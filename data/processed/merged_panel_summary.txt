@@ -1,0 +1,39 @@
+MERGED PANEL SUMMARY
+================================================================================
+
+total_rows: 485113
+date_range: (Timestamp('2005-01-01 00:00:00'), Timestamp('2025-08-31 00:00:00'))
+community_districts: 71
+rows_with_demographics: 445332
+interaction_variables: 116
+
+
+Demographic Variables:
+  pct_black: pct_black
+  pct_hispanic: pct_hispanic
+  pct_white: pct_white
+  pct_asian: pct_asian
+
+
+Interaction Variables Created:
+  - awarez_lag0_x_pct_black
+  - awarez_lag1_x_pct_black
+  - awarez_lag2_x_pct_black
+  - awarez_lag3_x_pct_black
+  - awarez_lag4_x_pct_black
+  - awarez_lag5_x_pct_black
+  - awarez_lag6_x_pct_black
+  - awarez_lag7_x_pct_black
+  - awarez_lag8_x_pct_black
+  - awarez_lag9_x_pct_black
+  - awarez_lag10_x_pct_black
+  - awarez_lag11_x_pct_black
+  - awarez_lag12_x_pct_black
+  - awarez_lag13_x_pct_black
+  - awarez_lag14_x_pct_black
+  - awarez_lag15_x_pct_black
+  - awarez_lag16_x_pct_black
+  - awarez_lag17_x_pct_black
+  - awarez_lag18_x_pct_black
+  - awarez_lag19_x_pct_black
+  ... and 96 more

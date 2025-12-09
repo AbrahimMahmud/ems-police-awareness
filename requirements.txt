@@ -16,6 +16,7 @@ seaborn>=0.12.0
 
 # Data storage
 pyarrow>=12.0.0
+openpyxl>=3.1.0  # For reading Excel files
 
 # Jupyter notebooks (optional)
 jupyter>=1.0.0

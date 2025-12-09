@@ -1,0 +1,5222 @@
+[
+  {
+    "resource": {
+      "name": "Census Demographics at the NYC Community District (CD) level",
+      "id": "5unr-w4sc",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "Table of Census Demographics\r\nrepresented at the NYC Community\r\nDistrict level",
+      "attribution": "Department of City Planning (DCP)",
+      "attribution_link": null,
+      "contact_email": null,
+      "type": "file",
+      "updatedAt": "2018-09-10T18:58:32.000Z",
+      "createdAt": "2015-02-17T16:47:18.000Z",
+      "metadata_updated_at": "2018-09-10T18:58:32.000Z",
+      "data_updated_at": "2015-02-17T16:47:18.000Z",
+      "page_views": {
+        "page_views_last_week": 113,
+        "page_views_last_month": 442,
+        "page_views_total": 5866,
+        "page_views_last_week_log": 6.832890014164742,
+        "page_views_last_month_log": 8.791162888555018,
+        "page_views_total_log": 12.518407276671365
+      },
+      "columns_name": [],
+      "columns_field_name": [],
+      "columns_datatype": [],
+      "columns_description": [],
+      "columns_format": [],
+      "download_count": 4914,
+      "provenance": "official",
+      "lens_view_type": "blobby",
+      "lens_display_type": "blob",
+      "locked": false,
+      "blob_mime_type": "application/zip; charset=binary",
+      "hide_from_data_json": false,
+      "publication_date": "2015-02-17T16:47:18.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "City Government",
+      "domain_tags": [
+        "census",
+        "community district"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Update_Automation",
+          "value": "No"
+        },
+        {
+          "key": "Update_Date-Made-Public",
+          "value": "2/17/2015"
+        },
+        {
+          "key": "Update_Update-Frequency",
+          "value": "As needed"
+        },
+        {
+          "key": "Dataset-Information_Agency",
+          "value": "Department of City Planning (DCP)"
+        },
+        {
+          "key": "Legislative-Compliance_Geo-coding-Attached?",
+          "value": ""
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.cityofnewyork.us"
+    },
+    "permalink": "https://data.cityofnewyork.us/d/5unr-w4sc",
+    "link": "https://data.cityofnewyork.us/City-Government/Census-Demographics-at-the-NYC-Community-District-/5unr-w4sc",
+    "owner": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    },
+    "creator": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    }
+  },
+  {
+    "resource": {
+      "name": "Demographic, Social, Economic, and Housing Profiles by Community District/PUMA",
+      "id": "kvuc-fg9b",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "Selected demographic, social, economic, and housing estimates data by community district/PUMA (Public Use Micro Data Sample Area). Three year estimates of population data from the Census Bureau's American Community Survey",
+      "attribution": "Department of City Planning (DCP)",
+      "attribution_link": null,
+      "contact_email": null,
+      "type": "href",
+      "updatedAt": "2024-10-30T14:28:11.000Z",
+      "createdAt": "2011-08-09T20:41:29.000Z",
+      "metadata_updated_at": "2024-10-30T14:28:11.000Z",
+      "data_updated_at": "2011-08-09T20:41:29.000Z",
+      "page_views": {
+        "page_views_last_week": 60,
+        "page_views_last_month": 275,
+        "page_views_total": 17078,
+        "page_views_last_week_log": 5.930737337562887,
+        "page_views_last_month_log": 8.108524456778168,
+        "page_views_total_log": 14.059935885112303
+      },
+      "columns_name": [],
+      "columns_field_name": [],
+      "columns_datatype": [],
+      "columns_description": [],
+      "columns_format": [],
+      "download_count": 1953,
+      "provenance": "official",
+      "lens_view_type": "href",
+      "lens_display_type": "href",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2011-08-09T20:41:29.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "City Government",
+      "domain_tags": [
+        "census",
+        "dcp",
+        "demographics",
+        "jobs and economic mobility",
+        "population",
+        "public use micro data sample area"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Update_Automation",
+          "value": "N/A"
+        },
+        {
+          "key": "Update_Date-Made-Public",
+          "value": "8/9/2011"
+        },
+        {
+          "key": "Update_Update-Frequency",
+          "value": "As needed"
+        },
+        {
+          "key": "Dataset-Information_Agency",
+          "value": "Department of City Planning (DCP)"
+        },
+        {
+          "key": "Legislative-Compliance_Geo-coding-Attached?",
+          "value": ""
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.cityofnewyork.us",
+      "additional_access_points": [
+        {
+          "urls": {
+            "page": "https://www1.nyc.gov/site/planning/data-maps/nyc-population/american-community-survey.page"
+          }
+        }
+      ],
+      "access_points": {
+        "page": "https://www1.nyc.gov/site/planning/data-maps/nyc-population/american-community-survey.page"
+      }
+    },
+    "permalink": "https://data.cityofnewyork.us/d/kvuc-fg9b",
+    "link": "https://data.cityofnewyork.us/City-Government/Demographic-Social-Economic-and-Housing-Profiles-b/kvuc-fg9b",
+    "owner": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    },
+    "creator": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    }
+  },
+  {
+    "resource": {
+      "name": "Census by Community 2019",
+      "id": "jpwd-iaas",
+      "resource_name": null,
+      "parent_fxf": [
+        "rkfr-buzb"
+      ],
+      "description": "Census data is an official count of dwelling units and population within those units. The data is physically collected and may be supplemented with other information such as the periodic age/gender distribution data. This additional data allows for better interpretation of the population statistics. A community district is a fixed boundary within Calgary, created by and for the Corporation. It represents a distinct geographical area of the city that is determined through the Land Development/Subdivision Process and approved by Council.",
+      "attribution": "The City of Calgary",
+      "attribution_link": null,
+      "contact_email": null,
+      "type": "map",
+      "updatedAt": "2023-02-01T15:39:07.000Z",
+      "createdAt": "2019-08-30T22:47:39.000Z",
+      "metadata_updated_at": "2023-02-01T15:39:07.000Z",
+      "data_updated_at": "2019-09-03T15:59:48.000Z",
+      "page_views": {
+        "page_views_last_week": 18,
+        "page_views_last_month": 104,
+        "page_views_total": 5271,
+        "page_views_last_week_log": 4.247927513443585,
+        "page_views_last_month_log": 6.714245517666122,
+        "page_views_total_log": 12.364134655008053
+      },
+      "columns_name": [],
+      "columns_field_name": [],
+      "columns_datatype": [],
+      "columns_description": [],
+      "columns_format": [],
+      "download_count": 25,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "visualization_canvas_map",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2019-08-30T22:47:59.000Z"
+    },
+    "classification": {
+      "categories": [
+        "demographics"
+      ],
+      "tags": [],
+      "domain_category": "Demographics",
+      "domain_tags": [],
+      "domain_metadata": [
+        {
+          "key": "Data-Supplier_Organization",
+          "value": "The City of Calgary"
+        },
+        {
+          "key": "Data-Supplier_Business-Unit",
+          "value": "City Clerks"
+        },
+        {
+          "key": "License/Attribution_License-URL",
+          "value": "https://data.calgary.ca/d/Open-Data-Terms/u45n-7awa"
+        },
+        {
+          "key": "Geospatial-Information_Map-Projection",
+          "value": "EPSG:4326 WGS84"
+        },
+        {
+          "key": "Geospatial-Information_Dataset-contains-geospatial-information",
+          "value": "Yes"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.calgary.ca",
+      "license": "See Terms of Use"
+    },
+    "permalink": "https://data.calgary.ca/d/jpwd-iaas",
+    "link": "https://data.calgary.ca/Demographics/Census-by-Community-2019/jpwd-iaas",
+    "owner": {
+      "id": "55bi-hyk4",
+      "user_type": "interactive",
+      "display_name": "Calgary Open Data"
+    },
+    "creator": {
+      "id": "55bi-hyk4",
+      "user_type": "interactive",
+      "display_name": "Calgary Open Data"
+    }
+  },
+  {
+    "resource": {
+      "name": "Target Community District",
+      "id": "tngj-drbu",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "The Table representing \"Target Community District Probation Demographic Data\" as of 08/05/2011",
+      "attribution": "Department of Probation (DOP)",
+      "attribution_link": "http://www.nyc.gov/html/prob/downloads/pdf/yajp_rfp_addendum_1.pdf",
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2020-02-08T00:53:00.000Z",
+      "createdAt": "2013-02-12T17:42:56.000Z",
+      "metadata_updated_at": "2020-02-08T00:53:00.000Z",
+      "data_updated_at": "2013-06-21T20:06:59.000Z",
+      "page_views": {
+        "page_views_last_week": 5,
+        "page_views_last_month": 20,
+        "page_views_total": 1502,
+        "page_views_last_week_log": 2.584962500721156,
+        "page_views_last_month_log": 4.392317422778761,
+        "page_views_total_log": 10.553629293916366
+      },
+      "columns_name": [
+        "Female Probationers      Ages 16-24",
+        "Borough Name",
+        "Community District",
+        "Male Probationers Ages 16-24",
+        "Total Probationers Ages 16 - 24 "
+      ],
+      "columns_field_name": [
+        "female_probationers_ages_16_24",
+        "borough_name",
+        "community_district",
+        "male_probationers_ages_16_24",
+        "total_probationers_ages_16_24"
+      ],
+      "columns_datatype": [
+        "Number",
+        "Text",
+        "Text",
+        "Number",
+        "Number"
+      ],
+      "columns_description": [
+        "Number of Female Probationers age 16 to 24 in a Community District\n",
+        "Brooklyn, Bronx, Manhattan, Queens\n",
+        "Borough Community District Number\n",
+        "Number of Male Probationers age 16 to 24 in a Community District\n",
+        "Number of Male and Female Probationers age 16 to 24 in a Community District\n"
+      ],
+      "columns_format": [
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "center"
+        },
+        {
+          "displayStyle": "plain",
+          "align": "left"
+        },
+        {
+          "displayStyle": "plain",
+          "align": "center"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "center"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "center"
+        }
+      ],
+      "download_count": 2821,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2013-06-21T20:07:02.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "City Government",
+      "domain_tags": [
+        "cd",
+        "community district",
+        "contact",
+        "dop",
+        "justice",
+        "law",
+        "probation",
+        "programs"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Update_Automation",
+          "value": "No"
+        },
+        {
+          "key": "Update_Date-Made-Public",
+          "value": "2/12/2013"
+        },
+        {
+          "key": "Update_Update-Frequency",
+          "value": "As needed"
+        },
+        {
+          "key": "Dataset-Information_Agency",
+          "value": "Department of Probation (DOP)"
+        },
+        {
+          "key": "Legislative-Compliance_Geo-coding-Attached?",
+          "value": ""
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.cityofnewyork.us"
+    },
+    "permalink": "https://data.cityofnewyork.us/d/tngj-drbu",
+    "link": "https://data.cityofnewyork.us/City-Government/Target-Community-District/tngj-drbu",
+    "owner": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    },
+    "creator": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    }
+  },
+  {
+    "resource": {
+      "name": "[ARCHIVED] Census Population Density",
+      "id": "s6f2-3jrq",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "<b>[ARCHIVED]</b> Community Counts data is retained for archival purposes only, such as research, reference and record-keeping. This data has not been maintained or updated.  Users looking for the latest information should refer to Statistics Canada\u2019s Census Program (https://www12.statcan.gc.ca/census-recensement/index-eng.cfm?MM=1) for the latest data, including detailed results about Nova Scotia.\n\nThis table reports population density. This data is sourced from the Census of Population.  Geographies available: provinces, counties, communities, municipalities, district health authorities, community health boards, economic regions, police districts, school boards, municipal electoral districts, provincial electoral districts, federal electoral districts, regional development authorities, watersheds",
+      "attribution": null,
+      "attribution_link": null,
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2020-01-06T15:04:30.000Z",
+      "createdAt": "2016-04-05T14:54:26.000Z",
+      "metadata_updated_at": "2020-01-06T15:04:30.000Z",
+      "data_updated_at": "2016-04-07T13:56:21.000Z",
+      "page_views": {
+        "page_views_last_week": 11,
+        "page_views_last_month": 64,
+        "page_views_total": 4341,
+        "page_views_last_week_log": 3.5849625007211565,
+        "page_views_last_month_log": 6.022367813028454,
+        "page_views_total_log": 12.084144010615146
+      },
+      "columns_name": [
+        "Percent Change 1996 - 2006",
+        "Percent Change 2001 - 2011",
+        "DataGroup2",
+        "GeogName",
+        "ComID",
+        "1991 - .",
+        "1996 - .",
+        "2001 - .",
+        "2006 - .",
+        "DataGroup1",
+        "Percent Change 1991 - 2001",
+        "2011 - .",
+        "DataGroup1_Order"
+      ],
+      "columns_field_name": [
+        "percent_change_1996_2006",
+        "percent_change_2001_2011",
+        "datagroup2",
+        "geogname",
+        "comid",
+        "_1991",
+        "_1996",
+        "_2001",
+        "_2006",
+        "datagroup1",
+        "percent_change_1991_2001",
+        "_2011",
+        "datagroup1_order"
+      ],
+      "columns_datatype": [
+        "Number",
+        "Number",
+        "Text",
+        "Text",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Number",
+        "Number",
+        "Number"
+      ],
+      "columns_description": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "columns_format": [
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {}
+      ],
+      "download_count": 1014,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2016-04-07T13:57:53.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "Population and Demographics",
+      "domain_tags": [
+        "1991",
+        "2011",
+        "community counts",
+        "population density"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Detailed-Metadata_Geographic-Region-Name",
+          "value": "Nova Scotia"
+        },
+        {
+          "key": "Detailed-Metadata_Department",
+          "value": "Finance and Treasury Board"
+        },
+        {
+          "key": "Detailed-Metadata_Usage-Considerations",
+          "value": "ARCHIVED on January 6, 2020. Community Counts data is retained for archival purposes only, such as research, reference and record-keeping. This data has not been maintained or updated. Users looking for the latest information should refer to Statistics Canada\u2019s Census Program (https://www12.statcan.gc.ca/census-recensement/index-eng.cfm?MM=1) for the latest data, including detailed results about Nova Scotia. Please exercise caution when making reference to older documents and data. \"X\" signifies the data is not available."
+        },
+        {
+          "key": "Detailed-Metadata_Time-Period-Coverage",
+          "value": "1991-01-01/2011-12-31"
+        },
+        {
+          "key": "Detailed-Metadata_Language",
+          "value": "eng"
+        },
+        {
+          "key": "Detailed-Metadata_Frequency",
+          "value": "One-time"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.novascotia.ca",
+      "license": "Nova Scotia Open Government Licence"
+    },
+    "permalink": "https://data.novascotia.ca/d/s6f2-3jrq",
+    "link": "https://data.novascotia.ca/Population-and-Demographics/-ARCHIVED-Census-Population-Density/s6f2-3jrq",
+    "owner": {
+      "id": "9pyy-md4w",
+      "user_type": "interactive",
+      "display_name": "Open Data Nova Scotia"
+    },
+    "creator": {
+      "id": "9pyy-md4w",
+      "user_type": "interactive",
+      "display_name": "Open Data Nova Scotia"
+    }
+  },
+  {
+    "resource": {
+      "name": "Prevention Agenda 2019-2024 Tracking Indicators: County Trend Data",
+      "id": "7j59-48xy",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "There are two datasets related to the County Level Prevention Agenda Tracking Indicators posted on this site. Each dataset consists of county level data for 70 health tracking indicators and sub-indicators for the Prevention Agenda 2019-2024: New York State\u2019s Health Improvement Plan.  A health tracking indicator is a metric through which progress on a certain area of health improvement can be assessed.  The indicators are organized by the Priority Area of the Prevention Agenda as well as the Focus Area under each Priority Area. The data sets also include indicators about major cross-cutting health outcomes and about health disparities. Each dataset includes tracking indicators for the five Priority Areas of the Prevention Agenda 2019-2024.  The most recent year dataset includes the most recent county level data for all indicators. The trend dataset includes the most recent county level data and historical data, where available. Each dataset also includes the Prevention Agenda 2024 state objectives for the indicators. Sub-indicators are included in these datasets to measure health disparities among socioeconomic groups.",
+      "attribution": "New York State Department of Health",
+      "attribution_link": "https://www.health.ny.gov/prevention/prevention_agenda/2019-2024/",
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2022-06-08T15:35:33.000Z",
+      "createdAt": "2014-04-03T12:58:43.000Z",
+      "metadata_updated_at": "2022-06-08T15:35:03.000Z",
+      "data_updated_at": "2022-06-08T15:35:33.000Z",
+      "page_views": {
+        "page_views_last_week": 277,
+        "page_views_last_month": 846,
+        "page_views_total": 54644,
+        "page_views_last_week_log": 8.118941072723507,
+        "page_views_last_month_log": 9.7262181593322,
+        "page_views_total_log": 15.737801875351302
+      },
+      "columns_name": [
+        "Location (address)",
+        "Local Waterfront Revitalization Program (LWRP) Communities",
+        "School Districts 2016.shp",
+        "Quartile",
+        "Objective Region",
+        "County Name",
+        "Indicator",
+        "Date Source",
+        "Priority Area Number",
+        "Focus Area Number",
+        "Average Number of Denominator/Rate",
+        "Data Comments",
+        "2024 Objective",
+        "Mapping Distribution",
+        "Priority Area",
+        "Focus Area",
+        "Indicator Number",
+        "Event Count/Rate",
+        "Measure Unit",
+        "NYS Senate Districts",
+        "Counties",
+        "New York Zip Codes",
+        "Percentage/Rate/Ratio",
+        "Location (zip)",
+        "Location (state)",
+        "Lower Limit of 95% CI",
+        "Upper Limit of 95% CI",
+        "Data Years",
+        "Location",
+        "Location (city)"
+      ],
+      "columns_field_name": [
+        "location_address",
+        ":@computed_region_8ire_itmf",
+        ":@computed_region_5edz_4hdv",
+        "quartile",
+        "objective_region",
+        "county_name",
+        "indicator",
+        "date_source",
+        "priority_area_number",
+        "focus_area_number",
+        "average_number_of_denominator_rate",
+        "data_comments",
+        "objective",
+        "mapping_distribution",
+        "priority_area",
+        "focus_area",
+        "indicator_number",
+        "event_count_rate",
+        "measure_unit",
+        ":@computed_region_assa_msit",
+        ":@computed_region_9yqb_tdyd",
+        ":@computed_region_43an_4dx5",
+        "percentage_rate_ratio",
+        "location_zip",
+        "location_state",
+        "lower_limit_of_95_ci",
+        "upper_limit_of_95_ci",
+        "data_years",
+        "location",
+        "location_city"
+      ],
+      "columns_datatype": [
+        "Text",
+        "Number",
+        "Number",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Number",
+        "Number",
+        "Text",
+        "Text",
+        "Text",
+        "Number",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Text",
+        "Number",
+        "Number",
+        "Text",
+        "Point",
+        "Text"
+      ],
+      "columns_description": [
+        "",
+        "",
+        "",
+        "Quartile(s) that indicator estimate falls within",
+        "Region of NYS that the objective pertains to",
+        "Full county name ",
+        "Full text description of the health tracking indicator",
+        "Data sources for the raw data used in indicator\ncomputation",
+        "Prevention Agenda priority area ID number",
+        "Prevention Agenda focus area ID number (focus area within priority area)",
+        "Denominator for rate computations or the reference group rate for ratio computations",
+        "Indicate when the county data is unstable or suppressed due to small number of events",
+        "Target value for the health tracking indicator, as specified by the Prevention Agenda",
+        "Grouping of county rates for color shades in the\nmap (value of \"1\" indicates the best group and\n\"3\" indicates the worst group)",
+        "Full title for the specific Prevention Agenda priority area",
+        "Full title for the specific focus area",
+        "Unique indicator identifier ",
+        "Event counts for rate computations (numerators) or the high-risk group rate for ratio computations",
+        "Result type, rate or percentage",
+        "",
+        "",
+        "",
+        "Numerical indicator value estimate",
+        "",
+        "",
+        "Lower limit of 95% Confidence Intervals for percentage estimates from survey data",
+        "Upper limit of 95% Confidence Intervals for percentage estimates from survey data",
+        "Time period for raw data used in indicator\ncomputation",
+        "Lat/Long decimal degree coordinates for the\nregion covered by the indicator, for use in\nmapping",
+        ""
+      ],
+      "columns_format": [
+        {},
+        {},
+        {},
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "align": "left"
+        },
+        {},
+        {},
+        {},
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {},
+        {},
+        {
+          "noCommas": "false",
+          "align": "right",
+          "percentScale": "100",
+          "precisionStyle": "standard",
+          "view": "percent_bar_and_text"
+        },
+        {
+          "noCommas": "false",
+          "align": "right",
+          "percentScale": "100",
+          "precisionStyle": "standard",
+          "view": "percent_bar_and_text"
+        },
+        {
+          "align": "center"
+        },
+        {
+          "view": "address_coords",
+          "align": "left"
+        },
+        {}
+      ],
+      "download_count": 4048,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2022-05-18T16:35:33.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "Health",
+      "domain_tags": [
+        "prevention agenda",
+        "tracking indicator"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Additional-Resources_See-Also",
+          "value": "https://apps.health.ny.gov/doh2/applinks/ebi/SASStoredProcess/guest?_program=/EBI/PHIG/apps/dashboard/pa_dashboard&p=abt1"
+        },
+        {
+          "key": "Additional-Resources_See-Also-",
+          "value": "https://www.health.ny.gov/PreventionAgendaDashboard"
+        },
+        {
+          "key": "Dataset-Summary_Dataset-Owner",
+          "value": "Office of Public Health Practice"
+        },
+        {
+          "key": "Dataset-Summary_Units",
+          "value": "Health Tracking Indicators"
+        },
+        {
+          "key": "Dataset-Summary_Granularity",
+          "value": "County"
+        },
+        {
+          "key": "Dataset-Summary_Coverage",
+          "value": "Statewide"
+        },
+        {
+          "key": "Dataset-Summary_Data-Frequency",
+          "value": "Annual"
+        },
+        {
+          "key": "Dataset-Summary_Posting-Frequency",
+          "value": "Yearly"
+        },
+        {
+          "key": "Dataset-Summary_Organization",
+          "value": "Office of Public Health Practice"
+        },
+        {
+          "key": "Dataset-Summary_Time-Period",
+          "value": "2021 update including different data years for different indicators"
+        },
+        {
+          "key": "Local-Data_County-Filter",
+          "value": "Yes"
+        },
+        {
+          "key": "Local-Data_County_Column",
+          "value": "county_name"
+        },
+        {
+          "key": "Dataset-Information_Agency",
+          "value": "Health, Department of"
+        },
+        {
+          "key": "Notes_Notes",
+          "value": "A health tracking indicator is a metric through which progress on a certain area of health improvement can be assessed.  The indicators are organized by the Priority Area of the Prevention Agenda as well as the Focus Area under each Priority Area.  Each dataset includes tracking indicators for the five Priority Areas of the Prevention Agenda 2013-2018.  The most recent year dataset includes the most recent county level data for all indicators. The trend dataset includes the most recent county level data and historical data, where available. Each dataset also includes the Prevention Agenda 2018 state targets for the indicators. Sub-indicators are included in these datasets to measure health disparities among socioeconomic groups."
+        },
+        {
+          "key": "Disclaimers_Limitations",
+          "value": "This dataset consists of various types of indicators with different units of measurement such as rates per 10,000 population, percentages, and ratios. Therefore, comparison of data across indicators might not be valid."
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "health.data.ny.gov"
+    },
+    "permalink": "https://health.data.ny.gov/d/7j59-48xy",
+    "link": "https://health.data.ny.gov/Health/Prevention-Agenda-2019-2024-Tracking-Indicators-Co/7j59-48xy",
+    "owner": {
+      "id": "s9j2-nqmr",
+      "user_type": "interactive",
+      "display_name": "Open Data NY - DOH"
+    },
+    "creator": {
+      "id": "s9j2-nqmr",
+      "user_type": "interactive",
+      "display_name": "Open Data NY - DOH"
+    }
+  },
+  {
+    "resource": {
+      "name": "Maryland Senate Districts Socioeconomic Characteristics - ACS 5-year Estimates (2018-2022)",
+      "id": "eapk-6rj4",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "Source: U.S. Census Bureau, 2018-2022 American Community Survey 5-Year Estimates. The ACS 5-year period are period estimates that describe the average characteristics of the population and housing over the period of data collection (2018 through 2022). Data provides broad social, economics, housing, and demographics information by Maryland Senate Districts.",
+      "attribution": "Maryland Department of Planning",
+      "attribution_link": "https://planning.maryland.gov/MSDC/Pages/american_community_survey/2016-2020ACS.aspx",
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2024-03-08T21:42:14.000Z",
+      "createdAt": "2022-09-27T15:31:57.000Z",
+      "metadata_updated_at": "2024-03-08T21:42:14.000Z",
+      "data_updated_at": "2024-03-08T21:42:08.000Z",
+      "page_views": {
+        "page_views_last_week": 0,
+        "page_views_last_month": 15,
+        "page_views_total": 862,
+        "page_views_last_week_log": 0.0,
+        "page_views_last_month_log": 4.0,
+        "page_views_total_log": 9.753216749178955
+      },
+      "columns_name": [
+        "SENATE DISTRICT",
+        "POPULATION-Total",
+        "POPULATION-Male",
+        "POPULATION-Female",
+        "RACE-White Alone",
+        "RACE-Black Alone",
+        "RACE-Asian Alone",
+        "RACE-American Indian Alaskan Native",
+        "RACE-Native Hawaiian Pacific Islander",
+        "RACE- Two or More Races",
+        "RACE/ETHNICITY -Hispanic or Latino",
+        "Date Created",
+        "COMMUTERS-Pct Worked at Home",
+        "COMMUTERS-Pct Other Means",
+        "EDUCATION- Pct Less than 9th Grade",
+        "EDUCATION ATTAINMENT- Pop. 25 years and over",
+        "HOUSING-Pct Renter-Occupied",
+        "HOUSING- Homeowner vacancy rate",
+        "VOTER POPULATION-Citizens 18 and over",
+        "COMMUTERS-Pct Walked",
+        "COMMUTERS-Pct Public Transportation",
+        "COMMUTERS-Pct Carpooled",
+        "COMMUTERS- Pct Drove Alone",
+        "COMMUTERS-16 years and over",
+        "Unemployment Rate",
+        "Civilian Labor Force -Unemployed",
+        "Civilian Labor Force -Employed",
+        "Population 16 years and over",
+        "LABOR-Civilian Labor Force (CLF)",
+        "EDUCATION- Pct Graduate or Professional",
+        "EDUCATION- Pct Associate's Degree",
+        "EDUCATION-Pct High School diploma",
+        "EDUCATION-Pct High School no diploma",
+        "HOUSING-Vacant Units",
+        "HOUSING- Rental vacancy rate",
+        "HOUSING-Pct Owner-Occupied",
+        "HOUSING-Occupied Units",
+        "HOUSING-Total Units",
+        "Pct. of FAMILIES in Poverty",
+        "FAMILIES-Total",
+        "HEALTH INSURANCE -Pct Civilian Pop. Covered",
+        "RACE- Some Other Race",
+        "EDUCATION-Pct Some College",
+        "EDUCATION-Pct Bachelor's Degree",
+        "HOUSEHOLDS-Total",
+        "HOUSEHOLD INCOME-MEDIAN"
+      ],
+      "columns_field_name": [
+        "senate_district",
+        "population_total",
+        "population_male",
+        "population_female",
+        "race_white_alone",
+        "race_black_alone",
+        "race_asian_alone",
+        "race_american_indian_alaskan",
+        "race_native_hawaiian_pacific",
+        "race_two_or_more_races",
+        "race_ethnicity_hispanic_or",
+        "date_created",
+        "commuters_pct_worked_at_home",
+        "commuters_pct_other_means",
+        "education_pct_less_than_9th",
+        "education_attainment_pop",
+        "housing_pct_renter_occupied",
+        "housing_homeowner_vacancy",
+        "voter_population_citizens",
+        "commuters_pct_walked",
+        "commuters_pct_public",
+        "commuters_pct_carpooled",
+        "commuters_pct_drove_alone",
+        "commuters_16_years_and_over",
+        "unemployment_rate",
+        "civilian_labor_force",
+        "civilian_labor_force_employed",
+        "population_16_years_and_over",
+        "labor_civilian_labor_force",
+        "education_pct_graduate_or",
+        "education_pct_associate_s",
+        "education_pct_high_school_1",
+        "education_pct_high_school",
+        "housing_vacant_units",
+        "housing_rental_vacancy_rate",
+        "housing_pct_owner_occupied",
+        "housing_occupied_units",
+        "housing_total_units",
+        "pct_of_families_in_poverty",
+        "families_total",
+        "health_insurance_pct_civilian",
+        "race_some_other_race",
+        "education_pct_some_college",
+        "education_pct_bachelor_s",
+        "households_total",
+        "household_income_median"
+      ],
+      "columns_datatype": [
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Text"
+      ],
+      "columns_description": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "columns_format": [
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {}
+      ],
+      "download_count": 519,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2024-03-08T21:42:14.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "Demographic",
+      "domain_tags": [
+        "socioeconomics",
+        "maryland",
+        "legislative",
+        "districts",
+        "demographics",
+        "acs",
+        "senate"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Agency_State-Agency-Performing-Data-Updates",
+          "value": "Maryland Department of Planning"
+        },
+        {
+          "key": "Time-Period_Update-Frequency",
+          "value": "Annually"
+        },
+        {
+          "key": "Time-Period_Date-Metadata-Written",
+          "value": "March 8, 2024"
+        },
+        {
+          "key": "Time-Period_Time-Period-of-Content",
+          "value": "A 5-year estimates are"
+        },
+        {
+          "key": "GIS-Download_Place-Keywords",
+          "value": "Maryland, Senate, Legislative"
+        },
+        {
+          "key": "Jurisdiction_Jurisdiction",
+          "value": "State of Maryland"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "opendata.maryland.gov",
+      "license": "Public Domain"
+    },
+    "permalink": "https://opendata.maryland.gov/d/eapk-6rj4",
+    "link": "https://opendata.maryland.gov/Demographic/Maryland-Senate-Districts-Socioeconomic-Characteri/eapk-6rj4",
+    "owner": {
+      "id": "85mq-rt9c",
+      "user_type": "interactive",
+      "display_name": "MDP"
+    },
+    "creator": {
+      "id": "85mq-rt9c",
+      "user_type": "interactive",
+      "display_name": "MDP"
+    }
+  },
+  {
+    "resource": {
+      "name": "SVI (Social Vulnerability Index) Priority Zip Code Vaccination Dashboard - ARCHIVE",
+      "id": "5gk3-gnrm",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "As of 1/19/2022, this dataset is no longer being updated. For more data on COVID-19 in Connecticut, visit data.ct.gov/coronavirus. \n\nThis tables shows the percent of people who have received at least one dose of COVID-19 vaccine who live in a Priority SVI Zip Code.  About a third of people in CT live in a Priority SVI zip code. \n\nSVI refers to the CDC's Social Vulnerability Index - a measure that combines 15 demographic variables to identify communities most vulnerable to negative health impacts from disasters and public health crises. Measures of social vulnerability include socioeconomic status, household composition, disability, race, ethnicity, language, and transportation limitations - among others.  SVI scores were calculated for each zip code in CT.  The zip codes in the top 20% were designated as Priority SVI zip codes.  Percentages are based on 2018 zip code population data supplied by ESRI corporation.    \n \nAll data in this report are preliminary; data for previous dates will be updated as new reports are received and data errors are corrected.\n\nThe data are presented cumulatively and by week of first dose of vaccine.  Percentages are reported for all providers combined and for pharmacies, FQHCs (Federally Qualified Health Centers), local public health departments / districts and hospitals. The table excludes people with a missing or out-of-state zip code and doses administered by the Federal government (including Department of Defense, Department of Correction, Department of Veteran\u2019s Affairs, Indian Health Service) or out-of-state providers.",
+      "attribution": "Department of Public Health",
+      "attribution_link": "https://portal.ct.gov/DPH",
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2023-08-02T14:50:59.000Z",
+      "createdAt": "2021-05-06T14:37:34.000Z",
+      "metadata_updated_at": "2023-08-02T14:50:59.000Z",
+      "data_updated_at": "2022-01-13T20:16:04.000Z",
+      "page_views": {
+        "page_views_last_week": 6,
+        "page_views_last_month": 30,
+        "page_views_total": 2732,
+        "page_views_last_week_log": 2.807354922057604,
+        "page_views_last_month_log": 4.954196310386876,
+        "page_views_total_log": 11.416269744523207
+      },
+      "columns_name": [
+        "Percent SVI Priority Zip Code",
+        "Practice Type",
+        "Date Updated"
+      ],
+      "columns_field_name": [
+        "percent_svi_priority_zip",
+        "practice_type",
+        "dateupdated"
+      ],
+      "columns_datatype": [
+        "Number",
+        "Text",
+        "Calendar date"
+      ],
+      "columns_description": [
+        "Percentage of people who initiated vaccination who live in a SVI priority zip code",
+        "Type of practice (FQHC, pharmacy, local health department, hospital)",
+        "Date the data was last updated"
+      ],
+      "columns_format": [
+        {},
+        {},
+        {
+          "view": "date"
+        }
+      ],
+      "download_count": 1815,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2021-05-06T14:42:32.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "Health and Human Services",
+      "domain_tags": [
+        "covid archive"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Agency_Agency",
+          "value": "Department of Public Health"
+        },
+        {
+          "key": "Details_Geographic-Unit",
+          "value": "State"
+        },
+        {
+          "key": "Details_Update-Frequency",
+          "value": "Not updated (historical data)"
+        },
+        {
+          "key": "Details_Temporal-Coverage",
+          "value": "The COVID-19 Pandemic"
+        },
+        {
+          "key": "COVID-19_Topic",
+          "value": "Vaccination"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.ct.gov",
+      "license": "Public Domain"
+    },
+    "permalink": "https://data.ct.gov/d/5gk3-gnrm",
+    "link": "https://data.ct.gov/Health-and-Human-Services/SVI-Social-Vulnerability-Index-Priority-Zip-Code-V/5gk3-gnrm",
+    "owner": {
+      "id": "dby8-627v",
+      "user_type": "interactive",
+      "display_name": "Gary Archambault"
+    },
+    "creator": {
+      "id": "dby8-627v",
+      "user_type": "interactive",
+      "display_name": "Gary Archambault"
+    }
+  },
+  {
+    "resource": {
+      "name": "Prevention Agenda 2019-2024 Tracking Indicators: County Most Recent Data",
+      "id": "47s5-ehya",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "There are two datasets related to the County Level Prevention Agenda Tracking Indicators posted on this site. Each dataset consists of county level data for 70 health tracking indicators and sub-indicators for the Prevention Agenda 2019-2024: New York State\u2019s Health Improvement Plan.  A health tracking indicator is a metric through which progress on a certain area of health improvement can be assessed.  The indicators are organized by the Priority Area of the Prevention Agenda as well as the Focus Area under each Priority Area. The data sets also include indicators about major cross-cutting health outcomes and about health disparities. Each dataset includes tracking indicators for the five Priority Areas of the Prevention Agenda 2019-2024.  The most recent year dataset includes the most recent county level data for all indicators. The trend dataset includes the most recent county level data and historical data, where available. Each dataset also includes the Prevention Agenda 2024 state objectives for the indicators. Sub-indicators are included in these datasets to measure health disparities among socioeconomic groups.",
+      "attribution": "New York State Department of Health",
+      "attribution_link": "https://www.health.ny.gov/prevention/prevention_agenda/2019-2024/",
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2022-06-08T15:35:06.000Z",
+      "createdAt": "2014-04-02T19:41:17.000Z",
+      "metadata_updated_at": "2022-06-08T15:34:58.000Z",
+      "data_updated_at": "2022-06-08T15:35:06.000Z",
+      "page_views": {
+        "page_views_last_week": 276,
+        "page_views_last_month": 788,
+        "page_views_total": 49021,
+        "page_views_last_week_log": 8.113742166049189,
+        "page_views_last_month_log": 9.623881490013458,
+        "page_views_total_log": 15.581141724040247
+      },
+      "columns_name": [
+        "Focus Area",
+        "Indicator Number",
+        "Indicator",
+        "Event Count/Rate",
+        "Average Number of Denominator/Rate",
+        "Measure Unit",
+        "Percentage/Rate/Ratio",
+        "Lower Limit of 95% CI",
+        "Upper Limit of 95% CI",
+        "Data Comments",
+        "Quartile",
+        "Objective Region",
+        "Date Source",
+        "Location",
+        "Location (state)",
+        "Location (address)",
+        "Location (city)",
+        "Location (zip)",
+        "2024 Objective",
+        "Data Years",
+        "Mapping Distribution",
+        "County Name",
+        "Priority Area Number",
+        "Priority Area",
+        "School Districts 2016.shp",
+        "Local Waterfront Revitalization Program (LWRP) Communities",
+        "New York Zip Codes",
+        "Counties",
+        "NYS Senate Districts",
+        "Focus Area Number"
+      ],
+      "columns_field_name": [
+        "focus_area",
+        "indicator_number",
+        "indicator",
+        "event_count_rate",
+        "average_number_of_denominator_rate",
+        "measure_unit",
+        "percentage_rate_ratio",
+        "lower_limit_of_95_ci",
+        "upper_limit_of_95_ci",
+        "data_comments",
+        "quartile",
+        "objective_region",
+        "date_source",
+        "location",
+        "location_state",
+        "location_address",
+        "location_city",
+        "location_zip",
+        "objective",
+        "data_years",
+        "mapping_distribution",
+        "county_name",
+        "priority_area_number",
+        "priority_area",
+        ":@computed_region_5edz_4hdv",
+        ":@computed_region_8ire_itmf",
+        ":@computed_region_43an_4dx5",
+        ":@computed_region_9yqb_tdyd",
+        ":@computed_region_assa_msit",
+        "focus_area_number"
+      ],
+      "columns_datatype": [
+        "Text",
+        "Text",
+        "Text",
+        "Number",
+        "Number",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Point",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Number",
+        "Text",
+        "Number",
+        "Text",
+        "Number",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number"
+      ],
+      "columns_description": [
+        "Full title for the specific focus area",
+        "Unique indicator identifier",
+        "Full text description of the health tracking indicator",
+        "Event counts for rate computations (numerators) or the high-risk group rate for ratio computations",
+        "Denominator for rate computations or the reference group rate for ratio computations",
+        "Result type, rate or percentage",
+        "Numerical indicator value estimate",
+        "Lower limit of 95% Confidence Intervals for percentage estimates from survey data",
+        "Upper limit of 95% Confidence Intervals for percentage estimates from survey data",
+        "Indicate when the county data is unstable or suppressed due to small number of events",
+        "Quartile(s) that indicator estimate falls within",
+        "Region of NYS that the objective pertains to",
+        "Data sources for the raw data used in indicator\ncomputation",
+        "Lat/Long decimal degree coordinates for the\nregion covered by the indicator, for use in\nmapping",
+        "",
+        "",
+        "",
+        "",
+        "Target value for the health tracking indicator, as specified by the Prevention Agenda",
+        "Time period for raw data used in indicator\ncomputation",
+        "Grouping of county rates for color shades in the\nmap (value of \"1\" indicates the best group and\n\"3\" indicates the worst group)",
+        "Full county name",
+        "Prevention Agenda priority area ID number",
+        "Full title for the specific Prevention Agenda priority area",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Prevention Agenda focus area ID number (focus area within priority area)"
+      ],
+      "columns_format": [
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "noCommas": "false",
+          "align": "right",
+          "percentScale": "100",
+          "precisionStyle": "standard",
+          "view": "percent_bar_and_text"
+        },
+        {
+          "noCommas": "false",
+          "align": "right",
+          "percentScale": "100",
+          "precisionStyle": "standard",
+          "view": "percent_bar_and_text"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "view": "address_coords",
+          "align": "left"
+        },
+        {},
+        {},
+        {},
+        {},
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "align": "center"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "align": "left"
+        },
+        {},
+        {},
+        {},
+        {},
+        {},
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        }
+      ],
+      "download_count": 5083,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2020-09-19T19:15:40.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "Health",
+      "domain_tags": [
+        "prevention agenda",
+        "tracking indicator"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Additional-Resources_See-Also",
+          "value": "https://apps.health.ny.gov/doh2/applinks/ebi/SASStoredProcess/guest?_program=/EBI/PHIG/apps/dashboard/pa_dashboard&p=abt1"
+        },
+        {
+          "key": "Additional-Resources_See-Also-",
+          "value": "https://www.health.ny.gov/PreventionAgendaDashboard"
+        },
+        {
+          "key": "Dataset-Summary_Dataset-Owner",
+          "value": "Office of Public Health Practice"
+        },
+        {
+          "key": "Dataset-Summary_Units",
+          "value": "Health Tracking Indicators"
+        },
+        {
+          "key": "Dataset-Summary_Granularity",
+          "value": "County"
+        },
+        {
+          "key": "Dataset-Summary_Coverage",
+          "value": "Statewide"
+        },
+        {
+          "key": "Dataset-Summary_Data-Frequency",
+          "value": "Annual"
+        },
+        {
+          "key": "Dataset-Summary_Posting-Frequency",
+          "value": "Yearly"
+        },
+        {
+          "key": "Dataset-Summary_Organization",
+          "value": "Office of Public Health Practice"
+        },
+        {
+          "key": "Dataset-Summary_Time-Period",
+          "value": "2021 update including different data years for different indicators"
+        },
+        {
+          "key": "Local-Data_County-Filter",
+          "value": "Yes"
+        },
+        {
+          "key": "Local-Data_County_Column",
+          "value": "county_name"
+        },
+        {
+          "key": "Dataset-Information_Agency",
+          "value": "Health, Department of"
+        },
+        {
+          "key": "Disclaimers_Limitations",
+          "value": "This dataset consists of various types of indicators with different units of measurement such as rates per 10,000 population, percentages, and ratios. Therefore, comparison of data across indicators might not be valid."
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "health.data.ny.gov"
+    },
+    "permalink": "https://health.data.ny.gov/d/47s5-ehya",
+    "link": "https://health.data.ny.gov/Health/Prevention-Agenda-2019-2024-Tracking-Indicators-Co/47s5-ehya",
+    "owner": {
+      "id": "s9j2-nqmr",
+      "user_type": "interactive",
+      "display_name": "Open Data NY - DOH"
+    },
+    "creator": {
+      "id": "s9j2-nqmr",
+      "user_type": "interactive",
+      "display_name": "Open Data NY - DOH"
+    }
+  },
+  {
+    "resource": {
+      "name": "Maryland Senate Districts-Socioeconomic Characteristics, ACS 5-year Estimates (2019-2023)",
+      "id": "fi3w-qdad",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "The ACS 5-year period are period estimates that describe the average characteristics of the population and housing over the period of data collection (2019 through 2023). Data provides broad social, economics, housing, and demographics information by Maryland Senate Districts.\n\nSource: U.S. Census Bureau, 2019-2023 American Community Survey 5-Year Estimates.",
+      "attribution": "Maryland Department of Planning - State Data and Analysis Center",
+      "attribution_link": "https://planning.maryland.gov/MSDC/Pages/american_community_survey/2016-2020ACS.aspx",
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2025-11-21T21:59:57.000Z",
+      "createdAt": "2025-11-21T21:44:21.000Z",
+      "metadata_updated_at": "2025-11-21T21:59:57.000Z",
+      "data_updated_at": "2025-11-21T21:59:46.000Z",
+      "page_views": {
+        "page_views_last_week": 8,
+        "page_views_last_month": 78,
+        "page_views_total": 78,
+        "page_views_last_week_log": 3.1699250014423126,
+        "page_views_last_month_log": 6.303780748177103,
+        "page_views_total_log": 6.303780748177103
+      },
+      "columns_name": [
+        "Civilian Labor Force - Pct. no health insurance coverage",
+        "POPULATION - Pct. Foreign born",
+        "LANGUAGE - Pct. Language spoken at home other than English",
+        "POPULATION - Pct. Living alone, Male 65 years and over",
+        "POPULATION - Pct. Living alone, Female 65 years and over",
+        "HOUSEHOLD - Pct. Female householder, no spouse, with children under 18 years",
+        "EDUCATION-Pct High School diploma or higher",
+        "EDUCATION - Pct. Bachelor's Degree or higher",
+        "HOUSEHOLD - Median income",
+        "Pct. Of FAMILIES in Poverty",
+        "HOUSEHOLD - Pct. Receiving SNAP (food stamp)",
+        "POPULATION - Median age (years)",
+        "POPULATION - Total",
+        "SENATE DISTRICT",
+        "HOUSING - Pct. No vehicles",
+        "Unemployment rate",
+        "Median Gross Rent",
+        "Date Created",
+        "POPULATION - 65 years and over",
+        "State legislative district",
+        "State",
+        "HOUSEHOLD-Pct with computer",
+        "HOUSEHOLD-with computer",
+        "Pct. of Civilian Labor Force-Employed",
+        "Total Houeholds",
+        "COMMUTERS-Pct. Worked from home",
+        "COMMUTERS-Pct. Drove Alone or carpool",
+        "COMMUTERS-Pct. Public Transportation",
+        "COMMUTERS-16 years and over",
+        "COMMUTERS-Mean travel time (minutes)",
+        "HOUSING - Pct. Renter-Occupied paying more than 35 percent of income on rent",
+        "HOUSEHOLD - Pct. Who spend 35 percent or more of income on housing cost",
+        "HOUSING - Median value",
+        "HOUSING - Pct. Owner Occupied Housing Units",
+        "HOUSING - Total Units",
+        "Pct. Civilian population with disability"
+      ],
+      "columns_field_name": [
+        "civilian_labor_force_pct",
+        "population_pct_foreign_born",
+        "language_pct_language_spoken",
+        "population_pct_living_alone",
+        "population_pct_living_alone_1",
+        "household_pct_female",
+        "education_pct_high_school",
+        "education_pct_bachelor_s",
+        "household_median_income",
+        "pct_of_families_in_poverty",
+        "household_pct_receiving_snap",
+        "population_median_age_years",
+        "population_total",
+        "senate_district",
+        "housing_pct_no_vehicles",
+        "unemployment_rate",
+        "median_gross_rent",
+        "date_created",
+        "population_65_years_and_over",
+        "state_legislative_district",
+        "state",
+        "household_pct_with_computer",
+        "household_with_computer",
+        "pct_of_civilian_labor_force",
+        "total_houeholds",
+        "commuters_pct_worked_from",
+        "commuters_pct_drove_alone",
+        "commuters_pct_public",
+        "commuters_16_years_and_over",
+        "commuters_mean_travel_time",
+        "housing_pct_renter_occupied",
+        "household_pct_who_spend_35",
+        "housing_median_value",
+        "housing_pct_owner_occupied",
+        "housing_total_units",
+        "pct_civilian_population_with"
+      ],
+      "columns_datatype": [
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Calendar date",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number"
+      ],
+      "columns_description": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "columns_format": [
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {},
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "view": "date"
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        },
+        {
+          "decimalSeparator": ".",
+          "groupSeparator": ","
+        }
+      ],
+      "download_count": 28,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2025-11-21T21:59:57.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "Demographic",
+      "domain_tags": [],
+      "domain_metadata": [
+        {
+          "key": "Agency_State-Agency-Performing-Data-Updates",
+          "value": "Maryland Department of Planning"
+        },
+        {
+          "key": "Time-Period_Update-Frequency",
+          "value": "Annually"
+        },
+        {
+          "key": "Time-Period_Date-Metadata-Written",
+          "value": "November 21, 2025"
+        },
+        {
+          "key": "Time-Period_Time-Period-of-Content",
+          "value": "2019-2023"
+        },
+        {
+          "key": "GIS-Download_Place-Keywords",
+          "value": "sentate, legislative districts, demographics, housing, economics, transportation"
+        },
+        {
+          "key": "Jurisdiction_Jurisdiction",
+          "value": "State of Maryland"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "opendata.maryland.gov",
+      "license": "Public Domain"
+    },
+    "permalink": "https://opendata.maryland.gov/d/fi3w-qdad",
+    "link": "https://opendata.maryland.gov/Demographic/Maryland-Senate-Districts-Socioeconomic-Characteri/fi3w-qdad",
+    "owner": {
+      "id": "sg58-28ap",
+      "user_type": "interactive",
+      "display_name": "Dial.Keju@maryland.gov"
+    },
+    "creator": {
+      "id": "sg58-28ap",
+      "user_type": "interactive",
+      "display_name": "Dial.Keju@maryland.gov"
+    }
+  },
+  {
+    "resource": {
+      "name": "Abuse/Neglect by Community District (CD)",
+      "id": "rnjn-x48k",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "Excel table that shows abuse/neglect investigations by community district and borough.",
+      "attribution": "Administration for Children's Services (ACS)",
+      "attribution_link": null,
+      "contact_email": null,
+      "type": "file",
+      "updatedAt": "2025-04-08T19:25:53.000Z",
+      "createdAt": "2014-05-23T19:23:51.000Z",
+      "metadata_updated_at": "2025-04-08T19:25:53.000Z",
+      "data_updated_at": "2014-05-23T19:23:51.000Z",
+      "page_views": {
+        "page_views_last_week": 12,
+        "page_views_last_month": 83,
+        "page_views_total": 5019,
+        "page_views_last_week_log": 3.700439718141092,
+        "page_views_last_month_log": 6.39231742277876,
+        "page_views_total_log": 12.293471648838135
+      },
+      "columns_name": [],
+      "columns_field_name": [],
+      "columns_datatype": [],
+      "columns_description": [],
+      "columns_format": [],
+      "download_count": 2492,
+      "provenance": "official",
+      "lens_view_type": "blobby",
+      "lens_display_type": "blob",
+      "locked": false,
+      "blob_mime_type": "application/x-zip-compressed",
+      "hide_from_data_json": false,
+      "publication_date": "2014-05-23T19:23:51.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "Social Services",
+      "domain_tags": [
+        "abuse/neglect by cd",
+        "acs"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Update_Automation",
+          "value": "No"
+        },
+        {
+          "key": "Update_Date-Made-Public",
+          "value": "5/23/2014"
+        },
+        {
+          "key": "Update_Update-Frequency",
+          "value": "Annually"
+        },
+        {
+          "key": "Dataset-Information_Agency",
+          "value": "Administration for Children's Services (ACS)"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.cityofnewyork.us"
+    },
+    "permalink": "https://data.cityofnewyork.us/d/rnjn-x48k",
+    "link": "https://data.cityofnewyork.us/Social-Services/Abuse-Neglect-by-Community-District-CD-/rnjn-x48k",
+    "owner": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    },
+    "creator": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    }
+  },
+  {
+    "resource": {
+      "name": "2020 Neighborhood Tabulation Areas (NTAs)",
+      "id": "9nt8-h7nd",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "2020 Neighborhood Tabulation Areas (NTAs) are medium-sized statistical geographies for reporting Decennial Census and American Community Survey (ACS). 2020 NTAs are created by aggregating 2020 census tracts and nest within Community District Tabulation Areas (CDTA). NTAs were delineated with the need for both geographic specificity and statistical reliability in mind. Consequently, each NTA contains enough population to mitigate sampling error associated with the ACS yet offers a unit of analysis that is smaller than a Community District.\n\nThough NTA boundaries and their associated names roughly correspond with many neighborhoods commonly recognized by New Yorkers, NTAs are not intended to definitively represent neighborhoods, nor are they intended to be exhaustive of all possible names and understandings of neighborhoods throughout New York City. Additionally, non-residential areas including large parks, airports, cemeteries, and other special areas are represented separately within this dataset and are assigned codes according to their type (See NTAType field).\n\nAll previously released versions of this data are available on the <a href=\"https://www.nyc.gov/content/planning/pages/resources/datasets/neighborhood-tabulation\">DCP Website: BYTES of the BIG APPLE</a>. Current version: 25d",
+      "attribution": "Department of City Planning (DCP)",
+      "attribution_link": "https://www.nyc.gov/content/planning/pages/resources/datasets/neighborhood-tabulation",
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2025-11-24T21:27:54.000Z",
+      "createdAt": "2021-09-13T17:16:55.000Z",
+      "metadata_updated_at": "2025-11-24T21:27:52.000Z",
+      "data_updated_at": "2025-11-24T21:27:54.000Z",
+      "page_views": {
+        "page_views_last_week": 657,
+        "page_views_last_month": 2924,
+        "page_views_total": 28246,
+        "page_views_last_week_log": 9.361943773735241,
+        "page_views_last_month_log": 11.51422090935813,
+        "page_views_total_log": 14.785810032388824
+      },
+      "columns_name": [
+        "Shape_Length",
+        "CountyFIPS",
+        "BoroName",
+        "CDTAName",
+        "BoroCode",
+        "NTAType",
+        "NTA2020",
+        "Shape_Area",
+        "NTAAbbrev",
+        "CDTA2020",
+        "NTAName",
+        "the_geom"
+      ],
+      "columns_field_name": [
+        "shape_leng",
+        "countyfips",
+        "boroname",
+        "cdtaname",
+        "borocode",
+        "ntatype",
+        "nta2020",
+        "shape_area",
+        "ntaabbrev",
+        "cdta2020",
+        "ntaname",
+        "the_geom"
+      ],
+      "columns_datatype": [
+        "Number",
+        "Text",
+        "Text",
+        "Text",
+        "Number",
+        "Text",
+        "Text",
+        "Number",
+        "Text",
+        "Text",
+        "Text",
+        "MultiPolygon"
+      ],
+      "columns_description": [
+        "Length of feature in internal units.",
+        "The Census Bureau defined County FIPS code",
+        "Borough Name.",
+        "2020 Community District Tabulation Area name.",
+        "Borough of census tract.",
+        "Type of Neighborhood Tabulation Area. One digit code assigned to an NTA to distinguish if it is residential or a non-residential area like a park, airport, cemetery, or other special area.",
+        "2020 Neighborhood Tabulation Area Code.",
+        "Area of feature in internal units squared.",
+        "An abbreviation of the 2020 Neighborhood Tabulation Area name.",
+        "2020 Community District Tabulation Area code.",
+        "2020 Neighborhood Tabulation Area Name",
+        ""
+      ],
+      "columns_format": [
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {}
+      ],
+      "download_count": 4634,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2021-09-13T17:20:57.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "City Government",
+      "domain_tags": [
+        "2020",
+        "acs",
+        "american community survey",
+        "boundaries",
+        "boundary",
+        "census",
+        "cscl",
+        "dcp",
+        "department of city planning",
+        "districts",
+        "lion",
+        "neighborhood tabulation areas",
+        "nta"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Update_Automation",
+          "value": "Yes"
+        },
+        {
+          "key": "Update_Date-Made-Public",
+          "value": "9/13/2021"
+        },
+        {
+          "key": "Update_Update-Frequency",
+          "value": "Quarterly"
+        },
+        {
+          "key": "Update_Data-Change-Frequency",
+          "value": "Quarterly"
+        },
+        {
+          "key": "Dataset-Information_Agency",
+          "value": "Department of City Planning (DCP)"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.cityofnewyork.us"
+    },
+    "permalink": "https://data.cityofnewyork.us/d/9nt8-h7nd",
+    "link": "https://data.cityofnewyork.us/City-Government/2020-Neighborhood-Tabulation-Areas-NTAs-/9nt8-h7nd",
+    "owner": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    },
+    "creator": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    }
+  },
+  {
+    "resource": {
+      "name": "Population of the Limited English Proficient (LEP) Speakers by Community District",
+      "id": "9ji4-nien",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "Many residents of New York City speak more than one language; a number of them speak and understand non-English languages more fluently than English. This dataset, derived from the Census Bureau's American Community Survey (ACS), includes information on over 1.7 million limited English proficient (LEP) residents and a subset of that population called limited English proficient citizens of voting age (CVALEP) at the Community District level. There are 59 community districts throughout NYC, with each district being represented by a Community Board.",
+      "attribution": "Civic Engagement Commission (CEC)",
+      "attribution_link": "https://www1.nyc.gov/assets/civicengagement/html/CEC-Language-Profiles-Map.html",
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2024-01-18T21:52:13.000Z",
+      "createdAt": "2022-04-25T18:45:13.000Z",
+      "metadata_updated_at": "2024-01-18T21:52:13.000Z",
+      "data_updated_at": "2022-04-25T18:52:33.000Z",
+      "page_views": {
+        "page_views_last_week": 9,
+        "page_views_last_month": 103,
+        "page_views_total": 3260,
+        "page_views_last_week_log": 3.3219280948873626,
+        "page_views_last_month_log": 6.700439718141092,
+        "page_views_total_log": 11.671098725748465
+      },
+      "columns_name": [
+        "Community District Name",
+        "% of Population that is CVALEP",
+        "Community District Population",
+        "Borough",
+        "Total CVALEP Population (Estimate)",
+        "% of Population that is LEP",
+        "Total LEP Population (Estimate)",
+        "Borough Community District Code",
+        "American Community Survey (ACS) Data Time Period"
+      ],
+      "columns_field_name": [
+        "community_district_name",
+        "of_population_that_is_cvalep",
+        "community_district_population",
+        "borough",
+        "total_cvalep_population",
+        "of_population_that_is_lep",
+        "total_lep_population_estimate",
+        "borough_cd_code",
+        "acs_5_year_data_time_period"
+      ],
+      "columns_datatype": [
+        "Text",
+        "Number",
+        "Number",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Text"
+      ],
+      "columns_description": [
+        "The name of the community district the LEPs and CVALEPs belong to",
+        "% of the CVALEP speakers out of the total population in a community district",
+        "Population of a community district comes from the Decennial Census. For the 2015-2019 ACS 5-year data, the population count comes from the Decennial Census 2010. For the ACS 5-year data periods beginning 2016-2020, population count from the Decennial Census 2020 will be applied..",
+        "The name of the borough the LEPs or CVALEPs belong",
+        "Estimated number of CVALEP speakers in a community district",
+        "% of the LEP speakers out of the total population in a community district",
+        "Estimated number of LEP speakers in a community district",
+        "First number is the borough code, followed by two numbers representing a community district in that borough",
+        "The five-year time period covered by the ACS data from the Census Bureau used to create this dataset. "
+      ],
+      "columns_format": [
+        {},
+        {
+          "precisionStyle": "percentage",
+          "percentScale": "1"
+        },
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {}
+      ],
+      "download_count": 1012,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2022-04-25T18:52:38.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "City Government",
+      "domain_tags": [
+        "civic engagement",
+        "language access",
+        "limited english proficiency",
+        "voter participation"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Update_Automation",
+          "value": "No"
+        },
+        {
+          "key": "Update_Date-Made-Public",
+          "value": "5/5/2021"
+        },
+        {
+          "key": "Update_Update-Frequency",
+          "value": "Annually"
+        },
+        {
+          "key": "Dataset-Information_Agency",
+          "value": "Civic Engagement Commission (CEC)"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.cityofnewyork.us"
+    },
+    "permalink": "https://data.cityofnewyork.us/d/9ji4-nien",
+    "link": "https://data.cityofnewyork.us/City-Government/Population-of-the-Limited-English-Proficient-LEP-S/9ji4-nien",
+    "owner": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    },
+    "creator": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    }
+  },
+  {
+    "resource": {
+      "name": "Population and Languages of the Limited English Proficient (LEP) Speakers by Community District",
+      "id": "ajin-gkbp",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "Many residents of New York City speak more than one language; a number of them speak and understand non-English languages more fluently than English. This dataset, derived from the Census Bureau's American Community Survey (ACS), includes information on over 1.7 million limited English proficient (LEP) residents and a subset of that population called limited English proficient citizens of voting age (CVALEP) at the Community District level. There are 59 community districts throughout NYC, with each district being represented by a Community Board.",
+      "attribution": "Civic Engagement Commission (CEC)",
+      "attribution_link": "https://www1.nyc.gov/assets/civicengagement/html/CEC-Language-Profiles-Map.html",
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2024-01-18T21:52:20.000Z",
+      "createdAt": "2022-04-25T19:00:22.000Z",
+      "metadata_updated_at": "2024-01-18T21:52:20.000Z",
+      "data_updated_at": "2022-04-25T19:11:54.000Z",
+      "page_views": {
+        "page_views_last_week": 104,
+        "page_views_last_month": 658,
+        "page_views_total": 5879,
+        "page_views_last_week_log": 6.714245517666122,
+        "page_views_last_month_log": 9.364134655008051,
+        "page_views_total_log": 12.521600439723725
+      },
+      "columns_name": [
+        "% of LEP Population",
+        "Community District Name",
+        "LEP Population (Estimate)",
+        "Language",
+        "American Community Survey (ACS) Data Time Period",
+        "Borough",
+        "CVALEP Population (Estimate)",
+        "Borough Community District Code",
+        "% of CVALEP Population"
+      ],
+      "columns_field_name": [
+        "of_lep_population",
+        "community_district_name",
+        "lep_population_estimate",
+        "language",
+        "acs_5_year_data_time_period",
+        "borough",
+        "cvalep_population_estimate",
+        "borough_cd_code",
+        "of_cvalep_population"
+      ],
+      "columns_datatype": [
+        "Number",
+        "Text",
+        "Number",
+        "Text",
+        "Text",
+        "Text",
+        "Number",
+        "Number",
+        "Number"
+      ],
+      "columns_description": [
+        "% of the LEP speakers in this language out of the total LEP speakers in this community district",
+        "The name of the community district the LEPs and CVALEPs belong to",
+        "Estimated number of LEP speakers in a specific language",
+        "The language spoken by the LEPs and CVALEPs",
+        "The five-year time period covered by the ACS data from the Census Bureau used to create this dataset. ",
+        "The name of the borough the LEPs or CVALEPs belong",
+        "Estimated number of CVALEP speakers in a specific language",
+        "First number is the borough code, followed by two numbers representing a unique community district in that borough",
+        "% of the CVALEP speakers in this language out of the total CVALEP speakers in this community district"
+      ],
+      "columns_format": [
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {}
+      ],
+      "download_count": 1450,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2022-04-25T19:12:00.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "City Government",
+      "domain_tags": [
+        "civic engagement",
+        "language access",
+        "limited english proficiency",
+        "voter participation"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Update_Automation",
+          "value": "No"
+        },
+        {
+          "key": "Update_Date-Made-Public",
+          "value": "5/5/2021"
+        },
+        {
+          "key": "Update_Update-Frequency",
+          "value": "Annually"
+        },
+        {
+          "key": "Dataset-Information_Agency",
+          "value": "Civic Engagement Commission (CEC)"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.cityofnewyork.us"
+    },
+    "permalink": "https://data.cityofnewyork.us/d/ajin-gkbp",
+    "link": "https://data.cityofnewyork.us/City-Government/Population-and-Languages-of-the-Limited-English-Pr/ajin-gkbp",
+    "owner": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    },
+    "creator": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    }
+  },
+  {
+    "resource": {
+      "name": "2020 Neighborhood Tabulation Areas (NTAs) - Mapped",
+      "id": "4hft-v355",
+      "resource_name": null,
+      "parent_fxf": [
+        "9nt8-h7nd"
+      ],
+      "description": "2020 Neighborhood Tabulation Areas (NTAs) are medium-sized statistical geographies for reporting Decennial Census and American Community Survey (ACS). 2020 NTAs are created by aggregating 2020 census tracts and nest within Community District Tabulation Areas (CDTA). NTAs were delineated with the need for both geographic specificity and statistical reliability in mind. Consequently, each NTA contains enough population to mitigate sampling error associated with the ACS yet offers a unit of analysis that is smaller than a Community District.\r\n\r\nThough NTA boundaries and their associated names roughly correspond with many neighborhoods commonly recognized by New Yorkers, NTAs are not intended to definitively represent neighborhoods, nor are they intended to be exhaustive of all possible names and understandings of neighborhoods throughout New York City. Additionally, non-residential areas including large parks, airports, cemeteries, and other special areas are represented separately within this dataset and are assigned codes according to their type (See NTAType field). All previously released versions of this data are available at <a href=\"https://www1.nyc.gov/site/planning/data-maps/open-data/bytes-archive.page?sorts[year]=0\">BYTES of the BIG APPLE- Archive</a>.",
+      "attribution": "Department of City Planning (DCP)",
+      "attribution_link": "https://www.nyc.gov/content/planning/pages/resources/datasets/neighborhood-tabulation",
+      "contact_email": null,
+      "type": "map",
+      "updatedAt": "2025-11-24T21:27:54.000Z",
+      "createdAt": "2021-09-13T17:22:04.000Z",
+      "metadata_updated_at": "2024-11-12T16:51:18.000Z",
+      "data_updated_at": "2025-11-24T21:27:54.000Z",
+      "page_views": {
+        "page_views_last_week": 182,
+        "page_views_last_month": 713,
+        "page_views_total": 10439,
+        "page_views_last_week_log": 7.515699838284044,
+        "page_views_last_month_log": 9.479780264029099,
+        "page_views_total_log": 13.349834091457248
+      },
+      "columns_name": [],
+      "columns_field_name": [],
+      "columns_datatype": [],
+      "columns_description": [],
+      "columns_format": [],
+      "download_count": 30,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "visualization_canvas_map",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2024-11-12T16:51:18.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "City Government",
+      "domain_tags": [
+        "2020",
+        "acs",
+        "american community survey",
+        "boundaries",
+        "boundary",
+        "census",
+        "cscl",
+        "dcp",
+        "department of city planning",
+        "districts",
+        "lion",
+        "neighborhood tabulation areas",
+        "nta"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Update_Automation",
+          "value": "No"
+        },
+        {
+          "key": "Update_Date-Made-Public",
+          "value": "September 21, 2021"
+        },
+        {
+          "key": "Update_Update-Frequency",
+          "value": "Quarterly"
+        },
+        {
+          "key": "Dataset-Information_Agency",
+          "value": "Department of City Planning (DCP)"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.cityofnewyork.us"
+    },
+    "permalink": "https://data.cityofnewyork.us/d/4hft-v355",
+    "link": "https://data.cityofnewyork.us/City-Government/2020-Neighborhood-Tabulation-Areas-NTAs-Mapped/4hft-v355",
+    "owner": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    },
+    "creator": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    }
+  },
+  {
+    "resource": {
+      "name": "Affordable Housing Production by Building",
+      "id": "hg8x-zxpr",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "The Department of Housing Preservation and Development (HPD) reports on projects, buildings, and units that began after January 1, 2014, and are counted towards either the Housing New York plan (1/1/2014 \u2013 12/31/2021) or the Housing Our Neighbors: A Blueprint for Housing & Homelessness plan (1/1/2022 \u2013 present).",
+      "attribution": "Department of Housing Preservation and Development (HPD)",
+      "attribution_link": null,
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2025-10-29T14:33:31.000Z",
+      "createdAt": "2016-12-13T18:44:07.000Z",
+      "metadata_updated_at": "2025-10-29T14:33:24.000Z",
+      "data_updated_at": "2025-10-29T14:33:31.000Z",
+      "page_views": {
+        "page_views_last_week": 419,
+        "page_views_last_month": 2085,
+        "page_views_total": 87747,
+        "page_views_last_week_log": 8.714245517666123,
+        "page_views_last_month_log": 11.026523442519766,
+        "page_views_total_log": 16.421078622653667
+      },
+      "columns_name": [
+        "Census Tract",
+        "Extremely Low Income Units",
+        "3-BR Units",
+        "All Counted Units",
+        "Extended Affordability Only",
+        "Studio Units",
+        "Very Low Income Units",
+        "6-BR+ Units",
+        "Prevailing Wage Status",
+        "Low Income Units",
+        "Council District",
+        "Middle Income Units",
+        "Street",
+        "Total Units",
+        "Project Start Date",
+        "Project Name",
+        "Counted Rental Units",
+        "BBL",
+        "Project ID",
+        "4-BR Units",
+        "NTA - Neighborhood Tabulation Area",
+        "Reporting Construction Type",
+        "Borough",
+        "Longitude (Internal)",
+        "Community Board",
+        "Latitude (Internal)",
+        "Number",
+        "Longitude",
+        "Other Income Units",
+        "Latitude",
+        "Counted Homeownership Units",
+        "5-BR Units",
+        "BIN",
+        "Building Completion Date",
+        "Moderate Income Units",
+        "Unknown-BR Units",
+        "Project Completion Date",
+        "Building ID",
+        "2-BR Units",
+        "1-BR Units",
+        "Postcode"
+      ],
+      "columns_field_name": [
+        "census_tract",
+        "extremely_low_income_units",
+        "_3_br_units",
+        "all_counted_units",
+        "extended_affordability_status",
+        "studio_units",
+        "very_low_income_units",
+        "_6_br_units",
+        "prevailing_wage_status",
+        "low_income_units",
+        "council_district",
+        "middle_income_units",
+        "street_name",
+        "total_units",
+        "project_start_date",
+        "project_name",
+        "counted_rental_units",
+        "bbl",
+        "project_id",
+        "_4_br_units",
+        "neighborhood_tabulation_area",
+        "reporting_construction_type",
+        "borough",
+        "longitude_internal",
+        "community_board",
+        "latitude_internal",
+        "house_number",
+        "longitude",
+        "other_income_units",
+        "latitude",
+        "counted_homeownership_units",
+        "_5_br_units",
+        "bin",
+        "building_completion_date",
+        "moderate_income_units",
+        "unknown_br_units",
+        "project_completion_date",
+        "building_id",
+        "_2_br_units",
+        "_1_br_units",
+        "postcode"
+      ],
+      "columns_datatype": [
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Number",
+        "Calendar date",
+        "Text",
+        "Number",
+        "Number",
+        "Text",
+        "Number",
+        "Text",
+        "Text",
+        "Text",
+        "Number",
+        "Text",
+        "Number",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Calendar date",
+        "Number",
+        "Number",
+        "Calendar date",
+        "Number",
+        "Number",
+        "Number",
+        "Number"
+      ],
+      "columns_description": [
+        "The Census Tract indicates the 2010 U.S. Census Tract where the building is located.",
+        "Extremely Low Income Units are units with rents that are affordable to households earning 0 to 30% of the area median income (AMI).",
+        "3-BR Units are units with 3-bedrooms.",
+        "The Counted Units field indicates the total number of affordable units, counted towards the Housing New York plan, that are in the building.",
+        "The Extended Affordability Only field indicates whether the project is considered to be Extended Affordability. An extended affordability project involves no construction, but secures an extended or new regulatory agreement. All extended affordability projects have a \u2018reporting construction type\u2019 of \u2018preservation.\u2019",
+        "Studio Units are units with 0-bedrooms.",
+        "Very Low Income Units are units with rents that are affordable to households earning 31 to 50% of the area median income (AMI).",
+        "6-BR+ Units are units with 6-bedrooms or more.",
+        "The Prevailing Wage Status field indicates whether the project is subject to prevailing wage requirements, such as Davis Bacon.",
+        "Low Income Units are units with rents that are affordable to households earning 51 to 80% of the area median income (AMI).",
+        "The Council District indicates the New York City Council District where the building is located.",
+        "Middle Income Units are units with rents that are affordable to households earning 121 to 165% of the area median income (AMI).",
+        "The Street Name is the name of the street in the building\u2019s address. E.g., the street name is \u2018Gold Street\u2019 in \u2018100 Gold Street.\u2019",
+        "The Total Units field indicates the total number of units, affordable and market rate, in each building.",
+        "The Project Start Date is the date of the project loan or agreement closing.",
+        "The Project Name is the name assigned to the project by HPD.",
+        "Counted Rental Units are the units in the building, counted toward the Housing New York plan, where assistance has been provided to landlords in exchange for a requirement for affordable units.",
+        "The BBL (Borough, Block, and Lot) is a unique identifier for each tax lot in the City.",
+        "The Project ID is a unique numeric identifier assigned to each project by HPD.",
+        "4-BR Units are units with 4-bedrooms.",
+        "The Neighborhood Tabulation Area indicates the New York City Neighborhood Tabulation Area where the building is located.",
+        "The Reporting Construction Type field indicates whether the building is categorized as \u2018new construction\u2019 or \u2018preservation\u2019 in Housing New York statistics. Note that some preservation projects included here may not actually involve construction, because they extend the project\u2019s regulatory restrictions but do not require rehabilitation.",
+        "The Borough is the borough where the building is located.",
+        "The Latitude (Internal) and Longitude (Internal) specify the location of the property on the earth\u2019s surface. The coordinates provided are of the internal centroid derived from the tax lot.",
+        "The Community Board field indicates the New York City Community District where the building is located.",
+        "The Latitude (Internal) and Longitude (Internal) specify the location of the property on the earth\u2019s surface. The coordinates provided are of the internal centroid derived from the tax lot.",
+        "The House Number is the street number in the building\u2019s address. E.g., the house number is \u2018100\u2019 in \u2018100 Gold Street.\u2019",
+        "The Latitude and Longitude specify the location of the property on the earth\u2019s surface. The coordinates provided are an estimate of the location based on the street segment and address range.",
+        "Other Units are units reserved for building superintendents.",
+        "The Latitude and Longitude specify the location of the property on the earth\u2019s surface. The coordinates provided are an estimate of the location based on the street segment and address range.",
+        "Counted Homeownership Units are the units in the building, counted toward the Housing New York Plan, where assistance has been provided directly to homeowners.",
+        "5-BR Units are units with 5-bedrooms.",
+        "The BIN (Building Identification Number) is a unique identifier for each building in the City.",
+        "The Building Completion Date is the date the building was completed. The field is blank if the building has not completed.",
+        "Moderate Income Units are units with rents that are affordable to households earning 81 to 120% of the area median income (AMI).",
+        "Unknown-BR Units are units with an unknown number of bedrooms.",
+        "The Project Completion Date is the date that the last building in the project was completed. If the project has not yet completed, then the field is blank.",
+        "The Building ID is a unique numeric identifier assigned to each building by HPD.",
+        "2-BR Units are units with 2-bedrooms.",
+        "1-BR Units are units with 1-bedroom.",
+        "Zip code"
+      ],
+      "columns_format": [
+        {},
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {},
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "displayStyle": "plain",
+          "align": "left"
+        },
+        {
+          "displayStyle": "plain",
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {},
+        {
+          "displayStyle": "plain",
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "displayStyle": "plain",
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "view": "date",
+          "align": "left"
+        },
+        {
+          "displayStyle": "plain",
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "true",
+          "align": "right"
+        },
+        {
+          "displayStyle": "plain",
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "displayStyle": "plain",
+          "align": "left"
+        },
+        {
+          "displayStyle": "plain",
+          "align": "left"
+        },
+        {
+          "displayStyle": "plain",
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {},
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "displayStyle": "plain",
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {},
+        {
+          "precisionStyle": "standard",
+          "noCommas": "true",
+          "align": "right"
+        },
+        {
+          "view": "date",
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {},
+        {
+          "view": "date",
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "true",
+          "align": "right"
+        },
+        {},
+        {},
+        {
+          "precisionStyle": "standard",
+          "noCommas": "true",
+          "align": "right"
+        }
+      ],
+      "download_count": 35265,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2021-05-18T19:42:18.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "Housing & Development",
+      "domain_tags": [
+        "affordable housing production",
+        "building",
+        "development",
+        "housing",
+        "hpd"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Update_Automation",
+          "value": "No"
+        },
+        {
+          "key": "Update_Date-Made-Public",
+          "value": "12/20/2016"
+        },
+        {
+          "key": "Update_Update-Frequency",
+          "value": "Quarterly"
+        },
+        {
+          "key": "Dataset-Information_Agency",
+          "value": "Department of Housing Preservation and Development (HPD)"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.cityofnewyork.us"
+    },
+    "permalink": "https://data.cityofnewyork.us/d/hg8x-zxpr",
+    "link": "https://data.cityofnewyork.us/Housing-Development/Affordable-Housing-Production-by-Building/hg8x-zxpr",
+    "owner": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    },
+    "creator": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    }
+  },
+  {
+    "resource": {
+      "name": "Comprehensive Affordable Housing Directory",
+      "id": "4syj-z4ky",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "***********************NOTICE********************************\nThis dataset is incomplete and in the process of being updated. Please contact david.cruz@austintexas.gov with any questions.\n***************************************************************\nThis dataset contains all income-restricted housing within the Austin Full Purpose and into the 5-mile Extra Territorial Jurisdiction. This includes properties funded by the City of Austin along with the Housing Authority City of Austin, Housing Authority of Travis County, and Texas Department of Housing and Community Affairs. Some properties may be funded by more than one entity. The property attributes are intended to help Austin residents find income-restricted housing that best suits their needs. \n\nThe dataset is connected to the affordable housing data hub which is consistently updated with the most current property information.  A Feature Manipulation Engine Script pulls a new dataset to the Open Data Portal on a daily basis.",
+      "attribution": "City of Austin, Texas - data.austintexas.gov",
+      "attribution_link": "https://portal.atxaffordablehousing.net/get_all_data",
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2025-11-10T21:33:02.000Z",
+      "createdAt": "2019-01-02T18:53:14.000Z",
+      "metadata_updated_at": "2025-11-10T21:33:02.000Z",
+      "data_updated_at": "2025-04-08T09:50:21.000Z",
+      "page_views": {
+        "page_views_last_week": 4,
+        "page_views_last_month": 13,
+        "page_views_total": 2000,
+        "page_views_last_week_log": 2.321928094887362,
+        "page_views_last_month_log": 3.8073549220576037,
+        "page_views_total_log": 10.966505451905741
+      },
+      "columns_name": [
+        "Washer Dryer Hookups",
+        "Community Development Block Gr",
+        "Washer Dryer Onsite",
+        "Has Playground",
+        "Num Units MFI 120",
+        "Num Units MFI 80",
+        "Num Units MFI 65",
+        "State",
+        "Source ATC Guide",
+        "Allows Pet",
+        "Num IR 2 Bed Units",
+        "Has 2 Bed Unit",
+        "Has 0 Bed Unit",
+        "Num Units MFI 40",
+        "Broken Lease Criteria",
+        "Comp Affordable Housing ID",
+        "HACA Funded",
+        "Source TDHCA",
+        "Num Units MFI 100",
+        "Num Units MFI 70",
+        "Has Permanent Support Units",
+        "Students Only",
+        "Community Veteran",
+        "NHCD Funded",
+        "Has Ceiling Fans",
+        "Has Pool",
+        "Has 3 Bed Unit",
+        "Has 1 Bed Unit",
+        "Broken Lease",
+        "Community Elderly",
+        "Num IR 1 Bed Units",
+        "Num IR 0 Bed Units",
+        "Criminal History Criteria",
+        "Washer Dryer Unit",
+        "Housing Program",
+        "Washer Dryer Other",
+        "Num IR 5 Bed Units",
+        "Num IR 4 Bed Units",
+        "Num Units MFI 50",
+        "Num Units MFI 30",
+        "Total Income Restricted Units",
+        "Eviction History Criteria",
+        "Email",
+        "Longitude",
+        "Zip Code",
+        "Geocolumn",
+        "Source AHI",
+        "Home Program Funding",
+        "Austin Housing Inventory ID",
+        "Affordability Expiration",
+        "Affordability Start",
+        "High School",
+        "Middle School",
+        "Elementary School",
+        "Bus Transit Distance",
+        "Pet Other",
+        "Has Air Conditioning",
+        "Num IR 3 Bed Units",
+        "BOUNDARIES_single_member_districts",
+        "Single Member Council Districts",
+        "Unit Type",
+        "Latitude",
+        "City",
+        "Property Name",
+        "Is Duplicate",
+        "Security",
+        "Community Mental",
+        "Has Off Street Parking",
+        "Num Units MFI 110",
+        "TDHCA Funded",
+        "Total Units",
+        "Cmty Domestic Abuse Survivor",
+        "Has Waitlist",
+        "Eviction History",
+        "Community Military",
+        "Has 5 Bed Unit",
+        "Has 4 Bed Unit",
+        "Low Income Housing Tax Credit",
+        "HATC Funded",
+        "Num Units MFI 60",
+        "Total Accessible IR Units",
+        "Total Housing Choice Units",
+        "Total Permanent Support Units",
+        "Criminal History",
+        "Cmty Served Descriptions",
+        "Website",
+        "Property Manager Or Landlord",
+        "Phone",
+        "Developer",
+        "Address",
+        "Owner",
+        "Has Allocated Acc IR Units",
+        "Community Disabled",
+        "Council District",
+        "Has Allocated IR Units",
+        "Only Serves Designated Cmtys",
+        "Num Units MFI 90",
+        "Accepts Housing Choice",
+        "Census Tract",
+        "Boundaries: Zip Code Tabulation Areas, 2017",
+        "Zipcodes",
+        "Community Registry",
+        "Neighborhood Planning Areas"
+      ],
+      "columns_field_name": [
+        "washer_dryer_hookup",
+        "community_development_block_gr",
+        "washer_dryer_onsite",
+        "has_playground",
+        "num_units_mfi_120",
+        "num_units_mfi_80",
+        "num_units_mfi_65",
+        "state",
+        "source_atc_guide",
+        "allows_pet",
+        "num_ir_2_bed_units",
+        "has_2_bed_unit",
+        "has_0_bed_unit",
+        "num_units_mfi_40",
+        "broken_lease_criteria",
+        "comp_affordable_housing_id",
+        "haca_funded",
+        "data__data_source_tdhca",
+        "num_units_mfi_100",
+        "num_units_mfi_70",
+        "has_permanent_support_units",
+        "students_only",
+        "community_veteran",
+        "nhcd_funded",
+        "has_ceiling_fans",
+        "has_pool",
+        "has_3_bed_unit",
+        "has_1_bed_unit",
+        "broken_lease",
+        "community_elderly",
+        "num_ir_1_bed_units",
+        "num_ir_0_bed_units",
+        "data__criminal_history_criteria",
+        "washer_dryer_unit",
+        "housing_program",
+        "washer_dryer_other",
+        "num_ir_5_bed_units",
+        "num_ir_4_bed_units",
+        "num_units_mfi_50",
+        "num_units_mfi_30",
+        "total_income_restricted_units",
+        "eviction_history_criteria",
+        "email",
+        "longitude",
+        "zip_code",
+        "geocoded_column",
+        "source_ahi",
+        "home_program_funding",
+        "austin_housing_inventory_id",
+        "affordability_expiration",
+        "affordability_start",
+        "high_school",
+        "middle_school",
+        "elementary_school",
+        "bus_transport_dist",
+        "pet_other",
+        "has_air_conditioning",
+        "num_ir_3_bed_units",
+        ":@computed_region_q9nd_rr82",
+        ":@computed_region_8spj_utxs",
+        "unit_type",
+        "latitude",
+        "city",
+        "property_name",
+        "is_duplicate",
+        "security",
+        "community_mental",
+        "has_off_street_parking",
+        "num_units_mfi_110",
+        "tdhca_funded",
+        "total_units",
+        "cmty_domestic_abuse_survivor",
+        "has_waitlist",
+        "eviction_history",
+        "community_military",
+        "has_5_bed_unit",
+        "has_4_bed_unit",
+        "low_income_housing_tax_credit",
+        "hatc_funded",
+        "num_units_mfi_60",
+        "total_accessible_ir_units",
+        "total_housing_choice_units",
+        "total_permanent_support_units",
+        "criminal_history",
+        "cmty_served_descriptions",
+        "website",
+        "property_manager_or_landlord",
+        "phone",
+        "developer",
+        "address",
+        "owner",
+        "has_allocated_acc_ir_units",
+        "community_disabled",
+        "council_district",
+        "has_allocated_ir_units",
+        "only_serves_designated_cmtys",
+        "num_units_mfi_90",
+        "accepts_housing_choice",
+        "census_tract",
+        ":@computed_region_jcrc_4uuy",
+        ":@computed_region_rxpj_nzrk",
+        ":@computed_region_m2th_e4b7",
+        ":@computed_region_e9j2_6w3z"
+      ],
+      "columns_datatype": [
+        "Checkbox",
+        "Number",
+        "Checkbox",
+        "Checkbox",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Checkbox",
+        "Text",
+        "Number",
+        "Checkbox",
+        "Checkbox",
+        "Number",
+        "Text",
+        "Number",
+        "Checkbox",
+        "Checkbox",
+        "Number",
+        "Number",
+        "Checkbox",
+        "Checkbox",
+        "Checkbox",
+        "Checkbox",
+        "Checkbox",
+        "Checkbox",
+        "Checkbox",
+        "Checkbox",
+        "Text",
+        "Checkbox",
+        "Number",
+        "Number",
+        "Text",
+        "Checkbox",
+        "Text",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Text",
+        "Number",
+        "Text",
+        "Point",
+        "Checkbox",
+        "Number",
+        "Number",
+        "Calendar date",
+        "Calendar date",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Checkbox",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Number",
+        "Text",
+        "Text",
+        "Number",
+        "Text",
+        "Checkbox",
+        "Checkbox",
+        "Number",
+        "Checkbox",
+        "Number",
+        "Checkbox",
+        "Checkbox",
+        "Text",
+        "Checkbox",
+        "Checkbox",
+        "Checkbox",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Checkbox",
+        "Checkbox",
+        "Number",
+        "Checkbox",
+        "Checkbox",
+        "Number",
+        "Checkbox",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number"
+      ],
+      "columns_description": [
+        "The unit includes washer and dryer hookups. [1:True, 0:False]",
+        "Amount of funds received through the United States Department of Housing and Urban Development Community Development Block Grant (CDBG)",
+        "The property has an onsite laundry facility. [1:True, 0:False]",
+        "The property has a playground. [1:True, 0:False]",
+        "Number of units at the project which are income-restricted at or below 120% of the median family income. Not cumulative with lower thresholds.",
+        "Number of units at the project which are income-restricted at or below 80% of the median family income. Not cumulative with lower thresholds.",
+        "Number of units at the project which are income-restricted at or below 65% of the median family income. Not cumulative with lower thresholds.",
+        "State",
+        "Is the data sourced from the Austin Tenant's Council Guide to Affordable Housing? [1=True, 0=False].",
+        "The property allow pets. [1:True, 0:False]",
+        "The number of income-restricted two bedroom units in the property.",
+        "The property has two-bedroom units. [1:True, 0:False]",
+        "The property has studio units. [1:True, 0:False]",
+        "Number of units at the project which are income-restricted at or below 40% of the median family income. Not cumulative with lower thresholds.",
+        "Description of the property's policy regarding tenants with past broken leases.",
+        "Unique ID and primary key for the property",
+        "Is this property funded by the Housing Authority City of Austin? [1:True, 0:False]",
+        "Is the data sourced from the Texas Department of Housing and Community Affairs database? [1:True, 0:False]",
+        "Number of units at the project which are income-restricted at or below 100% of the median family income. Not cumulative with lower thresholds.",
+        "Number of units at the project which are income-restricted at or below 70% of the median family income. Not cumulative with lower thresholds.",
+        "The property has units allocated for permanent supportive housing [1:True, 0:False]",
+        "Property dedicated for student renters only. [1:True, 0:False]",
+        "Property dedicated for veterans. [1:True, 0:False]",
+        "Is this property funded by Neighborhood Housing and Community Development at the City of Austin? [1:True, 0:False]",
+        "The property has ceiling fans. [1:True, 0:False]",
+        "The property has a pool. [1:True, 0:False]",
+        "The property has three-bedroom units. [1:True, 0:False]",
+        "The property has one-bedroom units. [1:True, 0:False]",
+        "Does the property approve tenants with a broken lease history? [Yes, No, Depends]",
+        "Property dedicated for the elderly. [1:True, 0:False]",
+        "The number of income-restricted one bedroom units in the property.",
+        "The number of income-restricted studio units in the property.",
+        "Types of criminal backgrounds accepted by property.",
+        "The unit includes a washer and dryer. [1:True, 0:False]",
+        "Housing program the property falls under.",
+        "Further description of washer/dryer amenities at the property.",
+        "The number of income-restricted five bedroom units in the property.",
+        "The number of income-restricted four bedroom units in the property.",
+        "Number of units at the project which are income-restricted at or below 50% of the median family income. Not cumulative with lower thresholds.",
+        "Number of units at the project which are income-restricted at or below 30% of the median family income. Not cumulative with lower thresholds.",
+        "The total number of income-restricted units in the property.",
+        "Description of the property's eviction history policy.",
+        "Email",
+        "Property Longitude",
+        "Zip Code",
+        "Location specific mapping idenifier",
+        "Is this data sourced from the City of Austin's Affordable Housing Inventory? [1:True, 0:False]",
+        "Amount of funds received through the United States Department of Housing and Urban Development HOME Investment Partnerships Program",
+        "Property ID corresponds to ID in the Affordable Housing Inventory.",
+        "Date when the property's affordability period expires.",
+        "Date when the property's affordability period begins.",
+        "Assigned high school within Austin ISD\u2019s attendance areas (geographic boundaries)",
+        "Assigned middle school within Austin ISD\u2019s attendance areas (geographic boundaries)",
+        "Assigned elementary school within Austin ISD\u2019s attendance areas (geographic boundaries)",
+        "Distance to nearest bus stop.",
+        "Description of pet policy.",
+        "The property has air conditioning. [1:True, 0:False]",
+        "The number of income-restricted three bedroom units in the property.",
+        "",
+        "",
+        "Unit type: [ADU, Apartment, Duplex, Fourplex, Individual and Multifamily, Multifamily, Senior Housing, Single Family]",
+        "Property Latitude",
+        "City",
+        "Property Name",
+        "Property is a duplicate. [1:True, 0:False]",
+        "Description of the property's security.",
+        "Property dedicated for tenants with mental health needs. [1:True, 0:False]",
+        "The property has off street parking. [1:True, 0:False]",
+        "Number of units at the project which are income-restricted at or below 110% of the median family income. Not cumulative with lower thresholds.",
+        "Is this property funded by the Texas Department of Housing and Community Affairs? [1:True, 0:False]",
+        "Total number of units in the property.",
+        "Property dedicated for survivors of domestic violence. [1:True, 0:False]",
+        "The property has a waitlist [1:True, 0:False]",
+        "Does the property approve tenants with an eviction history? [Yes, No, Depends]",
+        "Property dedicated for those currently in the military. [1:True, 0:False]",
+        "The property has five-bedroom units. [1:True, 0:False]",
+        "The property has four-bedroom units. [1:True, 0:False]",
+        "Indicates participation in the Texas Department of Housing and Community Affairs' Low-Income Housing Tax Credit award. [4:4%, 9:9%]",
+        "Is this property funded by the Housing Authority of Travis County? [1:True, 0:False]",
+        "Number of units at the project which are income-restricted at or below 60% of the median family income. Not cumulative with lower thresholds.",
+        "The total number of accessible income-restricted units.",
+        "The total number of Housing Choice Voucher (i.e., Section 8) units in the property.",
+        "Total number of permanent supportive housing units in the property.",
+        "Does the property accept tenants with criminal histories? [Yes, No, Depends]",
+        "Description of the communities served by the property.",
+        "Website",
+        "Property Manager or Landlord",
+        "Phone",
+        "Property Developer",
+        "Address",
+        "Property Owner",
+        "The property has accessible income-restricted units allocated. [1:True, 0:False]",
+        "Property dedicated for the disabled. [1:True, 0:False]",
+        "City Council District",
+        "The property has income-restricted units allocated [1:True, 0:False]",
+        "Property only serves specific communities. 1=yes. 0=no.",
+        "Number of units at the project which are income-restricted at or below 90% of the median family income. Not cumulative with lower thresholds.",
+        "The property accepts Housing Choice Vouchers (i.e., Section 8) [1:True, 0:False]",
+        "Geographic census region",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "columns_format": [
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "true",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {},
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "noCommas": "true",
+          "align": "left"
+        },
+        {
+          "view": "date_ymd",
+          "align": "left"
+        },
+        {
+          "view": "date_ymd",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {},
+        {},
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {
+          "displayStyle": "yesno",
+          "align": "left"
+        },
+        {
+          "align": "left"
+        },
+        {},
+        {},
+        {},
+        {}
+      ],
+      "download_count": 1281,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2019-11-20T18:17:52.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "Housing and Real Estate",
+      "domain_tags": [
+        "affordable housing"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Ownership_Department-name",
+          "value": "Austin Housing"
+        },
+        {
+          "key": "Publishing-Information_Update-Frequency",
+          "value": "Historical (Not Updated)"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "datahub.austintexas.gov",
+      "license": "Public Domain"
+    },
+    "permalink": "https://datahub.austintexas.gov/d/4syj-z4ky",
+    "link": "https://datahub.austintexas.gov/Housing-and-Real-Estate/Comprehensive-Affordable-Housing-Directory/4syj-z4ky",
+    "owner": {
+      "id": "nebr-fhr4",
+      "user_type": "team",
+      "display_name": "Austin Housing Owners"
+    },
+    "creator": {
+      "id": "nebr-fhr4",
+      "user_type": "team",
+      "display_name": "Austin Housing Owners"
+    }
+  },
+  {
+    "resource": {
+      "name": "[ARCHIVED] NHS Income Household Income by Income Groups",
+      "id": "f5k4-zesm",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "<b>[ARCHIVED]</b> Community Counts data is retained for archival purposes only, such as research, reference and record-keeping. This data has not been maintained or updated.  Users looking for the latest information should refer to Statistics Canada\u2019s Census Program (https://www12.statcan.gc.ca/census-recensement/index-eng.cfm?MM=1) for the latest data, including detailed results about Nova Scotia.\n \nThis table reports before tax household income by income groups. This data is sourced from the 2011 National Household Survey.  Geographies available: provinces, counties, communities, municipalities, district health authorities, community health boards, economic regions, police districts, school boards, municipal electoral districts, provincial electoral districts, federal electoral districts, regional development authorities, watersheds",
+      "attribution": null,
+      "attribution_link": null,
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2020-01-06T15:50:35.000Z",
+      "createdAt": "2016-04-05T17:13:38.000Z",
+      "metadata_updated_at": "2020-01-06T15:50:35.000Z",
+      "data_updated_at": "2016-04-05T17:14:07.000Z",
+      "page_views": {
+        "page_views_last_week": 5,
+        "page_views_last_month": 53,
+        "page_views_total": 1046,
+        "page_views_last_week_log": 2.584962500721156,
+        "page_views_last_month_log": 5.754887502163469,
+        "page_views_total_log": 10.032045726930809
+      },
+      "columns_name": [
+        "ComID",
+        "GeogName",
+        "DataGroup2",
+        "2011 - %",
+        "DataGroup1",
+        "2011 - .",
+        "DataGroup1_Order"
+      ],
+      "columns_field_name": [
+        "comid",
+        "geogname",
+        "datagroup2",
+        "_2011_2",
+        "datagroup1",
+        "_2011_1",
+        "datagroup1_order"
+      ],
+      "columns_datatype": [
+        "Text",
+        "Text",
+        "Text",
+        "Number",
+        "Text",
+        "Number",
+        "Number"
+      ],
+      "columns_description": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "columns_format": [
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {}
+      ],
+      "download_count": 592,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2016-04-05T17:20:31.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "Business and Economy",
+      "domain_tags": [
+        "community counts",
+        "household income",
+        "income",
+        "income groups",
+        "nhs"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Detailed-Metadata_Geographic-Region-Name",
+          "value": "Nova Scotia"
+        },
+        {
+          "key": "Detailed-Metadata_Department",
+          "value": "Finance and Treasury Board"
+        },
+        {
+          "key": "Detailed-Metadata_Usage-Considerations",
+          "value": "ARCHIVED on January 6, 2020. Community Counts data is retained for archival purposes only, such as research, reference and record-keeping. This data has not been maintained or updated. Users looking for the latest information should refer to Statistics Canada\u2019s Census Program (https://www12.statcan.gc.ca/census-recensement/index-eng.cfm?MM=1) for the latest data, including detailed results about Nova Scotia. Please exercise caution when making reference to older documents and data. \"X\" signifies the data is not available."
+        },
+        {
+          "key": "Detailed-Metadata_Time-Period-Coverage",
+          "value": "2011-01-01/2011-12-31"
+        },
+        {
+          "key": "Detailed-Metadata_Language",
+          "value": "eng"
+        },
+        {
+          "key": "Detailed-Metadata_Frequency",
+          "value": "One-time"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.novascotia.ca",
+      "license": "Nova Scotia Open Government Licence"
+    },
+    "permalink": "https://data.novascotia.ca/d/f5k4-zesm",
+    "link": "https://data.novascotia.ca/Business-and-Economy/-ARCHIVED-NHS-Income-Household-Income-by-Income-Gr/f5k4-zesm",
+    "owner": {
+      "id": "9pyy-md4w",
+      "user_type": "interactive",
+      "display_name": "Open Data Nova Scotia"
+    },
+    "creator": {
+      "id": "9pyy-md4w",
+      "user_type": "interactive",
+      "display_name": "Open Data Nova Scotia"
+    }
+  },
+  {
+    "resource": {
+      "name": "Real Property Income and Expense Form non-compliance list",
+      "id": "wvts-6tdf",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "Properties required to file RPIE-2107 which did not do so",
+      "attribution": "Department of Finance",
+      "attribution_link": null,
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2022-05-09T22:25:45.000Z",
+      "createdAt": "2018-12-11T18:09:52.000Z",
+      "metadata_updated_at": "2022-05-09T22:25:45.000Z",
+      "data_updated_at": "2018-12-11T19:00:01.000Z",
+      "page_views": {
+        "page_views_last_week": 45,
+        "page_views_last_month": 197,
+        "page_views_total": 17355,
+        "page_views_last_week_log": 5.523561956057013,
+        "page_views_last_month_log": 7.6293566200796095,
+        "page_views_total_log": 14.083146870816742
+      },
+      "columns_name": [
+        "RPIE Year",
+        "ZIP Code",
+        "Tax Class",
+        "Bldg. Class",
+        "Y Coordinate",
+        "Borough",
+        "X Coordinate",
+        "Status",
+        "Block",
+        "Longitude",
+        "Final 18/19 Actual AV",
+        "Address",
+        "BIN",
+        "City Council District",
+        "NTA",
+        "Census Tract",
+        "Community District",
+        "Lot",
+        "BBL",
+        "Latitude"
+      ],
+      "columns_field_name": [
+        "rpie_year",
+        "zip_code",
+        "tax_class",
+        "bldg_class",
+        "ycoordinate",
+        "borough",
+        "x_coordinate",
+        "status",
+        "block",
+        "longitude",
+        "final_18_19_actual_av",
+        "address",
+        "bin",
+        "city_council_district",
+        "nta",
+        "census_tract",
+        "community_district",
+        "lot",
+        "bbl",
+        "latitude"
+      ],
+      "columns_datatype": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Number",
+        "Text",
+        "Number",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Number"
+      ],
+      "columns_description": [
+        "Real Property Income and Expense Year",
+        "The property's postal code",
+        "Every property in the City is assigned to one of four tax classes (Classes 1, 2, 3 and 4); [See Data Dictionary for more details]",
+        "The building classification is used to describe a property's constructive use; [See Data Dictionary for more details]",
+        "Y Coordinate of the building's location. ",
+        "The name of the borough in which the property is located",
+        "X Coordinate of the building's location. ",
+        "RPIE filing status",
+        "The Block is a sub-division of the borough on which real properties are located",
+        "Longitude of the building's location. ",
+        "Final Actual Assessed Value",
+        "The street address of the property",
+        "The BIN (Building Identification Number) is a unique identifier for each building in the City.",
+        "The Council District field indicates the New York City Council District where the building is located.",
+        "The Neighborhood Tabulation Area field indicates the New York City Neighborhood area where the building is located.",
+        "The Census Tract field indicates the U.S. Census Tract where the building is located.",
+        "The Community Board field indicates the New York City Community District where the building is located.",
+        "A Lot is a subdivision of a Block and represents the property's unique location",
+        "The BBL (Borough, Block, and Lot) is a unique identifier for each tax lot in the City.",
+        "Latitude of the building's location. "
+      ],
+      "columns_format": [
+        {},
+        {},
+        {},
+        {},
+        {
+          "noCommas": "true"
+        },
+        {},
+        {
+          "noCommas": "true"
+        },
+        {},
+        {},
+        {},
+        {
+          "precisionStyle": "currency",
+          "currencyStyle": "USD"
+        },
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {
+          "noCommas": "true"
+        },
+        {}
+      ],
+      "download_count": 1931,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2018-12-11T19:00:02.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "City Government",
+      "domain_tags": [],
+      "domain_metadata": [
+        {
+          "key": "Update_Automation",
+          "value": "No"
+        },
+        {
+          "key": "Update_Date-Made-Public",
+          "value": "12/27/2018"
+        },
+        {
+          "key": "Update_Update-Frequency",
+          "value": "Historical data"
+        },
+        {
+          "key": "Dataset-Information_Agency",
+          "value": "Department of Finance (DOF)"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.cityofnewyork.us"
+    },
+    "permalink": "https://data.cityofnewyork.us/d/wvts-6tdf",
+    "link": "https://data.cityofnewyork.us/City-Government/Real-Property-Income-and-Expense-Form-non-complian/wvts-6tdf",
+    "owner": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    },
+    "creator": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    }
+  },
+  {
+    "resource": {
+      "name": "[ARCHIVED] Census Long Form Income Family Income After Tax by Income Group",
+      "id": "2xcg-pvnb",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "<b>[ARCHIVED]</b> Community Counts data is retained for archival purposes only, such as research, reference and record-keeping. This data has not been maintained or updated.  Users looking for the latest information should refer to Statistics Canada\u2019s Census Program (https://www12.statcan.gc.ca/census-recensement/index-eng.cfm?MM=1) for the latest data, including detailed results about Nova Scotia.\n\nThis table reports family income after tax by income group. This data is sourced from the Census of Population (long form).  Geographies available: provinces, counties, communities, municipalities, district health authorities, community health boards, economic regions, police districts, school boards, municipal electoral districts, provincial electoral districts, federal electoral districts, regional development authorities, watersheds",
+      "attribution": null,
+      "attribution_link": null,
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2020-01-06T14:32:05.000Z",
+      "createdAt": "2016-04-01T19:06:13.000Z",
+      "metadata_updated_at": "2020-01-06T14:32:05.000Z",
+      "data_updated_at": "2016-04-06T16:12:33.000Z",
+      "page_views": {
+        "page_views_last_week": 4,
+        "page_views_last_month": 50,
+        "page_views_total": 1455,
+        "page_views_last_week_log": 2.321928094887362,
+        "page_views_last_month_log": 5.672425341971496,
+        "page_views_total_log": 10.507794640198696
+      },
+      "columns_name": [
+        "2006 - %",
+        "DataGroup1_Order",
+        "2006 - .",
+        "DataGroup1",
+        "GeogName",
+        "DataGroup2",
+        "ComID"
+      ],
+      "columns_field_name": [
+        "_2006_2",
+        "datagroup1_order",
+        "_2006_1",
+        "datagroup1",
+        "geogname",
+        "datagroup2",
+        "comid"
+      ],
+      "columns_datatype": [
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ],
+      "columns_description": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "columns_format": [
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {}
+      ],
+      "download_count": 759,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2016-04-06T16:16:31.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "Business and Economy",
+      "domain_tags": [
+        "census",
+        "community counts",
+        "family income",
+        "income",
+        "income group"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Detailed-Metadata_Geographic-Region-Name",
+          "value": "Nova Scotia"
+        },
+        {
+          "key": "Detailed-Metadata_Department",
+          "value": "Finance and Treasury Board"
+        },
+        {
+          "key": "Detailed-Metadata_Usage-Considerations",
+          "value": "ARCHIVED on January 6, 2020. Community Counts data is retained for archival purposes only, such as research, reference and record-keeping. This data has not been maintained or updated. Users looking for the latest information should refer to Statistics Canada\u2019s Census Program (https://www12.statcan.gc.ca/census-recensement/index-eng.cfm?MM=1) for the latest data, including detailed results about Nova Scotia. Please exercise caution when making reference to older documents and data. \"X\" signifies the data is not available."
+        },
+        {
+          "key": "Detailed-Metadata_Time-Period-Coverage",
+          "value": "2006-01-01/2006-12-31"
+        },
+        {
+          "key": "Detailed-Metadata_Language",
+          "value": "eng"
+        },
+        {
+          "key": "Detailed-Metadata_Frequency",
+          "value": "One-time"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.novascotia.ca",
+      "license": "Nova Scotia Open Government Licence"
+    },
+    "permalink": "https://data.novascotia.ca/d/2xcg-pvnb",
+    "link": "https://data.novascotia.ca/Business-and-Economy/-ARCHIVED-Census-Long-Form-Income-Family-Income-Af/2xcg-pvnb",
+    "owner": {
+      "id": "9pyy-md4w",
+      "user_type": "interactive",
+      "display_name": "Open Data Nova Scotia"
+    },
+    "creator": {
+      "id": "9pyy-md4w",
+      "user_type": "interactive",
+      "display_name": "Open Data Nova Scotia"
+    }
+  },
+  {
+    "resource": {
+      "name": "Active Projects Under Construction",
+      "id": "8586-3zfm",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "New school projects (Capacity) and Capital Improvement Projects (CIP) currently under Construction.",
+      "attribution": "School Construction Authority (SCA)",
+      "attribution_link": null,
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2025-11-05T16:15:59.000Z",
+      "createdAt": "2011-10-09T00:24:57.000Z",
+      "metadata_updated_at": "2025-11-05T16:15:57.000Z",
+      "data_updated_at": "2025-11-05T16:15:59.000Z",
+      "page_views": {
+        "page_views_last_week": 174,
+        "page_views_last_month": 756,
+        "page_views_total": 125993,
+        "page_views_last_week_log": 7.45121111183233,
+        "page_views_last_month_log": 9.56414948998573,
+        "page_views_total_log": 16.94299550676239
+      },
+      "columns_name": [
+        "Location 1 (city)",
+        "Latitude",
+        "Neighborhood Tabulation Area (NTA) (2020)",
+        "Building ID",
+        "Location 1",
+        "Project type",
+        "Building Address",
+        "City",
+        "Council District",
+        "BBL",
+        "Census Tract (2020)",
+        "BIN",
+        "Postcode",
+        "Location 1 (state)",
+        "Zip Codes",
+        "Location 1 (address)",
+        "Community Districts",
+        "Borough Boundaries",
+        "City Council Districts",
+        "Police Precincts",
+        "Community Board",
+        "Location 1 (zip)",
+        "Borough",
+        "Construction Award",
+        "Project Description",
+        "Geographical District",
+        "BoroughCode",
+        "Longitude",
+        "School Name"
+      ],
+      "columns_field_name": [
+        "location_1_city",
+        "latitude",
+        "nta",
+        "buildingid",
+        "location_1",
+        "consttype",
+        "building_address",
+        "city",
+        "community_council",
+        "bbl",
+        "census_tract",
+        "bin",
+        "zip_code",
+        "location_1_state",
+        ":@computed_region_efsh_h5xi",
+        "location_1_address",
+        ":@computed_region_f5dn_yrer",
+        ":@computed_region_yeji_bk3q",
+        ":@computed_region_92fq_4b7q",
+        ":@computed_region_sbqj_enih",
+        "community_board",
+        "location_1_zip",
+        "borough",
+        "award",
+        "projdesc",
+        "geo_dist",
+        "boro",
+        "longitude",
+        "name"
+      ],
+      "columns_datatype": [
+        "Text",
+        "Number",
+        "Text",
+        "Text",
+        "Point",
+        "Text",
+        "Text",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Number",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Text",
+        "Number",
+        "Text",
+        "Number",
+        "Text",
+        "Number",
+        "Text"
+      ],
+      "columns_description": [
+        "",
+        "Latitude of the site's location",
+        "The Neighborhood Tabulation Area (Census 2020) field indicates the New York City Neighborhood area where the site is located",
+        "ID of the Building",
+        "System-generated column used for mapping",
+        "Identifies the project as CIP or Capacity\n",
+        "Address of the Building\n",
+        "City",
+        "The Council District field indicates the New York City Council District where the site is located",
+        "The BBL (Borough, Block, and Lot) is a unique identifier for each tax lot in the City",
+        "The Census Tract (Census 2020) field indicates the U.S. Census Tract where the site is located. Please note that as part of the geocoding process, leading and trailing zeros are dropped",
+        "The BIN (Building Identification Number) is a unique identifier for each building in the City",
+        "Mailing zip Code\n",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "The Community Board field indicates the New York City Community District where the site is located",
+        "",
+        "Borough name",
+        "Value of Prime Construction contract\n",
+        "Description of work\n",
+        "District school exists\n",
+        "Borough school exists\n",
+        "Longitude of the site's location",
+        "Name of School\n"
+      ],
+      "columns_format": [
+        {},
+        {},
+        {},
+        {
+          "displayStyle": "plain",
+          "align": "left"
+        },
+        {},
+        {
+          "displayStyle": "plain",
+          "align": "left"
+        },
+        {},
+        {},
+        {},
+        {
+          "precisionStyle": "standard",
+          "noCommas": "true",
+          "align": "right"
+        },
+        {
+          "noCommas": "true"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "true",
+          "align": "right"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "true",
+          "align": "right"
+        },
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "displayStyle": "plain",
+          "align": "left"
+        },
+        {
+          "precisionStyle": "standard",
+          "noCommas": "false",
+          "align": "right"
+        },
+        {
+          "displayStyle": "plain",
+          "align": "left"
+        },
+        {},
+        {
+          "displayStyle": "plain",
+          "align": "left"
+        }
+      ],
+      "download_count": 12760,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2024-05-24T16:26:21.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "Housing & Development",
+      "domain_tags": [
+        "authority",
+        "capital",
+        "construction",
+        "current",
+        "education",
+        "improvement",
+        "lifelong learning",
+        "project",
+        "sca",
+        "school"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Update_Automation",
+          "value": "No"
+        },
+        {
+          "key": "Update_Date-Made-Public",
+          "value": "10/9/2011"
+        },
+        {
+          "key": "Update_Update-Frequency",
+          "value": "Quarterly"
+        },
+        {
+          "key": "Dataset-Information_Agency",
+          "value": "School Construction Authority (SCA)"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.cityofnewyork.us"
+    },
+    "permalink": "https://data.cityofnewyork.us/d/8586-3zfm",
+    "link": "https://data.cityofnewyork.us/Housing-Development/Active-Projects-Under-Construction/8586-3zfm",
+    "owner": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    },
+    "creator": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    }
+  },
+  {
+    "resource": {
+      "name": "Individual Census by Borough, Community District, and Facility Type",
+      "id": "veav-vj3r",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "Presents the number of individuals for each shelter facility type by borough and community district",
+      "attribution": "Department of Homeless Services (DHS)",
+      "attribution_link": null,
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2025-12-04T21:14:44.000Z",
+      "createdAt": "2018-10-26T14:18:07.000Z",
+      "metadata_updated_at": "2025-12-04T21:14:43.000Z",
+      "data_updated_at": "2025-12-04T21:14:44.000Z",
+      "page_views": {
+        "page_views_last_week": 106,
+        "page_views_last_month": 495,
+        "page_views_total": 10028,
+        "page_views_last_week_log": 6.7414669864011465,
+        "page_views_last_month_log": 8.954196310386877,
+        "page_views_total_log": 13.29189014033856
+      },
+      "columns_name": [
+        "Adult Shelter",
+        "Report Date",
+        "Borough",
+        "Community Districts",
+        "Census Type",
+        "Adult Family Shelter",
+        "Family Cluster",
+        "Family with Children Shelter",
+        "Adult Family Commercial Hotel",
+        "Family with Children Commercial Hotel",
+        "Adult Shelter Commercial Hotel"
+      ],
+      "columns_field_name": [
+        "adult_shelter",
+        "report_date",
+        "borough",
+        "community_districts",
+        "census_type",
+        "adult_family_shelter",
+        "family_cluster",
+        "family_with_chidren_shelter",
+        "adult_family_comm_hotel",
+        "family_with_children_comm",
+        "adult_shelter_comm_hotel"
+      ],
+      "columns_datatype": [
+        "Number",
+        "Calendar date",
+        "Text",
+        "Number",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Number"
+      ],
+      "columns_description": [
+        "Total number in adult shelter by census type, borough, and community district",
+        "Date data was reported",
+        "Borough of shelter type",
+        "Community district of shelter type",
+        "Level (unit) or reporting",
+        "Total number in adult family shelter by census type, borough, and community district",
+        "Total number in family cluster by census type, borough, and community district",
+        "Total number in family with children shelter by census type, borough, and community district",
+        "Total number in adult family commercial hotel by census type, borough, and community district",
+        "Total number in family with children commercial hotel by census type, borough, and community district",
+        "Total number in adult shelter commercial hotel by census type, borough, and community district"
+      ],
+      "columns_format": [
+        {},
+        {
+          "view": "date"
+        },
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {}
+      ],
+      "download_count": 2700,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2018-10-26T14:21:35.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "Social Services",
+      "domain_tags": [
+        "daily",
+        "dhs",
+        "homeless",
+        "report"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Update_Automation",
+          "value": "No"
+        },
+        {
+          "key": "Update_Date-Made-Public",
+          "value": "10/26/2018"
+        },
+        {
+          "key": "Update_Update-Frequency",
+          "value": "Monthly"
+        },
+        {
+          "key": "Dataset-Information_Agency",
+          "value": "Department of Homeless Services (DHS)"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.cityofnewyork.us"
+    },
+    "permalink": "https://data.cityofnewyork.us/d/veav-vj3r",
+    "link": "https://data.cityofnewyork.us/Social-Services/Individual-Census-by-Borough-Community-District-an/veav-vj3r",
+    "owner": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    },
+    "creator": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    }
+  },
+  {
+    "resource": {
+      "name": "Census Demographics at the NYC Community District (CD) level",
+      "id": "5unr-w4sc",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "Table of Census Demographics\r\nrepresented at the NYC Community\r\nDistrict level",
+      "attribution": "Department of City Planning (DCP)",
+      "attribution_link": null,
+      "contact_email": null,
+      "type": "file",
+      "updatedAt": "2018-09-10T18:58:32.000Z",
+      "createdAt": "2015-02-17T16:47:18.000Z",
+      "metadata_updated_at": "2018-09-10T18:58:32.000Z",
+      "data_updated_at": "2015-02-17T16:47:18.000Z",
+      "page_views": {
+        "page_views_last_week": 113,
+        "page_views_last_month": 442,
+        "page_views_total": 5866,
+        "page_views_last_week_log": 6.832890014164742,
+        "page_views_last_month_log": 8.791162888555018,
+        "page_views_total_log": 12.518407276671365
+      },
+      "columns_name": [],
+      "columns_field_name": [],
+      "columns_datatype": [],
+      "columns_description": [],
+      "columns_format": [],
+      "download_count": 4914,
+      "provenance": "official",
+      "lens_view_type": "blobby",
+      "lens_display_type": "blob",
+      "locked": false,
+      "blob_mime_type": "application/zip; charset=binary",
+      "hide_from_data_json": false,
+      "publication_date": "2015-02-17T16:47:18.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "City Government",
+      "domain_tags": [
+        "census",
+        "community district"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Update_Automation",
+          "value": "No"
+        },
+        {
+          "key": "Update_Date-Made-Public",
+          "value": "2/17/2015"
+        },
+        {
+          "key": "Update_Update-Frequency",
+          "value": "As needed"
+        },
+        {
+          "key": "Dataset-Information_Agency",
+          "value": "Department of City Planning (DCP)"
+        },
+        {
+          "key": "Legislative-Compliance_Geo-coding-Attached?",
+          "value": ""
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.cityofnewyork.us"
+    },
+    "permalink": "https://data.cityofnewyork.us/d/5unr-w4sc",
+    "link": "https://data.cityofnewyork.us/City-Government/Census-Demographics-at-the-NYC-Community-District-/5unr-w4sc",
+    "owner": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    },
+    "creator": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    }
+  },
+  {
+    "resource": {
+      "name": "Police Stations",
+      "id": "z8bn-74gv",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "Chicago Police district station locations and contact information.",
+      "attribution": "Chicago Police Department",
+      "attribution_link": "http://www.chicagopolice.org/",
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2016-06-10T15:13:48.000Z",
+      "createdAt": "2010-12-22T21:07:03.000Z",
+      "metadata_updated_at": "2016-06-10T15:13:48.000Z",
+      "data_updated_at": "2016-06-10T15:12:51.000Z",
+      "page_views": {
+        "page_views_last_week": 57,
+        "page_views_last_month": 339,
+        "page_views_total": 306766,
+        "page_views_last_week_log": 5.857980995127572,
+        "page_views_last_month_log": 8.409390936137703,
+        "page_views_total_log": 18.226783769868966
+      },
+      "columns_name": [
+        "DISTRICT",
+        "Community Areas",
+        "Y COORDINATE",
+        "WEBSITE",
+        "PHONE",
+        "LOCATION (address)",
+        "CITY",
+        "DISTRICT NAME",
+        "Boundaries - ZIP Codes",
+        "LOCATION",
+        "FAX",
+        "LOCATION (city)",
+        "Zip Codes",
+        "Wards",
+        "Census Tracts",
+        "STATE",
+        "LATITUDE",
+        "Historical Wards 2003-2015",
+        "ADDRESS",
+        "LONGITUDE",
+        "LOCATION (state)",
+        "TTY",
+        "LOCATION (zip)",
+        "X COORDINATE",
+        "ZIP"
+      ],
+      "columns_field_name": [
+        "district",
+        ":@computed_region_vrxf_vc4k",
+        "y_coordinate",
+        "website",
+        "phone",
+        "location_address",
+        "city",
+        "district_name",
+        ":@computed_region_rpca_8um6",
+        "location",
+        "fax",
+        "location_city",
+        ":@computed_region_6mkv_f3dw",
+        ":@computed_region_43wa_7qmu",
+        ":@computed_region_bdys_3d7i",
+        "state",
+        "latitude",
+        ":@computed_region_awaf_s7ux",
+        "address",
+        "longitude",
+        "location_state",
+        "tty",
+        "location_zip",
+        "x_coordinate",
+        "zip"
+      ],
+      "columns_datatype": [
+        "Text",
+        "Number",
+        "Number",
+        "URL",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Number",
+        "Point",
+        "Text",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Number",
+        "Number",
+        "Text",
+        "Number",
+        "Text",
+        "Text",
+        "Text",
+        "Number",
+        "Text"
+      ],
+      "columns_description": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "columns_format": [
+        {
+          "align": "right"
+        },
+        {},
+        {
+          "precisionStyle": "standard",
+          "noCommas": "true",
+          "align": "right"
+        },
+        {},
+        {
+          "displayStyle": "phone",
+          "align": "left"
+        },
+        {},
+        {},
+        {},
+        {},
+        {
+          "view": "address_coords",
+          "align": "left"
+        },
+        {
+          "displayStyle": "phone",
+          "align": "left"
+        },
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {
+          "displayStyle": "phone",
+          "align": "left"
+        },
+        {},
+        {
+          "precisionStyle": "standard",
+          "noCommas": "true",
+          "align": "right"
+        },
+        {
+          "precisionStyle": "standard",
+          "align": "right"
+        }
+      ],
+      "download_count": 23553,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2016-06-10T15:13:48.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "Public Safety",
+      "domain_tags": [
+        "facilities",
+        "gis"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Metadata_Frequency",
+          "value": "Data is updated as needed"
+        },
+        {
+          "key": "Metadata_Data-Owner",
+          "value": "Police"
+        },
+        {
+          "key": "Metadata_Time-Period",
+          "value": "Current as of 2011"
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.cityofchicago.org"
+    },
+    "permalink": "https://data.cityofchicago.org/d/z8bn-74gv",
+    "link": "https://data.cityofchicago.org/Public-Safety/Police-Stations/z8bn-74gv",
+    "owner": {
+      "id": "scy9-9wg4",
+      "user_type": "interactive",
+      "display_name": "cocadmin"
+    },
+    "creator": {
+      "id": "scy9-9wg4",
+      "user_type": "interactive",
+      "display_name": "cocadmin"
+    }
+  },
+  {
+    "resource": {
+      "name": "New York City Population By Community Districts",
+      "id": "xi7c-iiu2",
+      "resource_name": null,
+      "parent_fxf": [],
+      "description": "New York City Population By Community Districts\r\n\r\nThe data was collected from Census Bureaus' Decennial data dissemination (SF1) for the years 1970, 1980, 1990, 2000 and 2010.\r\n\r\nCompiled by the Population Division \u2013 New York City Department of City Planning",
+      "attribution": "Department of City Planning (DCP)",
+      "attribution_link": "http://www.nyc.gov/html/dcp/html/census/demo_tables_2010.shtml",
+      "contact_email": null,
+      "type": "dataset",
+      "updatedAt": "2024-11-12T20:45:47.000Z",
+      "createdAt": "2013-02-20T17:29:38.000Z",
+      "metadata_updated_at": "2024-11-12T20:45:46.000Z",
+      "data_updated_at": "2024-11-12T20:45:47.000Z",
+      "page_views": {
+        "page_views_last_week": 233,
+        "page_views_last_month": 1413,
+        "page_views_total": 56062,
+        "page_views_last_week_log": 7.870364719583405,
+        "page_views_last_month_log": 10.4655664048094,
+        "page_views_total_log": 15.774761326369378
+      },
+      "columns_name": [
+        "1980 Population",
+        "Borough",
+        "1990 Population",
+        "CD Number",
+        "2000 Population",
+        "2010 Population",
+        "CD Name",
+        "1970 Population"
+      ],
+      "columns_field_name": [
+        "_1980_population",
+        "borough",
+        "_1990_population",
+        "cd_number",
+        "_2000_population",
+        "_2010_population",
+        "cd_name",
+        "_1970_population"
+      ],
+      "columns_datatype": [
+        "Number",
+        "Text",
+        "Number",
+        "Number",
+        "Number",
+        "Number",
+        "Text",
+        "Number"
+      ],
+      "columns_description": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "columns_format": [
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {}
+      ],
+      "download_count": 18203,
+      "provenance": "official",
+      "lens_view_type": "tabular",
+      "lens_display_type": "table",
+      "locked": false,
+      "blob_mime_type": null,
+      "hide_from_data_json": false,
+      "publication_date": "2013-06-26T17:15:48.000Z"
+    },
+    "classification": {
+      "categories": [],
+      "tags": [],
+      "domain_category": "City Government",
+      "domain_tags": [
+        "city",
+        "community",
+        "dcp",
+        "district",
+        "growth",
+        "planning",
+        "population"
+      ],
+      "domain_metadata": [
+        {
+          "key": "Update_Automation",
+          "value": "No"
+        },
+        {
+          "key": "Update_Date-Made-Public",
+          "value": "2/20/2013"
+        },
+        {
+          "key": "Update_Update-Frequency",
+          "value": "Historical data"
+        },
+        {
+          "key": "Dataset-Information_Agency",
+          "value": "Department of City Planning (DCP)"
+        },
+        {
+          "key": "Legislative-Compliance_Geo-coding-Attached?",
+          "value": ""
+        }
+      ]
+    },
+    "metadata": {
+      "domain": "data.cityofnewyork.us"
+    },
+    "permalink": "https://data.cityofnewyork.us/d/xi7c-iiu2",
+    "link": "https://data.cityofnewyork.us/City-Government/New-York-City-Population-By-Community-Districts/xi7c-iiu2",
+    "owner": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    },
+    "creator": {
+      "id": "5fuc-pqz2",
+      "user_type": "interactive",
+      "display_name": "NYC OpenData"
+    }
+  }
+]

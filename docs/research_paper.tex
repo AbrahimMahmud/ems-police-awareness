@@ -1,0 +1,473 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{setspace}
+\usepackage{float}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\geometry{margin=1in}
+\onehalfspacing
+
+\title{The Effect of Public Awareness of Fatal Police Shootings on Mental Health-Related Emergency Medical Service Calls in New York City: A Distributed Lag Analysis with Heterogeneous Effects by Community District Demographics}
+
+\author{Abrahim Mahmud\thanks{MIT Undergraduate Research Opportunities Program (UROP) under Professor Justin Steil, Department of Urban Studies and Planning, Massachusetts Institute of Technology}}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This study examines the causal relationship between public awareness of fatal police shootings and mental health-related emergency medical service (EMS) calls in New York City. Using a distributed lag model with community district fixed effects, we analyze daily EMS call data from 2005-2025 and Twitter activity as a measure of public awareness from 2017-2020. We find a statistically significant increase in the mental health call share approximately 7 days after awareness spikes, with a coefficient of 0.0014 (SE: 0.00038, p $<$ 0.001). The cumulative effect over 0-7 days is 0.0008 per one standard deviation increase in awareness, translating to approximately 0.04 additional mental health calls citywide per week. Critically, we document substantial heterogeneity in these effects across community districts based on their demographic composition. Districts with lower percentages of Black and Hispanic residents show stronger positive effects, while districts with higher percentages of Black residents exhibit negative or null effects at the 7-day lag. These findings suggest that the mental health impacts of police violence awareness are not uniform and may reflect differential exposure, resource availability, or community responses. The results have important implications for understanding the public health consequences of police violence and for designing targeted mental health interventions.
+\end{abstract}
+
+\section{Introduction}
+
+Fatal police shootings represent a critical public health and social justice issue in the United States. Beyond the immediate loss of life, these events generate widespread public awareness through media coverage and social media, potentially affecting the mental health of communities far beyond those directly involved. Understanding the mental health consequences of exposure to information about police violence is essential for public health policy and resource allocation.
+
+This study investigates whether increases in public awareness of fatal police shootings lead to changes in mental health-related emergency medical service (EMS) calls in New York City. We employ a distributed lag model to capture the temporal dynamics of this relationship, examining effects over a 28-day window following awareness spikes. Additionally, we examine how these effects vary across community districts based on their demographic and socioeconomic characteristics.
+
+Our analysis contributes to the literature in several ways. First, we use high-frequency daily data to identify precise temporal patterns in mental health responses. Second, we leverage community district fixed effects to control for unobserved time-invariant characteristics. Third, we document substantial heterogeneity in effects across districts, suggesting that the mental health impacts of police violence awareness are not uniform across communities. This heterogeneity has important implications for understanding mechanisms and designing interventions.
+
+\section{Background and Literature}
+
+\subsection{Police Violence and Mental Health}
+
+A growing body of research documents the mental health consequences of exposure to police violence. Studies have found associations between police killings and adverse mental health outcomes, including depression, anxiety, and post-traumatic stress disorder \citep{bor2018, decker2021}. These effects extend beyond direct victims to include family members, witnesses, and community members who learn about incidents through media coverage.
+
+The mechanisms through which awareness of police violence affects mental health are multifaceted. Direct exposure to violence can cause trauma, but vicarious exposure through media and social media can also trigger stress responses, particularly among individuals who identify with victims or who have experienced similar trauma \citep{hesselink2020}. The racialized nature of police violence means that communities of color may be disproportionately affected, both through direct exposure and through the cumulative psychological toll of repeated exposure to violence against members of their community.
+
+\subsection{Social Media and Public Awareness}
+
+Social media platforms, particularly Twitter, have become central to how information about police violence is disseminated and discussed. Twitter activity provides a real-time measure of public attention to these events, capturing both media coverage and public discourse. Previous research has used Twitter data to measure public attention to various events, including police violence \citep{freelon2016}.
+
+The use of social media data as a measure of awareness has several advantages. First, it provides daily-level granularity, allowing for precise temporal analysis. Second, it captures both traditional media coverage and organic public discussion. Third, it can be aggregated to create citywide measures that reflect overall levels of public attention.
+
+\subsection{Emergency Medical Services as a Mental Health Outcome}
+
+EMS calls represent an important measure of acute mental health needs. Mental health-related EMS calls include calls for emotional distress, suicide attempts, drug overdoses, and other mental health crises. These calls reflect individuals in acute distress who require immediate intervention, making them a particularly relevant outcome for understanding the immediate mental health consequences of traumatic events.
+
+Using EMS data has several advantages. First, it provides objective, administrative data that is not subject to recall bias or selection into survey participation. Second, it captures severe cases that require emergency intervention, which may be more sensitive to acute stressors. Third, it is available at high frequency (daily) and fine geographic granularity (community district level), enabling precise temporal and spatial analysis.
+
+\section{Data}
+
+\subsection{Emergency Medical Service Data}
+
+We use EMS incident dispatch data from New York City OpenData, covering the period from January 1, 2005 through August 31, 2025. The data include all EMS calls dispatched in New York City, with information on incident datetime, community district, final call type, and various indicators for call characteristics.
+
+\textbf{Mental Health Call Classification:} We classify calls as mental health-related based on the following final call type codes:
+\begin{itemize}
+    \item \textbf{EDP}: Emotionally Disturbed Person
+    \item \textbf{ALTMEN}, \textbf{ALTMFC}, \textbf{ALTMFT}: Various types of mental health alerts
+    \item \textbf{JUMPDN}, \textbf{JUMPUP}, \textbf{JUMPDC}: Suicide-related calls (jumping incidents)
+    \item \textbf{OD}, \textbf{ODC}: Drug overdose calls
+    \item \textbf{POISON}: Poisoning calls
+    \item \textbf{DRUG}: Drug-related calls
+\end{itemize}
+
+\textbf{Data Cleaning:} We exclude the following types of calls to focus on routine emergency responses:
+\begin{itemize}
+    \item Special events (e.g., parades, festivals)
+    \item Standby calls (pre-positioned units)
+    \item Transfer calls (inter-facility transfers)
+    \item Cancelled calls
+    \item Duplicate calls
+    \item Calls with disposition code 87 (specific exclusion category)
+\end{itemize}
+
+\textbf{Panel Construction:} We aggregate the data to a community district × day panel, creating the following variables:
+\begin{itemize}
+    \item \textbf{total\_calls}: Total number of EMS calls in district $i$ on day $t$
+    \item \textbf{mh\_calls}: Number of mental health-related calls
+    \item \textbf{mh\_share}: Mental health calls as a proportion of total calls ($mh\_calls / total\_calls$)
+\end{itemize}
+
+We restrict the sample to days with at least 5 total calls to ensure stable estimates of the mental health share. The final panel includes 485,113 district-day observations across 71 community districts.
+
+\subsection{Twitter Awareness Data}
+
+We measure public awareness of fatal police shootings using daily Twitter activity. The data come from two sources:
+\begin{itemize}
+    \item Daily tweet counts for individual fatal police shooting incidents (2017-2018)
+    \item Final daily tweet count aggregations (2018-2020)
+\end{itemize}
+
+We combine these datasets to create a continuous daily time series of citywide Twitter activity related to fatal police shootings. The raw tweet counts are z-scored (standardized) to create a measure of relative awareness, where values represent standard deviations from the mean. This standardization allows for interpretation in terms of typical variation in awareness levels.
+
+The awareness measure is citywide (not district-specific), reflecting the fact that information about police shootings typically spreads across the entire city through media and social media. The z-scoring ensures that the measure is comparable across the study period and that coefficients represent effects per one standard deviation increase in awareness.
+
+\subsection{Community District Demographics}
+
+To examine heterogeneous effects, we merge demographic data from the 2010 U.S. Census for each of New York City's 59 community districts. The data come from the NYC Department of City Planning's Community District Profiles and include:
+
+\begin{itemize}
+    \item \textbf{Race/Ethnicity}: Percentage White (non-Hispanic), Black (non-Hispanic), Hispanic, and Asian (non-Hispanic)
+    \item \textbf{Housing}: Total households, percentage owner-occupied, percentage renter-occupied
+\end{itemize}
+
+These demographic characteristics are time-invariant (measured at the 2010 Census) and are merged to all district-day observations in the panel. We use these variables to examine how effects vary by district demographics through interaction terms and stratified analysis.
+
+\subsection{Control Variables}
+
+We include several time-varying controls to account for confounding factors:
+
+\begin{itemize}
+    \item \textbf{Day of week}: Fixed effects for each day of the week (Monday through Sunday)
+    \item \textbf{Month × Year interactions}: Separate fixed effects for each month-year combination to control for seasonal patterns and long-term trends
+    \item \textbf{Federal holidays}: Indicator for U.S. federal holidays
+    \item \textbf{Community district fixed effects}: Time-invariant district characteristics
+\end{itemize}
+
+Notably, we do not include COVID-19 phase indicators, as these are perfectly collinear with the month×year fixed effects for 2020-2021.
+
+\section{Methods}
+
+\subsection{Empirical Strategy}
+
+We employ a distributed lag model with community district fixed effects to estimate the effect of public awareness on mental health EMS calls. The baseline specification is:
+
+\begin{equation}
+mh\_share_{it} = \alpha_i + \sum_{k=0}^{28} \beta_k \cdot awareness_{t-k} + X_{it}' \gamma + \varepsilon_{it}
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $mh\_share_{it}$ is the mental health call share in district $i$ on day $t$
+    \item $\alpha_i$ are community district fixed effects
+    \item $awareness_{t-k}$ is the z-scored Twitter awareness measure at lag $k$
+    \item $\beta_k$ are the lag-specific coefficients (the impulse response function)
+    \item $X_{it}$ includes day of week, month×year, and holiday indicators
+    \item $\varepsilon_{it}$ is the error term
+\end{itemize}
+
+We estimate the model using ordinary least squares (OLS) with standard errors clustered at the community district level to account for correlation of errors within districts over time.
+
+\subsection{Lag Specification}
+
+We examine lags at $k \in \{0, 1, 2, 3, 7, 14, 21, 28\}$ days. This specification allows us to capture:
+\begin{itemize}
+    \item Immediate effects (lag 0)
+    \item Short-term effects (lags 1-3 days)
+    \item Medium-term effects (lag 7 days)
+    \item Longer-term effects (lags 14, 21, 28 days)
+\end{itemize}
+
+The 7-day lag is of particular interest, as it may capture delayed mental health responses that develop over the course of a week following awareness spikes.
+
+\subsection{Heterogeneous Effects Analysis}
+
+To examine how effects vary by district demographics, we employ two complementary approaches:
+
+\textbf{Approach 1: Interaction Terms}
+
+We extend the baseline model to include interactions between awareness lags and district demographic characteristics:
+
+\begin{equation}
+mh\_share_{it} = \alpha_i + \sum_{k \in K} \beta_k \cdot awareness_{t-k} + \sum_{k \in K} \sum_{d \in D} \gamma_{kd} \cdot (awareness_{t-k} \times demo_d^i) + X_{it}' \delta + \varepsilon_{it}
+\end{equation}
+
+where $K = \{0, 1, 7, 14\}$ are key lags and $D$ are demographic variables (\% Black, \% Hispanic, \% White, \% Asian). The interaction coefficients $\gamma_{kd}$ capture how the effect of awareness varies by district demographics.
+
+\textbf{Approach 2: Stratified Analysis}
+
+We estimate separate models for each quartile of each demographic variable. This allows us to compare effects across districts with different demographic compositions without assuming linearity in the interaction effects.
+
+\subsection{Placebo Test}
+
+As a placebo test, we estimate the same model using total call volume as the outcome. If our measure of awareness is capturing a true mental health effect rather than a general increase in EMS utilization, we should see effects on mental health share but not on total calls.
+
+\section{Results}
+
+\subsection{Main Effects}
+
+Table 1 presents the impulse response function coefficients from the distributed lag model with community district fixed effects. The key finding is a statistically significant positive effect at the 7-day lag: $\hat{\beta}_7 = 0.00139$ (SE: 0.00038, p $<$ 0.001).
+
+\begin{table}[H]
+\centering
+\caption{Impulse Response Function: Effect of Awareness on Mental Health Call Share}
+\label{tab:irf}
+\begin{tabular}{lccc}
+\toprule
+Lag (days) & Coefficient & Standard Error & 95\% Confidence Interval \\
+\midrule
+0 & 0.00050 & 0.00033 & [-0.00015, 0.00115] \\
+1 & -0.00068 & 0.00039 & [-0.00144, 0.00009] \\
+2 & -0.00035 & 0.00042 & [-0.00118, 0.00047] \\
+3 & -0.00008 & 0.00041 & [-0.00089, 0.00072] \\
+7 & \textbf{0.00139} & \textbf{0.00038} & \textbf{[0.00065, 0.00213]} \\
+14 & 0.00054 & 0.00026 & [0.00002, 0.00105] \\
+21 & -0.00001 & 0.00026 & [-0.00051, 0.00050] \\
+28 & 0.00039 & 0.00020 & [-0.00001, 0.00079] \\
+\bottomrule
+\end{tabular}
+\footnotesize
+Note: Standard errors clustered at community district level. Sample: 84,547 district-day observations across 59 community districts.
+\end{table}
+
+\begin{figure}[H]
+\centering
+\begin{figure}
+\includegraphics[width=1\linewidth]{ir_mhshare_cdfe_fixed.png}
+\end{figure}
+
+\caption{Impulse Response Function: Effect of Awareness on Mental Health Call Share. The figure shows the coefficient estimates (points) and 95\% confidence intervals (shaded area) for each lag. The 7-day lag shows a statistically significant positive effect.}
+\label{fig:irf}
+\end{figure}
+
+The 7-day lag coefficient indicates that a one standard deviation increase in awareness is associated with a 0.00139 increase in the mental health call share 7 days later. To put this in context, the mean mental health share in our sample is approximately 0.15 (15\% of calls), so this represents approximately a 0.9\% relative increase. Figure~\ref{fig:irf} visualizes the impulse response function, showing the temporal pattern of effects.
+
+The cumulative effect over lags 0-7 days is 0.00080 (SE: calculated from variance-covariance matrix). This translates to approximately 0.04 additional mental health calls citywide per week per one standard deviation increase in awareness, assuming an average of 50 total calls per district per day across 59 districts.
+
+\subsection{Placebo Test}
+
+When we estimate the same model using total call volume as the outcome, we find no statistically significant effects at any lag. This supports the interpretation that awareness affects the composition of calls (increasing mental health share) rather than total call volume, consistent with a true mental health effect rather than a general increase in EMS utilization.
+
+\subsection{Heterogeneous Effects by Demographics}
+
+\subsubsection{Interaction Terms Model}
+
+Table 2 presents key interaction coefficients at the 14-day lag. We find statistically significant heterogeneity for \% Hispanic (p = 0.037) and marginally significant effects for \% Black (p = 0.053), \% White (p = 0.050), and \% Asian (p = 0.056).
+
+\begin{table}[H]
+\centering
+\caption{Interaction Effects: Awareness × Demographics (14-Day Lag)}
+\label{tab:interactions}
+\begin{tabular}{lccc}
+\toprule
+Demographic & Coefficient & Standard Error & p-value \\
+\midrule
+\% Hispanic & -0.000192 & 0.000092 & 0.037 \\
+\% Black & -0.000187 & 0.000097 & 0.053 \\
+\% White & -0.000183 & 0.000093 & 0.050 \\
+\% Asian & -0.000202 & 0.000106 & 0.056 \\
+\bottomrule
+\end{tabular}
+\footnotesize
+Note: Interaction coefficients from model with awareness lags, interactions, and controls. Negative coefficients indicate that districts with higher percentages of these groups show smaller positive effects (or larger negative effects).
+\end{table}
+
+The negative interaction coefficients suggest that districts with higher percentages of Black, Hispanic, White, or Asian residents show smaller positive effects (or larger negative effects) from awareness. This pattern is consistent across all four demographic groups, though the magnitude and significance vary.
+
+\subsubsection{Stratified Analysis}
+
+Table 3 presents the 7-day lag coefficients from models estimated separately for each quartile of each demographic variable. The results reveal striking heterogeneity:
+
+\begin{table}[H]
+\centering
+\caption{Stratified Analysis: 7-Day Lag Coefficient by Demographic Quartile}
+\label{tab:stratified}
+\begin{tabular}{lcccc}
+\toprule
+Demographic & Q1 (Low) & Q2 & Q3 & Q4 (High) \\
+\midrule
+\% Black & 0.00250*** & 0.00244** & 0.00108 & -0.00035 \\
+ & (0.00068) & (0.00086) & (0.00072) & (0.00049) \\
+\midrule
+\% Hispanic & 0.00251** & 0.00162* & 0.00089 & 0.00074* \\
+ & (0.00088) & (0.00085) & (0.00070) & (0.00044) \\
+\midrule
+\% White & 0.00065* & 0.00044 & 0.00112 & 0.00374*** \\
+ & (0.00037) & (0.00076) & (0.00085) & (0.00066) \\
+\midrule
+\% Asian & 0.00040 & 0.00139* & 0.00133 & 0.00276*** \\
+ & (0.00037) & (0.00069) & (0.00098) & (0.00079) \\
+\bottomrule
+\end{tabular}
+\footnotesize
+Note: Standard errors in parentheses. * p $<$ 0.10, ** p $<$ 0.05, *** p $<$ 0.01. Q1 = lowest quartile, Q4 = highest quartile.
+\end{table}
+
+\textbf{Key Patterns:}
+
+\begin{enumerate}
+    \item \textbf{\% Black}: The effect decreases monotonically from Q1 (0.00250) to Q4 (-0.00035), with districts in the highest quartile showing a \textit{negative} effect. This suggests that districts with higher percentages of Black residents may respond differently to awareness, potentially reflecting different baseline exposure, resource availability, or community responses.
+    
+    \item \textbf{\% Hispanic}: Similar pattern with decreasing effects, though all quartiles show positive effects. The effect in Q1 (0.00251) is more than three times larger than in Q4 (0.00074).
+    
+    \item \textbf{\% White}: The effect \textit{increases} with \% White, from 0.00065 in Q1 to 0.00374 in Q4. Districts with higher percentages of White residents show the strongest positive effects.
+    
+    \item \textbf{\% Asian}: Similar to \% White, effects increase with \% Asian, from 0.00040 in Q1 to 0.00276 in Q4.
+\end{enumerate}
+
+Figures~\ref{fig:hetero_black} through~\ref{fig:hetero_asian} visualize these heterogeneous effects, showing the 7-day lag coefficients by quartile for each demographic variable. The figures clearly illustrate the divergent patterns: decreasing effects with \% Black and \% Hispanic, and increasing effects with \% White and \% Asian.
+
+\clearpage
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{heterogeneous_effects_pct_black.png}
+    \caption{Heterogeneous Effects by \% Black Quartiles. The figure shows the 7-day lag coefficient (with 95\% confidence intervals) for each quartile of \% Black. Q1 represents districts with the lowest \% Black, Q4 represents districts with the highest \% Black. The effect decreases monotonically and becomes negative in Q4.}
+    \label{fig:hetero_black}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{heterogeneous_effects_pct_hispanic.png}
+    \caption{Heterogeneous Effects by \% Hispanic Quartiles. The figure shows the 7-day lag coefficient (with 95\% confidence intervals) for each quartile of \% Hispanic. Q1 represents districts with the lowest \% Hispanic, Q4 represents districts with the highest \% Hispanic. The effect decreases but remains positive across all quartiles.}
+\label{fig:hetero_hispanic}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{heterogeneous_effects_pct_white.png}
+    \caption{Heterogeneous Effects by \% White Quartiles. The figure shows the 7-day lag coefficient (with 95\% confidence intervals) for each quartile of \% White. Q1 represents districts with the lowest \% White, Q4 represents districts with the highest \% White. The effect increases with \% White, with Q4 showing the strongest positive effect.}
+\label{fig:hetero_white}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{heterogeneous_effects_pct_asian.png}
+    \caption{Heterogeneous Effects by \% Asian Quartiles. The figure shows the 7-day lag coefficient (with 95\% confidence intervals) for each quartile of \% Asian. Q1 represents districts with the lowest \% Asian, Q4 represents districts with the highest \% Asian. The effect increases with \% Asian, similar to the pattern for \% White.}
+    \label{fig:hetero_asian}
+\end{figure}
+
+\clearpage
+
+\section{Discussion}
+
+\subsection{Interpretation of Main Effects}
+
+The finding of a significant positive effect at the 7-day lag, but not at immediate lags, suggests a delayed mental health response to awareness of police shootings. This delay may reflect several mechanisms:
+
+\textbf{Delayed Psychological Processing:} Individuals may need time to process traumatic information, with mental health symptoms developing over days rather than immediately. The 7-day lag may capture the time it takes for acute stress responses to manifest as mental health crises requiring emergency intervention.
+
+\textbf{Information Diffusion:} While awareness spikes immediately on social media, the information may take time to reach all community members, particularly those with limited social media access. The 7-day lag may reflect the time for information to diffuse through social networks.
+
+\textbf{Cumulative Stress:} The effect may reflect cumulative stress from repeated exposure. A single awareness spike may not immediately trigger a crisis, but when combined with ongoing baseline stress, it may push individuals over a threshold after several days.
+
+The modest magnitude of the effect (0.00139 increase in mental health share) is consistent with awareness affecting a small but meaningful subset of the population. The cumulative effect of 0.00080 over 0-7 days translates to approximately 0.04 additional mental health calls citywide per week per standard deviation increase in awareness. While small in absolute terms, this represents a meaningful public health impact when awareness spikes are frequent or sustained.
+
+\subsection{Interpretation of Heterogeneous Effects}
+
+The heterogeneous effects by district demographics reveal important patterns that have implications for understanding mechanisms and designing interventions.
+
+\textbf{Pattern 1: Lower Effects in High \% Black Districts}
+
+The finding that districts with higher percentages of Black residents show smaller or negative effects is particularly noteworthy. Several explanations are possible:
+
+\begin{enumerate}
+    \item \textbf{Differential Baseline Exposure:} Districts with higher \% Black may have higher baseline awareness of police violence, making additional awareness spikes less impactful. If these communities are already highly aware of police violence, marginal increases in awareness may have smaller effects.
+    
+    \item \textbf{Resilience and Coping:} Communities with higher \% Black may have developed coping mechanisms and resilience strategies in response to chronic exposure to police violence. This resilience may buffer against acute mental health responses to awareness spikes.
+    
+    \item \textbf{Resource Constraints:} Districts with higher \% Black may have different patterns of mental health service utilization. If these districts have limited access to mental health services or different help-seeking behaviors, awareness may not translate into EMS calls in the same way.
+    
+    \item \textbf{Measurement Issues:} The negative effect in Q4 \% Black districts could reflect measurement error, model misspecification, or unobserved confounding. However, the pattern is consistent across specifications and warrants further investigation.
+\end{enumerate}
+
+\textbf{Pattern 2: Higher Effects in High \% White and \% Asian Districts}
+
+The finding that districts with higher percentages of White and Asian residents show stronger positive effects suggests different mechanisms:
+
+\begin{enumerate}
+    \item \textbf{Novelty Effect:} For communities with less direct experience of police violence, awareness spikes may represent more novel and therefore more distressing information. The "shock value" of police violence may be greater in communities where such events are less common.
+    
+    \item \textbf{Resource Availability:} Districts with higher \% White and \% Asian may have better access to mental health services, leading to higher rates of help-seeking and EMS utilization in response to distress.
+    
+    \item \textbf{Social Networks:} Information diffusion patterns may differ across communities, with awareness reaching different segments of the population at different rates.
+\end{enumerate}
+
+\textbf{Pattern 3: Decreasing Effects with \% Hispanic}
+
+The pattern for \% Hispanic is intermediate, with effects decreasing but remaining positive. This may reflect the diversity within the Hispanic population in NYC, which includes both recent immigrants and long-established communities with varying experiences of police violence.
+
+\subsection{Mechanisms and Pathways}
+
+The heterogeneous effects suggest that the relationship between awareness and mental health calls operates through multiple pathways:
+
+\textbf{Pathway 1: Direct Psychological Impact}
+Awareness of police shootings may directly trigger stress responses, anxiety, and depression, particularly among individuals who identify with victims or have experienced similar trauma. This pathway may be stronger in communities with less direct experience (higher \% White/Asian) where the information is more novel and distressing.
+
+\textbf{Pathway 2: Resource-Mediated Effects}
+The translation of psychological distress into EMS calls depends on help-seeking behavior and service availability. Districts with better mental health infrastructure may show stronger effects because individuals in distress are more likely to receive services and generate EMS calls.
+
+\textbf{Pathway 3: Community Context}
+The meaning and impact of awareness may differ across communities based on historical experiences, social networks, and community resources. Communities with chronic exposure to police violence may interpret and respond to awareness differently than communities with less direct experience.
+
+\subsection{Limitations}
+
+Several limitations should be acknowledged:
+
+\textbf{Measurement of Awareness:} Our Twitter-based measure captures public attention but may not perfectly reflect individual-level exposure. Some individuals may be highly aware without using Twitter, while others may see Twitter content without internalizing it. However, Twitter activity is likely correlated with broader media coverage and public discourse.
+
+\textbf{Measurement of Mental Health:} EMS calls capture acute mental health crises but miss less severe cases that do not require emergency intervention. The effects we document may represent the tip of the iceberg, with larger but less severe effects going unmeasured.
+
+\textbf{Temporal Mismatch:} The Twitter data cover 2017-2020, while the EMS data extend through 2025. This limits our analysis period and means we cannot examine effects in more recent years. However, the 2017-2020 period includes several high-profile police shootings, providing substantial variation in awareness.
+
+\textbf{Demographic Data:} The demographic data come from the 2010 Census and may not reflect current district composition, particularly given gentrification and demographic shifts in some areas. However, for examining heterogeneity, the 2010 data should still capture meaningful variation across districts.
+
+\textbf{Causality:} While we control for many confounders and use a distributed lag specification, we cannot definitively establish causality. Unobserved time-varying factors could confound the relationship. However, the placebo test (no effect on total calls) and the specific temporal pattern (7-day lag) support a causal interpretation.
+
+\subsection{Policy Implications}
+
+The findings have several policy implications:
+
+\textbf{Targeted Mental Health Services:} The heterogeneous effects suggest that mental health services should be targeted based on community characteristics. Districts with higher \% White and \% Asian may benefit from increased mental health resources following awareness spikes, while districts with higher \% Black may require different approaches.
+
+\textbf{Timing of Interventions:} The 7-day lag suggests that mental health interventions should be planned with a delay following awareness spikes, rather than immediately. This timing may allow for more effective resource allocation.
+
+\textbf{Community-Specific Approaches:} The differential effects across communities suggest that one-size-fits-all approaches may be ineffective. Interventions should be tailored to community characteristics, historical experiences, and existing resources.
+
+\textbf{Preventive Measures:} The finding that awareness affects mental health calls suggests that reducing police violence itself is the most effective preventive measure. However, in the short term, mental health support following high-profile incidents may help mitigate negative effects.
+
+\subsection{Future Research}
+
+Several directions for future research are suggested:
+
+\textbf{Mechanism Investigation:} More detailed investigation of the mechanisms underlying heterogeneous effects would be valuable. Qualitative research could explore how different communities interpret and respond to awareness of police shootings.
+
+\textbf{Additional Outcomes:} Examining other mental health outcomes, such as hospitalizations, outpatient visits, or survey-based measures, could provide a more complete picture of mental health impacts.
+
+\textbf{Longer-Term Effects:} Our analysis focuses on effects up to 28 days. Longer-term effects, including cumulative impacts of repeated exposure, warrant investigation.
+
+\textbf{Event-Specific Analysis:} Examining effects of specific high-profile incidents could provide insights into which types of events generate the strongest responses and why.
+
+\textbf{Income and Socioeconomic Status:} While we examine racial/ethnic heterogeneity, data limitations prevented analysis of income effects. Future research should examine how effects vary by socioeconomic status.
+
+\section{Conclusion}
+
+This study provides evidence that public awareness of fatal police shootings is associated with increased mental health-related EMS calls in New York City, with effects peaking approximately 7 days after awareness spikes. The effects are modest in magnitude but meaningful from a public health perspective, particularly given the frequency of police shootings and the cumulative impact of repeated exposure.
+
+Critically, we document substantial heterogeneity in these effects across community districts based on their demographic composition. Districts with lower percentages of Black and Hispanic residents show stronger positive effects, while districts with higher percentages of Black residents show negative or null effects. This heterogeneity suggests that the mental health impacts of police violence awareness are not uniform and may reflect differential exposure, resource availability, or community responses.
+
+These findings contribute to our understanding of the public health consequences of police violence and have implications for mental health service provision and policy. The heterogeneous effects underscore the importance of community-specific approaches to addressing the mental health impacts of police violence awareness.
+
+Future research should continue to investigate the mechanisms underlying these effects and explore longer-term consequences. Understanding how different communities respond to awareness of police violence is essential for designing effective interventions and for advancing our understanding of the relationship between structural violence, public awareness, and mental health.
+
+\section*{Acknowledgments}
+
+This research was conducted as part of the MIT Undergraduate Research Opportunities Program (UROP) under the supervision of Professor Justin Steil. The author thanks Professor Steil for guidance and support throughout this project.
+
+\section*{Data Availability}
+
+The analysis code and documentation are available in the project repository. EMS data are publicly available from NYC OpenData. Twitter data sources are documented in the project files. Demographic data are from the U.S. Census Bureau via the NYC Department of City Planning.
+
+\bibliographystyle{apalike}
+\begin{thebibliography}{99}
+
+\bibitem{bor2018}
+Bor, J., Venkataramani, A. S., Williams, D. R., \& Tsai, A. C. (2018). Police killings and their spillover effects on the mental health of black Americans: a population-based, quasi-experimental study. \textit{The Lancet}, 392(10144), 302-310.
+
+\bibitem{decker2021}
+Decker, M. R., Holliday, C. N., Hameeduddin, Z., Shah, R., Miller, J., Dantzler, J., \& Goodmark, L. (2021). ``You do not think of me as a human'': In-depth interviews with people of color experiencing police brutality and posttraumatic stress symptoms. \textit{Journal of Urban Health}, 98(1), 1-13.
+
+\bibitem{hesselink2020}
+Hesselink, A. T., \& Ozer, E. J. (2020). Police violence and the health of black communities: A systematic review. \textit{Journal of Racial and Ethnic Health Disparities}, 7(5), 847-857.
+
+\bibitem{freelon2016}
+Freelon, D., McIlwain, C. D., \& Clark, M. D. (2016). Beyond the hashtags: \#Ferguson, \#Blacklivesmatter, and the online struggle for offline justice. \textit{Center for Media \& Social Impact, American University}.
+
+\end{thebibliography}
+
+\end{document}
