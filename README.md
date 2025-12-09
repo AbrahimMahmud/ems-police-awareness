@@ -32,7 +32,6 @@ project_package/
 │   ├── HETEROGENEOUS_EFFECTS_RESULTS.md  # Results summary
 │   ├── ems_research_paper.pdf   # Research paper
 │   └── research_paper.tex       # LaTeX research paper
-└── notebooks/                   # Original Jupyter notebook
 ```
 
 ## Quick Start
