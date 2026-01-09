@@ -48,6 +48,13 @@ df_panel = df_panel.sort_values(["communitydistrict", "incident_date"]).reset_in
 for k in range(0, 29):
     df_panel[f"awarez_lag{k}"] = df_panel.groupby("communitydistrict")["awareness_z"].shift(k)
 
+# Calculate 3-day rolling average of MH calls (by CD) and log transform
+df_panel = df_panel.sort_values(["communitydistrict", "incident_date"])
+df_panel["mh_calls_3day_rolling"] = df_panel.groupby("communitydistrict")["mh_calls"].transform(
+    lambda x: x.rolling(window=3, min_periods=1, center=True).mean()
+)
+df_panel["log_mh_calls_3day_rolling"] = np.log1p(df_panel["mh_calls_3day_rolling"])
+
 df_panel["dow"] = df_panel["incident_date"].dt.dayofweek
 df_panel["month"] = df_panel["incident_date"].dt.month
 df_panel["year"] = df_panel["incident_date"].dt.year

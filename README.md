@@ -27,11 +27,11 @@ project_package/
 ├── outputs/
 │   ├── figures/                 # Visualizations
 │   └── tables/                  # Regression results
-├── docs/                        # Documentation
-│   ├── METHODOLOGY.md           # Detailed methodology and reasoning
-│   ├── HETEROGENEOUS_EFFECTS_RESULTS.md  # Results summary
-│   ├── ems_research_paper.pdf   # Research paper
-│   └── research_paper.tex       # LaTeX research paper
+└── docs/                        # Documentation
+    ├── METHODOLOGY.md           # Detailed methodology and reasoning
+    ├── HETEROGENEOUS_EFFECTS_RESULTS.md  # Results summary
+    ├── ems_research_paper.pdf   # Research paper
+    └── research_paper.tex       # LaTeX research paper
 ```
 
 ## Quick Start
