@@ -55,6 +55,13 @@ df_panel["mh_calls_3day_rolling"] = df_panel.groupby("communitydistrict")["mh_ca
 )
 df_panel["log_mh_calls_3day_rolling"] = np.log1p(df_panel["mh_calls_3day_rolling"])
 
+# Calculate 3-day rolling average of tweet counts (by CD) and log transform
+# This is used as an alternative predictor to awarez_lag variables
+df_panel["tweet_count_3day_rolling"] = df_panel.groupby("communitydistrict")["tweet_count_all"].transform(
+    lambda x: x.rolling(window=3, min_periods=1, center=True).mean()
+)
+df_panel["log_3_day"] = np.log1p(df_panel["tweet_count_3day_rolling"])
+
 df_panel["dow"] = df_panel["incident_date"].dt.dayofweek
 df_panel["month"] = df_panel["incident_date"].dt.month
 df_panel["year"] = df_panel["incident_date"].dt.year

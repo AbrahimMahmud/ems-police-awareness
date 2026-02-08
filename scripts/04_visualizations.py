@@ -51,16 +51,31 @@ ir = pd.DataFrame(rows, columns=["lag", "coef", "se", "ci_lo", "ci_hi"]).sort_va
 
 plt.figure(figsize=(10, 6))
 plt.axhline(0, lw=1, ls="--", color="gray", alpha=0.5)
-plt.plot(ir["lag"], ir["coef"], marker="o", markersize=8, linewidth=2, label="Coefficient")
 
+# Plot confidence intervals first (so they appear behind the line)
 has_ci = ir["ci_lo"].notna() & ir["ci_hi"].notna()
 if has_ci.any():
+    # Use a more visible color and higher alpha for the confidence interval
     plt.fill_between(ir.loc[has_ci, "lag"], ir.loc[has_ci, "ci_lo"], ir.loc[has_ci, "ci_hi"], 
-                     alpha=0.2, label="95% Confidence Interval")
-    no_ci = ~has_ci
-    if no_ci.any():
-        plt.plot(ir.loc[no_ci, "lag"], ir.loc[no_ci, "coef"], marker="x", markersize=10,
-                linestyle="None", color="red", label="No SE available")
+                     alpha=0.3, color="steelblue", label="95% Confidence Interval", zorder=1)
+    
+    # Also plot error bars for better visibility
+    ci_data = ir.loc[has_ci]
+    errors_low = ci_data["coef"] - ci_data["ci_lo"]
+    errors_hi = ci_data["ci_hi"] - ci_data["coef"]
+    plt.errorbar(ci_data["lag"], ci_data["coef"], 
+                yerr=[errors_low, errors_hi],
+                fmt='none', color='darkblue', alpha=0.5, capsize=4, capthick=1.5, zorder=2)
+
+# Plot the coefficient line and points
+plt.plot(ir["lag"], ir["coef"], marker="o", markersize=8, linewidth=2, 
+         color="steelblue", label="Coefficient", zorder=3)
+
+# Mark points without SE
+no_ci = ~has_ci
+if no_ci.any():
+    plt.plot(ir.loc[no_ci, "lag"], ir.loc[no_ci, "coef"], marker="x", markersize=10,
+            linestyle="None", color="red", label="No SE available (clustering issue)", zorder=4)
 
 plt.title("Impulse Response of MH Share to Awareness (CD Fixed Effects)", fontsize=14, fontweight="bold")
 plt.xlabel("Lag (days)", fontsize=12)

@@ -37,9 +37,54 @@ print(f"Date range: {df['incident_date'].min()} to {df['incident_date'].max()}")
 df_analysis = df[df["incident_date"].between("2017-01-01", "2020-12-31")].copy()
 print(f"Analysis period (2017-2020): {len(df_analysis):,} rows")
 
-# Create treatment indicator (high awareness days)
+# ============================================================================
+# Create de-meaned outcome variable
+# ============================================================================
+print("\n" + "=" * 80)
+print("CREATING DE-MEANED OUTCOME VARIABLE")
+print("=" * 80)
+
+# Ensure dow is available
+if "dow" not in df_analysis.columns:
+    df_analysis["dow"] = df_analysis["incident_date"].dt.dayofweek
+
+# Calculate mean mh_share for each weekday within each community district
+cd_weekday_means = df_analysis.groupby(['communitydistrict', 'dow'])['mh_share'].mean().reset_index()
+cd_weekday_means.rename(columns={'mh_share': 'mh_share_mean'}, inplace=True)
+
+# Merge back and create de-meaned variable
+df_analysis = df_analysis.merge(
+    cd_weekday_means, 
+    on=['communitydistrict', 'dow'], 
+    how='left',
+    suffixes=('', '_mean')
+)
+df_analysis['dm_mh_share'] = df_analysis['mh_share'] - df_analysis['mh_share_mean']
+
+print(f"De-meaned variable created: {df_analysis['dm_mh_share'].notna().sum():,} non-null values")
+
+# ============================================================================
+# Create treatment indicators
+# ============================================================================
+
+# Treatment 1: Threshold-based (original)
 threshold = 1.5  # Standard deviations
 df_analysis["treated"] = (df_analysis["awareness_z"] > threshold).astype(int)
+
+# Treatment 2: Quantile-based (top quintile)
+df_analysis = df_analysis[df_analysis["awareness_z"].notna()].copy()
+df_analysis['awareness_quantile'] = pd.qcut(
+    df_analysis['awareness_z'], 
+    q=5, 
+    labels=['0-20', '20-40', '40-60', '60-80', '80-100'],
+    retbins=False,
+    duplicates='drop'
+)
+df_analysis["treated_quantile"] = (df_analysis['awareness_quantile'] == '80-100').astype(int)
+
+print(f"\nTreatment definitions:")
+print(f"  Threshold-based (>1.5 SD): {df_analysis['treated'].sum():,} treated days")
+print(f"  Quantile-based (top quintile): {df_analysis['treated_quantile'].sum():,} treated days")
 
 # Create time periods relative to treatment
 # For DID, we need to identify treatment periods and pre/post periods
@@ -203,6 +248,164 @@ if did_results:
     did_out = OUTPUTS_TABLES / "did_results.csv"
     df_did_results.to_csv(did_out, index=False)
     print(f"\n✓ Saved DID results to: {did_out}")
+
+# ============================================================================
+# DID Model 3: De-meaned outcome (threshold-based treatment)
+# ============================================================================
+
+print("\n" + "=" * 80)
+print("DID MODEL 3: DE-MEANED OUTCOME (THRESHOLD-BASED TREATMENT)")
+print("=" * 80)
+
+df_did_demeaned = df_did[df_did["dm_mh_share"].notna()].copy()
+
+if len(df_did_demeaned) > 100:
+    formula_did3 = "dm_mh_share ~ treated * post + C(dow) + C(month):C(year) + is_holiday + C(cd_str)"
+    y3, X3 = patsy.dmatrices(formula_did3, data=df_did_demeaned, return_type="dataframe")
+    groups3 = df_did_demeaned.loc[y3.index, "cd_int"].to_numpy(dtype="int64")
+    
+    mod_did3 = sm.OLS(y3, X3, missing="drop").fit(
+        cov_type="cluster",
+        cov_kwds={"groups": groups3}
+    )
+    
+    print(f"Observations: {int(mod_did3.nobs):,}")
+    print(f"R-squared: {mod_did3.rsquared:.4f}")
+    
+    if "treated:post" in mod_did3.params.index:
+        did_coef = mod_did3.params["treated:post"]
+        did_se = mod_did3.bse["treated:post"]
+        print(f"\nDID coefficient (treated × post): {did_coef:.6f} (SE: {did_se:.6f})")
+        print(f"95% CI: [{did_coef - 1.96*did_se:.6f}, {did_coef + 1.96*did_se:.6f}]")
+        
+        did_results.append({
+            "model": "DID with de-meaned outcome (threshold)",
+            "coefficient": did_coef,
+            "se": did_se,
+            "ci_low": did_coef - 1.96 * did_se,
+            "ci_hi": did_coef + 1.96 * did_se,
+            "n_obs": int(mod_did3.nobs),
+            "r_squared": mod_did3.rsquared,
+        })
+else:
+    print("⚠️  Insufficient data for de-meaned DID analysis")
+
+# ============================================================================
+# DID Model 4: Quantile-based treatment (original outcome)
+# ============================================================================
+
+print("\n" + "=" * 80)
+print("DID MODEL 4: QUANTILE-BASED TREATMENT (ORIGINAL OUTCOME)")
+print("=" * 80)
+
+# Recreate event windows for quantile-based treatment
+df_analysis_quant = df_analysis.copy()
+df_analysis_quant = df_analysis_quant.sort_values(["communitydistrict", "incident_date"])
+df_analysis_quant["event_time_quant"] = np.nan
+
+treated_dates_quant = df_analysis_quant[df_analysis_quant["treated_quantile"] == 1]["incident_date"].drop_duplicates().sort_values()
+print(f"Treatment days (top quintile): {len(treated_dates_quant)}")
+
+# Create windows around treatment events
+for event_date in treated_dates_quant:
+    window_start = event_date - pd.Timedelta(days=14)
+    window_end = event_date + pd.Timedelta(days=14)
+    
+    mask = (df_analysis_quant["incident_date"] >= window_start) & (df_analysis_quant["incident_date"] <= window_end)
+    df_analysis_quant.loc[mask, "event_time_quant"] = (df_analysis_quant.loc[mask, "incident_date"] - event_date).dt.days
+
+df_analysis_quant["post_quant"] = (df_analysis_quant["event_time_quant"] >= 0).astype(int)
+df_analysis_quant["post_quant"] = df_analysis_quant["post_quant"].fillna(0)
+
+df_did_quant = df_analysis_quant[df_analysis_quant["event_time_quant"].notna()].copy()
+print(f"Observations in event windows: {len(df_did_quant):,}")
+
+if len(df_did_quant) > 100:
+    formula_did4 = "mh_share ~ treated_quantile * post_quant + C(dow) + C(month):C(year) + is_holiday + C(cd_str)"
+    y4, X4 = patsy.dmatrices(formula_did4, data=df_did_quant, return_type="dataframe")
+    groups4 = df_did_quant.loc[y4.index, "cd_int"].to_numpy(dtype="int64")
+    
+    mod_did4 = sm.OLS(y4, X4, missing="drop").fit(
+        cov_type="cluster",
+        cov_kwds={"groups": groups4}
+    )
+    
+    print(f"Observations: {int(mod_did4.nobs):,}")
+    print(f"R-squared: {mod_did4.rsquared:.4f}")
+    
+    if "treated_quantile:post_quant" in mod_did4.params.index:
+        did_coef = mod_did4.params["treated_quantile:post_quant"]
+        did_se = mod_did4.bse["treated_quantile:post_quant"]
+        print(f"\nDID coefficient (treated_quantile × post_quant): {did_coef:.6f} (SE: {did_se:.6f})")
+        print(f"95% CI: [{did_coef - 1.96*did_se:.6f}, {did_coef + 1.96*did_se:.6f}]")
+        
+        did_results.append({
+            "model": "DID with quantile-based treatment",
+            "coefficient": did_coef,
+            "se": did_se,
+            "ci_low": did_coef - 1.96 * did_se,
+            "ci_hi": did_coef + 1.96 * did_se,
+            "n_obs": int(mod_did4.nobs),
+            "r_squared": mod_did4.rsquared,
+        })
+else:
+    print("⚠️  Insufficient data for quantile-based DID analysis")
+
+# ============================================================================
+# DID Model 5: De-meaned outcome + Quantile-based treatment
+# ============================================================================
+
+print("\n" + "=" * 80)
+print("DID MODEL 5: DE-MEANED OUTCOME + QUANTILE-BASED TREATMENT")
+print("=" * 80)
+
+df_did_quant_demeaned = df_did_quant[df_did_quant["dm_mh_share"].notna()].copy()
+
+if len(df_did_quant_demeaned) > 100:
+    formula_did5 = "dm_mh_share ~ treated_quantile * post_quant + C(dow) + C(month):C(year) + is_holiday + C(cd_str)"
+    y5, X5 = patsy.dmatrices(formula_did5, data=df_did_quant_demeaned, return_type="dataframe")
+    groups5 = df_did_quant_demeaned.loc[y5.index, "cd_int"].to_numpy(dtype="int64")
+    
+    mod_did5 = sm.OLS(y5, X5, missing="drop").fit(
+        cov_type="cluster",
+        cov_kwds={"groups": groups5}
+    )
+    
+    print(f"Observations: {int(mod_did5.nobs):,}")
+    print(f"R-squared: {mod_did5.rsquared:.4f}")
+    
+    if "treated_quantile:post_quant" in mod_did5.params.index:
+        did_coef = mod_did5.params["treated_quantile:post_quant"]
+        did_se = mod_did5.bse["treated_quantile:post_quant"]
+        print(f"\nDID coefficient (treated_quantile × post_quant): {did_coef:.6f} (SE: {did_se:.6f})")
+        print(f"95% CI: [{did_coef - 1.96*did_se:.6f}, {did_coef + 1.96*did_se:.6f}]")
+        
+        did_results.append({
+            "model": "DID with de-meaned outcome + quantile treatment",
+            "coefficient": did_coef,
+            "se": did_se,
+            "ci_low": did_coef - 1.96 * did_se,
+            "ci_hi": did_coef + 1.96 * did_se,
+            "n_obs": int(mod_did5.nobs),
+            "r_squared": mod_did5.rsquared,
+        })
+else:
+    print("⚠️  Insufficient data for combined analysis")
+
+# ============================================================================
+# Save updated DID results
+# ============================================================================
+
+if did_results:
+    df_did_results = pd.DataFrame(did_results)
+    did_out = OUTPUTS_TABLES / "did_results.csv"
+    df_did_results.to_csv(did_out, index=False)
+    print(f"\n✓ Saved updated DID results to: {did_out}")
+    
+    print("\n" + "=" * 80)
+    print("DID RESULTS COMPARISON")
+    print("=" * 80)
+    print(df_did_results[["model", "coefficient", "se", "n_obs", "r_squared"]].to_string(index=False))
 
 # Compare with distributed lag approach
 print("\n" + "=" * 80)

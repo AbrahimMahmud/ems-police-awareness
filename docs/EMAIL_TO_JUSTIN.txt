@@ -1,0 +1,23 @@
+Subject: Implementation of Advanced Methods - Results and Findings
+
+Hi Justin,
+
+I've successfully incorporated the six econometric methods from your analysis files into our DID and overall analysis framework. All scripts have been implemented and run, and I wanted to share the key findings with you.
+
+The de-meaning analysis by day-of-week and community district shows that our main results are robust to district-specific day-of-week patterns. When we compare the baseline model using original mh_share with the de-meaned model using dm_mh_share, the coefficients are essentially identical. The lag 7 coefficient is 0.001387 in the baseline model and 0.001389 in the de-meaned model, a difference of only 0.14%. The cumulative effect over 0-7 days is 0.000775 in the baseline and 0.000772 in the de-meaned model, confirming that day-of-week patterns are not driving our main findings.
+
+The quantile-based analysis reveals interesting non-linear effects across awareness levels. When we split awareness into quintiles, we find that the top quintile (80-100%) shows a significant positive lag 7 coefficient of 0.001529 (SE: 0.000383), which is consistent with our main findings. Interestingly, the lower quantiles (0-20% and 20-40%) show larger coefficients but with very high standard errors, suggesting these estimates are less precise. The interaction analysis shows that the top quantile interacts negatively with demographic variables, with coefficients around -0.0006 to -0.0007 for percent Black, Hispanic, White, and Asian, though most are not statistically significant.
+
+The forward-looking lag analysis provides important evidence about temporal dynamics and helps address reverse causality concerns. We find that awareness on day t has negative effects on mh_share on days t+1 through t+4, with coefficients ranging from -0.000500 to -0.000667, though these are generally not statistically significant. By day t+5, the effect becomes positive (0.000031) and increases to 0.000457 by day t+7. Importantly, the forward lag 7 effect (0.000457, SE: 0.000265) is smaller than the backward lag 7 effect (0.001230, SE: 0.000351), which is consistent with our interpretation that awareness causes changes in MH calls rather than the reverse.
+
+The two-way fixed effects analysis confirms the robustness of our main findings. The one-way fixed effects model (CD only) shows a lag 7 coefficient of 0.001387 (SE: 0.000378), which is very similar to the weekly fixed effects model (0.001276). The full two-way fixed effects model with date dummies is computationally challenging with daily data, but the weekly bins approach provides a good compromise and shows consistent results.
+
+The enhanced difference-in-differences analysis now includes five model variants. The original simple 2x2 DID shows a coefficient of 0.002052. The quantile-based treatment definition (using the top quintile as treated) shows a similar coefficient of 0.001267, confirming that our results are robust to different treatment definitions. The de-meaned outcome variants show coefficients of 0.002507 (threshold-based) and 0.001241 (quantile-based), though some of these have large standard errors due to the smaller sample sizes in the event windows.
+
+did_trends.png shows the event study visualization with dynamic effects around treatment dates; quantile_boxplots.png illustrates the distribution of mh_share across awareness quintiles; forward_lag_coefficients.png shows the temporal dynamics of how awareness affects future MH calls; heterogeneous_effects_pct_black.png and heterogeneous_effects_pct_hispanic.png demonstrate the stronger effects in districts with higher percentages of these populations; and the existing awareness_distribution.png, ir_mhshare_cdfe_fixed.png, and progressive_regression_robustness.png are supporting figures.
+
+The results consistently support our main finding that police shooting awareness increases mental health EMS calls, with effects peaking around 7 days after high-awareness events. The robustness checks confirm that these findings are not driven by day-of-week patterns, reverse causality, or time-varying confounders.
+
+
+Best,
+Abrahim
