@@ -1,13 +1,13 @@
-# New Methods Implementation: Incorporating Justin's Advanced Analysis Techniques
+# New Methods Implementation: Advanced Econometric Techniques
 
 **Date:** Implementation Complete  
-**Purpose:** Presentation of new econometric methods incorporated from Justin's analysis files
+**Purpose:** Documentation of econometric methods incorporated into the analysis framework
 
 ---
 
 ## Executive Summary
 
-We have successfully incorporated **6 advanced econometric methods** from Justin's analysis files into our DID and overall analysis framework. These methods strengthen our identification strategy, provide robustness checks, and allow for more nuanced examination of the relationship between police shooting awareness and mental health EMS calls.
+We have successfully incorporated **6 econometric methods** from analysis files into our DID and overall analysis framework. These methods strengthen our identification strategy, provide robustness checks, and allow for more nuanced examination of the relationship between police shooting awareness and mental health EMS calls.
 
 ---
 
@@ -25,7 +25,7 @@ We have successfully incorporated **6 advanced econometric methods** from Justin
 ### Why This Matters
 - **Controls for unobserved heterogeneity**: Day-of-week effects may differ across districts (e.g., some districts have more weekend activity)
 - **Robustness check**: If results are similar with/without de-meaning, it suggests our main findings are not driven by day-of-week patterns
-- **From Justin's work**: This method was used in `210719_demean_and_quantiles.ipynb` to examine relationships after removing day-of-week variation
+- **Methodological basis**: This approach has been used in similar panel data analyses to examine relationships after removing day-of-week variation
 
 ### Implementation Details
 ```python
@@ -55,8 +55,8 @@ df['dm_mh_share'] = df['mh_share'] - df['mh_share_mean']
 - Two-way fixed effects: community district + date
 
 ### Why This Matters
-- **Correct specification**: Count data should be modeled with count models, not OLS on proportions
-- **From Justin's R code**: `fixest::fenegbin` was used in `220309_negative_binomial_regression.R`
+- **Correct specification**: Count data should be modeled with count models, not OLS regression on proportions
+- **Methodological basis**: Negative binomial regression is the standard approach for count data in panel settings
 - **Controls for call volume**: Including `total_other_calls` as offset accounts for overall EMS activity
 
 ### Implementation Details
@@ -88,7 +88,7 @@ formula = "mh_calls ~ log_3_day + lag_vars + total_other_calls + C(cd_str) + C(d
 
 ### Why This Matters
 - **Non-linear effects**: Tests whether effects differ at different levels of awareness
-- **From Justin's work**: `210719_demean_and_quantiles.ipynb` used quantile analysis extensively
+- **Methodological basis**: Quantile analysis is a standard approach for examining non-linear effects
 - **Heterogeneity**: May reveal that effects are concentrated in high-awareness periods
 
 ### Implementation Details
@@ -120,7 +120,7 @@ for quantile in ['0-20', '20-40', '40-60', '60-80', '80-100']:
 - Used as alternative predictor to standardized lag variables
 
 ### Why This Matters
-- **From Justin's R code**: `log_3_day` was the main predictor in `220309_negative_binomial_regression.R`
+- **Methodological basis**: Log-transformed rolling averages are commonly used to smooth time series data
 - **Smoothing**: Rolling average reduces noise in daily tweet counts
 - **Log transformation**: Handles right-skewed distribution of tweet counts
 
@@ -153,7 +153,7 @@ df['log_3_day'] = np.log1p(df['tweet_count_3day_rolling'])
 
 ### Why This Matters
 - **Temporal dynamics**: Understands whether effects persist or accumulate over time
-- **From Justin's work**: `210719_demean_and_quantiles.ipynb` examined `next_1` through `next_7`
+- **Methodological basis**: Forward-looking lag analysis is a standard approach for examining temporal dynamics and addressing reverse causality concerns
 - **Causality check**: Forward effects help rule out reverse causality concerns
 
 ### Implementation Details
@@ -331,12 +331,12 @@ New Methods Added
    - Check `outputs/figures/` for visualizations
    - Compare results across specifications
 
-### For Presentation to Justin
+### Implementation Summary
 
-1. **Show code structure**: Demonstrate how methods were incorporated
-2. **Present results**: Compare new findings with existing analysis
-3. **Discuss robustness**: Highlight how new methods strengthen identification
-4. **Address questions**: Be prepared to discuss computational considerations, interpretation, etc.
+1. **Code structure**: Methods were incorporated following existing project patterns
+2. **Results integration**: New findings complement existing analysis
+3. **Robustness**: New methods strengthen identification and provide additional evidence
+4. **Technical considerations**: Computational efficiency and interpretation were carefully considered
 
 ---
 
@@ -368,7 +368,7 @@ New Methods Added
 
 ## Conclusion
 
-We have successfully incorporated all 6 advanced methods from Justin's analysis files. These additions:
+We have successfully incorporated all 6 advanced econometric methods into the analysis framework. These additions:
 
 1. **Strengthen identification**: Multiple robustness checks and alternative specifications
 2. **Improve specification**: Count models for count data, proper fixed effects

@@ -37,14 +37,19 @@ env/
 
 # Data files (too large for git)
 data/raw/*.csv
+data/raw/*.xlsx
+data/raw/*.xls
+data/raw/*.json
 data/processed/*.parquet
 data/processed/*.csv
+data/processed/*.txt
 
 # Output files
 outputs/figures/*.png
 outputs/figures/*.pdf
 outputs/tables/*.csv
 outputs/tables/*.txt
+outputs/*.pptx
 
 # OS
 .DS_Store

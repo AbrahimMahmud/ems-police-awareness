@@ -7,7 +7,7 @@
 | **1. De-meaning** | `21_demean_analysis.py` | Remove day-of-week patterns that vary by district |
 | **2. Negative Binomial** | `22_negative_binomial_regression.py` | Count model for `mh_calls` (not proportions) |
 | **3. Quantile Analysis** | `23_quantile_analysis.py` | Split awareness into quintiles, test non-linear effects |
-| **4. Log Rolling Avg** | `02_merge_awareness.py` | Added `log_3_day` variable (from Justin's R code) |
+| **4. Log Rolling Avg** | `02_merge_awareness.py` | Added `log_3_day` variable (log-transformed 3-day rolling average) |
 | **5. Forward Lags** | `24_forward_lag_analysis.py` | How awareness affects future days (t+1 to t+7) |
 | **6. Two-Way FE** | `25_twoway_fixed_effects.py` | Date + CD fixed effects |
 
