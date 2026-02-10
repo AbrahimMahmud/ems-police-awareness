@@ -164,6 +164,13 @@ The threshold approach yields **larger point estimates** than the continuous dis
 ### Event Day Definition
 Each "event day" (day 0) is a calendar date where `awareness_z > 1.5 SD`. This represents when public awareness peaked, which may be the same day as a police killing, or days later when news spreads and public attention builds. For example, the May 29, 2020 event day (awareness_z = 20.43) was 4 days after the May 25, 2020 killing, representing when public attention reached its peak.
 
+number of shares in a community district 1.5sd above compared to 
+avg of week after vs avg to the week before
+
+diff in high visibility days 
+diff in 6 CD with the highest percentage of black residence compared to other demographics
+
+
 ### Results
 
 **Simple 2×2 DID**:

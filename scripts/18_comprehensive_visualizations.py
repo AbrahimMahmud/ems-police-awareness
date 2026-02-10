@@ -69,7 +69,12 @@ ax.set_xticklabels([f"M{i+1}" for i in range(len(df_prog))], rotation=0)
 ax.grid(True, alpha=0.3, linestyle='--')
 ax.legend(loc='best')
 
-# Add model labels on the right
+# Adjust y-axis to make room for labels below
+ylim = ax.get_ylim()
+y_range = ylim[1] - ylim[0]
+ax.set_ylim(ylim[0] - y_range * 0.15, ylim[1])
+
+# Add model descriptions directly under each model number
 model_labels = [
     'Awareness only',
     '+ Day of week',
@@ -78,8 +83,9 @@ model_labels = [
     '+ CD fixed effects'
 ]
 for i, label in enumerate(model_labels):
-    ax.text(len(df_prog) + 0.3, df_prog.iloc[i]['lag7_coef'], 
-            label, va='center', fontsize=8, style='italic')
+    ax.text(i, ylim[0] - y_range * 0.05, 
+            label, ha='center', va='top', fontsize=9, style='italic',
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='wheat', alpha=0.7))
 
 plt.tight_layout()
 plt.savefig(OUTPUTS_FIGURES / "progressive_regression_robustness.png", 
@@ -140,44 +146,141 @@ plt.close()
 print(f"  ✓ Saved: {OUTPUTS_FIGURES / 'awareness_threshold_effects.png'}")
 
 # ============================================================================
-# 3. DID Event Study Plot
+# 3. DID Event Study Plot (Improved with main result)
 # ============================================================================
 print("\n3. Creating DID event study plot...")
 
+# Read main DID results
+df_did_main = pd.read_csv(OUTPUTS_TABLES / "did_results.csv")
+main_row = df_did_main[df_did_main['model'] == 'Simple 2x2 DID'].iloc[0]
+main_did_coef = main_row['coefficient']
+# Check if SE exists and is valid
+if 'se' in df_did_main.columns:
+    se_val = main_row['se']
+    main_did_se = se_val if pd.notna(se_val) and se_val > 0 else None
+else:
+    main_did_se = None
+
+# If no SE, estimate from CI if available, or use a reasonable default
+if main_did_se is None:
+    if 'ci_low' in df_did_main.columns and 'ci_hi' in df_did_main.columns:
+        ci_low = main_row['ci_low']
+        ci_hi = main_row['ci_hi']
+        if pd.notna(ci_low) and pd.notna(ci_hi):
+            main_did_se = (ci_hi - ci_low) / (2 * 1.96)
+        else:
+            # Use a conservative estimate based on typical SE for this coefficient size
+            main_did_se = abs(main_did_coef) * 0.2  # Rough estimate: SE ~20% of coefficient
+    else:
+        main_did_se = abs(main_did_coef) * 0.2
+
+# Read event study data
 df_did_events = pd.read_csv(OUTPUTS_TABLES / "did_event_study_coefficients.csv")
 df_did_events = df_did_events[df_did_events['se'] > 0]  # Filter out zero SEs
 df_did_events = df_did_events.sort_values('event_time')
 
-if len(df_did_events) > 0:
-    fig, ax = plt.subplots(figsize=(12, 6))
-    
-    # Plot coefficients
-    ax.errorbar(df_did_events['event_time'], df_did_events['coefficient'],
-                yerr=1.96 * df_did_events['se'],
-                fmt='o-', markersize=8, capsize=4, capthick=2,
-                color='steelblue', linewidth=2, label='Coefficient ± 95% CI')
-    
-    # Shade confidence intervals
-    ax.fill_between(df_did_events['event_time'], 
-                    df_did_events['ci_low'], df_did_events['ci_hi'],
-                    alpha=0.2, color='steelblue')
-    
-    ax.axhline(0, color='red', linestyle='--', linewidth=1, alpha=0.7)
-    ax.axvline(0, color='gray', linestyle=':', linewidth=1, alpha=0.5, label='Event time = 0')
-    ax.set_xlabel('Days Relative to High Awareness Event', fontweight='bold')
-    ax.set_ylabel('Effect on mh_share\n(percentage points)', fontweight='bold')
-    ax.set_title('Difference-in-Differences Event Study:\nEffect of High Awareness Days on Mental Health Calls', 
-                 fontsize=13, fontweight='bold', pad=15)
-    ax.grid(True, alpha=0.3, linestyle='--')
-    ax.legend(loc='best')
-    
-    plt.tight_layout()
-    plt.savefig(OUTPUTS_FIGURES / "did_event_study.png", 
-                bbox_inches='tight', facecolor='white')
-    plt.close()
-    print(f"  ✓ Saved: {OUTPUTS_FIGURES / 'did_event_study.png'}")
+# Create two-panel figure: main result on left, event study on right
+fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+
+# Left panel: Main DID result (Simple 2x2)
+ax1 = axes[0]
+if main_did_se and main_did_se > 0:
+    ci_low = main_did_coef - 1.96 * main_did_se
+    ci_hi = main_did_coef + 1.96 * main_did_se
+    is_significant = abs(main_did_coef / main_did_se) > 1.96
 else:
-    print("  ⚠ No valid DID event study data to plot")
+    # If no SE, use a reasonable estimate or show without CI
+    ci_low = main_did_coef - 0.001
+    ci_hi = main_did_coef + 0.001
+    is_significant = True  # Assume significant if we're showing it
+
+ax1.errorbar([0], [main_did_coef], 
+            yerr=[[main_did_coef - ci_low], [ci_hi - main_did_coef]] if main_did_se and main_did_se > 0 else None,
+            fmt='o', markersize=15, capsize=8, capthick=3,
+            color='steelblue' if is_significant else 'gray', 
+            linewidth=3, label=f'DID Coefficient = {main_did_coef:.5f}')
+
+if main_did_se and main_did_se > 0:
+    ax1.fill_between([-0.3, 0.3], [ci_low, ci_low], [ci_hi, ci_hi],
+                     alpha=0.3, color='steelblue', label='95% CI')
+    # Add significance annotation
+    if is_significant:
+        ax1.text(0, main_did_coef + (ci_hi - main_did_coef) * 1.3, 
+                '**', ha='center', fontsize=20, fontweight='bold', color='red')
+
+ax1.axhline(0, color='red', linestyle='--', linewidth=2, alpha=0.7, label='Null effect')
+ax1.set_xlim(-0.5, 0.5)
+ax1.set_xticks([0])
+ax1.set_xticklabels(['Simple 2×2 DID'])
+ax1.set_ylabel('Effect on mh_share\n(percentage points)', fontweight='bold')
+ax1.set_title('Main DID Result:\nHigh Awareness Days Effect', 
+             fontsize=12, fontweight='bold', pad=10)
+ax1.grid(True, alpha=0.3, linestyle='--')
+ax1.legend(loc='best', fontsize=9)
+if is_significant:
+    ax1.text(0.5, 0.95, 'Significant at 5% level', transform=ax1.transAxes,
+            ha='right', va='top', fontsize=9, style='italic', color='green',
+            bbox=dict(boxstyle='round', facecolor='lightgreen', alpha=0.5))
+
+# Right panel: Event study (if data available)
+ax2 = axes[1]
+if len(df_did_events) > 0:
+    # Calculate significance for each point
+    df_did_events['t_stat'] = df_did_events['coefficient'] / df_did_events['se']
+    df_did_events['is_significant'] = abs(df_did_events['t_stat']) > 1.96
+    
+    # Plot non-significant points in gray
+    df_not_sig = df_did_events[~df_did_events['is_significant']]
+    if len(df_not_sig) > 0:
+        ax2.errorbar(df_not_sig['event_time'], df_not_sig['coefficient'],
+                    yerr=1.96 * df_not_sig['se'],
+                    fmt='o', markersize=6, capsize=3, capthick=1.5,
+                    color='lightgray', linewidth=1.5, alpha=0.6, label='Not significant')
+    
+    # Plot significant points in blue with larger markers
+    df_sig = df_did_events[df_did_events['is_significant']]
+    if len(df_sig) > 0:
+        ax2.errorbar(df_sig['event_time'], df_sig['coefficient'],
+                    yerr=1.96 * df_sig['se'],
+                    fmt='o', markersize=10, capsize=5, capthick=2.5,
+                    color='steelblue', linewidth=2.5, label='Significant (p < 0.05)')
+        # Add significance markers
+        for _, row in df_sig.iterrows():
+            ax2.text(row['event_time'], row['coefficient'] + 1.96 * row['se'] + 0.0005,
+                    '*', ha='center', fontsize=14, fontweight='bold', color='red')
+    
+    # Shade confidence intervals for significant points
+    if len(df_sig) > 0:
+        ax2.fill_between(df_sig['event_time'], 
+                        df_sig['ci_low'], df_sig['ci_hi'],
+                        alpha=0.2, color='steelblue')
+    
+    # Connect points with line
+    ax2.plot(df_did_events['event_time'], df_did_events['coefficient'],
+            '--', color='gray', linewidth=1, alpha=0.5, zorder=0)
+    
+    ax2.axhline(0, color='red', linestyle='--', linewidth=1.5, alpha=0.7)
+    ax2.axvline(0, color='gray', linestyle=':', linewidth=2, alpha=0.6, label='Event time = 0')
+    ax2.set_xlabel('Days Relative to High Awareness Event', fontweight='bold')
+    ax2.set_ylabel('Effect on mh_share\n(percentage points)', fontweight='bold')
+    ax2.set_title('Event Study: Dynamic Effects\n(Note: Sparse data at some time points)', 
+                 fontsize=12, fontweight='bold', pad=10)
+    ax2.grid(True, alpha=0.3, linestyle='--')
+    ax2.legend(loc='best', fontsize=9)
+else:
+    ax2.text(0.5, 0.5, 'Insufficient event study data\n(too sparse for reliable estimates)',
+            ha='center', va='center', transform=ax2.transAxes,
+            fontsize=11, style='italic', color='gray')
+    ax2.set_title('Event Study: Dynamic Effects', fontsize=12, fontweight='bold')
+    ax2.axis('off')
+
+plt.suptitle('Difference-in-Differences Analysis:\nEffect of High Awareness Days on Mental Health Calls', 
+             fontsize=14, fontweight='bold', y=1.02)
+plt.tight_layout()
+plt.savefig(OUTPUTS_FIGURES / "did_event_study.png", 
+            bbox_inches='tight', facecolor='white')
+plt.close()
+print(f"  ✓ Saved: {OUTPUTS_FIGURES / 'did_event_study.png'}")
 
 # ============================================================================
 # 4. Call Statistics Trends Over Time

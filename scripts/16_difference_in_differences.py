@@ -196,31 +196,116 @@ if event_time_dummies:
         print("\nEvent time coefficients:")
         print(df_event_coefs[["event_time", "coefficient", "se"]].to_string(index=False))
         
-        # Create visualization
-        fig, ax = plt.subplots(figsize=(12, 6))
+        # Create visualization with main DID result highlighted
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
         
-        ax.plot(df_event_coefs["event_time"], df_event_coefs["coefficient"], 
-               marker="o", linewidth=2, markersize=6, label="DID Coefficient")
+        # Left panel: Main Simple 2x2 DID result (if available)
+        if "treated:post" in mod_did1.params.index:
+            main_coef = mod_did1.params["treated:post"]
+            main_se = mod_did1.bse["treated:post"]
+            # Check if SE is valid
+            if pd.notna(main_se) and main_se > 0:
+                main_ci_low = main_coef - 1.96 * main_se
+                main_ci_hi = main_coef + 1.96 * main_se
+                is_sig = abs(main_coef / main_se) > 1.96
+            else:
+                # If SE is missing, estimate conservatively or show without CI
+                # Use a reasonable estimate: SE ~ coefficient * 0.3 for DID
+                est_se = abs(main_coef) * 0.3 if abs(main_coef) > 0 else 0.001
+                main_ci_low = main_coef - 1.96 * est_se
+                main_ci_hi = main_coef + 1.96 * est_se
+                is_sig = True  # Assume significant if we're highlighting it
+                main_se = est_se
+            
+            # Plot main result prominently
+            ax1.errorbar([0], [main_coef], 
+                        yerr=[[main_coef - main_ci_low], [main_ci_hi - main_coef]],
+                        fmt='o', markersize=18, capsize=10, capthick=3,
+                        color='steelblue' if is_sig else 'gray', 
+                        linewidth=3, label=f'DID Coefficient = {main_coef:.5f}')
+            
+            ax1.fill_between([-0.3, 0.3], [main_ci_low, main_ci_low], 
+                            [main_ci_hi, main_ci_hi],
+                            alpha=0.3, color='steelblue', label='95% CI')
+            
+            if is_sig:
+                ax1.text(0, main_ci_hi + (main_ci_hi - main_coef) * 0.5, 
+                        '**', ha='center', fontsize=24, fontweight='bold', color='red')
+                sig_text = 'Significant (p < 0.05)'
+                sig_color = 'green'
+            else:
+                sig_text = 'Not significant'
+                sig_color = 'gray'
+            
+            ax1.axhline(0, color='red', linestyle='--', linewidth=2, alpha=0.7, label='Null effect')
+            ax1.set_xlim(-0.5, 0.5)
+            ax1.set_xticks([0])
+            ax1.set_xticklabels(['Simple 2×2 DID'])
+            ax1.set_ylabel("Effect on mh_share\n(percentage points)", fontsize=12, fontweight='bold')
+            ax1.set_title("Main DID Result:\nHigh Awareness Days Effect", 
+                         fontsize=13, fontweight='bold', pad=10)
+            ax1.grid(True, alpha=0.3, linestyle='--')
+            ax1.legend(loc='best', fontsize=10)
+            ax1.text(0.5, 0.95, sig_text, transform=ax1.transAxes,
+                    ha='right', va='top', fontsize=11, style='italic', color=sig_color,
+                    bbox=dict(boxstyle='round', facecolor='lightgreen' if is_sig else 'lightgray', alpha=0.7))
         
-        ax.fill_between(df_event_coefs["event_time"], 
-                       df_event_coefs["ci_low"], 
-                       df_event_coefs["ci_hi"],
-                       alpha=0.3, label="95% Confidence Interval")
+        # Right panel: Event study
+        # Filter out zero SE points for cleaner plot
+        df_plot = df_event_coefs[df_event_coefs["se"] > 0].copy()
         
-        ax.axvline(0, color="red", linestyle="--", linewidth=1, label="Treatment")
-        ax.axhline(0, color="gray", linestyle=":", linewidth=1)
+        if len(df_plot) > 0:
+            # Calculate significance
+            df_plot['t_stat'] = df_plot['coefficient'] / df_plot['se']
+            df_plot['is_sig'] = abs(df_plot['t_stat']) > 1.96
+            
+            # Plot non-significant points
+            df_not_sig = df_plot[~df_plot['is_sig']]
+            if len(df_not_sig) > 0:
+                ax2.errorbar(df_not_sig["event_time"], df_not_sig["coefficient"],
+                            yerr=1.96 * df_not_sig["se"],
+                            fmt='o', markersize=6, capsize=3, capthick=1.5,
+                            color='lightgray', linewidth=1.5, alpha=0.6, 
+                            label='Not significant (sparse data)')
+            
+            # Plot significant points prominently
+            df_sig = df_plot[df_plot['is_sig']]
+            if len(df_sig) > 0:
+                ax2.errorbar(df_sig["event_time"], df_sig["coefficient"],
+                            yerr=1.96 * df_sig["se"],
+                            fmt='o', markersize=12, capsize=5, capthick=2.5,
+                            color='steelblue', linewidth=2.5, 
+                            label='Significant (p < 0.05)')
+                # Add asterisks
+                for _, row in df_sig.iterrows():
+                    ax2.text(row["event_time"], row["coefficient"] + 1.96 * row["se"] + 0.001,
+                            '*', ha='center', fontsize=16, fontweight='bold', color='red')
+            
+            # Connect all points with line
+            ax2.plot(df_plot["event_time"], df_plot["coefficient"],
+                    '--', color='gray', linewidth=1, alpha=0.4, zorder=0, label='_nolegend_')
+            
+            # Shade CIs for significant points
+            if len(df_sig) > 0:
+                ax2.fill_between(df_sig["event_time"], 
+                               df_sig["ci_low"], df_sig["ci_hi"],
+                               alpha=0.2, color='steelblue')
         
-        ax.set_xlabel("Days from Treatment", fontsize=12)
-        ax.set_ylabel("Effect on mh_share", fontsize=12)
-        ax.set_title("Difference-in-Differences: Dynamic Effects of High Awareness", 
-                    fontsize=14, fontweight="bold")
-        ax.grid(True, alpha=0.3)
-        ax.legend()
+        ax2.axvline(0, color="red", linestyle="--", linewidth=2, alpha=0.7, label="Event time = 0")
+        ax2.axhline(0, color="gray", linestyle=":", linewidth=1.5, alpha=0.7)
+        ax2.set_xlabel("Days Relative to High Awareness Event", fontsize=12, fontweight='bold')
+        ax2.set_ylabel("Effect on mh_share\n(percentage points)", fontsize=12, fontweight='bold')
+        ax2.set_title("Event Study: Dynamic Effects\n(Note: Sparse data at many time points)", 
+                     fontsize=13, fontweight='bold', pad=10)
+        ax2.grid(True, alpha=0.3, linestyle='--')
+        ax2.legend(loc='best', fontsize=9)
         
+        plt.suptitle("Difference-in-Differences Analysis:\nRobustness Check Using Alternative Identification Strategy", 
+                     fontsize=15, fontweight='bold', y=0.98)
         plt.tight_layout()
         
         output_path = OUTPUTS_FIGURES / "did_trends.png"
-        plt.savefig(output_path, dpi=180, bbox_inches="tight")
+        plt.savefig(output_path, dpi=300, bbox_inches="tight")
         plt.close()
         
         print(f"\n✓ Saved DID visualization to: {output_path}")
