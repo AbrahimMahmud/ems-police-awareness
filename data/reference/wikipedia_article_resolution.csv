@@ -1,0 +1,151 @@
+name,tweet_volume,volume_share,article,pageview_days
+George Floyd,146199,0.2875120207198862,Killing_of_George_Floyd,220
+Breonna Taylor,59329,0.1166752212894078,Killing_of_Breonna_Taylor,210
+Rayshard Brooks,33274,0.0654359809399072,Killing_of_Rayshard_Brooks,202
+Stephon Clark,20236,0.0397957116757817,Shooting_of_Stephon_Clark,1017
+Laquan McDonald,17407,0.0342322570241319,Murder_of_Laquan_McDonald,815
+Elijah McClain,15838,0.031146693097501,Death_of_Elijah_McClain,200
+Alton Sterling,12839,0.0252489198559676,Shooting_of_Alton_Sterling,1461
+Atatiana Jefferson,11743,0.0230935482411892,Killing_of_Atatiana_Jefferson,446
+Michael Brown,10037,0.019738562862711,Killing_of_Michael_Brown,997
+Dion Johnson,9887,0.0194435758716373,Shooting_of_Dion_Johnson,110
+Jordan Edwards,8973,0.0176461218060283,Shooting_of_Jordan_Edwards,1340
+Tony Timpa,8319,0.016359978524947,Tony_Timpa,180
+David McAtee,7327,0.0144091312239796,Killing_of_David_McAtee,64
+Freddie Gray,6928,0.0136244658277236,Death_of_Freddie_Gray,1461
+Walter Wallace Jr.,5815,0.0114356623539568,Killing_of_Walter_Wallace,66
+Eric Garner,5804,0.0114140299746114,Killing_of_Eric_Garner,456
+Willie McCoy,5269,0.0103619097064486,Killing_of_Willie_McCoy,1
+Charleena Lyles,4986,0.0098053675832895,,0
+Philando Castile,4974,0.0097817686240036,Shooting_of_Philando_Castile,1461
+Sean Monterrosa,3370,0.0066273743994556,Killing_of_Sean_Monterrosa,200
+Jonathan Price,3144,0.0061829273329046,Murder_of_Jonathan_Price,8
+Botham Shem Jean,2604,0.0051209741650393,Murder_of_Botham_Jean,501
+Terence Crutcher,2243,0.0044110388065219,Shooting_of_Terence_Crutcher,1461
+Korryn Gaines,2163,0.0042537124112826,Korryn_Gaines,1373
+Walter Scott,2101,0.0041317844549722,Killing_of_Walter_Scott,1
+Deon Kay,1992,0.0039174272414586,Shooting_of_Deon_Kay,54
+Mubarak Soulemane,1891,0.003718802667469,,0
+Diante Yarber,1821,0.0035811420716346,,0
+Scout Schultz,1692,0.0033274532593112,Killing_of_Scout_Schultz,5
+Vanessa Marquez,1573,0.0030934302463928,,0
+Jemel Roberson,1511,0.0029715022900823,,0
+Patrick Harmon,1422,0.0027964766753786,Killing_of_Patrick_Harmon,1176
+Ryan Whitaker,1408,0.0027689445562117,,0
+Tyrese West,1363,0.0026804484588896,,0
+Trayford Pellerin,1346,0.0026470165999012,,0
+Alvin Cole,1265,0.0024877236247214,Killing_of_Alvin_Cole,57
+Marcellis Stinnette,1239,0.0024365925462687,Killing_of_Marcellis_Stinnette,71
+Daniel Hambrick,1167,0.0022949987905533,,0
+Matthew David Conrad,1044,0.0020531094578729,,0
+Saheed Vassell,1028,0.002021644178825,,0
+Juan J. Godines,1026,0.002017711018944,,0
+Corey Jones,1006,0.0019783794201342,Killing_of_Corey_Jones,1
+Connor Betts,993,0.0019528138809078,2019_Dayton_shooting,516
+Dreasjon Reed,980,0.0019272483416814,,0
+De'Von Bailey,965,0.001897749642574,,0
+Danny Ray Thomas,949,0.0018662843635262,,0
+Sylville Smith,855,0.00168142584912,2016_Milwaukee_riots,1461
+Miciah Lee,850,0.0016715929494175,,0
+Quintonio Legrier,841,0.0016538937299531,,0
+Andres Guardado,774,0.0015221328739402,Killing_of_Andres_Guardado,195
+Dijon Kizzee,771,0.0015162331341187,,0
+Mary Knowlton,747,0.0014690352155469,,0
+Katlyn Alix,746,0.0014670686356065,,0
+Antonio Arce,723,0.0014218372969752,,0
+Gary Martin,706,0.0013884054379868,,0
+Hakim Littleton,695,0.0013667730586414,,0
+Darnell Wicker,689,0.0013549735789984,,0
+Nicolas Chavez,613,0.0012055135035211,,0
+Bradley Carey,608,0.0011956806038187,,0
+Jamarion Rashad Robinson,605,0.0011897808639972,,0
+Richard Lance London,604,0.0011878142840567,,0
+Demarco Newman,601,0.0011819145442352,,0
+Jawari Porter,601,0.0011819145442352,,0
+Johannes M. Wood,600,0.0011799479642947,,0
+Marcus Sexton,600,0.0011799479642947,,0
+Michael McClurg,599,0.0011779813843542,,0
+James A. Quealy,599,0.0011779813843542,,0
+Ronald Robbibaro,599,0.0011779813843542,,0
+Jeffrey Allen Morris,599,0.0011779813843542,,0
+Mario Martinez Torres,599,0.0011779813843542,,0
+Earl Pinckney,599,0.0011779813843542,,0
+James Eugene Burgess,599,0.0011779813843542,,0
+David Michael Moya,599,0.0011779813843542,,0
+Benjamin William Heaton,599,0.0011779813843542,,0
+Kenneth Eugene Bonanno,599,0.0011779813843542,,0
+Bryan N. Byrd,598,0.0011760148044137,,0
+Adam Jo Klimek,598,0.0011760148044137,,0
+Ronald Smith,598,0.0011760148044137,,0
+Micah Xavier Johnson,547,0.0010757192274487,2016_shooting_of_Dallas_police_officers,1461
+Kevin Peterson Jr.,546,0.0010737526475082,,0
+Emantic Fitzgerald Bradford Jr.,497,0.0009773902304241,Killing_of_Emantic_Fitzgerald_Bradford_Jr.,62
+Deborah Danner,469,0.0009223259920904,,0
+Brandon Webber,458,0.000900693612745,,0
+Frank Ordonez,437,0.0008593954339946,2019_Miramar_shootout,392
+Brian Mulkeen,436,0.0008574288540542,,0
+Jamar Clark,425,0.0008357964747087,,0
+Joshua Feast,420,0.0008259635750063,,0
+Willem Van Spronsen,394,0.0007748324965535,,0
+Peter Selis,391,0.000768932756732,,0
+Aaron Bailey,384,0.0007551666971486,Aaron_Bailey,1412
+Jayson Negron,362,0.0007119019384578,,0
+Marqueese Alston,361,0.0007099353585173,,0
+Lionel Morris,356,0.0007001024588148,,0
+Dontre Hamilton,339,0.0006666705998265,,0
+Anthony McClain,335,0.0006588042800645,Pasadena_Police_Department_(California),1461
+Duncan Socrates Lemp,328,0.0006450382204811,,0
+Jared Lakey,319,0.0006273390010167,,0
+Desmond Phillips,315,0.0006194726812547,,0
+Jose Nieves,305,0.0005998068818498,,0
+Tyre King,301,0.0005919405620878,,0
+Terrence Sterling,298,0.0005860408222664,,0
+Hannah Williams,290,0.0005703081827424,,0
+Anthony Hill,288,0.0005663750228614,,0
+Dennis Tuttle,286,0.0005624418629805,Harding_Street_raid,50
+Mario Woods,281,0.000552608963278,History_of_the_San_Francisco_Police_Department,1461
+Keith Lamont Scott,269,0.0005290100039921,,0
+Kameron Prescott,268,0.0005270434240516,,0
+Joshua Beal,268,0.0005270434240516,,0
+Isaiah Lewis,265,0.0005211436842301,,0
+Samuel Dubose,264,0.0005191771042897,,0
+Brian Simonsen,259,0.0005093442045872,,0
+Aries Clark,256,0.0005034444647657,,0
+Magdiel Sanchez,252,0.0004955781450038,,0
+Keeven Robinson,248,0.0004877118252418,,0
+Sarah Grossman,246,0.0004837786653608,List_of_police_violence_incidents_during_George_Floyd_protests,206
+Elena Mondragon,244,0.0004798455054798,,0
+Jonas Joseph,237,0.0004660794458964,,0
+Ronald Davis,235,0.0004621462860154,,0
+Greg Gunn,233,0.0004582131261344,Killing_of_Greg_Gunn,107
+DeWayne Craddock,232,0.0004562465461939,2019_Virginia_Beach_shooting,486
+Ryan Twyman,230,0.0004523133863129,,0
+Alfred Olango,227,0.0004464136464915,,0
+Bernardo Palacios-Carbajal,225,0.0004424804866105,Killing_of_Bernardo_Palacios-Carbajal,188
+Bennie Edwards,209,0.0004110152075626,,0
+Oshae Terry,207,0.0004070820476816,,0
+Genevive Dawes,203,0.0003992157279197,,0
+Bradley Blackshire,203,0.0003992157279197,,0
+Osaze Osagie,202,0.0003972491479792,,0
+Kenneth Jones,200,0.0003933159880982,,0
+Miles Hall,200,0.0003933159880982,,0
+Dylan Noble,194,0.0003815165084553,,0
+Andre Maurice Hill,193,0.0003795499285148,,0
+Oscar Cain,193,0.0003795499285148,,0
+George Robinson,191,0.0003756167686338,Killing_of_George_Robinson,138
+Dominique Clayton,190,0.0003736501886933,,0
+Bennie Branch,189,0.0003716836087528,,0
+Jeremy McDole,181,0.0003559509692289,,0
+Erik Salgado,169,0.000332352009943,,0
+Ronald Greene,166,0.0003264522701215,,0
+Henry Green,165,0.000324485690181,,0
+Roshad McIntosh,164,0.0003225191102405,,0
+Matthew Tucker,163,0.0003205525303,,0
+Joel Acevedo,160,0.0003146527904786,,0
+Maurice Granton Jr.,160,0.0003146527904786,,0
+Kamal Flowers,156,0.0003067864707166,,0
+Sean Moore,155,0.0003048198907761,,0
+Jeffrey Dennis,155,0.0003048198907761,,0
+Bettie Jones,154,0.0003028533108356,,0
+David Joseph,150,0.0002949869910736,,0
+Joshua Pawlik,150,0.0002949869910736,,0

@@ -97,6 +97,14 @@ MANUAL_TITLES = {
     "jordan edwards": "Shooting_of_Jordan_Edwards",
     "walter wallace jr.": "Killing_of_Walter_Wallace",
     "botham shem jean": "Murder_of_Botham_Jean",
+    "freddie gray": "Death_of_Freddie_Gray",
+    "tony timpa": "Tony_Timpa",
+    "terence crutcher": "Shooting_of_Terence_Crutcher",
+    "korryn gaines": "Korryn_Gaines",
+    "ronald greene": "Death_of_Ronald_Greene",
+    "dion johnson": "Shooting_of_Dion_Johnson",
+    "deon kay": "Shooting_of_Deon_Kay",
+    "jonathan price": "Murder_of_Jonathan_Price",
     "micah xavier johnson": "2016_shooting_of_Dallas_police_officers",
 }
 POLICE_WORDS = ("police", "officer", "law enforcement", "deputy", "trooper")
