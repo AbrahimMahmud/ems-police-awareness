@@ -114,3 +114,36 @@ the race-matched awareness index (aware_black_log) is built and ready.
    shows EDP share breaking ~0.8pp below its own pre-event level in the three
    weeks after May 25, 2020 while injury shares rise 2-3pp -- the regression
    signature, visible without a model.
+
+## 7. Checkpoint update: Phase 3-4 complete (heterogeneity, DID, counts, permutation)
+
+1. **Vintage question resolved**: ACS 2015-19 vs Census 2010 demographics are
+   nearly interchangeable at the CD level (corr 0.993 on %Black; 6/59 quartile
+   switches; results identical to 3 decimals). ACS is primary; 2010 is the
+   robustness appendix.
+2. **Heterogeneity is non-monotonic**: the EDP suppression appears in the
+   whitest quartile (Q1: -0.00108, p=0.02) and the two Blackest (Q3/Q4:
+   ~-0.00074, p~0.09) but not Q2. Continuous interactions slope negative
+   (Black+Hispanic x awareness: -0.00015 per 10pp, p=0.005; race-matched
+   Black-victim awareness x %Black: p=0.06), but the clean "avoidance
+   concentrates in Black districts" prediction is NOT confirmed as stated --
+   suppression looks broad-based with at most a modest gradient.
+3. **DID (Justin's design) is directionally consistent but underpowered**:
+   heavily-Black vs Q2, week-after vs week-before: EDP -0.0017 (p=0.49),
+   mh_narrow -0.0026 (p=0.32). With 15v15 districts and 12 episodes the
+   minimum detectable effect is several times the plausible effect size.
+4. **Counts stay non-significant** (PPML: EDP -0.4%/log-point, p=0.21) -- the
+   suppression claim remains compositional (shares), not levels.
+5. **Permutation inference is the decisive caveat**: 200 circular shifts of
+   the awareness series yield p=0.26 for the edp_share days-3-5 effect whose
+   date-clustered p was 0.019. With both series persistent and only 12 real
+   episodes, clustered SEs understate uncertainty; the suppression pattern is
+   internally coherent (right call type, null placebos, visible in raw
+   single-event data, sign-consistent everywhere) but is NOT statistically
+   distinguishable from chance at conventional thresholds on this sample.
+6. **Implication for the paper**: honest framing is now "suggestive evidence
+   of post-awareness avoidance of police-adjacent emergency care" with the
+   permutation result reported prominently, OR the sample must be extended
+   (more episodes: 2015-16 and 2021-23 via the validated Wikipedia/Trends
+   instrument) to gain the power a confirmatory claim needs. Extension is the
+   scientifically stronger path and is feasible with sources already in hand.
