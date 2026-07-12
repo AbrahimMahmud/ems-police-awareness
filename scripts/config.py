@@ -49,10 +49,14 @@ assert len(VALID_CDS) == 59
 # "Call Type Descriptions" in EMS_incident_dispatch_data_description.xlsx.
 # ---------------------------------------------------------------------------
 CALL_TYPE_GROUPS = {
-    "edp": ["EDP"],
+    # EDP family: EDPC appears mid-2018 as a progressive recode of EDP (family
+    # total stable ~125k/yr while EDP alone falls); EDPM appears 2021; omitting
+    # them (as the original analysis did) creates a time-trending undercount.
+    "edp": ["EDP", "EDPC", "EDPM", "EDPW", "T-EDP"],
     "altmen": ["ALTMEN", "ALTMFC", "ALTMFT"],
-    "suicide_jump": ["JUMPDN", "JUMPUP", "JUMPDC"],
-    "od_poison_drug": ["OD", "ODC", "POISON", "DRUG"],
+    # JUMPDC, OD, ODC, POISON never occur in 2016-2021 (legacy codes); kept out.
+    "suicide_jump": ["JUMPDN", "JUMPUP"],
+    "od_poison_drug": ["DRUG", "DRUGFC"],
     # placebo outcomes: no plausible awareness channel
     "cardiac": ["ARREST", "ARREFC", "ARREFT", "CARD", "CARDFC", "CARDFT",
                 "HEART", "HEARTC", "CVA", "CVAC", "CVACFC", "CVACFT", "CVAFC", "CVAFT"],
