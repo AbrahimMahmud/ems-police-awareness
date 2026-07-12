@@ -13,14 +13,35 @@ Outputs (committed, small):
   data/reference/wikipedia_pageviews_victims.csv
 """
 
+import hashlib
 import io
 import json
 import time
+import urllib.parse
 import urllib.request
+from datetime import datetime, timezone
 
 import pandas as pd
 
-from config import DATA_REFERENCE, VALID_CDS
+from config import DATA_REFERENCE, TWEETS_PER_VICTIM_CSV, VALID_CDS
+
+SOURCES_LOG = DATA_REFERENCE / "data_sources.csv"
+
+
+def log_source(source_id, description, url, payload_bytes=None, out_file=None):
+    """Append a provenance row (see docs/DATA_PROVENANCE.md) with content hash."""
+    if payload_bytes is None and out_file is not None:
+        payload_bytes = open(out_file, "rb").read()
+    row = pd.DataFrame([{
+        "source_id": source_id,
+        "description": description,
+        "url": url,
+        "accessed_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "sha256": hashlib.sha256(payload_bytes).hexdigest() if payload_bytes else "",
+        "output_file": str(out_file) if out_file else "",
+    }])
+    header = not SOURCES_LOG.exists()
+    row.to_csv(SOURCES_LOG, mode="a", header=header, index=False)
 
 UA = {"User-Agent": "ems-police-awareness-research/1.0 (academic research)"}
 BORO = {"MN": 1, "BX": 2, "BK": 3, "QN": 4, "SI": 5}
@@ -48,27 +69,76 @@ cd = cd[["communitydistrict", "total_pop_acs", "pct_white_acs", "pct_black_acs",
 assert len(cd) == 59, f"expected 59 CDs, got {len(cd)}"
 assert cd[["pct_white_acs", "pct_black_acs", "pct_hispanic_acs", "pct_asian_acs"]].max().max() <= 100
 cd.to_csv(DATA_REFERENCE / "acs_2019_cd_demographics.csv", index=False)
+log_source("S7", "NYC DCP ACS 2015-2019 demographic profile, NTA2020 level", ACS_URL,
+           payload_bytes=raw, out_file=DATA_REFERENCE / "acs_2019_cd_demographics.csv")
 print(f"ACS 2015-2019: {len(cd)} CDs (source: DCP demo_2019_acs5yr_nta.xlsx)")
 bs = cd[cd["communitydistrict"] == 303].iloc[0]
 print(f"  sanity: Bed-Stuy (CD 303) pct_black_acs = {bs['pct_black_acs']:.1f}")
 
-# --- 2. Wikipedia daily pageviews for top victims ---
-# Article titles change over time (Shooting_of_ -> Killing_of_ renames);
-# candidates are tried in order and the first with substantial coverage wins.
-ARTICLES = {
-    "George Floyd": ["Killing_of_George_Floyd"],
-    "Breonna Taylor": ["Killing_of_Breonna_Taylor"],
-    "Rayshard Brooks": ["Killing_of_Rayshard_Brooks"],
-    "Stephon Clark": ["Shooting_of_Stephon_Clark"],
-    "Laquan McDonald": ["Murder_of_Laquan_McDonald"],
-    "Elijah McClain": ["Death_of_Elijah_McClain", "Killing_of_Elijah_McClain"],
-    "Atatiana Jefferson": ["Killing_of_Atatiana_Jefferson"],
-    "Alton Sterling": ["Shooting_of_Alton_Sterling"],
-    "Philando Castile": ["Shooting_of_Philando_Castile", "Killing_of_Philando_Castile"],
-    "Daniel Prude": ["Death_of_Daniel_Prude"],
-    "Walter Wallace Jr.": ["Killing_of_Walter_Wallace"],
-    "Jordan Edwards": ["Shooting_of_Jordan_Edwards", "Murder_of_Jordan_Edwards"],
+# --- 2. Wikipedia daily pageviews: automated article resolution ---
+# For the top WIKI_TOP_N victims by tweet volume (~99%+ of volume-weighted
+# signal), try title variants and accept an article only if it exists AND its
+# summary mentions police (guards against same-name false positives). Manual
+# overrides handle known renames the variant list misses.
+WIKI_TOP_N = 150
+TITLE_PREFIXES = ["Killing of", "Shooting of", "Murder of", "Death of", ""]
+# Verified titles (previous run + manual research) skip resolution entirely.
+MANUAL_TITLES = {
+    "george floyd": "Killing_of_George_Floyd",
+    "breonna taylor": "Killing_of_Breonna_Taylor",
+    "rayshard brooks": "Killing_of_Rayshard_Brooks",
+    "stephon clark": "Shooting_of_Stephon_Clark",
+    "laquan mcdonald": "Murder_of_Laquan_McDonald",
+    "elijah mcclain": "Death_of_Elijah_McClain",
+    "atatiana jefferson": "Killing_of_Atatiana_Jefferson",
+    "alton sterling": "Shooting_of_Alton_Sterling",
+    "philando castile": "Shooting_of_Philando_Castile",
+    "daniel prude": "Death_of_Daniel_Prude",
+    "jordan edwards": "Shooting_of_Jordan_Edwards",
+    "walter wallace jr.": "Killing_of_Walter_Wallace",
+    "botham shem jean": "Murder_of_Botham_Jean",
+    "micah xavier johnson": "2016_shooting_of_Dallas_police_officers",
 }
+POLICE_WORDS = ("police", "officer", "law enforcement", "deputy", "trooper")
+
+
+def summary_lookup(title):
+    """Return the canonical article title if it exists and mentions police."""
+    u = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(title)}"
+    for attempt in range(4):
+        try:
+            req = urllib.request.Request(u, headers=UA)
+            s = json.loads(urllib.request.urlopen(req, timeout=30).read())
+            text = (s.get("extract") or "").lower()
+            canonical = s.get("titles", {}).get("canonical") or title
+            return canonical if any(w in text for w in POLICE_WORDS) else None
+        except urllib.error.HTTPError as e:
+            if e.code == 429:
+                time.sleep(3 * (attempt + 1))
+                continue
+            return None  # 404 etc: title doesn't exist
+        except Exception:
+            return None
+    return None
+
+
+def resolve_article(name):
+    key = name.strip().lower()
+    if key in MANUAL_TITLES:
+        return MANUAL_TITLES[key]
+    for prefix in TITLE_PREFIXES:
+        title = f"{prefix} {name.strip()}".strip().replace(" ", "_")
+        hit = summary_lookup(title)
+        if hit:
+            return hit
+        time.sleep(0.5)
+    return None
+
+
+pv_victims = pd.read_csv(TWEETS_PER_VICTIM_CSV)
+top_names = (pv_victims.groupby("name")["tweet_count"].sum()
+             .sort_values(ascending=False).head(WIKI_TOP_N))
+total_vol = pv_victims["tweet_count"].sum()
 
 
 def fetch_views(article):
@@ -86,23 +156,36 @@ def fetch_views(article):
     raise RuntimeError(f"rate-limited after retries: {article}")
 
 
-pv_rows = []
-for name, candidates in ARTICLES.items():
-    best, best_article = [], None
-    for article in candidates:
+pv_rows, res_rows = [], []
+for name, vol in top_names.items():
+    article = resolve_article(name)
+    n_days = 0
+    if article:
         try:
             items = fetch_views(article)
+            n_days = len(items)
+            for it in items:
+                pv_rows.append({"name": name, "article": article,
+                                "date": pd.to_datetime(it["timestamp"][:8]),
+                                "views": it["views"]})
         except Exception as e:
-            print(f"  {article}: {e}")
-            items = []
-        if len(items) > len(best):
-            best, best_article = items, article
-        time.sleep(1.0)
-    for it in best:
-        pv_rows.append({"name": name, "article": best_article,
-                        "date": pd.to_datetime(it["timestamp"][:8]),
-                        "views": it["views"]})
-    print(f"  {name}: {len(best)} days via {best_article}")
+            print(f"  {name}: pageviews failed for {article}: {e}")
+            article = None
+    res_rows.append({"name": name, "tweet_volume": int(vol),
+                     "volume_share": vol / total_vol,
+                     "article": article, "pageview_days": n_days})
+    time.sleep(0.4)
+
+res = pd.DataFrame(res_rows)
+res.to_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv", index=False)
 pv = pd.DataFrame(pv_rows)
 pv.to_csv(DATA_REFERENCE / "wikipedia_pageviews_victims.csv", index=False)
-print(f"Wikipedia: {len(pv):,} article-days, {pv['name'].nunique()} victims")
+log_source("S8", f"Wikimedia pageviews, top-{WIKI_TOP_N} victims, en.wikipedia 2017-2020",
+           "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/",
+           out_file=DATA_REFERENCE / "wikipedia_pageviews_victims.csv")
+resolved = res[res["article"].notna()]
+print(f"Wikipedia: resolved {len(resolved)}/{len(res)} of top-{WIKI_TOP_N} victims "
+      f"({100 * resolved['volume_share'].sum():.1f}% of ALL tweet volume); "
+      f"{len(pv):,} article-days")
+print("Unresolved with largest volume:")
+print(res[res["article"].isna()].head(8)[["name", "tweet_volume"]].to_string(index=False))
