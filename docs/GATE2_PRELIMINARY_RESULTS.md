@@ -92,3 +92,25 @@ the race-matched awareness index (aware_black_log) is built and ready.
 - Window-level results shown "alone" and "jointly" differ because adjacent
   windows correlate at 0.8; both are reported.
 - Count models (PPML) and the DID remain to be run before conclusions harden.
+
+## 6. Checkpoint update (2026-07-12): call-type audit, outlier robustness, data augmentation
+
+1. **Call-type audit** (user-requested): EDPC (140k calls, phased in mid-2018 as a
+   recode of EDP), EDPM, EDPW, T-EDP added to the EDP family; OD/ODC/POISON/JUMPDC
+   confirmed absent from 2016-2021 (legacy codes). With the corrected family the
+   days-3-5 EDP suppression strengthens to -0.00065 (p=0.019).
+2. **Outlier sensitivity resolved**: Floyd episode = 3.2% of days, 28.9% of
+   regressor variance (log scale), but the suppression estimate is invariant:
+   drop-Floyd -0.00063 (p=0.031), drop-2020 -0.00115 (p<0.001), winsorized
+   unchanged. Unlike the legacy lag-7 result, current findings are not
+   outlier-driven.
+3. **Environment/network change**: the session environment's network policy was
+   updated on 2026-07-12 to allow api.census.gov, wikimedia.org,
+   data.cityofnewyork.us, and trends.google.com so public augmentation data
+   (ACS 2015-19 CD demographics, Wikipedia pageviews, NYC Well/311/NYPD CFS)
+   can be fetched directly. Policy applies to sessions started after the change;
+   fetches run via scripts/09_fetch_public_data.py.
+4. **Single-event view**: raw Floyd-only comparison vs 2017-19 calendar baseline
+   shows EDP share breaking ~0.8pp below its own pre-event level in the three
+   weeks after May 25, 2020 while injury shares rise 2-3pp -- the regression
+   signature, visible without a model.
