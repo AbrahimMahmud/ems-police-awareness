@@ -58,3 +58,33 @@ originator) becomes a nice-to-have, not a blocker.
 4. Gate: validation reviewed -> CAI becomes the instrument for
    CONFIRMATION_PLAN W1; discovery-period results re-expressed in CAI as a
    robustness column.
+
+## 7. Amendment: supply vs demand tiers (delivery is not consumption)
+
+News/TV volume measures what media DELIVERED; searches and pageviews measure
+what the public actually DID upon becoming aware. These are different objects
+and are kept in separate tiers:
+
+- **CAI-D (demand tier) = the awareness measure.** Components: wiki,
+  trends_us, trends_nyc. Every component requires an act by an aware person.
+  This is the treatment variable in all outcome models.
+- **CAI-S (supply tier) = exposure opportunity.** Components: gdelt_news,
+  gdelt_tv. Never enters outcome models as "awareness." Three uses:
+  1. *Conversion diagnostics*: daily attention-per-coverage ratio; days with
+     high supply but low demand ("delivery without uptake") are identified
+     and tabulated.
+  2. *Discriminating test*: on supply/demand divergence days, outcomes should
+     follow CAI-D, not CAI-S, if behavior responds to awareness rather than
+     to whatever else co-moves with news cycles. This is a falsification
+     test the single-source design could never run.
+  3. *Candidate instrument* (exploratory only): supply shocks as an IV for
+     demand-side awareness; exclusion restriction is debatable (protest
+     coverage may affect EMS directly), so IV results are labeled exploratory.
+- Optional refinement: consumption-weight gdelt_tv by coarse public channel
+  ratings (mention share x approximate audience = gross impressions); only if
+  monthly ratings can be sourced publicly and reproducibly.
+- Rationale kept on record: demand-side digital measures under-represent
+  older/offline populations; CAI-S is retained partly because TV reaches
+  them. If CAI-D and CAI-S correlate > 0.8 daily, the distinction is noted
+  as immaterial in practice; if they diverge, the two-tier separation is
+  doing real work.
