@@ -45,30 +45,6 @@ def get_json(url, tries=6):
 
 rows = []
 
-# --- GDELT DOC (news volume), chunked by 2 years ---
-# GDELT DOC fulltext begins 2017-01-01; 2015-16 news tier unavailable (documented)
-for y0 in range(2017, 2025, 1):
-    q = urllib.parse.quote(FROZEN_QUERY + " sourcecountry:US")
-    u = (f"https://api.gdeltproject.org/api/v2/doc/doc?query={q}"
-         f"&mode=timelinevol&format=json"
-         f"&startdatetime={y0}0101000000&enddatetime={y0}1231235959")
-    js = get_json(u)
-    for pt in js["timeline"][0]["data"]:
-        rows.append({"date": pt["date"][:8], "component": "gdelt_news", "value": pt["value"]})
-    time.sleep(15)
-
-# --- GDELT TV (cable airtime share), chunked by 2 years ---
-for y0 in range(2015, 2025, 1):
-    q = urllib.parse.quote(FROZEN_QUERY + " (station:CNN OR station:MSNBC OR station:FOXNEWS)")
-    u = (f"https://api.gdeltproject.org/api/v2/tv/tv?query={q}"
-         f"&mode=timelinevol&format=json&datanorm=perc"
-         f"&startdatetime={y0}0101000000&enddatetime={y0}1231235959")
-    js = get_json(u)
-    series = js.get("timeline", [{}])[0].get("data", [])
-    for pt in series:
-        rows.append({"date": pt["date"][:8], "component": "gdelt_tv", "value": pt["value"]})
-    time.sleep(15)
-
 # --- Wikipedia pageviews, extended window, all resolved articles ---
 res = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv")
 articles = res.dropna(subset=["article"]).drop_duplicates("article")["article"].tolist()
@@ -85,6 +61,35 @@ for i, art in enumerate(articles):
     time.sleep(0.4)
 for d, v in wiki_daily.items():
     rows.append({"date": d, "component": "wiki_ext", "value": v})
+
+# --- GDELT TV (cable airtime share), chunked by 2 years ---
+for y0 in range(2015, 2025, 1):
+    q = urllib.parse.quote(FROZEN_QUERY + " (station:CNN OR station:MSNBC OR station:FOXNEWS)")
+    u = (f"https://api.gdeltproject.org/api/v2/tv/tv?query={q}"
+         f"&mode=timelinevol&format=json&datanorm=perc"
+         f"&startdatetime={y0}0101000000&enddatetime={y0}1231235959")
+    js = get_json(u)
+    series = js.get("timeline", [{}])[0].get("data", [])
+    for pt in series:
+        rows.append({"date": pt["date"][:8], "component": "gdelt_tv", "value": pt["value"]})
+    time.sleep(15)
+
+# GDELT DOC: persistently rate-limited from this egress IP; tolerate failure
+# per AWARENESS_INDEX_DESIGN (missing-component rule) and mark pending.
+try:
+    # --- GDELT DOC (news volume), chunked by 2 years ---
+    # GDELT DOC fulltext begins 2017-01-01; 2015-16 news tier unavailable (documented)
+    for y0 in range(2017, 2025, 1):
+        q = urllib.parse.quote(FROZEN_QUERY + " sourcecountry:US")
+        u = (f"https://api.gdeltproject.org/api/v2/doc/doc?query={q}"
+             f"&mode=timelinevol&format=json"
+             f"&startdatetime={y0}0101000000&enddatetime={y0}1231235959")
+        js = get_json(u)
+        for pt in js["timeline"][0]["data"]:
+            rows.append({"date": pt["date"][:8], "component": "gdelt_news", "value": pt["value"]})
+        time.sleep(15)
+except RuntimeError as e:
+    print(f"gdelt_news UNAVAILABLE (rate-limited): {e}")
 
 out = pd.DataFrame(rows)
 out["date"] = pd.to_datetime(out["date"])
