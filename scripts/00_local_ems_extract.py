@@ -6,8 +6,8 @@ everything the corrected analysis pipeline needs, so the raw file never has to
 be moved:
 
   1. data/processed/ems_cd_day_calltype.parquet
-     District x day x final_call_type call counts for 2016-01-01..2021-12-31
-     (analysis window plus lag/lead buffer). Call types kept verbatim so mental
+     District x day x final_call_type call counts for 2014-12-01..2024-12-31
+     (confirmation-plan window plus lag/lead buffer). Call types kept verbatim so mental
      health definitions can be changed without re-reading the raw file.
 
   2. data/processed/ems_citywide_day_trends.parquet
@@ -107,7 +107,7 @@ out1 = DATA_PROCESSED / "ems_cd_day_calltype.parquet"
 sql1 = BASE_CTE + f"""
 SELECT incident_date, communitydistrict, final_call_type, COUNT(*) AS n_calls
 FROM ems_filtered
-WHERE incident_date BETWEEN DATE '2016-01-01' AND DATE '2021-12-31'
+WHERE incident_date BETWEEN DATE '2014-12-01' AND DATE '2024-12-31'
 GROUP BY 1, 2, 3
 ORDER BY 1, 2, 3
 """
