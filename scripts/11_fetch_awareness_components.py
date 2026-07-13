@@ -26,13 +26,20 @@ FROZEN_QUERY = '("police shooting" OR "police killing" OR "killed by police" OR 
 START, END = "2015-01-01", "2024-12-31"
 
 
-def get_json(url, tries=4):
+def get_json(url, tries=6):
+    """GDELT rate limiter returns a plain-text message, not an HTTP error;
+    detect it and back off hard (60s+) before retrying."""
     for a in range(tries):
         try:
-            return json.loads(urllib.request.urlopen(
-                urllib.request.Request(url, headers=UA), timeout=90).read())
+            body = urllib.request.urlopen(
+                urllib.request.Request(url, headers=UA), timeout=90).read()
+            text = body[:200].decode("utf-8", "ignore")
+            if "limit requests" in text or "Invalid" in text:
+                time.sleep(60 + 30 * a)
+                continue
+            return json.loads(body)
         except Exception:
-            time.sleep(8 * (a + 1))
+            time.sleep(15 * (a + 1))
     raise RuntimeError(f"failed: {url[:120]}")
 
 
@@ -40,27 +47,27 @@ rows = []
 
 # --- GDELT DOC (news volume), chunked by 2 years ---
 # GDELT DOC fulltext begins 2017-01-01; 2015-16 news tier unavailable (documented)
-for y0 in range(2017, 2025, 2):
+for y0 in range(2017, 2025, 1):
     q = urllib.parse.quote(FROZEN_QUERY + " sourcecountry:US")
     u = (f"https://api.gdeltproject.org/api/v2/doc/doc?query={q}"
          f"&mode=timelinevol&format=json"
-         f"&startdatetime={y0}0101000000&enddatetime={min(y0+1,2024)}1231235959")
+         f"&startdatetime={y0}0101000000&enddatetime={y0}1231235959")
     js = get_json(u)
     for pt in js["timeline"][0]["data"]:
         rows.append({"date": pt["date"][:8], "component": "gdelt_news", "value": pt["value"]})
-    time.sleep(6)
+    time.sleep(15)
 
 # --- GDELT TV (cable airtime share), chunked by 2 years ---
-for y0 in range(2015, 2025, 2):
+for y0 in range(2015, 2025, 1):
     q = urllib.parse.quote(FROZEN_QUERY + " (station:CNN OR station:MSNBC OR station:FOXNEWS)")
     u = (f"https://api.gdeltproject.org/api/v2/tv/tv?query={q}"
          f"&mode=timelinevol&format=json&datanorm=perc"
-         f"&startdatetime={y0}0101000000&enddatetime={min(y0+1,2024)}1231235959")
+         f"&startdatetime={y0}0101000000&enddatetime={y0}1231235959")
     js = get_json(u)
     series = js.get("timeline", [{}])[0].get("data", [])
     for pt in series:
         rows.append({"date": pt["date"][:8], "component": "gdelt_tv", "value": pt["value"]})
-    time.sleep(6)
+    time.sleep(15)
 
 # --- Wikipedia pageviews, extended window, all resolved articles ---
 res = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv")
