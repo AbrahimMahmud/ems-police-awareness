@@ -24,7 +24,9 @@ GEOS = {"trends_us": "US", "trends_nyc": "US-NY-501"}
 START, END = pd.Timestamp("2015-01-01"), pd.Timestamp("2024-12-31")
 CHUNK, OVERLAP = 180, 60
 
-pt = TrendReq(hl="en-US", tz=0, timeout=(10, 30), retries=3, backoff_factor=2)
+pt = TrendReq(hl="en-US", tz=0, timeout=(10, 30))  # no retries kwargs: pytrends
+# passes the removed urllib3 'method_whitelist' argument; our own retry loop
+# below handles transient failures instead.
 rows = []
 for comp, geo in GEOS.items():
     stitched = None
