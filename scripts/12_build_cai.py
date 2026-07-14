@@ -21,15 +21,17 @@ from config import DATA_PROCESSED, DATA_REFERENCE, OUTPUTS_TABLES
 
 OUTPUTS_TABLES.mkdir(parents=True, exist_ok=True)
 
-D_COMPONENTS = ["wiki_ext", "trends_us", "trends_nyc"]
+D_COMPONENTS = ["wiki_ext", "trends_us", "trends_nyc", "trends_victims"]
 S_COMPONENTS = ["gdelt_news", "gdelt_tv"]
 STD_WINDOW = ("2017-01-01", "2019-12-31")   # never a window containing Floyd
 FLOYD = ("2020-05-26", "2020-07-10")
 
 parts = [pd.read_csv(DATA_REFERENCE / "cai_components_daily.csv", parse_dates=["date"])]
-tr = DATA_REFERENCE / "cai_trends_daily.csv"
-if tr.exists():
-    parts.append(pd.read_csv(tr, parse_dates=["date"]))
+anchored = DATA_REFERENCE / "cai_trends_anchored.csv"
+if anchored.exists():
+    parts.append(pd.read_csv(anchored, parse_dates=["date"]))  # anchored US/NYC + victim terms
+else:
+    parts.append(pd.read_csv(DATA_REFERENCE / "cai_trends_daily.csv", parse_dates=["date"]))
 comp = pd.concat(parts, ignore_index=True)
 wide = comp.pivot_table(index="date", columns="component", values="value").sort_index()
 wide = wide.reindex(pd.date_range("2015-01-01", "2024-12-31", freq="D"))
@@ -84,7 +86,10 @@ top = std.nlargest(20, "cai_d").reset_index()[["date", "cai_d", "cai_s"]]
 attr = []
 for d in top["date"]:
     near = reg[(reg["date"] >= d - pd.Timedelta(days=14)) & (reg["date"] <= d)]
-    near = near[near["wiki_article"].notna() | near["name"].str.contains("Floyd|Taylor|Brooks|Clark", na=False)]
+    vol = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv")
+    volmap = vol.set_index(vol["name"].str.lower())["tweet_volume"]
+    near = near.assign(prom=near["name"].str.lower().map(volmap).fillna(0))
+    near = near.sort_values("prom", ascending=False)
     attr.append("; ".join(near["name"].head(2)) if len(near) else "")
 top["candidate_events"] = attr
 top.to_csv(OUTPUTS_TABLES / "cai_top_days.csv", index=False)
