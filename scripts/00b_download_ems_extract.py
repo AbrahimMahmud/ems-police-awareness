@@ -24,34 +24,43 @@ COLS = ("incident_datetime,communitydistrict,final_call_type,"
 PAGE = 500_000
 UA = {"User-Agent": "ems-police-awareness-research/1.0", "Accept": "text/csv"}
 
-frames = []
+# Pages ordered by :id (indexed, fast) and written to disk immediately;
+# rerunning resumes from existing page files.
+from pathlib import Path
+PAGES_DIR = DATA_PROCESSED / "ems_pages"
+PAGES_DIR.mkdir(parents=True, exist_ok=True)
 offset = 0
 while True:
-    url = (f"{BASE}?$select={COLS}&$order=incident_datetime"
-           f"&$where=incident_datetime >= '2005-01-01T00:00:00'"
-           f"&$limit={PAGE}&$offset={offset}")
-    url = url.replace(" ", "%20").replace("'", "%27")
+    pf = PAGES_DIR / f"page_{offset:09d}.parquet"
+    if pf.exists():
+        n = len(pd.read_parquet(pf, columns=["incident_datetime"]))
+        print(f"offset {offset:,}: cached ({n:,} rows)", flush=True)
+        if n < PAGE:
+            break
+        offset += PAGE
+        continue
+    url = f"{BASE}?$select={COLS}&$order=:id&$limit={PAGE}&$offset={offset}"
+    url = url.replace(" ", "%20")
     for attempt in range(5):
         try:
             raw = urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=600).read()
             break
         except Exception as e:
-            print(f"page offset={offset}: retry {attempt+1} ({e})")
+            print(f"offset {offset:,}: retry {attempt+1} ({e})", flush=True)
             time.sleep(30 * (attempt + 1))
     else:
         raise RuntimeError(f"page failed at offset {offset}")
     df = pd.read_csv(io.BytesIO(raw), dtype=str, low_memory=False)
     if len(df) == 0:
         break
-    frames.append(df)
-    print(f"offset {offset:,}: {len(df):,} rows "
-          f"(through {df['incident_datetime'].max()})", flush=True)
+    df.to_parquet(pf, index=False)
+    print(f"offset {offset:,}: {len(df):,} rows", flush=True)
     if len(df) < PAGE:
         break
     offset += PAGE
 
-ems = pd.concat(frames, ignore_index=True)
-del frames
+ems = pd.concat([pd.read_parquet(p) for p in sorted(PAGES_DIR.glob("page_*.parquet"))],
+                ignore_index=True)
 print(f"Total rows downloaded: {len(ems):,}")
 
 # --- same filters as 00_local_ems_extract.py ---
