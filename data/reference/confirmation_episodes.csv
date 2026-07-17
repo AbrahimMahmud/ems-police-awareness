@@ -1,0 +1,71 @@
+episode,start,end,n_high_days,peak_date,peak_cai_d,candidate_events,period
+1,2015-01-05,2015-01-22,11,2015-01-20,1.81,Kristiana Coignard; Tiano Meton,extension
+2,2015-01-30,2015-01-30,1,2015-01-30,1.4,John Barry Marshall; Alan James,extension
+3,2015-02-11,2015-02-11,1,2015-02-11,1.46,Fletcher Ray Stewart; Jonathan Paul Pierce,extension
+4,2015-02-18,2015-02-25,3,2015-02-18,1.5,Francis Spivey; Glenn C. Lewis,extension
+5,2015-03-19,2015-03-19,1,2015-03-19,1.29,Anthony Hill; Shane Watkins,extension
+6,2015-04-01,2015-05-29,43,2015-04-28,3.93,Freddie Gray; Walter Scott,extension
+7,2015-06-07,2015-06-10,4,2015-06-08,2.32,Isiah Hampton; Ryan Keith Bolinger,extension
+8,2015-06-18,2015-06-19,2,2015-06-19,1.37,Louis Atencio; Santos Laboy,extension
+9,2015-07-23,2015-07-24,2,2015-07-23,1.4,Samuel Dubose; Seth Raines,extension
+10,2015-10-27,2015-10-29,3,2015-10-28,1.36,Corey Jones; Larry Busby,extension
+11,2015-11-09,2015-11-09,1,2015-11-09,1.0,Antonio Henry; Adarius Brown,extension
+12,2015-12-01,2015-12-18,9,2015-12-16,2.53,Mario Woods; Erica Lauro,extension
+13,2016-05-12,2016-05-12,1,2016-05-12,1.01,Matthew Tucker; Sean Ryan Mondragon,extension
+14,2016-05-23,2016-05-25,3,2016-05-24,1.98,Doll Pierre Louis; Derek Allan Prophet,extension
+15,2016-07-06,2016-07-27,18,2016-07-08,5.15,Alton Sterling; Philando Castile,extension
+16,2016-09-21,2016-10-05,10,2016-09-22,3.03,Terence Crutcher; Tyre King,extension
+17,2016-11-16,2016-11-17,2,2016-11-16,1.43,Joshua Beal; Jose Gregory Anthony Franco,extension
+18,2016-11-30,2016-11-30,1,2016-11-30,1.65,Daniel Landeros; David K. Crosby-Dowdy,extension
+19,2017-04-25,2017-04-25,1,2017-04-25,1.01,Juan Manuel Avilla; Gavin Williams,discovery
+20,2017-05-02,2017-05-09,5,2017-05-03,2.02,Jordan Edwards; Peter Selis,discovery
+21,2017-05-18,2017-05-18,1,2017-05-18,1.82,Jayson Negron; Daniel George Boak,discovery
+22,2017-06-17,2017-06-23,5,2017-06-21,2.33,Michael Brown; Charleena Lyles,discovery
+23,2017-07-29,2017-07-30,2,2017-07-29,1.81,Aries Clark; Jashod Carter,discovery
+24,2017-09-25,2017-09-27,3,2017-09-25,2.13,Scout Schultz; Magdiel Sanchez,discovery
+25,2017-10-09,2017-10-11,2,2017-10-11,1.14,Brandon Wade Rucker; Kristian Martinez,discovery
+26,2017-10-30,2017-11-06,4,2017-10-31,1.23,Jeffrey Todd Sprowl; Dana Dean Carrothers,discovery
+27,2017-11-29,2017-11-30,2,2017-11-29,1.18,Quinton Shane Lee; Jonathan Maldonado,discovery
+28,2017-12-08,2017-12-12,3,2017-12-11,1.12,Marcia Metzger Aiken; Stacy Micheletti,discovery
+29,2018-03-22,2018-04-11,14,2018-03-27,2.62,Stephon Clark; Diante Yarber,discovery
+30,2018-04-24,2018-04-25,2,2018-04-25,1.3,Jese Paul Schlegel; Charles Boeh,discovery
+31,2018-05-02,2018-05-02,1,2018-05-02,1.12,"Damion ""Dae-Dae"" Collier; Manuel Palacio",discovery
+32,2018-05-24,2018-05-24,1,2018-05-24,1.06,Keeven Robinson; Dustin Brian Montano,discovery
+33,2018-09-05,2018-09-05,1,2018-09-05,1.04,Vanessa Marquez; Oshae Terry,discovery
+34,2019-01-17,2019-01-18,2,2019-01-17,1.1,Antonio Arce; George Robinson,discovery
+35,2019-03-04,2019-03-08,2,2019-03-04,1.58,Bradley Blackshire; Thomas Wayne Swinford,discovery
+36,2019-04-04,2019-04-04,1,2019-04-04,1.08,Oscar Cain; Daniel Robert Ramirez,discovery
+37,2019-04-22,2019-05-09,7,2019-04-30,1.2,Isaiah Lewis; William R. Clark,discovery
+38,2019-05-20,2019-05-20,1,2019-05-20,1.14,Dominique Clayton; Ronald Greene,discovery
+39,2019-06-15,2019-06-18,3,2019-06-18,1.94,Tyrese West; Brandon Webber,discovery
+40,2019-08-04,2019-08-04,1,2019-08-04,1.1,Connor Betts; De'Von Bailey,discovery
+41,2019-10-13,2019-10-24,6,2019-10-14,1.4,Atatiana Jefferson; Brian Mulkeen,discovery
+42,2019-11-10,2019-11-10,1,2019-11-10,1.1,Eric Reason; Lucky Miller,discovery
+43,2020-01-10,2020-01-10,1,2020-01-10,1.02,Miciah Lee; Clando Anitok,discovery
+44,2020-05-01,2020-05-16,11,2020-05-07,2.27,Nicolas Chavez; Jonas Joseph,discovery
+45,2020-05-26,2020-10-01,113,2020-05-31,5.36,George Floyd; Rayshard Brooks,discovery
+46,2020-10-14,2020-10-14,1,2020-10-14,1.01,Jonathan Price; Steven Vest,discovery
+47,2020-10-21,2020-11-11,12,2020-10-28,2.55,Walter Wallace Jr.; Marcellis Stinnette,discovery
+48,2020-12-09,2020-12-09,1,2020-12-09,1.2,Joshua Feast; Kenneth Dale Miller,discovery
+49,2021-01-06,2021-01-06,1,2021-01-06,1.05,Benicio Vasquez; Ashli Babbitt,extension
+50,2021-02-26,2021-02-26,1,2021-02-26,1.44,Frederick Earl Hight; Maggie A. Dickerson,extension
+51,2021-03-09,2021-03-09,1,2021-03-09,1.33,Jehlani Black; Jim Wright,extension
+52,2021-04-06,2021-04-28,16,2021-04-13,3.12,Oscar Herrera; Dalton James Gerrit Kooiman,extension
+53,2022-01-13,2022-01-13,1,2022-01-13,1.51,Alexander Joseph Bogusz; Edgar Morfin Mendoza,extension
+54,2022-02-18,2022-02-18,1,2022-02-18,1.19,Murdock J. Phillips; Michael Freigang,extension
+55,2022-03-28,2022-03-28,1,2022-03-28,1.04,Michael Allensworth; Lawrence Knudsen,extension
+56,2022-04-12,2022-04-14,2,2022-04-12,1.16,Anthony Hood-Schaffner; James Walsh,extension
+57,2022-04-28,2022-04-28,1,2022-04-28,1.26,Derrick Padilla; Charles Bangs,extension
+58,2022-05-09,2022-05-10,2,2022-05-10,1.38,Felipe De Jesus Herrera Jr.; Gregory Walker,extension
+59,2022-05-17,2022-05-19,3,2022-05-17,1.41,Rickey Looney; Tavis Carithers,extension
+60,2022-05-26,2022-05-26,1,2022-05-26,1.66,Robert Williams; Douglas Weishaupl,extension
+61,2022-10-13,2022-10-13,1,2022-10-13,1.31,Taylor L. Lowery; Christopher L. Ardoin,extension
+62,2022-11-18,2022-11-18,1,2022-11-18,1.03,Nicholas Mitchell; James Murphy,extension
+63,2022-11-30,2022-11-30,1,2022-11-30,1.19,Watts Williams; Joshua Antelope,extension
+64,2022-12-09,2022-12-09,1,2022-12-09,1.26,Peter Birmingham; Benjamin Moralez,extension
+65,2023-01-26,2023-02-09,10,2023-01-28,4.08,David Lawrence Couch III; Bradley S. Havermale,extension
+66,2023-03-09,2023-03-09,1,2023-03-09,1.03,Ghassan Radwan Baba; Alejandro Saucedo,extension
+67,2023-05-04,2023-05-11,3,2023-05-08,1.8,Robert Joseph Layton; Justin Roberts,extension
+68,2023-05-23,2023-05-23,1,2023-05-23,1.18,Treyvorius Stodghill; Anthony Zaremski,extension
+69,2023-11-16,2023-11-16,1,2023-11-16,1.0,Jeremy Dale Adams; Richard Pyorre,extension
+70,2024-05-13,2024-05-13,1,2024-05-13,1.09,Kristopher K. Handy; Ivory James Welch III,extension
