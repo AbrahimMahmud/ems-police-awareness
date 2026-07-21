@@ -147,3 +147,38 @@ the race-matched awareness index (aware_black_log) is built and ready.
    (more episodes: 2015-16 and 2021-23 via the validated Wikipedia/Trends
    instrument) to gain the power a confirmatory claim needs. Extension is the
    scientifically stronger path and is feasible with sources already in hand.
+
+## 8. Checkpoint (2026-07-18): CAI robustness on discovery period (Justin's Q3)
+
+Re-ran the discovery-period (2017-2020 ONLY; extension freeze intact) EDP and
+narrow-MH effects with the composite index CAI-D in place of legacy Twitter.
+Key result -- the specific "days 3-5 suppression" is measure-dependent:
+
+| Measure | outcome | days3-5 coef | p | joint lags0-7 p |
+|---|---|---|---|---|
+| Twitter | edp_share | -0.00065 | 0.019 | 0.156 |
+| Twitter | mh_narrow | -0.00072 | 0.016 | 0.057 |
+| CAI-D   | edp_share | +0.00038 | 0.407 | 0.041 |
+| CAI-D   | mh_narrow | +0.00051 | 0.293 | 0.006 |
+
+Reading (honest):
+1. A first-week relationship between awareness and MH-call composition is
+   present under both measures and is if anything STRONGER under CAI-D
+   (joint lags 0-7: mh_narrow p=0.006 vs 0.057). So "awareness moves call
+   composition in the first week" survives the measure swap.
+2. BUT the specific feature we highlighted -- a decline concentrated at
+   days 3-5 -- is specific to the legacy Twitter measure. Under CAI-D the
+   individual-lag structure differs (Twitter loads negative on lag 5; CAI-D
+   loads positive on lags 1 and 6), and the days-3-5 window is not negative.
+3. Implication: with only 12 discovery episodes the first-week signal is
+   real-ish but its precise temporal shape and daily-level sign are NOT
+   pinned down; different (both defensible) awareness measures pick different
+   noisy lags. This is the same fragility permutation inference flagged
+   (p=0.26) and is a strong argument for the extension sample.
+4. Consequence for the frozen plan: H1 was frozen as DIRECTIONAL ("EDP share
+   declines days 0-5") based on the Twitter measure. The composite index does
+   not reproduce that direction at that window. Recommend the confirmation
+   test be reframed to the robust object -- a two-sided first-week joint test
+   of awareness on EDP/narrow-MH composition -- rather than a directional
+   days-3-5 decline. TO BE RATIFIED WITH JUSTIN AT GATE C before the
+   confirmatory run.
