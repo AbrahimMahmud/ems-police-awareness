@@ -40,6 +40,7 @@ project_package/
 │   ├── figures/                 # Visualizations
 │   └── tables/                  # Regression results
 └── docs/                        # Documentation
+    ├── LITERATURE_REVIEW.md     # Comparable work, positioning, and research agenda
     ├── METHODOLOGY.md           # Detailed methodology and reasoning
     ├── RESULTS_INTERPRETATION.md  # Comprehensive results interpretation
     ├── AWARENESS_EVENT_DEFINITION.md  # Definition of high awareness days
@@ -230,6 +231,7 @@ See `docs/METHODOLOGY.md` for detailed explanation of methodological choices and
 
 ## Documentation
 
+- **`docs/LITERATURE_REVIEW.md`**: Comparable studies, how their designs differ from ours, and the resulting research agenda
 - **`docs/METHODOLOGY.md`**: Detailed methodology, data processing decisions, and analytical choices
 - **`docs/RESULTS_INTERPRETATION.md`**: Comprehensive results interpretation with all findings
 - **`docs/AWARENESS_EVENT_DEFINITION.md`**: Technical definition of high awareness event days
