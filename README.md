@@ -44,6 +44,8 @@ scripts/
   08_figures.py               publication figures (read saved tables only)
   09_fetch_public_data.py     ACS 2015-19 demographics, Wikipedia pageviews (+ hash log)
   10d_parse_cd_demographics.py  legacy 2010 Census parser (kept for vintage comparison)
+  16_bheard_exposure.py       B-HEARD confound control: precinct x CD crosswalk built
+                              from the dispatch file itself, CD exposure step table
 ```
 
 Run order: 00 (locally) → 01 → 02 → 03/03b/04/05/06/07 → 08.
@@ -60,4 +62,6 @@ pending documentation from the data's originator.
 
 - `docs/REWORK_PLAN.md` — issue register (I1–I19), design, review gates
 - `docs/GATE2_PRELIMINARY_RESULTS.md` — findings memo, updated at each checkpoint
+- `docs/GATE_C_MEMO.md` — decisions needed before the confirmatory run
+- `docs/RELATED_WORK.md` — comparable studies, positioning, and what to borrow
 - `docs/DATA_PROVENANCE.md` — source registry

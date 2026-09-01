@@ -85,3 +85,27 @@ EPISODE_MERGE_GAP_DAYS = 7
 
 # High-visibility days for the DID (plan §5.2): top decile of aware_log in analysis window.
 DID_EVENT_QUANTILE = 0.90
+
+# ---------------------------------------------------------------------------
+# B-HEARD confound control (GATE_C_MEMO.md §2)
+# ---------------------------------------------------------------------------
+# B-HEARD routes nonviolent mental-health 911 calls to EMS-led rather than
+# police-led response. It launched June 2021 and reduces mental-health EMS call
+# rates in adopting precincts, so it confounds the 2021-2024 confirmation
+# sample in the same direction as the hypothesis under test.
+BHEARD_LAUNCH = "2021-06-01"
+BHEARD_ADOPTION_CSV = DATA_REFERENCE / "bheard_precinct_adoption.csv"
+BHEARD_EXPOSURE_CSV = DATA_REFERENCE / "bheard_cd_exposure.csv"
+PRECINCT_CD_CROSSWALK_CSV = DATA_REFERENCE / "precinct_cd_crosswalk.csv"
+# Primary control uses the conservative (maximal-exposure) bound; "late" is the
+# pre-specified sensitivity. See the module docstring of 16_bheard_exposure.py.
+BHEARD_PRIMARY_BOUND = "early"
+
+# ---------------------------------------------------------------------------
+# Stacked episode event study (ROADMAP U1; GATE_C_MEMO.md §3)
+# ---------------------------------------------------------------------------
+EVENT_WINDOW_PRE = 14                  # days before the episode start
+EVENT_WINDOW_POST = 14                 # primary post-window
+EVENT_WINDOW_POST_SENSITIVITY = (28, 60)   # U2: Desmond et al. find year-long effects
+EVENT_REFERENCE_DAY = -1               # omitted category in event-time dummies
+RANDOMIZATION_DRAWS = 2000             # episode-level RI; primary p-value

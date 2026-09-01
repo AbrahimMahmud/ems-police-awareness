@@ -90,6 +90,42 @@ scripts). Update this file whenever a source is added, replaced, or re-downloade
 - **Role**: existence check + police-mention verification during S8 resolution;
   no data from this endpoint enters the analysis
 
+### S10. NYPD precinct x community district crosswalk (from the EMS dispatch file)
+- **Provider**: derived in-project from S1 via the NYC Open Data SODA API
+- **Endpoint**: https://data.cityofnewyork.us/resource/76xm-jjuj.json
+  (`$select=policeprecinct,communitydistrict,count(1)`, `$group` on both, 2015-2024)
+- **Accessed**: 2026-09-01 via `scripts/16_bheard_exposure.py`
+- **Method**: the dispatch file carries BOTH `policeprecinct` and `communitydistrict`
+  on every incident, so the crosswalk is an exact cross-tabulation over 14,909,558
+  incidents rather than an area-weighted overlay of two shapefiles. Weighting by
+  call volume is the correct weight when the quantity being apportioned is a share
+  of calls. Result: 131 precinct-CD pairs, 59 CDs, 77 precincts.
+- **File in project**: `data/reference/precinct_cd_crosswalk.csv`
+- **Role**: maps precinct-level B-HEARD adoption (S11) onto the CD-level panel
+- **Cite as**: derived from S1.
+
+### S11. B-HEARD precinct adoption schedule
+- **Provider**: NYC Mayor's Office of Community Mental Health (program announcements);
+  operational counts cross-checked against NYC Independent Budget Office,
+  "B-HEARD: A Look at Precinct Level Data" (January 2026)
+- **URL**: https://mentalhealth.cityofnewyork.us/b-heard
+- **Accessed**: 2026-09-01
+- **File in project**: `data/reference/bheard_precinct_adoption.csv`
+- **Known limitation**: OCMH announced expansions by NEIGHBOURHOOD, not by precinct
+  number, so intermediate tranche membership is not publicly pinned. The table
+  carries `adoption_earliest`/`adoption_latest` bounds and a confidence flag per
+  precinct (3 high, 11 medium, 17 low) rather than invented precision.
+  `scripts/16_bheard_exposure.py` asserts that the IBO operational counts fall
+  inside the bounds at 2022-01-01, 2023-01-01, 2024-01-01 and 2025-01-01.
+  **Verification of the intermediate dates is an open item.**
+- **Role**: confound control for the confirmation sample. B-HEARD reduces
+  mental-health EMS call rates in adopting precincts (Psychiatric Services,
+  doi:10.1176/appi.ps.20250528), affects 18 of 40 extension episodes, and biases in
+  the same direction as the hypothesis under test. See `docs/GATE_C_MEMO.md` §2.
+- **Derived output**: `data/reference/bheard_cd_exposure.csv` (CD x date x bound)
+- **Cite as**: NYC Mayor's Office of Community Mental Health, B-HEARD program
+  announcements; New York City Independent Budget Office (2026).
+
 ## Planned sources (not yet fetched)
 
 - **NYC Well contact volumes** (NYC Open Data) — substitution outcome; granularity TBD
