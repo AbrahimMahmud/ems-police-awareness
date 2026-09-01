@@ -248,15 +248,15 @@ until the paper rewrite.
 | Run 00 extract locally, upload 2 parquets | Abrahim | — |
 | Verify curated victim rows (flagged low-confidence) | Abrahim | — |
 | Twitter provenance from Justin | Abrahim | — |
-| Phase 1 (01, 02, QC, provenance doc) | Claude-assisted | parquets |
+| Phase 1 (01, 02, QC, provenance doc) | assisted | parquets |
 | **Gate 1: data sign-off** | Abrahim (+Justin) | Phase 1 |
 | PRE_ANALYSIS_NOTE.md | drafted for Abrahim's approval | Gate 1 |
-| Phase 2 (03) | Claude-assisted | pre-analysis note approved |
+| Phase 2 (03) | assisted | pre-analysis note approved |
 | **Gate 2: results decision point** | Abrahim + Justin | Phase 2 |
-| Phase 3 (04, 05) | Claude-assisted | Gate 2 |
-| Phase 4 (06, 07) | Claude-assisted | Gate 2 |
+| Phase 3 (04, 05) | assisted | Gate 2 |
+| Phase 4 (06, 07) | assisted | Gate 2 |
 | **Gate 3: full results review** | Abrahim + Justin | Phases 3–4 |
-| Phase 5 (docs, cleanup, 08 figures) | Claude-assisted | Gate 3 |
+| Phase 5 (docs, cleanup, 08 figures) | assisted | Gate 3 |
 | Paper rewrite | Abrahim | Gate 3 |
 
 ---

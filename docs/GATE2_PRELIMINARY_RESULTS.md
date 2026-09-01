@@ -104,11 +104,11 @@ the race-matched awareness index (aware_black_log) is built and ready.
    drop-Floyd -0.00063 (p=0.031), drop-2020 -0.00115 (p<0.001), winsorized
    unchanged. Unlike the legacy lag-7 result, current findings are not
    outlier-driven.
-3. **Environment/network change**: the session environment's network policy was
+3. **Environment/network change**: the analysis environment's network policy was
    updated on 2026-07-12 to allow api.census.gov, wikimedia.org,
    data.cityofnewyork.us, and trends.google.com so public augmentation data
    (ACS 2015-19 CD demographics, Wikipedia pageviews, NYC Well/311/NYPD CFS)
-   can be fetched directly. Policy applies to sessions started after the change;
+   can be fetched directly. Policy applies to runs started after the change;
    fetches run via scripts/09_fetch_public_data.py.
 4. **Single-event view**: raw Floyd-only comparison vs 2017-19 calendar baseline
    shows EDP share breaking ~0.8pp below its own pre-event level in the three
