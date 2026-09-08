@@ -181,3 +181,132 @@ that ignores both would overstate what the run can deliver.
 | 5 | Power recomputation | Do before closing the gate |
 
 After ratification: one confirmatory run, all hypotheses, no second look.
+
+---
+
+## 6. Ratification record — 2026-09-08
+
+Ratified in the 2026-09-08 working session. The decisions below are frozen; the
+confirmatory run may not proceed until §5 (power) is also closed.
+
+### 6.0 NEW — the legacy Twitter measure is retired as a treatment variable
+
+**Decision.** The Twitter series is removed from every substantive model. It was
+never re-fetchable, its collection methodology was never documented by the data's
+originator, and it cannot be defended in print. CAI-D — Wikipedia victim
+pageviews plus Google Trends (US and NYC) — is now the treatment variable
+everywhere (`config.PRIMARY_AWARENESS = "cai_d"`).
+
+**What Twitter is still for.** One thing only: `03b_bridge_legacy.py`, where the
+z-scored Twitter series is the *object* of the methods critique (ROADMAP D2) —
+the demonstration that z-scoring an attention measure manufactures
+outlier-leveraged findings. Using an indefensible measure to show why such
+measures fail is a different act from claiming a result with one, and the paper
+should make that distinction explicitly. `02_build_awareness.py` now writes
+`awareness_legacy_*.parquet` and is labelled accordingly.
+
+**Consequences, stated plainly:**
+
+1. **Everything in `GATE2_PRELIMINARY_RESULTS.md` §2–§4 is superseded.** Those
+   estimates were computed on the Twitter measure. §8 of that memo already
+   showed the days-3-5 EDP suppression is measure-dependent (−0.00065, p=0.019
+   under Twitter; +0.00038, p=0.407 under CAI-D). Retiring Twitter means the
+   headline "post-awareness avoidance of police-adjacent care" no longer has a
+   surviving estimate behind it. What survives the swap is the weaker,
+   two-sided object: a first-week relationship between awareness and call
+   composition (joint lags 0–7: p=0.041 EDP, p=0.006 narrow-MH under CAI-D).
+   The full discovery pipeline must be re-run under CAI-D before any framing
+   claim is made.
+2. **The race-matched exposure index had to be rebuilt.** `aware_black_log` was
+   Twitter-derived. `12_build_cai.py` now constructs `cai_d_black` /
+   `cai_d_nonblack` from per-victim Wikipedia pageviews joined to the victim
+   registry (99.99% of victim pageviews classified by race). Two limits, both
+   binding on H3:
+   - the per-victim pageview file spans **2017–2020 only**, so H3 cannot be
+     tested on the extension sample until pageviews are re-fetched over
+     2015–2024 (the Wikimedia API is reachable; the fetcher exists in
+     `09_fetch_public_data.py` and needs rate-limited re-running);
+   - `corr(cai_d, cai_d_black) = 0.834`. The identity-matched contrast is
+     therefore weak — the sub-index is close to the composite it sits inside,
+     and H3 has less independent variation than the Twitter version implied.
+
+### 6.1 H1 reframe — ratified, and now unavoidable
+
+Ratified as recommended in §1: a two-sided joint test of awareness on first-week
+(lags 0–7) EDP and narrow-MH call composition, under CAI-D
+(`config.H1_TEST`, `config.H1_OUTCOMES`).
+
+Note this is no longer a judgment call. H1 was frozen as a *directional* claim
+stated on the Twitter measure; with that measure retired, the directional
+hypothesis has no instrument to be stated on. The two-sided reframe is what
+remains, and the loss of power relative to a directional test stands as recorded
+in §1.
+
+### 6.2 B-HEARD — ratified as recommended
+
+Exposure control (early/conservative bound) primary, in every extension-sample
+specification, with its interaction with time-since-adoption; late bound as
+Sensitivity A; pre-2021-06 episode restriction as Sensitivity B; the
+discovery-period invariance check as validation. Unchanged from §2.
+
+### 6.3 Estimator — ratified as recommended
+
+Stacked episode event study primary, windows −14..+14 with +28/+60
+sensitivities, quasi-Poisson/PPML on counts alongside share OLS, and
+**episode-level randomization inference as the primary p-value**. The
+synthetic-null calibration in §3 is a precondition, not a robustness column: if
+the estimator does not reject at its nominal rate on data with this
+serial-correlation structure, the confirmatory p-value is uninterpretable.
+
+### 6.4 DID control group — even-distribution primary
+
+Treated = top-quartile %Black districts. **Primary control = the
+"even-distribution" set** (bottom quartile of a Herfindahl index over the four
+race shares). Q2 becomes the pre-specified sensitivity
+(`config.DID_CONTROL_PRIMARY`, `config.DID_CONTROL_SENSITIVITY`).
+
+Reasoning: both control sets are defined on demographics alone, so neither is
+outcome-dependent by construction. But the *choice between them* is now being
+made after the discovery run reported that Q2 is the one quartile with no
+effect (`GATE2_PRELIMINARY_RESULTS.md` §7.2). Promoting Q2 to control after
+learning that would maximise the measured contrast for a reason the data
+supplied, and a referee is entitled to say so. The Herfindahl set avoids the
+objection at some cost in interpretability. Both are reported; only the primary
+is inferential.
+
+### 6.5 Power — still open, still blocking
+
+Unchanged from §5. Must be recomputed for 40 extension episodes under the
+two-sided reframe with the B-HEARD control absorbing variation in the most
+recent episodes, and now also under CAI-D rather than Twitter. Until this is
+done there is no basis for saying the confirmatory run is worth making.
+
+### 6.6 New open items created by 6.0
+
+| # | Item | Blocking? |
+|---|---|---|
+| A | Re-run the full discovery pipeline under CAI-D; rewrite the Gate 2 memo from the results | Yes — no current framing claim is supported without it |
+| B | Re-fetch per-victim Wikipedia pageviews 2015–2024 so H3 is testable on the extension sample | Yes for H3 only |
+| C | `PANEL_BUFFER_START/END` and `ANALYSIS_START/END` are still discovery-scoped; widen for the extension run | Yes, before Phase D |
+| D | CAI validation numbers below need Justin's eye before the index is written up | No, but do it early |
+
+### 6.7 CAI validation battery — three numbers worth arguing about
+
+From `outputs/tables/cai_validation.csv` (run 2026-09-08):
+
+- **`corr(wiki_ext, trends_us) = 0.211`.** The two demand-tier components are
+  only weakly correlated. An unweighted mean of weakly-correlated components is
+  defensible as an index, but it means CAI-D is not measuring one clean thing,
+  and the paper has to say what it is measuring.
+- **`corr(wiki_ext, gdelt_news) = 0.713`.** Wikipedia pageviews correlate more
+  strongly with news *supply* than with the other demand component. This is
+  awkward for the demand/supply separation in `AWARENESS_INDEX_DESIGN.md` §7 and
+  should be addressed head-on rather than left for a referee to find.
+- **`corr(CAI-D, CAI-S) = 0.63`** (0.508 excluding Floyd). Below the 0.8
+  threshold the design document set, so the two-tier separation is doing real
+  work — the divergence-day falsification test has a genuine sample (18 days).
+
+Peak alignment is a point in the index's favour: the top CAI-D days are the
+Floyd episode, and the highest non-2020 day is **2016-07-08** (Alton Sterling and
+Philando Castile) — an extension-period event the index detects without having
+been tuned on it.

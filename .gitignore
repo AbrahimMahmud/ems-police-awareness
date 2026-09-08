@@ -58,3 +58,6 @@ Thumbs.db
 # Keep directory structure with .gitkeep
 !**/.gitkeep
 data/processed/ems_pages/
+
+# Local virtualenv
+.venv/

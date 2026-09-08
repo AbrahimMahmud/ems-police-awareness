@@ -1,6 +1,6 @@
 """Count models, permutation inference, and the deferral test (REWORK_PLAN §4).
 
-1. PPML: edp (count) ~ aware_log_w35 + log(other calls) | CD + dow + month-year.
+1. PPML: edp (count) ~ cai_d_w35 + log(other calls) | CD + dow + month-year.
    Resolves the shares-vs-counts question (share effects can be compositional).
 2. Permutation inference: circularly shift the awareness date-series by random
    offsets >= 60 days (preserving its autocorrelation), re-estimate the w35
@@ -28,7 +28,7 @@ N_PERM = 200
 rng = np.random.default_rng(20260712)
 
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
-aware = pd.read_parquet(DATA_PROCESSED / "awareness_daily.parquet")[["date", "aware_log"]]
+aware = pd.read_parquet(DATA_PROCESSED / "cai_daily.parquet")[["date", "cai_d"]]
 
 df = panel[panel["incident_date"].between(ANALYSIS_START, ANALYSIS_END)].copy()
 df = df[df["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE]
@@ -48,7 +48,7 @@ def w35_from(series_df, col):
     return pd.DataFrame({"date": s["date"], "w35": w})
 
 
-base_w = w35_from(aware, "aware_log")
+base_w = w35_from(aware, "cai_d")
 d = df.merge(base_w, left_on="incident_date", right_on="date", how="left").dropna(subset=["w35"])
 
 # 1. PPML count model
@@ -70,7 +70,7 @@ perm_bs = []
 for i in range(N_PERM):
     shift = int(rng.integers(60, n_days - 60))
     sh = aware.copy()
-    sh["aware_perm"] = np.roll(sh["aware_log"].to_numpy(), shift)
+    sh["aware_perm"] = np.roll(sh["cai_d"].to_numpy(), shift)
     pw = w35_from(sh, "aware_perm")
     dp = df.merge(pw, left_on="incident_date", right_on="date", how="left").dropna(subset=["w35"])
     mp = pf.feols(f"edp_share ~ w35 | {FE}", dp, vcov="iid")  # only coef needed
@@ -83,8 +83,8 @@ results.append({"test": "permutation_edp_share_w35", "coef": b_actual,
 
 # 3. Deferral test: cumulative days 0-8
 s = aware.sort_values("date").reset_index(drop=True)
-cum = s["aware_log"].rolling(9).mean().shift(0)
-cum_df = pd.DataFrame({"date": s["date"], "w08": s["aware_log"].shift(0).rolling(9).mean()})
+cum = s["cai_d"].rolling(9).mean().shift(0)
+cum_df = pd.DataFrame({"date": s["date"], "w08": s["cai_d"].shift(0).rolling(9).mean()})
 # rolling(9) at t averages t-8..t which equals lags 0..8
 d2 = df.merge(cum_df, left_on="incident_date", right_on="date", how="left").dropna(subset=["w08"])
 for y in ["edp_share", "mh_narrow_share"]:

@@ -33,7 +33,7 @@ def save(fig, name):
 # ---------------------------------------------------------------------------
 # Figure 1: awareness series with episodes (data section)
 # ---------------------------------------------------------------------------
-aw = pd.read_parquet(DATA_PROCESSED / "awareness_daily.parquet")
+aw = pd.read_parquet(DATA_PROCESSED / "cai_daily.parquet")
 ep = pd.read_csv(OUTPUTS_TABLES / "awareness_episodes.csv", parse_dates=["start", "end", "peak_date"])
 
 fig, ax = plt.subplots(figsize=(9, 3.2))

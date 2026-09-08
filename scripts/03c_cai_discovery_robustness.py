@@ -40,7 +40,7 @@ cai = pd.read_parquet(DATA_PROCESSED / "cai_daily.parquet")[["date", "cai_d"]]
 caiw = windows_from(cai, "cai_d")
 
 # Legacy Twitter (log)
-tw = pd.read_parquet(DATA_PROCESSED / "awareness_daily.parquet")[["date", "aware_log"]]
+tw = pd.read_parquet(DATA_PROCESSED / "awareness_legacy_daily.parquet")[["date", "aware_log"]]
 tww = windows_from(tw, "aware_log")
 
 FE = "communitydistrict + dow + month_year"

@@ -1,5 +1,16 @@
 # Gate 2 preliminary results memo
 
+> **STATUS (2026-09-08): §2–§4 and §6–§7 are SUPERSEDED.** Every estimate in
+> those sections was computed on the legacy Twitter awareness measure, which was
+> retired as a treatment variable at Gate C (`GATE_C_MEMO.md` §6.0). §8 already
+> showed the headline days-3-5 EDP suppression does not survive the swap to
+> CAI-D. The discovery pipeline must be re-run under CAI-D and this memo
+> rewritten from those results before any framing claim is made. Sections are
+> kept as the record of what the Twitter measure produced — which is also the
+> raw material for the methods contribution (ROADMAP D2). §1 (the bridge) stands
+> on its own terms, since demonstrating the failure of the z-scored Twitter
+> measure is its purpose.
+
 First full run of the corrected pipeline on real data (extracts of the NYC EMS
 dispatch file, 59 districts, 2017–2020). This memo is the decision-point input
 for the paper's framing. Tables referenced are in `outputs/tables/`.

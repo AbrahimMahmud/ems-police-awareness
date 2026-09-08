@@ -16,8 +16,13 @@ OUTPUTS_FIGURES = PROJECT_ROOT / "outputs" / "figures"
 # ---------------------------------------------------------------------------
 # Input files
 # ---------------------------------------------------------------------------
-TWEETS_DAILY_CSV = DATA_RAW / "220126_final_daily_tweet_count.csv"      # single source (I5)
-TWEETS_PER_VICTIM_CSV = DATA_RAW / "211118_tweet_count_name_date.csv"   # victim-level detail
+# Legacy Twitter files. RETIRED as a treatment variable (GATE_C_MEMO.md §6):
+# the collection methodology was never documented by the data's originator and
+# cannot be defended in print. They are retained for ONE purpose only -- the
+# bridge/methods result (ROADMAP D2), where the z-scored Twitter series is the
+# OBJECT OF CRITIQUE, not a measure anything is claimed from.
+TWEETS_DAILY_CSV = DATA_RAW / "220126_final_daily_tweet_count.csv"      # legacy/bridge only
+TWEETS_PER_VICTIM_CSV = DATA_RAW / "211118_tweet_count_name_date.csv"   # legacy/bridge only
 SHOOTINGS_DB_CSV = DATA_RAW / "fatalpoliceshootingsCLEANED.csv"         # WaPo Fatal Force (cleaned)
 VICTIM_CURATION_CSV = DATA_REFERENCE / "victim_curation_table.csv"      # manual top-100 (I9)
 EMS_EXTRACT_CD_DAY = DATA_PROCESSED / "ems_cd_day_calltype.parquet"     # from 00_local_ems_extract.py
@@ -71,9 +76,17 @@ MH_BROAD_GROUPS = MH_NARROW_GROUPS + ("od_poison_drug",)
 # ---------------------------------------------------------------------------
 # Awareness (I5, I6, I8, I9)
 # ---------------------------------------------------------------------------
-PRIMARY_AWARENESS = "aware_log"            # log(1 + tweet_count)
-AWARENESS_VARIANTS = ("aware_log", "aware_z", "aware_rank", "aware_re_log",
-                      "aware_black_log", "aware_nonblack_log")
+# Treatment variable: the composite index CAI-D (demand/attention tier), built
+# from Wikipedia victim pageviews + Google Trends by 12_build_cai.py. Every
+# component is public and re-fetchable, which is the whole point of the swap.
+PRIMARY_AWARENESS = "cai_d"
+AWARENESS_VARIANTS = ("cai_d", "cai_d_black", "cai_d_nonblack", "cai_s")
+
+# Legacy Twitter variants, available only via 02_build_awareness.py and used
+# only by 03b_bridge_legacy.py. Never a treatment in a reported result.
+LEGACY_AWARENESS = "aware_log"
+LEGACY_AWARENESS_VARIANTS = ("aware_log", "aware_z", "aware_rank", "aware_re_log",
+                             "aware_black_log", "aware_nonblack_log")
 LAGS = tuple(range(0, 29))                 # every k, 0..28 (meeting note)
 LEADS = tuple(range(1, 15))                # pre-trend checks, 1..14 (meeting note)
 ROLLING_WINDOWS = ((0, 2), (3, 5), (6, 8), (9, 11), (12, 14))  # meeting note
@@ -109,3 +122,21 @@ EVENT_WINDOW_POST = 14                 # primary post-window
 EVENT_WINDOW_POST_SENSITIVITY = (28, 60)   # U2: Desmond et al. find year-long effects
 EVENT_REFERENCE_DAY = -1               # omitted category in event-time dummies
 RANDOMIZATION_DRAWS = 2000             # episode-level RI; primary p-value
+
+# ---------------------------------------------------------------------------
+# Gate C ratified decisions (GATE_C_MEMO.md §6, 2026-09-08)
+# ---------------------------------------------------------------------------
+# H1 is a TWO-SIDED joint test of awareness on first-week (lags 0-7) EDP and
+# narrow-MH call composition under CAI-D. The directional days-3-5 decline is
+# retired: it was a feature of the legacy Twitter series, which is no longer a
+# treatment variable.
+H1_TEST = "two_sided_joint_lags_0_7"
+H1_OUTCOMES = ("edp_share", "mh_narrow_share")
+
+# DID control group (GATE_C_MEMO.md §4). Treated = top-quartile %Black CDs.
+# Primary control is the "even-distribution" set (bottom quartile of a
+# Herfindahl index over the four race shares) rather than Q2: Q2 is the one
+# quartile the discovery run found to have no effect, so promoting it to
+# control after seeing that would be selecting the comparison on the outcome.
+DID_CONTROL_PRIMARY = "even_distribution"
+DID_CONTROL_SENSITIVITY = "q2_black"

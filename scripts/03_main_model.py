@@ -1,7 +1,7 @@
 """Core estimation: full impulse response with corrected inference (REWORK_PLAN I1, I3, I6).
 
 Primary specification (docs/PRE_ANALYSIS_NOTE.md):
-    mh_narrow_share ~ aware_log lags 0..28 + leads 1..14
+    mh_narrow_share ~ cai_d lags 0..28 + leads 1..14
                       | CD FE + day-of-week FE + month x year FE
     sample: 2017-2020, 59 CDs, total_calls >= 5, all lags/leads observed
     primary inference: SEs clustered by DATE
@@ -17,7 +17,7 @@ Outputs (outputs/tables/):
     irf_windows.csv           rolling-window (binned) IRF, date-clustered
     progressive_controls.csv  controls added one at a time (meeting note), date-clustered
 Usage:
-    python 03_main_model.py [--outcome mh_narrow_share] [--aware aware_log]
+    python 03_main_model.py [--outcome mh_narrow_share] [--aware cai_d]
 """
 
 import argparse

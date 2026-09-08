@@ -5,7 +5,7 @@ concentrates in heavily Black/Hispanic districts -- the decisive test of the
 help-seeking-avoidance interpretation. Uses BOTH demographic vintages:
 ACS 2015-2019 (primary, period-matched) and Census 2010 (legacy comparison).
 
-Models (outcome = edp_share and mh_narrow_share; W = aware_log_w35, each
+Models (outcome = edp_share and mh_narrow_share; W = cai_d_w35, each
 window alone; date-clustered SEs):
   1. Interaction: y ~ W + W x (pct_black - 50)/10   [Justin's 50% baseline;
      coefficient = change in effect per +10pp Black share]
@@ -34,10 +34,10 @@ OUTPUTS_TABLES.mkdir(parents=True, exist_ok=True)
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
 lags = pd.read_parquet(DATA_PROCESSED / "awareness_lags.parquet")
 
-# race-matched awareness window (mean of black-victim lags 3-5)
-lags["aware_black_w35"] = lags[[f"aware_black_log_lag{k}" for k in (3, 4, 5)]].mean(axis=1)
-
-df = panel.merge(lags[["date", "aware_log_w35", "aware_log_w02", "aware_black_w35"]],
+# Race-matched awareness window: built by 02b_build_cai_lags.py from the
+# Wikipedia victim-pageview sub-index. Covers fewer days than CAI-D (see
+# qc_cai_lags.csv); models using it drop the uncovered rows.
+df = panel.merge(lags[["date", "cai_d_w35", "cai_d_w02", "cai_d_black_w35"]],
                  left_on="incident_date", right_on="date", how="left")
 df = df[df["incident_date"].between(ANALYSIS_START, ANALYSIS_END)]
 df = df[df["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE]
@@ -97,21 +97,21 @@ def quartiles(outcome, wvar, share_col, vintage, label):
 
 for outcome in ["edp_share", "mh_narrow_share"]:
     for share_col, vintage in [("pct_black_acs", "acs1519"), ("pct_black", "census2010")]:
-        interaction(outcome, "aware_log_w35", share_col, vintage, "black")
-        quartiles(outcome, "aware_log_w35", share_col, vintage, "pct_black")
-    interaction(outcome, "aware_log_w35", "bh_acs", "acs1519", "black_hispanic")
-    quartiles(outcome, "aware_log_w35", "bh_acs", "acs1519", "black_hispanic")
+        interaction(outcome, "cai_d_w35", share_col, vintage, "black")
+        quartiles(outcome, "cai_d_w35", share_col, vintage, "pct_black")
+    interaction(outcome, "cai_d_w35", "bh_acs", "acs1519", "black_hispanic")
+    quartiles(outcome, "cai_d_w35", "bh_acs", "acs1519", "black_hispanic")
     # binary split (meeting note)
-    d = df.dropna(subset=[outcome, "aware_log_w35", "bh_acs"]).copy()
+    d = df.dropna(subset=[outcome, "cai_d_w35", "bh_acs"]).copy()
     med = demo["pct_black_acs"].add(demo["pct_hispanic_acs"]).median()
     for grp, lab in [(d[d["bh_acs"] > med], "above_median_BH"),
                      (d[d["bh_acs"] <= med], "below_median_BH")]:
-        m = pf.feols(f"{outcome} ~ aware_log_w35 | {FE}", grp, vcov=VC)
+        m = pf.feols(f"{outcome} ~ cai_d_w35 | {FE}", grp, vcov=VC)
         rows.append({"model": "binary_split", "vintage": "acs1519", "outcome": outcome,
-                     "term": lab, "coef": m.coef()["aware_log_w35"],
-                     "se": m.se()["aware_log_w35"], "p": m.pvalue()["aware_log_w35"]})
+                     "term": lab, "coef": m.coef()["cai_d_w35"],
+                     "se": m.se()["cai_d_w35"], "p": m.pvalue()["cai_d_w35"]})
     # race-matched exposure
-    interaction(outcome, "aware_black_w35", "pct_black_acs", "acs1519", "blackvictim_x_black")
+    interaction(outcome, "cai_d_black_w35", "pct_black_acs", "acs1519", "blackvictim_x_black")
 
 res = pd.DataFrame(rows)
 res.to_csv(OUTPUTS_TABLES / "heterogeneity_results.csv", index=False)

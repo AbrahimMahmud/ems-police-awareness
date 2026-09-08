@@ -31,7 +31,7 @@ SPARSE_LAGS = (0, 1, 2, 3, 7, 14, 21, 28)
 FLOYD_EPISODE = ("2020-05-26", "2020-07-03")  # episode 6 in awareness_episodes.csv
 
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
-lags = pd.read_parquet(DATA_PROCESSED / "awareness_lags.parquet")
+lags = pd.read_parquet(DATA_PROCESSED / "awareness_legacy_lags.parquet")
 
 df = panel.merge(lags, left_on="incident_date", right_on="date", how="left")
 df = df[df["incident_date"].between(ANALYSIS_START, ANALYSIS_END)]

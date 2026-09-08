@@ -1,9 +1,17 @@
-"""Build the awareness dataset from the single Twitter source (REWORK_PLAN I5-I9).
+"""Build the LEGACY Twitter awareness dataset (REWORK_PLAN I5-I9).
+
+RETIRED AS A TREATMENT VARIABLE (GATE_C_MEMO.md §6, 2026-09-08). The Twitter
+collection methodology was never documented by the data's originator and is not
+defensible in print. This script is retained for one purpose: it feeds
+03b_bridge_legacy.py, where the z-scored Twitter series is the OBJECT of the
+methods critique (ROADMAP D2) rather than a measure anything is claimed from.
+The treatment variable for every substantive model is CAI-D; see
+12_build_cai.py and 02b_build_cai_lags.py.
 
 Outputs:
-  data/processed/awareness_daily.parquet   one row per date 2017-2020: raw counts,
+  data/processed/awareness_legacy_daily.parquet  one row per date 2017-2020: raw counts,
                                            all transform variants, race-specific indices
-  data/processed/awareness_lags.parquet    one row per date (buffered range) with
+  data/processed/awareness_legacy_lags.parquet  one row per date (buffered range) with
                                            lag 0..28 / lead 1..14 columns per variant,
                                            plus rolling-window means for the primary
   outputs/tables/awareness_episodes.csv    high-awareness episodes with victim attribution
@@ -28,16 +36,16 @@ import pandas as pd
 from config import (
     ANALYSIS_END,
     ANALYSIS_START,
-    AWARENESS_VARIANTS,
     DATA_PROCESSED,
     EPISODE_MERGE_GAP_DAYS,
     EPISODE_Z_THRESHOLD,
     LAGS,
     LEADS,
+    LEGACY_AWARENESS,
+    LEGACY_AWARENESS_VARIANTS,
     OUTPUTS_TABLES,
     PANEL_BUFFER_END,
     PANEL_BUFFER_START,
-    PRIMARY_AWARENESS,
     ROLLING_WINDOWS,
     SHOOTINGS_DB_CSV,
     TWEETS_DAILY_CSV,
@@ -131,7 +139,7 @@ aware["aware_re_log"] = np.log1p(aware["tweets_and_re"])
 aware["aware_black_log"] = np.log1p(aware["black_victim"])
 aware["aware_nonblack_log"] = np.log1p(aware["nonblack_victim"])
 
-out_daily = DATA_PROCESSED / "awareness_daily.parquet"
+out_daily = DATA_PROCESSED / "awareness_legacy_daily.parquet"
 aware.to_parquet(out_daily, index=False)
 
 # ---------------------------------------------------------------------------
@@ -143,7 +151,7 @@ grid = full_dates.merge(aware, on="date", how="left").sort_values("date").reset_
 # and downstream models drop those rows explicitly.
 
 lag_cols = {}
-for var in AWARENESS_VARIANTS:
+for var in LEGACY_AWARENESS_VARIANTS:
     for k in LAGS:
         lag_cols[f"{var}_lag{k}"] = grid[var].shift(k)
     for j in LEADS:
@@ -152,11 +160,11 @@ lag_tbl = pd.concat([grid[["date"]], pd.DataFrame(lag_cols)], axis=1)
 
 win_cols = {}
 for lo, hi in ROLLING_WINDOWS:
-    cols = [f"{PRIMARY_AWARENESS}_lag{k}" for k in range(lo, hi + 1)]
-    win_cols[f"{PRIMARY_AWARENESS}_w{lo}{hi}"] = lag_tbl[cols].mean(axis=1)
+    cols = [f"{LEGACY_AWARENESS}_lag{k}" for k in range(lo, hi + 1)]
+    win_cols[f"{LEGACY_AWARENESS}_w{lo}{hi}"] = lag_tbl[cols].mean(axis=1)
 lag_tbl = pd.concat([lag_tbl, pd.DataFrame(win_cols)], axis=1)
 
-out_lags = DATA_PROCESSED / "awareness_lags.parquet"
+out_lags = DATA_PROCESSED / "awareness_legacy_lags.parquet"
 lag_tbl.to_parquet(out_lags, index=False)
 
 # ---------------------------------------------------------------------------
@@ -198,7 +206,7 @@ ep_df.to_csv(OUTPUTS_TABLES / "awareness_episodes.csv", index=False)
 # ---------------------------------------------------------------------------
 # 6. QC outputs
 # ---------------------------------------------------------------------------
-variant_corr = aware[list(AWARENESS_VARIANTS)].corr().round(3)
+variant_corr = aware[list(LEGACY_AWARENESS_VARIANTS)].corr().round(3)
 
 qc = pd.DataFrame([
     {"metric": "daily_rows", "value": len(aware)},
@@ -228,9 +236,9 @@ top_days[["date", "tweet_count", "tweets_and_re", "aware_log", "aware_z",
           "black_victim", "nonblack_victim", "unclassified", "top_victim"]].to_csv(
     OUTPUTS_TABLES / "qc_awareness_top_days.csv", index=False)
 
-print(f"awareness_daily.parquet: {len(aware):,} rows "
+print(f"awareness_legacy_daily.parquet: {len(aware):,} rows "
       f"({aware['date'].min().date()} -> {aware['date'].max().date()})")
-print(f"awareness_lags.parquet:  {len(lag_tbl):,} rows x {lag_tbl.shape[1]} cols")
+print(f"awareness_legacy_lags.parquet: {len(lag_tbl):,} rows x {lag_tbl.shape[1]} cols")
 print(f"Race classification coverage: {coverage:.1%} of tweet volume "
       f"({int((pv['match_source'] == 'curated').sum()):,} rows via curated table)")
 print(f"Episodes (z>{EPISODE_Z_THRESHOLD}, merge<{EPISODE_MERGE_GAP_DAYS}d): {len(ep_df)}")
