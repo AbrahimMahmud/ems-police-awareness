@@ -59,6 +59,7 @@ scripts/
   11c_trends_anchor_and_victims.py  weekly-anchored Trends + victim-name terms
   12_build_cai.py             CAI-D (treatment) and CAI-S (diagnostics), race-matched
                               sub-indices, and the validation battery
+  20_data_audit.py            integrity audit of all committed inputs (no outcome data)
   16_bheard_exposure.py       B-HEARD confound control: precinct x CD crosswalk built
                               from the dispatch file itself, CD exposure step table
 ```
@@ -82,4 +83,6 @@ pending documentation from the data's originator.
 - `docs/RELATED_WORK.md` — comparable studies, positioning, and what to borrow
 - `docs/PAPER_PLAN.md` — venue decision, section skeleton, display items, RECORD
   obligations, and drafting rules for the manuscript
+- `docs/DATA_AUDIT.md` — integrity audit of every committed input; the reason the
+  index construction and episode list are being corrected
 - `docs/DATA_PROVENANCE.md` — source registry
