@@ -61,3 +61,6 @@ data/processed/ems_pages/
 
 # Local virtualenv
 .venv/
+
+# Wikipedia probe cache (regenerable; scripts/21_refetch_wikipedia.py)
+data/processed/wiki_probe_cache/

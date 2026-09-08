@@ -58,19 +58,28 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
-from config import DATA_REFERENCE, VALID_CDS
+from config import (
+    BHEARD_ADOPTION_CSV,
+    BHEARD_EXPOSURE_CSV,
+    BHEARD_LAUNCH as CFG_BHEARD_LAUNCH,
+    DATA_REFERENCE,
+    PRECINCT_CD_CROSSWALK_CSV,
+    VALID_CDS,
+)
 
 SOURCES_LOG = DATA_REFERENCE / "data_sources.csv"
-ADOPTION_CSV = DATA_REFERENCE / "bheard_precinct_adoption.csv"
-CROSSWALK_CSV = DATA_REFERENCE / "precinct_cd_crosswalk.csv"
-EXPOSURE_CSV = DATA_REFERENCE / "bheard_cd_exposure.csv"
+# Paths and the launch date come from config: a pre-registered control must
+# not have a second source of truth (REWORK_PLAN.md §7, "no magic numbers").
+ADOPTION_CSV = BHEARD_ADOPTION_CSV
+CROSSWALK_CSV = PRECINCT_CD_CROSSWALK_CSV
+EXPOSURE_CSV = BHEARD_EXPOSURE_CSV
 
 EMS_SODA = "https://data.cityofnewyork.us/resource/76xm-jjuj.json"
 CROSSWALK_START = "2015-01-01"
 CROSSWALK_END = "2025-01-01"
 
 # B-HEARD launched June 2021; nothing before this can be exposed.
-BHEARD_LAUNCH = pd.Timestamp("2021-06-01")
+BHEARD_LAUNCH = pd.Timestamp(CFG_BHEARD_LAUNCH)
 
 # Independent validation constraints: NYC Independent Budget Office,
 # "B-HEARD: A Look at Precinct Level Data" (January 2026) reports the number of
@@ -121,9 +130,12 @@ def fetch_crosswalk():
     # Restrict to the 59 analysis CDs (I7); park/airport joint-interest areas out.
     df = df[df["communitydistrict"].isin(VALID_CDS)].copy()
 
-    # w_precinct_in_cd: of this CD's calls, what fraction sits in this precinct.
+    # w_cd_calls_from_precinct: of this community district's EMS calls, the fraction handled
+    # by this precinct. Normalised BY COMMUNITY DISTRICT, so it sums to 1 within
+    # each CD and NOT within each precinct. That is the direction B-HEARD exposure
+    # needs: a CD's exposure is the call-weighted share covered by adopters.
     # This is the weight used to convert precinct-level adoption into CD exposure.
-    df["w_precinct_in_cd"] = df["n"] / df.groupby("communitydistrict")["n"].transform("sum")
+    df["w_cd_calls_from_precinct"] = df["n"] / df.groupby("communitydistrict")["n"].transform("sum")
     return df.sort_values(["communitydistrict", "policeprecinct"]).reset_index(drop=True)
 
 
@@ -144,7 +156,7 @@ def build_exposure(xwalk, adoption):
         covered = merged.dropna(subset=["adopt_date"])
         for cd, g in covered.groupby("communitydistrict"):
             cum = 0.0
-            for d, step in g.groupby("adopt_date")["w_precinct_in_cd"].sum().items():
+            for d, step in g.groupby("adopt_date")["w_cd_calls_from_precinct"].sum().items():
                 cum += float(step)
                 out.append({"bound": bound, "communitydistrict": int(cd),
                             "effective_from": d.date().isoformat(),
@@ -231,7 +243,7 @@ def main():
     # Round-trip check: the step table must reproduce the same coverage the
     # crosswalk implies once every precinct has adopted.
     implied = (xwalk[xwalk["policeprecinct"].isin(adoption["precinct"])]
-               .groupby("communitydistrict")["w_precinct_in_cd"].sum().clip(upper=1.0))
+               .groupby("communitydistrict")["w_cd_calls_from_precinct"].sum().clip(upper=1.0))
     rebuilt = final.set_index("communitydistrict")["exposure"]
     diff = (implied - rebuilt.reindex(implied.index).fillna(0)).abs().max()
     assert diff < 1e-6, f"step table disagrees with crosswalk by {diff:.2e}"

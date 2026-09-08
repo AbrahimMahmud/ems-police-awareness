@@ -91,7 +91,7 @@ LAGS = tuple(range(0, 29))                 # every k, 0..28 (meeting note)
 LEADS = tuple(range(1, 15))                # pre-trend checks, 1..14 (meeting note)
 ROLLING_WINDOWS = ((0, 2), (3, 5), (6, 8), (9, 11), (12, 14))  # meeting note
 
-# Episode definition (plan §4.1): runs of days with aware_z > EPISODE_Z_THRESHOLD,
+# Episode definition (plan §4.1): runs of days with cai_d > EPISODE_Z_THRESHOLD,
 # merged when separated by fewer than EPISODE_MERGE_GAP_DAYS days.
 EPISODE_Z_THRESHOLD = 1.0
 EPISODE_MERGE_GAP_DAYS = 7
@@ -130,6 +130,12 @@ RANDOMIZATION_DRAWS = 2000             # episode-level RI; primary p-value
 # narrow-MH call composition under CAI-D. The directional days-3-5 decline is
 # retired: it was a feature of the legacy Twitter series, which is no longer a
 # treatment variable.
+# The confirmation freeze. While True, freeze_guard.assert_discovery_only()
+# rejects any outcome row outside ANALYSIS_START..ANALYSIS_END, so no model can
+# reach the extension sample. Setting this to False IS the act of opening the
+# confirmation sample: do it in its own commit, after Gate C ratification.
+FREEZE_ACTIVE = True
+
 H1_TEST = "two_sided_joint_lags_0_7"
 H1_OUTCOMES = ("edp_share", "mh_narrow_share")
 

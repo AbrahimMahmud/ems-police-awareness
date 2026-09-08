@@ -23,14 +23,17 @@ from config import (
     MIN_TOTAL_CALLS_FOR_SHARE,
     OUTPUTS_TABLES,
 )
+from freeze_guard import assert_discovery_only, freeze_banner
 
 N_PERM = 200
 rng = np.random.default_rng(20260712)
 
+freeze_banner("04_robustness")
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
 aware = pd.read_parquet(DATA_PROCESSED / "cai_daily.parquet")[["date", "cai_d"]]
 
 df = panel[panel["incident_date"].between(ANALYSIS_START, ANALYSIS_END)].copy()
+assert_discovery_only(df, where="04_robustness")
 df = df[df["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE]
 df["month_year"] = df["year"] * 100 + df["month"]
 df["date_id"] = df["incident_date"].dt.strftime("%Y%m%d").astype(int)
@@ -77,6 +80,14 @@ for i in range(N_PERM):
     perm_bs.append(mp.coef()["w35"])
 perm_bs = np.array(perm_bs)
 p_perm = float((np.abs(perm_bs) >= abs(b_actual)).mean())
+
+# Persist the draws, not just the p-value. Randomization inference is the primary
+# p-value for this project, so the null distribution is itself a reportable
+# object: the permutation histogram with the observed estimate marked is the
+# honest picture of the headline result (docs/PAPER_PLAN.md §6.2).
+pd.DataFrame({"draw": np.arange(1, len(perm_bs) + 1), "coef": perm_bs}).assign(
+    observed=b_actual, outcome="edp_share", window="w35", n_draws=len(perm_bs),
+).to_csv(OUTPUTS_TABLES / "permutation_draws.csv", index=False)
 results.append({"test": "permutation_edp_share_w35", "coef": b_actual,
                 "se": float(perm_bs.std()), "p": p_perm,
                 "note": f"{N_PERM} circular shifts >=60 days; p = share |b_perm| >= |b_actual|"})

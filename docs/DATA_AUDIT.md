@@ -76,11 +76,23 @@ precisely the §1 scaling problem restated.
 
 ## 3. Wikipedia: a 2015 hole and four resolver failures
 
-**Coverage hole.** `wiki_ext` begins **2015-07-01**. Twelve extension episodes
-start in 2015; those falling in January–June 2015 were defined with no Wikipedia
-component at all. `gdelt_news` is missing for 2015–2016 and 2023–2024 — it sits
-in the supply tier so it does not enter CAI-D, but it disables the
-divergence-day falsification test in those years.
+**Coverage hole — a hard limit, not a defect.** `wiki_ext` begins
+**2015-07-01** because the Wikimedia pageviews API itself begins there
+(`11_fetch_awareness_components.py:7`). No fetch can recover January–June 2015.
+Twelve extension episodes start in 2015 and those before July were therefore
+defined with no Wikipedia component at all. The correct response is to **drop
+that window from the analysis sample**, not to try to repair it: an index built
+from a different component set is not the same measurement.
+
+`gdelt_news` is missing for 2015–2016 and 2023–2024. It sits in the supply tier
+so it does not enter CAI-D, but it disables the divergence-day falsification test
+in those years.
+
+**The resolver bug reaches CAI-D, not just H3.** `wiki_ext` is built from the same
+`wikipedia_article_resolution.csv` article list
+(`11_fetch_awareness_components.py:49-50`), so the four near-empty series below
+contribute almost nothing to the composite index and therefore to the episode
+list — not merely to the race sub-indices.
 
 **Resolver accepted low-traffic redirects.** Four victims resolved to
 `Killing_of_*` titles that carry almost no traffic, when the real articles are

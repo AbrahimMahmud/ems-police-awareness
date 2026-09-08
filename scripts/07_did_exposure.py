@@ -26,10 +26,16 @@ from config import (
     DATA_REFERENCE,
     MIN_TOTAL_CALLS_FOR_SHARE,
     OUTPUTS_TABLES,
+    DID_CONTROL_PRIMARY,
+    DID_CONTROL_SENSITIVITY,
+    FREEZE_ACTIVE,
 )
+from freeze_guard import assert_discovery_only, freeze_banner
 
+freeze_banner("07_did_exposure")
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
 panel = panel[panel["incident_date"].between(ANALYSIS_START, ANALYSIS_END)]
+assert_discovery_only(panel, where="07_did_exposure")
 panel = panel[panel["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE].copy()
 panel["date_id"] = panel["incident_date"].dt.strftime("%Y%m%d").astype(int)
 
@@ -40,12 +46,24 @@ acs["q_black"] = pd.qcut(acs["pct_black_acs"], 4, labels=False)
 acs["q_herf"] = pd.qcut(acs["herfindahl"], 4, labels=False)
 
 treated_cds = set(acs.loc[acs["q_black"] == 3, "communitydistrict"])
+# Control-group names match config so the Gate C ratification (memo §6.4) is
+# enforced by code rather than only recorded in prose. Primary is the
+# even-distribution set; Q2 is the pre-specified sensitivity, because Q2 was
+# found to be the one quartile with no effect and promoting it after learning
+# that would select the comparison on the outcome.
 controls = {
-    "Q2_black": set(acs.loc[acs["q_black"] == 1, "communitydistrict"]),
-    "even_mix": set(acs.loc[acs["q_herf"] == 0, "communitydistrict"]),
+    "even_distribution": set(acs.loc[acs["q_herf"] == 0, "communitydistrict"]),
+    "q2_black": set(acs.loc[acs["q_black"] == 1, "communitydistrict"]),
 }
+assert DID_CONTROL_PRIMARY in controls and DID_CONTROL_SENSITIVITY in controls
 
-ep = pd.read_csv(OUTPUTS_TABLES / "awareness_episodes.csv", parse_dates=["start", "end"])
+# The frozen CAI-D episode list is the single source of episode timing. While the
+# confirmation freeze holds, only discovery-period episodes are in scope.
+ep = pd.read_csv(DATA_REFERENCE / "confirmation_episodes.csv", parse_dates=["start", "end"])
+if FREEZE_ACTIVE:
+    ep = ep[ep["period"] == "discovery"]
+ep = ep.sort_values("start").reset_index(drop=True)
+print(f"episodes in scope: {len(ep)} ({'discovery only' if FREEZE_ACTIVE else 'all periods'})")
 starts = ep["start"].tolist()
 
 frames = []
@@ -63,19 +81,20 @@ win["post"] = (win["rel_day"] > 0).astype(int)
 
 rows, path_rows = [], []
 for ctrl_name, ctrl_cds in controls.items():
+    is_primary = int(ctrl_name == DID_CONTROL_PRIMARY)
     sub = win[win["communitydistrict"].isin(treated_cds | ctrl_cds)].copy()
     sub["treated"] = sub["communitydistrict"].isin(treated_cds).astype(int)
     sub["tp"] = sub["treated"] * sub["post"]
     for outcome in ["edp_share", "mh_narrow_share", "injury_share"]:
         d = sub.dropna(subset=[outcome])
         m = pf.feols(f"{outcome} ~ tp + post | communitydistrict + episode", d, vcov={"CRV1": "date_id"})
-        rows.append({"estimand": "week_after_vs_before", "control": ctrl_name,
+        rows.append({"is_primary": is_primary, "estimand": "week_after_vs_before", "control": ctrl_name,
                      "outcome": outcome, "coef": m.coef()["tp"], "se": m.se()["tp"],
                      "p": m.pvalue()["tp"], "n_obs": len(d),
                      "n_treated_cds": len(treated_cds), "n_control_cds": len(ctrl_cds)})
         d7 = d[d["rel_day"].isin([-1, 7])]
         m7 = pf.feols(f"{outcome} ~ tp + post | communitydistrict + episode", d7, vcov={"CRV1": "date_id"})
-        rows.append({"estimand": "day7_vs_daym1", "control": ctrl_name,
+        rows.append({"is_primary": is_primary, "estimand": "day7_vs_daym1", "control": ctrl_name,
                      "outcome": outcome, "coef": m7.coef()["tp"], "se": m7.se()["tp"],
                      "p": m7.pvalue()["tp"], "n_obs": len(d7),
                      "n_treated_cds": len(treated_cds), "n_control_cds": len(ctrl_cds)})
@@ -85,7 +104,7 @@ for ctrl_name, ctrl_cds in controls.items():
         if len(dd):
             t = dd.loc[dd["treated"] == 1, "edp_share"].mean()
             c = dd.loc[dd["treated"] == 0, "edp_share"].mean()
-            path_rows.append({"control": ctrl_name, "rel_day": rd, "t_minus_c": t - c})
+            path_rows.append({"is_primary": is_primary, "control": ctrl_name, "rel_day": rd, "t_minus_c": t - c})
 
 res = pd.DataFrame(rows)
 res.to_csv(OUTPUTS_TABLES / "did_exposure_results.csv", index=False)

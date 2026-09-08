@@ -39,6 +39,7 @@ from config import (
     PRIMARY_AWARENESS,
     ROLLING_WINDOWS,
 )
+from freeze_guard import assert_discovery_only, freeze_banner
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--outcome", default="mh_narrow_share")
@@ -51,6 +52,7 @@ OUTPUTS_TABLES.mkdir(parents=True, exist_ok=True)
 # ---------------------------------------------------------------------------
 # Assemble estimation sample
 # ---------------------------------------------------------------------------
+freeze_banner("03_main_model")
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
 lags = pd.read_parquet(DATA_PROCESSED / "awareness_lags.parquet")
 
@@ -61,6 +63,7 @@ keep = ["date"] + lag_cols + lead_cols + [c for c in win_cols if c in lags.colum
 
 df = panel.merge(lags[keep], left_on="incident_date", right_on="date", how="left")
 df = df[df["incident_date"].between(ANALYSIS_START, ANALYSIS_END)]
+assert_discovery_only(df, where="03_main_model")
 df = df[df["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE]
 df = df.dropna(subset=[OUTCOME] + lag_cols + lead_cols)
 df["month_year"] = df["year"] * 100 + df["month"]

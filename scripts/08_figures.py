@@ -10,7 +10,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from config import DATA_PROCESSED, OUTPUTS_FIGURES, OUTPUTS_TABLES
+from config import (
+    ANALYSIS_END,
+    ANALYSIS_START,
+    DATA_PROCESSED,
+    DATA_REFERENCE,
+    FREEZE_ACTIVE,
+    OUTPUTS_FIGURES,
+    OUTPUTS_TABLES,
+)
 
 OUTPUTS_FIGURES.mkdir(parents=True, exist_ok=True)
 
@@ -31,25 +39,54 @@ def save(fig, name):
 
 
 # ---------------------------------------------------------------------------
-# Figure 1: awareness series with episodes (data section)
+# Figure 1: raw outcome and raw treatment in calendar time, episodes marked.
+# Raw data comes before any coefficient plot (Wing et al. 2024, Annu Rev Public
+# Health, recommendation 1). Two stacked panels sharing an x-axis: the citywide
+# mental-health call share on top, the composite awareness index beneath.
 # ---------------------------------------------------------------------------
 aw = pd.read_parquet(DATA_PROCESSED / "cai_daily.parquet")
-ep = pd.read_csv(OUTPUTS_TABLES / "awareness_episodes.csv", parse_dates=["start", "end", "peak_date"])
+aw["date"] = pd.to_datetime(aw["date"])
 
-fig, ax = plt.subplots(figsize=(9, 3.2))
-ax.plot(aw["date"], aw["tweet_count"], color=BLUE, lw=0.8)
-ax.set_yscale("log")
-ax.set_ylabel("Daily tweets (log scale)")
-for _, e in ep.iterrows():
-    ax.axvspan(e["start"], e["end"] + pd.Timedelta(days=1), color=BLUE, alpha=0.12, lw=0)
-label_eps = ep.nlargest(6, "peak_z").drop_duplicates("top_victim").nlargest(4, "peak_z")
-for _, e in label_eps.iterrows():
-    ax.annotate(e["top_victim"], xy=(e["peak_date"], e["peak_tweets"]),
-                xytext=(0, 6), textcoords="offset points",
-                ha="center", fontsize=8, color="#0b0b0b")
-ax.set_ylim(top=aw["tweet_count"].max() * 6)
-ax.set_title("Public awareness of police killings, 2017–2020 (shaded: high-awareness episodes)")
-save(fig, "fig1_awareness_series")
+ep = pd.read_csv(DATA_REFERENCE / "confirmation_episodes.csv",
+                 parse_dates=["start", "end", "peak_date"])
+if FREEZE_ACTIVE:
+    ep = ep[ep["period"] == "discovery"]
+
+panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
+panel["incident_date"] = pd.to_datetime(panel["incident_date"])
+city = (panel.groupby("incident_date")[["mh_narrow_calls", "total_calls"]].sum()
+        .assign(share=lambda d: d["mh_narrow_calls"] / d["total_calls"]))
+win = (slice(ANALYSIS_START, ANALYSIS_END) if FREEZE_ACTIVE
+       else slice(str(city.index.min().date()), str(city.index.max().date())))
+city = city.loc[win]
+awp = aw.set_index("date").loc[win]
+
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 5.2), sharex=True,
+                               gridspec_kw={"height_ratios": [1, 1], "hspace": 0.12})
+
+ax1.plot(city.index, 100 * city["share"], color=BLUE, lw=0.7)
+ax1.set_ylabel("Mental-health share\nof EMS calls (%)")
+
+ax2.plot(awp.index, awp["cai_d"], color="#444444", lw=0.7)
+ax2.axhline(0, color="#999999", lw=0.6, ls=":")
+ax2.set_ylabel("Composite awareness\nindex (CAI-D, SD units)")
+
+for ax in (ax1, ax2):
+    for _, e in ep.iterrows():
+        ax.axvspan(e["start"], e["end"] + pd.Timedelta(days=1), color=BLUE, alpha=0.12, lw=0)
+    # dashed markers for the two events that confound this outcome series
+    for when, lab in ((pd.Timestamp("2020-03-01"), "COVID emergency"),
+                      (pd.Timestamp("2021-06-01"), "B-HEARD launch")):
+        if awp.index.min() <= when <= awp.index.max():
+            ax.axvline(when, color="#b00020", lw=0.9, ls="--")
+            if ax is ax1:
+                ax.annotate(lab, xy=(when, ax.get_ylim()[1]), xytext=(3, -10),
+                            textcoords="offset points", fontsize=7, color="#b00020")
+
+ax1.set_title("Mental-health EMS call share and public attention to police violence, "
+              "New York City, %s–%s" % (str(city.index.min().year), str(city.index.max().year)))
+ax2.set_xlabel("")
+save(fig, "fig1_raw_series")
 
 # ---------------------------------------------------------------------------
 # Figure 2: primary IRF with leads (pre-trend region)

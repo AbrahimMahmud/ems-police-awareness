@@ -146,13 +146,13 @@ record("acs_out_of_range_values", int(((shares < 0) | (shares > 100)).sum().sum(
 # ---------------------------------------------------------------------------
 print("\n== 9-10. crosswalk and B-HEARD ==")
 cw = pd.read_csv(DATA_REFERENCE / "precinct_cd_crosswalk.csv")
-by_cd = cw.groupby("communitydistrict")["w_precinct_in_cd"].sum()
-by_pct = cw.groupby("policeprecinct")["w_precinct_in_cd"].sum()
+by_cd = cw.groupby("communitydistrict")["w_cd_calls_from_precinct"].sum()
+by_pct = cw.groupby("policeprecinct")["w_cd_calls_from_precinct"].sum()
 cd_ok = int((by_cd.sub(1).abs() < 1e-3).sum())
 record("crosswalk_weights_sum_to_1_by_CD", f"{cd_ok} / {len(by_cd)}", "PASS" if cd_ok == len(by_cd) else "FLAG")
 record("crosswalk_weights_sum_to_1_by_precinct",
-       f"{int((by_pct.sub(1).abs() < 1e-3).sum())} / {len(by_pct)}", "FLAG",
-       "column is named w_precinct_in_cd but is normalised by CD — rename it")
+       f"{int((by_pct.sub(1).abs() < 1e-3).sum())} / {len(by_pct)}", "INFO",
+       "normalised by CD, which is the direction B-HEARD exposure needs")
 
 ad = pd.read_csv(DATA_REFERENCE / "bheard_precinct_adoption.csv")
 conf = ad["confidence"].value_counts().to_dict()

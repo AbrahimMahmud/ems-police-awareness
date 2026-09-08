@@ -28,9 +28,11 @@ from config import (
     MIN_TOTAL_CALLS_FOR_SHARE,
     OUTPUTS_TABLES,
 )
+from freeze_guard import assert_discovery_only, freeze_banner
 
 OUTPUTS_TABLES.mkdir(parents=True, exist_ok=True)
 
+freeze_banner("06_heterogeneity")
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
 lags = pd.read_parquet(DATA_PROCESSED / "awareness_lags.parquet")
 
@@ -40,6 +42,7 @@ lags = pd.read_parquet(DATA_PROCESSED / "awareness_lags.parquet")
 df = panel.merge(lags[["date", "cai_d_w35", "cai_d_w02", "cai_d_black_w35"]],
                  left_on="incident_date", right_on="date", how="left")
 df = df[df["incident_date"].between(ANALYSIS_START, ANALYSIS_END)]
+assert_discovery_only(df, where="06_heterogeneity")
 df = df[df["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE]
 df["month_year"] = df["year"] * 100 + df["month"]
 df["date_id"] = df["incident_date"].dt.strftime("%Y%m%d").astype(int)
