@@ -80,4 +80,6 @@ pending documentation from the data's originator.
 - `docs/GATE2_PRELIMINARY_RESULTS.md` — findings memo, updated at each checkpoint
 - `docs/GATE_C_MEMO.md` — decisions needed before the confirmatory run
 - `docs/RELATED_WORK.md` — comparable studies, positioning, and what to borrow
+- `docs/PAPER_PLAN.md` — venue decision, section skeleton, display items, RECORD
+  obligations, and drafting rules for the manuscript
 - `docs/DATA_PROVENANCE.md` — source registry
