@@ -134,11 +134,31 @@ def fit_event_study(stack, outcome, fe="ep_cd + dow", counts=False,
     fml = f"{outcome} ~ i(rel_day, ref={EVENT_REFERENCE_DAY}) | {fe}"
     try:
         if counts:
-            d = d[d["total_calls"] > 0]
-            return pf.fepois(fml, d, vcov=vcov)
+            # PPML on the count with a log total-calls OFFSET, so a coefficient
+            # reads as a proportional change in the rate — the same quantity the
+            # share regression targets, without the denominator moving the
+            # answer. The offset was documented in 17's header and never
+            # existed: counts=True was passed by no caller and fepois was called
+            # with no offset at all (findings X5, R8).
+            #
+            # pyfixest takes the offset as a COLUMN NAME, not an array, so the
+            # column has to exist. Passing a Series raises TypeError, which the
+            # except below then turned into a silent "not estimable" — the arm
+            # would have looked merely unlucky rather than broken.
+            d = d[(d["total_calls"] > 0) & d[outcome].notna()].copy()
+            if d.empty:
+                return None
+            d["log_total"] = np.log(d["total_calls"])
+            return pf.fepois(fml, d, vcov=vcov, offset="log_total")
         return pf.feols(fml, d, vcov=vcov)
-    except Exception:
+    except Exception as e:
+        _note_fit_failure(outcome, counts, e)
         return None
+
+
+def count_outcome(share_outcome):
+    """The count column behind a share column: edp_share -> edp."""
+    return share_outcome[:-6] if share_outcome.endswith("_share") else share_outcome
 
 
 # Collinear event-time dummies get dropped when windows are truncated by an
@@ -146,6 +166,23 @@ def fit_event_study(stack, outcome, fe="ep_cd + dow", counts=False,
 # composition would vary across randomization draws and the null distribution
 # would not correspond to the observed statistic. So require most of the week.
 MIN_FIRST_WEEK_DAYS = 6
+
+# Fit failures are EXPECTED during randomization inference — a placebo draw can
+# produce a degenerate design — so they cannot raise. But a systematic failure
+# (a bad formula, a wrong argument type) then looks identical to bad luck, which
+# is how the counts arm could be broken and merely appear "not estimable". So
+# each distinct failure is reported once, and never silently.
+_SEEN_FAILURES = set()
+
+
+def _note_fit_failure(outcome, counts, exc):
+    key = (outcome, bool(counts), type(exc).__name__, str(exc)[:80])
+    if key in _SEEN_FAILURES:
+        return
+    _SEEN_FAILURES.add(key)
+    arm = "PPML counts" if counts else "OLS share"
+    print(f"[event_study] {arm} fit failed for {outcome}: "
+          f"{type(exc).__name__}: {str(exc)[:160]}")
 
 
 def first_week_effect(stack, outcome, fe="ep_cd + dow", counts=False, days=range(0, 8),

@@ -422,10 +422,48 @@ def s_stale_calibration_artifact():
 
 
 def s_ppml_wired():
-    """X5/R8: the counts arm is documented but never called."""
-    s = src("17_stacked_event_study.py")
-    return ("PASS" if "counts=True" in s else "FAIL",
-            "counts arm called" if "counts=True" in s else "PPML/offset documented but dead code")
+    """X5/R8: the counts arm must actually fit, with a real offset.
+
+    Behavioural. Grepping for `counts=True` proves a caller exists, not that
+    the arm works — and it did not: pyfixest takes `offset` as a COLUMN NAME,
+    so passing a Series raised TypeError, which the estimator's broad `except`
+    turned into a silent "not estimable". The arm would have looked unlucky
+    rather than broken, which is exactly how it stayed dead code while being
+    documented in 17's header.
+
+    So: plant a known proportional rate change and require the PPML arm to fit
+    and recover it. Counts matter here because the 2020 "signature" reverses in
+    them — EDP counts were flat after Floyd while the denominator rose 6.4%.
+    """
+    sys.path.insert(0, str(SCRIPTS))
+    import event_study as es
+    rng = np.random.default_rng(5)
+    dates = pd.date_range("2017-01-01", "2020-12-31", freq="D")
+    cds = list(range(1, 60))
+    N, T = len(cds), len(dates)
+    tot = rng.poisson(60, (N, T))
+    panel = pd.DataFrame({"communitydistrict": np.repeat(cds, T),
+                          "incident_date": np.tile(dates, N),
+                          "total_calls": tot.reshape(-1)})
+    panel["dow"] = panel["incident_date"].dt.dayofweek
+    starts = [d for d in pd.date_range("2017-02-01", periods=30, freq="44D")
+              if d <= dates[-1] - pd.Timedelta(days=20)]
+    m = pd.Series(False, index=panel.index)
+    for st0 in starts:
+        m |= panel["incident_date"].between(st0, st0 + pd.Timedelta(days=7))
+    ratio = 0.85
+    panel["edp"] = rng.poisson(np.where(m, 0.10 * ratio, 0.10) * panel["total_calls"])
+
+    stack = es.build_stack(panel, starts, 14, 14)
+    mc = es.fit_event_study(stack, "edp", counts=True)
+    if mc is None:
+        return "FAIL", "PPML counts arm does not fit"
+    got = es.first_week_mean(stack, "edp", counts=True)
+    want = float(np.log(ratio))
+    ok = got is not None and abs(got - want) < 0.05
+    return ("PASS" if ok else "FAIL",
+            f"PPML recovers planted rate change: {got:+.4f} vs log({ratio})={want:+.4f}"
+            if ok else f"PPML fitted but recovered {got} against a planted {want:+.4f}")
 
 
 # ===========================================================================

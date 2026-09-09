@@ -68,6 +68,7 @@ from config import (
 from event_study import (
     _rel_day_coefs,
     build_stack,
+    count_outcome,
     episode_day_counts,
     first_week_effect,
     first_week_mean,
@@ -137,6 +138,32 @@ for outcome in outcomes:
         # -- randomization inference (primary p-value) --
         obs, p_ri, draws = randomization_p(panel, real_starts, outcome,
                                            EVENT_WINDOW_PRE, post, args.draws, rng)
+
+        # -- counts arm: PPML on the count with a log total-calls offset --
+        # Reported BESIDE the share result, never instead of it. The 2020
+        # "signature" is known to reverse in counts: EDP counts were flat after
+        # Floyd while the denominator rose 6.4% because injury calls rose ~20%,
+        # so a compositional finding that exists only in the denominator is not
+        # a finding. Publishing one arm and not the other is how that goes
+        # unnoticed (finding T3.1; the arm itself was dead code, X5/R8).
+        cnt = count_outcome(outcome)
+        if cnt in stack.columns:
+            c_obs, c_p, c_draws = randomization_p(panel, real_starts, cnt,
+                                                  EVENT_WINDOW_PRE, post,
+                                                  args.draws, rng, counts=True)
+            if c_obs is not None:
+                rows.append({"outcome": cnt, "post_window": post,
+                             "estimator": "PPML_count_offset",
+                             "first_week_chi2": c_obs,
+                             "first_week_mean_coef": first_week_mean(stack, cnt,
+                                                                     counts=True),
+                             "p_randomization": c_p, "n_draws": len(c_draws),
+                             "null_sd": float(c_draws.std()) if len(c_draws) else np.nan,
+                             "n_episodes": len(real_starts), "n_obs": len(stack)})
+                print(f"  {cnt:18s} post={post:>3}  chi2={c_obs:8.2f}  "
+                      f"p_RI={c_p:.3f}  [PPML counts]")
+            else:
+                print(f"  {cnt} post={post}: counts arm not estimable")
 
         rows.append({"outcome": outcome, "post_window": post, "estimator": "OLS_share",
                      "first_week_chi2": obs,
