@@ -5,6 +5,7 @@ T.nyc_censoring,"T3,L3","trends_nyc is a level, not a censored indicator",FAIL,"
 T.victims_topic_units,"T2,L2",trends_victims divided by topic term,PASS,dropped from CAI_D_COMPONENTS
 T.composite_after_avg,D5,composite standardised after averaging,FAIL,reference-window mean=-0.0000 sd=0.6699 (target 0.00 / 1.00)
 T.fixed_component_set,D5,CAI-D requires a fixed component set,FAIL,mean-of-available: SD varies by component count
+T.basket_not_registry_gated,T9,basket reaches victims MPV omits,FAIL,"45 articles; missing MPV-omitted victims: ['Daniel Prude', 'Sandra Bland']"
 T.wiki_basket_live,X2,wiki basket not selected by retired Twitter,FAIL,0 basket victims killed after 2020 (defect if 0)
 S.reference_day,"S2,D1",event-time reference is day -1,PASS,"reference is day -1; estimated -14..14, n=28"
 S.placebo_count,"S1,E1,L1,X4,D2",placebo draws keep the real episode count,PASS,100% of draws keep all 30 episodes; mean 30.0
@@ -24,4 +25,4 @@ E.attribution_lookback,E2,attribution lookback >= 60 days,FAIL,lookback 14d (nee
 O.ems_complete,O5,EMS extract covers the full source,PASS,"60 pages, last ends 2026-06-30, complete"
 O.panel_exists,O5,panel_cd_day.parquet exists,PASS,present
 O.dropna_groupby,O4,missing-district rows not silently dropped,PASS,dropna=False
-M.register_sync,O5,register and suite have not drifted apart,PASS,36/53 findings tagged; all 24 blocking covered
+M.register_sync,O5,register and suite have not drifted apart,PASS,37/54 findings tagged; all 25 blocking covered
