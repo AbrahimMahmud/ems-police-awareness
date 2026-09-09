@@ -1,6 +1,15 @@
 # Rebuild plan
 
-**Status: 26 checks — 24 FAIL, 1 BLOCKED, 1 PASS.** Target: 26 PASS.
+**Status: 26 checks — 15 FAIL, 0 BLOCKED, 11 PASS.** Target: 26 PASS.
+
+Progress log (each line is one gate that ran clean, no regressions):
+
+| Date | Phase | Fixed | Checks passing |
+|---|---|---|---|
+| 09-09 | mechanism | suite + baseline + register sync | 1 |
+| 09-09 | P1.1 | dropped `trends_victims`; corrected two checks that could not fail | 2 |
+| 09-09 | P0 + P4 | EMS extract whole; O4; all five estimator defects; calibration gate | 10 |
+| 09-09 | P0 | panel built — last BLOCKED cleared | 11 |
 
 This is the execution plan for the 53 findings in `AUDIT_FINDINGS.csv`. It is
 ordered so that each phase's inputs are settled before it runs, and it puts a
@@ -119,16 +128,22 @@ which means no estimate in the repo is reproducible.
 
 - [x] Restart `00b_download_ems_extract.py` on the harness-tracked background
       runner. `nohup` dies at turn boundaries; this does not.
-- [ ] Let it finish. It is resumable — each page is cached and skipped on rerun.
+- [x] **Done: 29,978,154 rows, matching the source count exactly**, aggregated to
+      4,876,509 district-day-call-type rows over 2014-12-01..2024-12-31.
 - [ ] Fix the terminator: stop relying on a short final page. Record realised
       min/max date and row count, and exit non-zero if coverage falls short of
       the source count.
-- [ ] Fix `00b`'s silent `dropna` on missing community district (**O4**): use
-      `dropna=False` in the groupby so excluded call volume is *counted* rather
-      than vanishing, and report it as a QC line.
+- [x] Fix `00b`'s silent `dropna` on missing community district (**O4**).
+      It found what it was meant to find: **167,446 calls (1.14%)** had no
+      district and were vanishing before any QC metric saw them — and the
+      by-year rate is **2.97% in 2015 against ~0.90% from 2016 on**, which is
+      finding O2's geocoding regime change, now measured instead of hidden.
 - [ ] Reconcile `00b`'s mental-health code map against `config.CALL_TYPE_GROUPS`.
       The two "equivalent" extract scripts are not equivalent.
-- [ ] Then `01_build_panel.py` and `10d_parse_cd_demographics.py`.
+- [x] `01_build_panel.py`: 89,857 rows, 59 districts, 2016-12-01..2021-01-31
+      (still buffered-discovery-scoped, correctly — widening `ANALYSIS_START/END`
+      is the act that ends the freeze and waits on ratification).
+- [ ] `10d_parse_cd_demographics.py`.
 
 **Gate P0:** `O.ems_complete` PASS; `O.panel_exists` moves BLOCKED → PASS;
 `O.dropna_groupby` PASS. Panel is 59 districts exactly, no duplicate
