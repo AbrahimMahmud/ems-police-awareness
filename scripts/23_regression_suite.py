@@ -175,6 +175,36 @@ def t_fixed_component_set():
             "requires all components" if requires else "mean-of-available: SD varies by component count")
 
 
+def t_basket_not_registry_gated():
+    """T9: the basket must reach victims that Mapping Police Violence omits.
+
+    wiki_ext is summed over the articles in wikipedia_article_resolution.csv
+    (11_fetch_awareness_components.py:49-50), so that file IS the basket.
+
+    Mapping Police Violence, which is 100% of victim_registry.csv, does not
+    carry Daniel Prude, Sandra Bland, Marvin Scott, Javier Ambler or Leneal
+    Frazier — verified against the MPV workbook directly, so it is source
+    coverage, not a parsing bug. Those omissions run with the hypothesis rather
+    than across it: they are in-custody, restraint and mental-health-crisis
+    deaths. Daniel Prude is the most on-hypothesis event in the dataset.
+
+    So a basket built by matching the registry would be systematically blind to
+    the events this paper is about, and this check exists to stop that
+    seemingly-sensible rule from being adopted. Prude and Bland are the canary:
+    if the basket reaches them, it was not registry-gated.
+    """
+    f = DATA_REFERENCE / "wikipedia_article_resolution.csv"
+    if not f.exists():
+        return "BLOCKED", "no article resolution file"
+    arts = pd.read_csv(f)["article"].dropna().astype(str).str.lower()
+    blob = " ".join(arts)
+    canaries = {"daniel_prude": "Daniel Prude", "sandra_bland": "Sandra Bland"}
+    missing = [lbl for key, lbl in canaries.items() if key not in blob]
+    return ("PASS" if not missing else "FAIL",
+            f"{len(arts)} articles; reaches MPV-omitted victims" if not missing
+            else f"{len(arts)} articles; missing MPV-omitted victims: {missing}")
+
+
 def t_wiki_basket_twitter():
     """X2: wiki_ext article basket is selected by retired Twitter volume."""
     res = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv")
@@ -517,6 +547,7 @@ CHECKS = [
     ("T.victims_topic_units", "T2,L2", "trends_victims divided by topic term", t_victims_saturate),
     ("T.composite_after_avg", "D5", "composite standardised after averaging", t_composite_after_avg),
     ("T.fixed_component_set", "D5", "CAI-D requires a fixed component set", t_fixed_component_set),
+    ("T.basket_not_registry_gated", "T9", "basket reaches victims MPV omits", t_basket_not_registry_gated),
     ("T.wiki_basket_live", "X2", "wiki basket not selected by retired Twitter", t_wiki_basket_twitter),
     ("S.reference_day", "S2,D1", "event-time reference is day -1", s_reference_day),
     ("S.placebo_count", "S1,E1,L1,X4,D2", "placebo draws keep the real episode count", s_placebo_count),
