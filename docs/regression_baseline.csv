@@ -3,8 +3,8 @@ T.anchor_monthly,"X1,T4","Trends anchor rescales all days, not just 1-7",FAIL,10
 T.nyc_break,T1,trends_nyc has no artificial level break,FAIL,post/pre median positive = 4.48x (defect if >2)
 T.nyc_censoring,"T3,L3","trends_nyc is a level, not a censored indicator",FAIL,"79% zeros overall, by-year spread 43%"
 T.victims_topic_units,"T2,L2",trends_victims divided by topic term,PASS,dropped from CAI_D_COMPONENTS
-T.composite_after_avg,D5,composite standardised after averaging,FAIL,reference-window mean=-0.0000 sd=0.6699 (target 0.00 / 1.00)
-T.fixed_component_set,D5,CAI-D requires a fixed component set,FAIL,mean-of-available: SD varies by component count
+T.composite_after_avg,D5,composite standardised after averaging,PASS,reference-window mean=-0.0000 sd=1.0000 (target 0.00 / 1.00)
+T.fixed_component_set,D5,CAI-D requires a fixed component set,PASS,"all 3,472 scored days use 3 components"
 T.basket_not_registry_gated,T9,basket reaches victims MPV omits,FAIL,"45 articles; missing MPV-omitted victims: ['Daniel Prude', 'Sandra Bland']"
 T.wiki_basket_live,X2,wiki basket not selected by retired Twitter,FAIL,0 basket victims killed after 2020 (defect if 0)
 S.reference_day,"S2,D1",event-time reference is day -1,PASS,"reference is day -1; estimated -14..14, n=28"
@@ -19,7 +19,7 @@ D.freeze_not_tautological,D3,freeze guard is not a tautology,PASS,guard is indep
 D.freeze_disjoint,D3,confirmation sample disjoint from discovery,PASS,explicit confirmation window
 D.guard_coverage,D3,every panel reader calls the guard,PASS,all panel readers guarded (2 documented exemptions)
 D.guard_can_fire,"D3,D4",freeze guard actually rejects things,PASS,guard fires on all 4 rejection cases
-E.threshold_stringency,"D5,L5",episode threshold is constant stringency,FAIL,share above threshold ranges 0.3%-41.0% by year
+E.threshold_stringency,"D5,L5",episode threshold is constant stringency,FAIL,share above threshold ranges 0.5%-54.6% by year
 E.no_mega_episode,"E3,D7",no episode exceeds its analysis window,FAIL,longest episode 128 days (cap 28)
 E.labels_live_source,"E5,L6,R2",episode labels not from retired Twitter,FAIL,candidate_events ranked by retired tweet_volume
 E.attribution_lookback,E2,attribution lookback >= 60 days,FAIL,lookback 14d (needs >=60)

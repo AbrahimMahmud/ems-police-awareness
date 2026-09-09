@@ -168,11 +168,28 @@ def t_composite_after_avg():
 
 
 def t_fixed_component_set():
-    """T-const: CAI-D must require a fixed component set, not mean-of-available."""
-    s = src("12_build_cai.py")
-    requires = "isna().any(axis=1)" in s or "dropna(subset=avail_d" in s
-    return ("PASS" if requires else "FAIL",
-            "requires all components" if requires else "mean-of-available: SD varies by component count")
+    """D5: every scored CAI-D day must rest on the SAME component set.
+
+    Checked on the built index. The previous version grepped 12_build_cai.py for
+    one of two specific idioms; the fix used a third (`notna().all(axis=1)`), so
+    the property held while the check reported FAIL. That is the same fragility
+    that made T.composite_after_avg report a false PASS, in the other direction.
+
+    Mean-of-available is the defect: the spread of a mean moves with how many
+    terms are averaged, so the index's SD tracked data availability rather than
+    attention (0.770 on 2-component days, 0.693 on 3, 1.034 on 4), and whether a
+    day cleared the episode threshold depended partly on which sources were
+    reporting that day.
+    """
+    d = pd.read_parquet(DATA_PROCESSED / "cai_daily.parquet")
+    scored = d[d["cai_d"].notna()]
+    if scored.empty:
+        return "BLOCKED", "no scored cai_d days"
+    counts = sorted(scored["n_d_components"].dropna().unique().tolist())
+    if len(counts) != 1:
+        by = scored.groupby("n_d_components")["cai_d"].std(ddof=0).round(3).to_dict()
+        return "FAIL", f"scored days span component counts {counts}; SD by count {by}"
+    return "PASS", f"all {len(scored):,} scored days use {int(counts[0])} components"
 
 
 def t_basket_not_registry_gated():

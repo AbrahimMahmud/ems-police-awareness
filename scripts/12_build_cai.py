@@ -85,9 +85,55 @@ for c in wide.columns:
 
 avail_d = [c for c in D_COMPONENTS if c in std.columns]
 avail_s = [c for c in S_COMPONENTS if c in std.columns]
-std["cai_d"] = std[avail_d].mean(axis=1)
-std["cai_s"] = std[avail_s].mean(axis=1)
 std["n_d_components"] = std[avail_d].notna().sum(axis=1)
+std["n_s_components"] = std[avail_s].notna().sum(axis=1)
+
+
+def composite(cols, name):
+    """Fixed component set, then standardise the COMPOSITE (finding D5).
+
+    Two defects, one fix.
+
+    The index used to be the mean of whatever components existed that day. How
+    many existed swung from 2 to 4 across the decade, and the spread of a mean
+    moves with the number of terms averaged, so the index's SD moved with data
+    availability rather than with attention: 0.770 on 2-component days, 0.693 on
+    3, 1.034 on 4. A day became an episode partly because of which sources
+    happened to be reporting.
+
+    And averaging k separately standardised series does not give something with
+    unit variance — it gives roughly 1/sqrt(k) of it, times the correlation
+    structure. Measured here: SD 0.6699 on the reference window. So the frozen
+    rule `cai_d > EPISODE_Z_THRESHOLD` with the threshold at 1.0 was never the
+    documented "1 SD" rule; it was about 1.5 SD, and it selected the 62nd
+    percentile of days in 2020 and the 99.7th in 2024.
+
+    So: score a day only when EVERY component is present, then re-standardise
+    the composite on the reference window. Days that lack a component are NaN
+    rather than being scored on a different measure under the same name. That is
+    a real cost in coverage, and it is reported below rather than absorbed.
+    """
+    have_all = std[cols].notna().all(axis=1)
+    raw = std[cols].mean(axis=1).where(have_all)
+    ref = raw.loc[STD_WINDOW[0]:STD_WINDOW[1]]
+    if not ref.notna().any():
+        raise SystemExit(f"{name}: no complete-component days in the reference window")
+    out = (raw - ref.mean()) / ref.std(ddof=0)
+    lost = int((~have_all).sum())
+    print(f"{name}: {int(have_all.sum()):,} scored days, {lost:,} dropped for an "
+          f"incomplete component set ({lost / len(have_all):.1%})")
+    return out
+
+
+std["cai_d"] = composite(avail_d, "cai_d")
+std["cai_s"] = composite(avail_s, "cai_s")
+
+# The property the fix exists to create, asserted rather than assumed.
+_ref = std["cai_d"].loc[STD_WINDOW[0]:STD_WINDOW[1]]
+assert abs(_ref.std(ddof=0) - 1.0) < 1e-9 and abs(_ref.mean()) < 1e-9, (
+    f"cai_d is not standardised on the reference window "
+    f"(mean={_ref.mean():.4f}, sd={_ref.std(ddof=0):.4f})")
+print(f"cai_d reference window: mean={_ref.mean():+.6f} sd={_ref.std(ddof=0):.6f}")
 for out_name, src in RACE_COMPONENTS.items():
     # single-component sub-indices: standardised on the same window as CAI-D,
     # but built from wiki alone, so weaker than the full composite by design.
