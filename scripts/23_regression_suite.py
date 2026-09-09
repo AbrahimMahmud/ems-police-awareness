@@ -348,32 +348,57 @@ def o_dropna_groupby():
 
 
 # ===========================================================================
+# META — the register and the suite must not drift apart
+# ===========================================================================
+def m_register_sync():
+    """Every tag resolves to a finding, and every blocking finding has a check.
+
+    Without this, a finding can be silently dropped from the register or a check
+    can be tagged with an ID that no longer exists, and coverage looks fine while
+    the defect goes untested. That is the same "couldn't check reads as fine"
+    failure the suite exists to prevent, applied to the suite itself.
+    """
+    reg = pd.read_csv(PROJECT_ROOT / "docs" / "AUDIT_FINDINGS.csv")
+    known = set(reg["id"])
+    tagged = {f.strip() for _, fids, _, _ in CHECKS for f in fids.split(",")}
+    unknown = sorted(tagged - known)
+    blocking = set(reg.loc[reg["severity"] == "blocking", "id"])
+    uncovered = sorted(blocking - tagged)
+    if unknown:
+        return "FAIL", f"tags with no finding: {unknown}"
+    if uncovered:
+        return "FAIL", f"blocking findings with no check: {uncovered}"
+    return "PASS", f"{len(tagged)}/{len(known)} findings tagged; all {len(blocking)} blocking covered"
+
+
+# ===========================================================================
 CHECKS = [
     ("T.anchor_monthly", "X1,T4", "Trends anchor rescales all days, not just 1-7", t_anchor_monthly),
     ("T.nyc_break", "T1", "trends_nyc has no artificial level break", t_nyc_break),
     ("T.nyc_censoring", "T3,L3", "trends_nyc is a level, not a censored indicator", t_nyc_censored),
     ("T.victims_topic_units", "T2,L2", "trends_victims divided by topic term", t_victims_saturate),
-    ("T.composite_after_avg", "T-const", "composite standardised after averaging", t_composite_after_avg),
-    ("T.fixed_component_set", "T-const", "CAI-D requires a fixed component set", t_fixed_component_set),
+    ("T.composite_after_avg", "D5", "composite standardised after averaging", t_composite_after_avg),
+    ("T.fixed_component_set", "D5", "CAI-D requires a fixed component set", t_fixed_component_set),
     ("T.wiki_basket_live", "X2", "wiki basket not selected by retired Twitter", t_wiki_basket_twitter),
     ("S.reference_day", "S2,D1", "event-time reference is day -1", s_reference_day),
     ("S.placebo_count", "S1,E1,L1,X4,D2", "placebo draws keep the real episode count", s_placebo_count),
     ("S.joint_test", "S3,R7", "H1 uses a joint test, not a 1-df mean", s_joint_test),
     ("S.cluster_by_date", "S6", "SEs clustered by date, not hetero", s_cluster_by_date),
-    ("S.prewindow_truncation", "S4", "pre-window truncated at previous episode", s_prewindow_truncation),
+    ("S.prewindow_truncation", "S5,E4", "pre-window truncated at previous episode", s_prewindow_truncation),
     ("S.calibration_can_fail", "S4,X3,R3", "calibration verdict can fail", s_calibration_can_fail),
     ("S.no_stale_calibration", "R3", "no stale low-n calibration artifact", s_stale_calibration_artifact),
     ("S.ppml_wired", "X5,R8", "counts/PPML arm actually called", s_ppml_wired),
     ("D.freeze_not_tautological", "D3", "freeze guard is not a tautology", d_freeze_not_tautological),
     ("D.freeze_disjoint", "D3", "confirmation sample disjoint from discovery", d_freeze_enforces_disjoint),
     ("D.guard_coverage", "D3", "every panel reader calls the guard", d_guard_coverage),
-    ("E.threshold_stringency", "E,T", "episode threshold is constant stringency", e_threshold_constant_stringency),
-    ("E.no_mega_episode", "E,T2.4", "no episode exceeds its analysis window", e_no_mega_episode),
-    ("E.labels_live_source", "E,R2", "episode labels not from retired Twitter", e_labels_not_from_twitter),
+    ("E.threshold_stringency", "D5,L5", "episode threshold is constant stringency", e_threshold_constant_stringency),
+    ("E.no_mega_episode", "E3,D7", "no episode exceeds its analysis window", e_no_mega_episode),
+    ("E.labels_live_source", "E5,L6,R2", "episode labels not from retired Twitter", e_labels_not_from_twitter),
     ("E.attribution_lookback", "E2", "attribution lookback >= 60 days", e_attribution_lookback),
-    ("O.ems_complete", "P0", "EMS extract covers the full source", o_ems_download_complete),
-    ("O.panel_exists", "P0", "panel_cd_day.parquet exists", o_panel_exists),
+    ("O.ems_complete", "O5", "EMS extract covers the full source", o_ems_download_complete),
+    ("O.panel_exists", "O5", "panel_cd_day.parquet exists", o_panel_exists),
     ("O.dropna_groupby", "O4", "missing-district rows not silently dropped", o_dropna_groupby),
+    ("M.register_sync", "O5", "register and suite have not drifted apart", m_register_sync),
 ]
 
 
