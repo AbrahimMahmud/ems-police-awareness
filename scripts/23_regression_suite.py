@@ -434,15 +434,94 @@ def d_freeze_enforces_disjoint():
             else "flipping FREEZE_ACTIVE pools all 70 episodes into one sample")
 
 
+# Scripts that read the panel but must NOT route it through select_sample, with
+# the reason. Exemptions are listed here rather than being implicit, so adding
+# one is a visible edit in a diff instead of a script quietly going unchecked.
+GUARD_EXEMPT = {
+    # Builds the panel, including the lag/lead buffer that deliberately extends
+    # to PANEL_BUFFER_END = 2021-01-31 — inside a confirmation window. Filtering
+    # here would destroy the padding the lag structure needs. Nothing in this
+    # script examines an outcome; the modelling scripts filter downstream.
+    "01_build_panel.py",
+    # The auditor itself: it must be able to read the raw panel to check it.
+    "23_regression_suite.py",
+}
+
+
 def d_guard_coverage():
-    """D3: every script reading the panel must call the guard."""
+    """D3: every panel-reading script must route the panel through the guard.
+
+    Tests the PROPERTY (does this script go through freeze_guard?) rather than
+    one function name. The first version grepped for `assert_discovery_only`,
+    so renaming the entry point to `select_sample` — the actual fix for the
+    tautology — made this check report the fixed scripts as unguarded.
+    """
+    entries = ("select_sample", "assert_no_confirmation_outcomes",
+               "assert_discovery_only")
     missing = []
-    for f in SCRIPTS.glob("*.py"):
+    for f in sorted(SCRIPTS.glob("*.py")):
+        if f.name in GUARD_EXEMPT:
+            continue
         t = f.read_text()
-        if "panel_cd_day.parquet" in t and "assert_discovery_only" not in t:
+        if "panel_cd_day.parquet" in t and not any(e in t for e in entries):
             missing.append(f.name)
     return ("PASS" if not missing else "FAIL",
-            "all covered" if not missing else f"unguarded: {sorted(missing)}")
+            f"all panel readers guarded ({len(GUARD_EXEMPT)} documented exemptions)"
+            if not missing else f"unguarded: {missing}")
+
+
+def d_guard_can_fire():
+    """D3/D4: the freeze guard must actually REJECT things, in both flag states.
+
+    The retired guard's defect was not that it was wrong but that it could never
+    fire: it was always asked, immediately after the caller's own filter,
+    whether that filter had worked. A gate that has never rejected anything has
+    not been tested. So this exercises it on inputs it must refuse.
+
+    The last case is the one that matters most. Lifting FREEZE_ACTIVE must
+    SWITCH the sample to the confirmation windows, not WIDEN it to include the
+    discovery years that have already been examined.
+    """
+    sys.path.insert(0, str(SCRIPTS))
+    import freeze_guard as fg
+
+    def frame(lo, hi):
+        return pd.DataFrame({"incident_date": pd.date_range(lo, hi, freq="D"),
+                             "edp_share": 0.1})
+
+    saved = fg.FREEZE_ACTIVE
+    results = []
+    try:
+        fg.FREEZE_ACTIVE = True
+        # 1. drops confirmation-period rows from a wide frame
+        out = fg.select_sample(frame("2016-06-01", "2021-06-30"), where="selftest")
+        results.append(("drops out-of-window",
+                        out["incident_date"].max() == pd.Timestamp("2020-12-31")))
+        # 2. fires on a frame that is entirely confirmation-period
+        try:
+            fg.assert_no_confirmation_outcomes(frame("2021-01-01", "2021-03-01"),
+                                               where="selftest")
+            results.append(("rejects confirmation data", False))
+        except fg.FreezeViolation:
+            results.append(("rejects confirmation data", True))
+        # 3. an empty sample raises rather than returning silently
+        try:
+            fg.select_sample(frame("2022-01-01", "2022-02-01"), where="selftest")
+            results.append(("rejects empty sample", False))
+        except fg.FreezeViolation:
+            results.append(("rejects empty sample", True))
+        # 4. lifting the freeze must EXCLUDE discovery, not pool it
+        fg.FREEZE_ACTIVE = False
+        out = fg.select_sample(frame("2015-01-01", "2024-12-31"), where="selftest")
+        pooled = int(out["incident_date"].between("2017-01-01", "2020-12-31").sum())
+        results.append(("samples stay disjoint when lifted", pooled == 0))
+    finally:
+        fg.FREEZE_ACTIVE = saved
+
+    bad = [n for n, ok in results if not ok]
+    return ("PASS" if not bad else "FAIL",
+            f"guard fires on all {len(results)} rejection cases" if not bad
+            else f"guard did NOT fire on: {bad}")
 
 
 # ===========================================================================
@@ -560,6 +639,7 @@ CHECKS = [
     ("D.freeze_not_tautological", "D3", "freeze guard is not a tautology", d_freeze_not_tautological),
     ("D.freeze_disjoint", "D3", "confirmation sample disjoint from discovery", d_freeze_enforces_disjoint),
     ("D.guard_coverage", "D3", "every panel reader calls the guard", d_guard_coverage),
+    ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),
     ("E.threshold_stringency", "D5,L5", "episode threshold is constant stringency", e_threshold_constant_stringency),
     ("E.no_mega_episode", "E3,D7", "no episode exceeds its analysis window", e_no_mega_episode),
     ("E.labels_live_source", "E5,L6,R2", "episode labels not from retired Twitter", e_labels_not_from_twitter),

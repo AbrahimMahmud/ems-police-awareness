@@ -30,12 +30,11 @@ from config import (
     DID_CONTROL_SENSITIVITY,
     FREEZE_ACTIVE,
 )
-from freeze_guard import assert_discovery_only, freeze_banner
+from freeze_guard import freeze_banner, select_sample
 
 freeze_banner("07_did_exposure")
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
-panel = panel[panel["incident_date"].between(ANALYSIS_START, ANALYSIS_END)]
-assert_discovery_only(panel, where="07_did_exposure")
+panel = select_sample(panel, where="07_did_exposure")
 panel = panel[panel["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE].copy()
 panel["date_id"] = panel["incident_date"].dt.strftime("%Y%m%d").astype(int)
 

@@ -23,7 +23,7 @@ from config import (
     MIN_TOTAL_CALLS_FOR_SHARE,
     OUTPUTS_TABLES,
 )
-from freeze_guard import assert_discovery_only, freeze_banner
+from freeze_guard import freeze_banner, select_sample
 
 N_PERM = 200
 rng = np.random.default_rng(20260712)
@@ -32,8 +32,7 @@ freeze_banner("04_robustness")
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
 aware = pd.read_parquet(DATA_PROCESSED / "cai_daily.parquet")[["date", "cai_d"]]
 
-df = panel[panel["incident_date"].between(ANALYSIS_START, ANALYSIS_END)].copy()
-assert_discovery_only(df, where="04_robustness")
+df = select_sample(panel, where="04_robustness")
 df = df[df["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE]
 df["month_year"] = df["year"] * 100 + df["month"]
 df["date_id"] = df["incident_date"].dt.strftime("%Y%m%d").astype(int)

@@ -63,6 +63,7 @@ from config import (
     VALID_CDS,
 )
 from event_study import randomization_p
+from freeze_guard import select_sample
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--sims", type=int, default=200, help="synthetic panels to test")
@@ -88,7 +89,7 @@ panel_path = DATA_PROCESSED / "panel_cd_day.parquet"
 if panel_path.exists():
     real = pd.read_parquet(panel_path)
     real["incident_date"] = pd.to_datetime(real["incident_date"])
-    real = real[real["incident_date"].between(ANALYSIS_START, ANALYSIS_END)]
+    real = select_sample(real, where="18_null_calibration")
     if "edp_share" in real.columns and real["edp_share"].notna().any():
         s = real.dropna(subset=["edp_share"]).sort_values(["communitydistrict", "incident_date"])
         d = s.groupby("communitydistrict")["edp_share"]

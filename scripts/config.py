@@ -31,8 +31,33 @@ EMS_EXTRACT_TRENDS = DATA_PROCESSED / "ems_citywide_day_trends.parquet"
 # ---------------------------------------------------------------------------
 # Sample definition
 # ---------------------------------------------------------------------------
-ANALYSIS_START = "2017-01-01"
-ANALYSIS_END = "2020-12-31"
+# Discovery and confirmation are named SEPARATELY and explicitly (finding D3).
+#
+# Previously only ANALYSIS_START/END existed, scoped to discovery, and the guard
+# no-opped when FREEZE_ACTIVE was False. Lifting the freeze therefore did NOT
+# open a confirmation sample — it opened whatever ANALYSIS_START/END happened to
+# say, and widening them pooled the already-examined discovery years into the
+# "confirmatory" run. That would have produced a discovery-contaminated estimate
+# reported as 70 unseen episodes, which is the single worst thing that could
+# happen to this design, and no code prevented it.
+#
+# Now the two samples are disjoint by construction and the active one is derived,
+# never hand-set. See freeze_guard.select_sample().
+DISCOVERY_START = "2017-01-01"
+DISCOVERY_END = "2020-12-31"
+
+# Never examined. Kept as explicit intervals so "the confirmation sample" is a
+# value in the code rather than a claim in a document.
+CONFIRM_START = "2015-01-01"
+CONFIRMATION_WINDOWS = (
+    ("2015-01-01", "2016-12-31"),   # pre-discovery: no COVID, no B-HEARD
+    ("2021-01-01", "2024-12-31"),   # post-discovery: B-HEARD control required
+)
+
+# Back-compatible aliases. While the freeze holds these ARE the discovery window;
+# they are what existing scripts filter on.
+ANALYSIS_START = DISCOVERY_START
+ANALYSIS_END = DISCOVERY_END
 PANEL_BUFFER_START = "2016-12-01"   # covers 28-day lags before analysis start
 PANEL_BUFFER_END = "2021-01-31"     # covers 14-day leads after analysis end
 

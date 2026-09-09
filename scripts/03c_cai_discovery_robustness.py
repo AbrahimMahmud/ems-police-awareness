@@ -16,11 +16,15 @@ import pyfixest as pf
 from scipy import stats
 
 from config import DATA_PROCESSED, MIN_TOTAL_CALLS_FOR_SHARE, OUTPUTS_TABLES
+from freeze_guard import select_sample
 
-DISC_START, DISC_END = "2017-01-01", "2020-12-31"   # hard discovery-only guard
+# The discovery window is no longer restated here. This literal was the only
+# freeze enforcement in the repo and it was a SECOND source of truth: it could
+# drift from config.py silently, and a reader had no way to know which one the
+# run actually used. select_sample() derives the window from FREEZE_ACTIVE.
 
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
-panel = panel[panel["incident_date"].between(DISC_START, DISC_END)]
+panel = select_sample(panel, where="03c_cai_discovery_robustness")
 panel = panel[panel["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE].copy()
 panel["month_year"] = panel["year"] * 100 + panel["month"]
 panel["date_id"] = panel["incident_date"].dt.strftime("%Y%m%d").astype(int)

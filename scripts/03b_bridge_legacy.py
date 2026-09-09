@@ -15,6 +15,7 @@ import pandas as pd
 import pyfixest as pf
 from scipy import stats
 
+from freeze_guard import select_sample
 from config import (
     ANALYSIS_END,
     ANALYSIS_START,
@@ -34,7 +35,7 @@ panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
 lags = pd.read_parquet(DATA_PROCESSED / "awareness_legacy_lags.parquet")
 
 df = panel.merge(lags, left_on="incident_date", right_on="date", how="left")
-df = df[df["incident_date"].between(ANALYSIS_START, ANALYSIS_END)]
+df = select_sample(df, where="03b_bridge_legacy")
 df = df[df["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE]
 df["month_year"] = df["year"] * 100 + df["month"]
 df["date_id"] = df["incident_date"].dt.strftime("%Y%m%d").astype(int)

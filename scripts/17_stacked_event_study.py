@@ -75,7 +75,7 @@ from event_study import (
     joint_p,
     randomization_p,
 )
-from freeze_guard import assert_discovery_only, freeze_banner
+from freeze_guard import freeze_banner, select_sample
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--outcome", default=None, help="default: every H1 outcome")
@@ -91,8 +91,7 @@ rng = np.random.default_rng(20260908)
 # ---------------------------------------------------------------------------
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
 panel["incident_date"] = pd.to_datetime(panel["incident_date"])
-panel = panel[panel["incident_date"].between(ANALYSIS_START, ANALYSIS_END)]
-assert_discovery_only(panel, where="17_stacked_event_study")
+panel = select_sample(panel, where="17_stacked_event_study")
 panel = panel[panel["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE].copy()
 panel["dow"] = panel["incident_date"].dt.dayofweek
 

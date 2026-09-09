@@ -15,9 +15,10 @@ S.prewindow_truncation,"S5,E4","contested district-days reassigned, not deleted"
 S.calibration_can_fail,"S4,X3,R3",calibration verdict can fail,PASS,min-n enforced + uniformity test
 S.no_stale_calibration,R3,no stale low-n calibration artifact,BLOCKED,no calibration artifact — run 18_null_calibration.py
 S.ppml_wired,"X5,R8",counts/PPML arm actually called,FAIL,PPML/offset documented but dead code
-D.freeze_not_tautological,D3,freeze guard is not a tautology,FAIL,"tautological in ['03_main_model.py', '05_placebo_and_calls.py', '06_heterogeneity.py', '07_did_exposure.py', '17_stacked_event_study.py']"
-D.freeze_disjoint,D3,confirmation sample disjoint from discovery,FAIL,flipping FREEZE_ACTIVE pools all 70 episodes into one sample
-D.guard_coverage,D3,every panel reader calls the guard,FAIL,"unguarded: ['01_build_panel.py', '03b_bridge_legacy.py', '03c_cai_discovery_robustness.py', '08_figures.py', '18_null_calibration.py']"
+D.freeze_not_tautological,D3,freeze guard is not a tautology,PASS,guard is independent
+D.freeze_disjoint,D3,confirmation sample disjoint from discovery,PASS,explicit confirmation window
+D.guard_coverage,D3,every panel reader calls the guard,PASS,all panel readers guarded (2 documented exemptions)
+D.guard_can_fire,"D3,D4",freeze guard actually rejects things,PASS,guard fires on all 4 rejection cases
 E.threshold_stringency,"D5,L5",episode threshold is constant stringency,FAIL,share above threshold ranges 0.3%-41.0% by year
 E.no_mega_episode,"E3,D7",no episode exceeds its analysis window,FAIL,longest episode 128 days (cap 28)
 E.labels_live_source,"E5,L6,R2",episode labels not from retired Twitter,FAIL,candidate_events ranked by retired tweet_volume
@@ -25,4 +26,4 @@ E.attribution_lookback,E2,attribution lookback >= 60 days,FAIL,lookback 14d (nee
 O.ems_complete,O5,EMS extract covers the full source,PASS,"60 pages, last ends 2026-06-30, complete"
 O.panel_exists,O5,panel_cd_day.parquet exists,PASS,present
 O.dropna_groupby,O4,missing-district rows not silently dropped,PASS,dropna=False
-M.register_sync,O5,register and suite have not drifted apart,PASS,37/54 findings tagged; all 25 blocking covered
+M.register_sync,O5,register and suite have not drifted apart,PASS,38/54 findings tagged; all 25 blocking covered

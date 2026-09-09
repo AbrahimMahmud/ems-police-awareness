@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from freeze_guard import select_sample
 from config import (
     ANALYSIS_END,
     ANALYSIS_START,
@@ -54,10 +55,14 @@ if FREEZE_ACTIVE:
 
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
 panel["incident_date"] = pd.to_datetime(panel["incident_date"])
+# Figures are a way of examining outcomes, so they are inside the freeze too.
+panel = select_sample(panel, where="08_figures")
 city = (panel.groupby("incident_date")[["mh_narrow_calls", "total_calls"]].sum()
         .assign(share=lambda d: d["mh_narrow_calls"] / d["total_calls"]))
-win = (slice(ANALYSIS_START, ANALYSIS_END) if FREEZE_ACTIVE
-       else slice(str(city.index.min().date()), str(city.index.max().date())))
+# Plot exactly what select_sample permitted. The previous form widened to the
+# FULL panel range once the freeze lifted, which would have drawn discovery
+# and confirmation on one axis and called it the confirmation figure.
+win = slice(str(city.index.min().date()), str(city.index.max().date()))
 city = city.loc[win]
 awp = aw.set_index("date").loc[win]
 
