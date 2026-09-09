@@ -1,0 +1,26 @@
+check,findings,description,state,detail
+T.anchor_monthly,"X1,T4","Trends anchor rescales all days, not just 1-7",FAIL,100.0% of day>7 rows unrescaled (defect if ~100%)
+T.nyc_break,T1,trends_nyc has no artificial level break,FAIL,post/pre median positive = 4.48x (defect if >2)
+T.nyc_censoring,"T3,L3","trends_nyc is a level, not a censored indicator",FAIL,"79% zeros overall, by-year spread 43%"
+T.victims_topic_units,"T2,L2",trends_victims divided by topic term,FAIL,ratio = df[name] with no denominator
+T.composite_after_avg,T-const,composite standardised after averaging,FAIL,per-component only; scale varies with component count
+T.fixed_component_set,T-const,CAI-D requires a fixed component set,FAIL,mean-of-available: SD varies by component count
+T.wiki_basket_live,X2,wiki basket not selected by retired Twitter,FAIL,0 basket victims killed after 2020 (defect if 0)
+S.reference_day,"S2,D1",event-time reference is day -1,FAIL,day -1 dropped from sample; patsy omits the lowest level instead
+S.placebo_count,"S1,E1,L1,X4,D2",placebo draws keep the real episode count,FAIL,11% of draws keep all 30 episodes; mean 16.2
+S.joint_test,"S3,R7","H1 uses a joint test, not a 1-df mean",FAIL,1-df mean of 8 coefficients
+S.cluster_by_date,S6,"SEs clustered by date, not hetero",FAIL,vcov=hetero with date-level treatment
+S.prewindow_truncation,S4,pre-window truncated at previous episode,FAIL,forward-only; both copies deleted on collision
+S.calibration_can_fail,"S4,X3,R3",calibration verdict can fail,FAIL,wide binomial band only; passes at any n
+S.no_stale_calibration,R3,no stale low-n calibration artifact,FAIL,artifact has n_sims=12 (needs >=200)
+S.ppml_wired,"X5,R8",counts/PPML arm actually called,FAIL,PPML/offset documented but dead code
+D.freeze_not_tautological,D3,freeze guard is not a tautology,FAIL,"tautological in ['03_main_model.py', '05_placebo_and_calls.py', '06_heterogeneity.py', '07_did_exposure.py', '17_stacked_event_study.py']"
+D.freeze_disjoint,D3,confirmation sample disjoint from discovery,FAIL,flipping FREEZE_ACTIVE pools all 70 episodes into one sample
+D.guard_coverage,D3,every panel reader calls the guard,FAIL,"unguarded: ['01_build_panel.py', '03b_bridge_legacy.py', '03c_cai_discovery_robustness.py', '08_figures.py', '18_null_calibration.py']"
+E.threshold_stringency,"E,T",episode threshold is constant stringency,FAIL,share above threshold ranges 0.3%-38.0% by year
+E.no_mega_episode,"E,T2.4",no episode exceeds its analysis window,FAIL,longest episode 128 days (cap 28)
+E.labels_live_source,"E,R2",episode labels not from retired Twitter,FAIL,candidate_events ranked by retired tweet_volume
+E.attribution_lookback,E2,attribution lookback >= 60 days,FAIL,lookback 14d (needs >=60)
+O.ems_complete,P0,EMS extract covers the full source,FAIL,"33 pages, last ends 2017-10-24, last page FULL -> truncated"
+O.panel_exists,P0,panel_cd_day.parquet exists,BLOCKED,panel not built
+O.dropna_groupby,O4,missing-district rows not silently dropped,FAIL,missing-CD rows silently discarded
