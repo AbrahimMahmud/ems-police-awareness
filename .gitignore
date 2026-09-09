@@ -64,3 +64,6 @@ data/processed/ems_pages/
 
 # Wikipedia probe cache (regenerable; scripts/21_refetch_wikipedia.py)
 data/processed/wiki_probe_cache/
+
+# Wikipedia category cache (regenerable; scripts/24_build_wiki_basket.py)
+data/processed/wiki_cat_cache/
