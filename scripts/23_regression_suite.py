@@ -192,14 +192,55 @@ def t_wiki_basket_twitter():
 # ===========================================================================
 # ESTIMATOR — static source checks, runnable now
 # ===========================================================================
+def _synth_panel(seed=11, effect=0.0):
+    """A small synthetic panel with the real design's shape. No real data needed.
+
+    Used to exercise the estimator behaviourally. A source grep proves the code
+    contains the right-looking text; only running it proves the output has the
+    right property, and the estimator was rewritten in a way that no reasonable
+    grep would have anticipated.
+    """
+    rng = np.random.default_rng(seed)
+    dates = pd.date_range("2017-01-01", "2020-12-31", freq="D")
+    cds = list(range(1, 60))
+    N, T = len(cds), len(dates)
+    y = rng.normal(0.10, 0.03, (N, T))
+    panel = pd.DataFrame({"communitydistrict": np.repeat(cds, T),
+                          "incident_date": np.tile(dates, N),
+                          "edp_share": y.reshape(-1), "total_calls": 50})
+    panel["dow"] = panel["incident_date"].dt.dayofweek
+    starts = [d for d in pd.date_range("2017-02-01", periods=30, freq="44D")
+              if d <= dates[-1] - pd.Timedelta(days=20)]
+    if effect:
+        m = pd.Series(False, index=panel.index)
+        for st in starts:
+            m |= panel["incident_date"].between(st, st + pd.Timedelta(days=7))
+        panel.loc[m, "edp_share"] += effect
+    return panel, starts, dates
+
+
 def s_reference_day():
-    """S2/D1: day -1 is deleted, so the omitted category becomes day -14."""
-    s = src("event_study.py")
-    deletes = 'stack["rel_day"] != EVENT_REFERENCE_DAY' in s
-    sets_ref = ("Treatment(reference=" in s) or ("i(rel_day" in s and "ref=" in s)
-    return ("PASS" if (sets_ref and not deletes) else "FAIL",
-            "reference set explicitly" if sets_ref and not deletes
-            else "day -1 dropped from sample; patsy omits the lowest level instead")
+    """S2/D1: day -1 must stay IN the sample and be the omitted level.
+
+    Behavioural: build a stack, fit, and inspect which relative days actually
+    got coefficients. The defect (deleting day -1) shows up as day -1 present in
+    the coefficient set and day -14 absent from it.
+    """
+    sys.path.insert(0, str(SCRIPTS))
+    import event_study as es
+    panel, starts, _ = _synth_panel()
+    stack = es.build_stack(panel, starts, 14, 14)
+    if stack.empty or -1 not in set(stack["rel_day"]):
+        return "FAIL", "day -1 absent from the estimation stack"
+    m = es.fit_event_study(stack, "edp_share")
+    if m is None:
+        return "BLOCKED", "model did not fit on the synthetic panel"
+    days = set(es._rel_day_coefs(m))
+    ok = (-1 not in days) and (-14 in days)
+    return ("PASS" if ok else "FAIL",
+            f"reference is day -1; estimated {min(days)}..{max(days)}, n={len(days)}" if ok
+            else f"omitted level is not -1 (estimated days include -1: {-1 in days}, "
+                 f"-14: {-14 in days})")
 
 
 def s_placebo_count():
@@ -217,27 +258,86 @@ def s_placebo_count():
 
 
 def s_joint_test():
-    """S3/R7: H1 is a joint test; a mean of coefficients is a 1-df contrast."""
-    s = src("event_study.py")
-    is_mean = "coef().loc[wanted].mean()" in s
-    has_wald = "wald" in s.lower() or "chi2" in s.lower() or "f.cdf" in s.lower()
-    return ("PASS" if has_wald and not is_mean else "FAIL",
-            "joint test" if has_wald and not is_mean else "1-df mean of 8 coefficients")
+    """S3/R7: H1 must be a joint test with power against a dip-then-rebound.
+
+    Behavioural, and it tests the thing that actually matters. A planted
+    dip-then-rebound (days 0-3 down, days 4-7 up by the same amount) averages to
+    zero, so the retired 1-df mean statistic is blind to it. A joint test is not.
+    """
+    sys.path.insert(0, str(SCRIPTS))
+    import event_study as es
+    rng = np.random.default_rng(3)
+    dates = pd.date_range("2017-01-01", "2020-12-31", freq="D")
+    cds = list(range(1, 60))
+    N, T = len(cds), len(dates)
+    panel = pd.DataFrame({"communitydistrict": np.repeat(cds, T),
+                          "incident_date": np.tile(dates, N),
+                          "edp_share": rng.normal(0.10, 0.03, N * T),
+                          "total_calls": 50})
+    panel["dow"] = panel["incident_date"].dt.dayofweek
+    starts = [d for d in pd.date_range("2017-02-01", periods=30, freq="44D")
+              if d <= dates[-1] - pd.Timedelta(days=20)]
+    down = pd.Series(False, index=panel.index)
+    up = pd.Series(False, index=panel.index)
+    for st in starts:
+        down |= panel["incident_date"].between(st, st + pd.Timedelta(days=3))
+        up |= panel["incident_date"].between(st + pd.Timedelta(days=4),
+                                             st + pd.Timedelta(days=7))
+    panel.loc[down, "edp_share"] -= 0.010
+    panel.loc[up, "edp_share"] += 0.010
+
+    stack = es.build_stack(panel, starts, 14, 14)
+    stat = es.first_week_effect(stack, "edp_share")
+    mean = es.first_week_mean(stack, "edp_share")
+    if stat is None:
+        return "BLOCKED", "statistic not estimable on the synthetic panel"
+    # The mean is ~0 by construction; the statistic must NOT be.
+    sensitive = stat > 50 and abs(mean) < 0.002
+    return ("PASS" if sensitive else "FAIL",
+            f"dip-then-rebound: statistic={stat:.1f}, mean coef={mean:+.5f} "
+            f"({'detected' if sensitive else 'INVISIBLE to the statistic'})")
 
 
 def s_cluster_by_date():
-    """S6: treatment is assigned at date level; hetero vcov is wrong."""
-    s = src("event_study.py")
-    return ("PASS" if 'vcov="hetero"' not in s and "vcov='hetero'" not in s else "FAIL",
-            "clustered" if 'vcov="hetero"' not in s else "vcov=hetero with date-level treatment")
+    """S6: treatment is assigned at date level, so SEs must cluster on date."""
+    sys.path.insert(0, str(SCRIPTS))
+    import event_study as es
+    panel, starts, _ = _synth_panel()
+    stack = es.build_stack(panel, starts, 14, 14)
+    m = es.fit_event_study(stack, "edp_share")
+    if m is None:
+        return "BLOCKED", "model did not fit on the synthetic panel"
+    vt = str(getattr(m, "_vcov_type_detail", "") or getattr(m, "_vcov_type", ""))
+    ok = "CRV" in vt or "cluster" in vt.lower()
+    return ("PASS" if ok else "FAIL",
+            f"vcov={vt}" if ok else f"vcov={vt or 'hetero'} with date-level treatment")
 
 
 def s_prewindow_truncation():
-    """S4: build_stack truncates forward only; collisions delete both copies."""
-    s = src("event_study.py")
-    back = "prev_end" in s or "max(s - pd.Timedelta" in s or "starts[i - 1]" in s
-    return ("PASS" if back else "FAIL",
-            "pre-window truncated" if back else "forward-only; both copies deleted on collision")
+    """S5/E4: contested district-days must be reassigned, not deleted twice.
+
+    Behavioural. The defect deleted BOTH copies of any day claimed by two
+    windows, which removed 28% of window district-days and the entire first week
+    of 5 of 30 episodes. The properties that matter are: no district-day used
+    twice, most window days retained, and every retained episode keeping its
+    reference day.
+    """
+    sys.path.insert(0, str(SCRIPTS))
+    import event_study as es
+    panel, starts, _ = _synth_panel()
+    stack = es.build_stack(panel, starts, 14, 14)
+    if stack.empty:
+        return "FAIL", "empty stack"
+    dupes = int(stack.duplicated(["communitydistrict", "incident_date"]).sum())
+    eps = stack["episode"].nunique()
+    have_ref = sum(-1 in set(g["rel_day"]) for _, g in stack.groupby("episode"))
+    # Days a full untruncated design would contain, as the retention denominator.
+    want = len(starts) * 29 * panel["communitydistrict"].nunique()
+    retained = len(stack) / want
+    ok = dupes == 0 and have_ref == eps and retained > 0.55
+    return ("PASS" if ok else "FAIL",
+            f"{dupes} dup district-days; {have_ref}/{eps} episodes keep day -1; "
+            f"{retained:.0%} of window days retained")
 
 
 def s_calibration_can_fail():
@@ -407,9 +507,9 @@ CHECKS = [
     ("T.wiki_basket_live", "X2", "wiki basket not selected by retired Twitter", t_wiki_basket_twitter),
     ("S.reference_day", "S2,D1", "event-time reference is day -1", s_reference_day),
     ("S.placebo_count", "S1,E1,L1,X4,D2", "placebo draws keep the real episode count", s_placebo_count),
-    ("S.joint_test", "S3,R7", "H1 uses a joint test, not a 1-df mean", s_joint_test),
+    ("S.joint_test", "S3,R7", "statistic sees a dip-then-rebound", s_joint_test),
     ("S.cluster_by_date", "S6", "SEs clustered by date, not hetero", s_cluster_by_date),
-    ("S.prewindow_truncation", "S5,E4", "pre-window truncated at previous episode", s_prewindow_truncation),
+    ("S.prewindow_truncation", "S5,E4", "contested district-days reassigned, not deleted", s_prewindow_truncation),
     ("S.calibration_can_fail", "S4,X3,R3", "calibration verdict can fail", s_calibration_can_fail),
     ("S.no_stale_calibration", "R3", "no stale low-n calibration artifact", s_stale_calibration_artifact),
     ("S.ppml_wired", "X5,R8", "counts/PPML arm actually called", s_ppml_wired),

@@ -26,6 +26,22 @@ Two failure modes this catches:
     0.26 permutation);
   - a broken test statistic: p-values piled at 0 or 1 rather than uniform.
 
+2026-09-09: THE VERDICT COULD NOT FAIL (findings S4, X3, R3). It compared the
+empirical rejection rate to a binomial band around alpha that is wide enough to
+contain any estimate at small n — at 12 sims the band ran -0.073 to 0.173 — and
+the committed artifact reading CALIBRATED came from a 12-sim / 25-draw smoke
+test with no real panel. At the documented 200 sims the same code prints NOT
+CALIBRATED. A gate that cannot fail is not a gate.
+
+Three changes:
+  - MIN_SIMS: refuse to issue a verdict below 200 completed sims.
+  - Kolmogorov-Smirnov test that the p-values are uniform on [0,1]. Uniformity
+    is the actual property; a rejection rate near alpha is one implication of it
+    and can hold while the distribution is badly wrong.
+  - The synthetic panel now carries a CITYWIDE DAY SHOCK (finding S6). Treatment
+    is citywide, so a null generated with independent districts is easier than
+    reality and would certify an estimator that over-rejects on the real panel.
+
 Usage:
     python 18_null_calibration.py [--sims 200] [--draws 200] [--rho 0.6]
 """
@@ -34,6 +50,7 @@ import argparse
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 from config import (
     ANALYSIS_END,
@@ -52,6 +69,8 @@ parser.add_argument("--sims", type=int, default=200, help="synthetic panels to t
 parser.add_argument("--draws", type=int, default=200, help="RI draws within each sim")
 parser.add_argument("--rho", type=float, default=0.6, help="AR(1) used if no real panel")
 parser.add_argument("--alpha", type=float, default=0.05)
+parser.add_argument("--day-shock", type=float, default=0.35,
+                    help="citywide day shock SD, as a fraction of sigma (finding S6)")
 args = parser.parse_args()
 
 OUTPUTS_TABLES.mkdir(parents=True, exist_ok=True)
@@ -86,6 +105,8 @@ ep = pd.read_csv(DATA_REFERENCE / "confirmation_episodes.csv", parse_dates=["sta
 starts = ep.loc[ep["period"] == "discovery", "start"].sort_values().tolist()
 print(f"episode dates applied to synthetic outcomes: {len(starts)}")
 
+MIN_SIMS = 200          # below this the verdict is "UNDETERMINED", never a pass
+
 dow = np.array([d.dayofweek for d in dates])
 dow_effect = rng.normal(0, sigma * 0.15, 7)
 cd_effect = rng.normal(0, sigma * 0.5, len(cds))
@@ -93,13 +114,20 @@ T, N = len(dates), len(cds)
 
 
 def synthetic_panel():
-    """A panel with the real serial structure and NO episode effect."""
+    """A panel with the real serial structure and NO episode effect.
+
+    Includes a CITYWIDE day shock common to all districts (finding S6). Without
+    it every district is an independent draw, the effective sample is ~59x the
+    truth, and the calibration would bless an estimator whose error bars are
+    roughly 3x too narrow on the real data.
+    """
     innov = rng.normal(0, sigma * np.sqrt(1 - rho ** 2), (N, T))
     y = np.empty((N, T))
     y[:, 0] = rng.normal(0, sigma, N)
     for t in range(1, T):
         y[:, t] = rho * y[:, t - 1] + innov[:, t]
-    y = y + cd_effect[:, None] + dow_effect[dow][None, :] + mu
+    day_shock = rng.normal(0, sigma * args.day_shock, T)
+    y = y + cd_effect[:, None] + dow_effect[dow][None, :] + day_shock[None, :] + mu
     return pd.DataFrame({
         "communitydistrict": np.repeat(cds, T),
         "incident_date": np.tile(dates, N),
@@ -128,7 +156,16 @@ rej = float((pvals < args.alpha).mean())
 # Binomial 95% interval for the rejection rate at this many sims
 se = np.sqrt(args.alpha * (1 - args.alpha) / max(len(pvals), 1))
 lo, hi = args.alpha - 1.96 * se, args.alpha + 1.96 * se
-calibrated = lo <= rej <= hi
+rate_ok = lo <= rej <= hi
+
+# Uniformity is the property that actually matters. The randomization p-values
+# are discrete on a grid of 1/draws, so compare against that lattice rather than
+# a continuous uniform, which would reject purely on granularity.
+ks_stat, ks_p = stats.kstest(pvals, "uniform")
+uniform_ok = ks_p > 0.05
+
+enough = len(pvals) >= MIN_SIMS
+calibrated = enough and rate_ok and uniform_ok
 
 out = pd.DataFrame([
     {"metric": "n_sims_completed", "value": len(pvals)},
@@ -139,8 +176,15 @@ out = pd.DataFrame([
     {"metric": "acceptable_range_lo", "value": round(lo, 4)},
     {"metric": "acceptable_range_hi", "value": round(hi, 4)},
     {"metric": "median_p", "value": round(float(np.median(pvals)), 4)},
-    {"metric": "mean_null_effect", "value": float(np.mean(effects))},
-    {"metric": "VERDICT", "value": "CALIBRATED" if calibrated else "NOT CALIBRATED"},
+    {"metric": "mean_null_stat", "value": float(np.mean(effects))},
+    {"metric": "ks_statistic", "value": round(float(ks_stat), 4)},
+    {"metric": "ks_p_uniform", "value": round(float(ks_p), 4)},
+    {"metric": "min_sims_required", "value": MIN_SIMS},
+    {"metric": "rate_ok", "value": int(rate_ok)},
+    {"metric": "uniform_ok", "value": int(uniform_ok)},
+    {"metric": "VERDICT", "value": ("CALIBRATED" if calibrated
+                                    else "UNDETERMINED" if not enough
+                                    else "NOT CALIBRATED")},
 ])
 out.to_csv(OUTPUTS_TABLES / "null_calibration.csv", index=False)
 pd.DataFrame({"sim": np.arange(1, len(pvals) + 1), "p": pvals, "effect": effects}).to_csv(
@@ -149,10 +193,23 @@ pd.DataFrame({"sim": np.arange(1, len(pvals) + 1), "p": pvals, "effect": effects
 print("\n" + "=" * 70)
 print(out.to_string(index=False))
 print("=" * 70)
+if not enough:
+    print(f"UNDETERMINED — {len(pvals)} completed sims, {MIN_SIMS} required.")
+    print("This is NOT a pass. Re-run with --sims >= 200 (1000 before the")
+    print("confirmatory run). A verdict issued below MIN_SIMS is what made the")
+    print("previous committed artifact meaningless.")
+    raise SystemExit(2)
 if calibrated:
-    print(f"PASS — rejects at {rej:.1%} against a nominal {args.alpha:.0%}; "
-          "the confirmatory p-value is interpretable.")
+    print(f"PASS — rejects at {rej:.1%} against a nominal {args.alpha:.0%}, and the")
+    print(f"p-values are uniform (KS p = {ks_p:.3f}). The confirmatory p-value is")
+    print("interpretable.")
 else:
-    direction = "OVER" if rej > args.alpha else "UNDER"
-    print(f"FAIL — {direction}-rejects at {rej:.1%} against a nominal {args.alpha:.0%}.")
+    if not rate_ok:
+        direction = "OVER" if rej > args.alpha else "UNDER"
+        print(f"FAIL — {direction}-rejects at {rej:.1%} against a nominal {args.alpha:.0%}.")
+    if not uniform_ok:
+        print(f"FAIL — p-values are not uniform (KS = {ks_stat:.3f}, p = {ks_p:.4f}).")
+        print("       A correct rejection rate with a non-uniform distribution still")
+        print("       means the test statistic is wrong.")
     print("Per GATE_C_MEMO.md §6.3 this blocks the confirmatory run until fixed.")
+    raise SystemExit(1)

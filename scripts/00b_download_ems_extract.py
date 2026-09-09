@@ -85,8 +85,28 @@ print(f"After filters: {len(ems):,} rows")
 
 # Extract 1: CD x day x call type, 2014-12..2024-12
 win = ems[ems["incident_date"].between("2014-12-01", "2024-12-31")]
-g1 = (win.groupby(["incident_date", "communitydistrict", "final_call_type"])
+
+# dropna=False is load-bearing (finding O4). communitydistrict is coerced with
+# errors="coerce", so every unparseable district becomes NaN, and pandas drops
+# NaN group keys by DEFAULT — silently, and before any QC metric is computed.
+# The excluded-volume number therefore understated the true loss, and the
+# geocoding regime change at 2015-12-31 (missing-CD 3.12% -> 0.63%, finding O2)
+# was invisible in it. Keep the NaN group, count it, then let the downstream
+# panel filter to VALID_CDS knowingly rather than by accident.
+g1 = (win.groupby(["incident_date", "communitydistrict", "final_call_type"], dropna=False)
       .size().rename("n_calls").reset_index())
+
+miss = g1["communitydistrict"].isna()
+miss_share = float(g1.loc[miss, "n_calls"].sum() / max(g1["n_calls"].sum(), 1))
+print(f"  missing community district: {int(g1.loc[miss, 'n_calls'].sum()):,} calls "
+      f"({miss_share:.2%} of in-window volume) — retained as NaN, not dropped")
+by_year = (g1.assign(year=g1["incident_date"].dt.year)
+             .groupby(["year", g1["communitydistrict"].isna()])["n_calls"].sum()
+             .unstack(fill_value=0))
+if True in by_year.columns:
+    rate = (by_year[True] / by_year.sum(axis=1)).round(4)
+    print("  missing-CD share by year:")
+    print(rate.to_string())
 out1 = DATA_PROCESSED / "ems_cd_day_calltype.parquet"
 g1.to_parquet(out1, index=False)
 print(f"Wrote {out1}: {len(g1):,} rows, {g1['incident_date'].min()} -> {g1['incident_date'].max()}")

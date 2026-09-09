@@ -6,12 +6,12 @@ T.victims_topic_units,"T2,L2",trends_victims divided by topic term,PASS,dropped 
 T.composite_after_avg,D5,composite standardised after averaging,FAIL,reference-window mean=-0.0000 sd=0.6699 (target 0.00 / 1.00)
 T.fixed_component_set,D5,CAI-D requires a fixed component set,FAIL,mean-of-available: SD varies by component count
 T.wiki_basket_live,X2,wiki basket not selected by retired Twitter,FAIL,0 basket victims killed after 2020 (defect if 0)
-S.reference_day,"S2,D1",event-time reference is day -1,FAIL,day -1 dropped from sample; patsy omits the lowest level instead
-S.placebo_count,"S1,E1,L1,X4,D2",placebo draws keep the real episode count,FAIL,11% of draws keep all 30 episodes; mean 16.2
-S.joint_test,"S3,R7","H1 uses a joint test, not a 1-df mean",FAIL,1-df mean of 8 coefficients
-S.cluster_by_date,S6,"SEs clustered by date, not hetero",FAIL,vcov=hetero with date-level treatment
-S.prewindow_truncation,"S5,E4",pre-window truncated at previous episode,FAIL,forward-only; both copies deleted on collision
-S.calibration_can_fail,"S4,X3,R3",calibration verdict can fail,FAIL,wide binomial band only; passes at any n
+S.reference_day,"S2,D1",event-time reference is day -1,PASS,"reference is day -1; estimated -14..14, n=28"
+S.placebo_count,"S1,E1,L1,X4,D2",placebo draws keep the real episode count,PASS,100% of draws keep all 30 episodes; mean 30.0
+S.joint_test,"S3,R7",statistic sees a dip-then-rebound,PASS,"dip-then-rebound: statistic=1527.3, mean coef=+0.00122 (detected)"
+S.cluster_by_date,S6,"SEs clustered by date, not hetero",PASS,vcov=CRV1
+S.prewindow_truncation,"S5,E4","contested district-days reassigned, not deleted",PASS,0 dup district-days; 30/30 episodes keep day -1; 100% of window days retained
+S.calibration_can_fail,"S4,X3,R3",calibration verdict can fail,PASS,min-n enforced + uniformity test
 S.no_stale_calibration,R3,no stale low-n calibration artifact,FAIL,artifact has n_sims=12 (needs >=200)
 S.ppml_wired,"X5,R8",counts/PPML arm actually called,FAIL,PPML/offset documented but dead code
 D.freeze_not_tautological,D3,freeze guard is not a tautology,FAIL,"tautological in ['03_main_model.py', '05_placebo_and_calls.py', '06_heterogeneity.py', '07_did_exposure.py', '17_stacked_event_study.py']"
@@ -21,7 +21,7 @@ E.threshold_stringency,"D5,L5",episode threshold is constant stringency,FAIL,sha
 E.no_mega_episode,"E3,D7",no episode exceeds its analysis window,FAIL,longest episode 128 days (cap 28)
 E.labels_live_source,"E5,L6,R2",episode labels not from retired Twitter,FAIL,candidate_events ranked by retired tweet_volume
 E.attribution_lookback,E2,attribution lookback >= 60 days,FAIL,lookback 14d (needs >=60)
-O.ems_complete,O5,EMS extract covers the full source,FAIL,"57 pages, last ends 2025-07-28, last page FULL -> truncated"
+O.ems_complete,O5,EMS extract covers the full source,PASS,"60 pages, last ends 2026-06-30, complete"
 O.panel_exists,O5,panel_cd_day.parquet exists,BLOCKED,panel not built
-O.dropna_groupby,O4,missing-district rows not silently dropped,FAIL,missing-CD rows silently discarded
+O.dropna_groupby,O4,missing-district rows not silently dropped,PASS,dropna=False
 M.register_sync,O5,register and suite have not drifted apart,PASS,36/53 findings tagged; all 24 blocking covered

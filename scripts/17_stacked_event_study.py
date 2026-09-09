@@ -28,8 +28,15 @@ is re-run on RANDOMIZATION_DRAWS re-draws of placebo episode dates that preserve
 the real episodes' spacing, and the reported p is the share of placebo statistics
 at least as extreme as the observed one.
 
-The test statistic is the first-week effect: the mean of the day 0..7
-coefficients, two-sided, per the H1 reframe ratified at Gate C §6.1.
+The test statistic is the JOINT Wald chi-square on the day 0..7 coefficients,
+two-sided in the effect, per the H1 reframe ratified at Gate C §6.1. The mean of
+those coefficients is reported beside it as the effect size, but it is not the
+test: a dip-then-rebound, the mechanism this project hypothesises, averages to
+roughly zero (finding S3/R7).
+
+Standard errors are clustered on the date. Treatment is citywide and assigned at
+the date level, so independence across districts within a day is not available
+(finding S6).
 
 Outcomes are estimated on shares (OLS) and on counts (PPML with a log
 total-calls offset), because the finding is compositional and counts have stayed
@@ -43,14 +50,12 @@ import argparse
 
 import numpy as np
 import pandas as pd
-import pyfixest as pf
 
 from config import (
     ANALYSIS_END,
     ANALYSIS_START,
     DATA_PROCESSED,
     DATA_REFERENCE,
-    EVENT_REFERENCE_DAY,
     EVENT_WINDOW_POST,
     EVENT_WINDOW_POST_SENSITIVITY,
     EVENT_WINDOW_PRE,
@@ -60,7 +65,16 @@ from config import (
     OUTPUTS_TABLES,
     RANDOMIZATION_DRAWS,
 )
-from event_study import build_stack, first_week_effect, randomization_p
+from event_study import (
+    _rel_day_coefs,
+    build_stack,
+    episode_day_counts,
+    first_week_effect,
+    first_week_mean,
+    fit_event_study,
+    joint_p,
+    randomization_p,
+)
 from freeze_guard import assert_discovery_only, freeze_banner
 
 parser = argparse.ArgumentParser()
@@ -107,24 +121,31 @@ for outcome in outcomes:
 
         # -- event-time path (only for the primary window) --
         if post == args.post:
-            d = stack[stack["rel_day"] != EVENT_REFERENCE_DAY].dropna(subset=[outcome])
-            m = pf.feols(f"{outcome} ~ C(rel_day) | ep_cd + dow", d, vcov="hetero")
-            for n in m._coefnames:
-                if "rel_day" not in n:
-                    continue
-                rd = int(float(n.split("[T.")[1].rstrip("]")))
-                path_rows.append({"outcome": outcome, "rel_day": rd,
-                                  "coef": float(m.coef()[n]), "se": float(m.se()[n])})
+            m = fit_event_study(stack, outcome)
+            if m is not None:
+                names = _rel_day_coefs(m)
+                epc = episode_day_counts(stack)
+                for rd, n in sorted(names.items()):
+                    path_rows.append({"outcome": outcome, "rel_day": rd,
+                                      "coef": float(m.coef()[n]), "se": float(m.se()[n]),
+                                      "n_episodes": int(epc.get(rd, 0))})
+                w = [names[k] for k in range(0, 8) if k in names]
+                if w:
+                    chi2, p_asy = joint_p(m, w)
+                    print(f"    joint chi2({len(w)}) = {chi2:.2f}   asymptotic p = {p_asy:.4f}"
+                          "   (reported beside the RI p, never instead of it)")
 
         # -- randomization inference (primary p-value) --
         obs, p_ri, draws = randomization_p(panel, real_starts, outcome,
                                            EVENT_WINDOW_PRE, post, args.draws, rng)
 
         rows.append({"outcome": outcome, "post_window": post, "estimator": "OLS_share",
-                     "first_week_effect": obs, "p_randomization": p_ri,
+                     "first_week_chi2": obs,
+                     "first_week_mean_coef": first_week_mean(stack, outcome),
+                     "p_randomization": p_ri,
                      "n_draws": len(draws), "null_sd": float(draws.std()) if len(draws) else np.nan,
                      "n_episodes": len(real_starts), "n_obs": len(stack)})
-        print(f"  {outcome:18s} post={post:>3}  effect={obs:+.6f}  p_RI={p_ri:.3f}  ({len(draws)} draws)")
+        print(f"  {outcome:18s} post={post:>3}  chi2={obs:8.2f}  p_RI={p_ri:.3f}  ({len(draws)} draws)")
 
         if post == args.post:
             pd.DataFrame({"draw": np.arange(1, len(draws) + 1), "stat": draws}).assign(
