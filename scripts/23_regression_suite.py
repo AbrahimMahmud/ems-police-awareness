@@ -125,7 +125,17 @@ def t_nyc_censored():
 
 
 def t_victims_saturate():
-    """T2/L2: trends_victims never divided by topic term, so victims cap at 100."""
+    """T2/L2: trends_victims must not enter CAI-D as an undivided window rank.
+
+    Two fixes are acceptable and the check accepts either: drop the component
+    from the CAI-D basket, or actually divide by the topic term so the series
+    carries units. An earlier version of this check tested only the second,
+    which would have reported FAIL forever if the component were dropped —
+    a check that can only pass one way silently forbids the other.
+    """
+    from config import CAI_D_COMPONENTS
+    if "trends_victims" not in CAI_D_COMPONENTS:
+        return "PASS", "dropped from CAI_D_COMPONENTS"
     s = src("11c_trends_anchor_and_victims.py")
     divides = bool(re.search(r"ratio\s*=\s*df\[name\][^\n]*/\s*df\[\s*TOPIC", s))
     return ("PASS" if divides else "FAIL",
@@ -133,13 +143,28 @@ def t_victims_saturate():
 
 
 def t_composite_after_avg():
-    """T-const: composite must be standardised AFTER averaging, not per-component."""
-    s = src("12_build_cai.py")
-    # defect: each component standardised then averaged, with no re-standardisation
-    per_comp = "std[c] = (x - ref.mean()) / ref.std" in s
-    after = re.search(r"cai_d.*?=.*?\(.*?cai_d.*?-.*?ref.*?mean", s, re.S) is not None
-    return ("PASS" if after else "FAIL",
-            "composite re-standardised" if after else "per-component only; scale varies with component count")
+    """D5: the composite must be standardised AFTER averaging, not per-component.
+
+    Checked on the BUILT INDEX, not on the source. The first version of this
+    check grepped 12_build_cai.py with a non-greedy DOTALL regex, which matched
+    across the whole file and reported PASS after an unrelated edit while the
+    defect was untouched. A source grep loose enough to match anywhere is not a
+    test. The property is arithmetic, so test the arithmetic.
+
+    Averaging k separately standardised components gives a composite with SD
+    below 1 (about 0.67 here), so `cai_d > EPISODE_Z_THRESHOLD` is not the
+    "1 SD" rule it is documented to be — it is roughly 1.5 SD, and it moves
+    with how many components exist that day.
+    """
+    d = pd.read_parquet(DATA_PROCESSED / "cai_daily.parquet")
+    d["date"] = pd.to_datetime(d["date"])
+    ref = d[d["date"].between("2017-01-01", "2019-12-31")]["cai_d"].dropna()
+    if ref.empty:
+        return "BLOCKED", "no cai_d on the reference window"
+    sd, mean = float(ref.std(ddof=0)), float(ref.mean())
+    ok = abs(sd - 1.0) < 0.02 and abs(mean) < 0.02
+    return ("PASS" if ok else "FAIL",
+            f"reference-window mean={mean:+.4f} sd={sd:.4f} (target 0.00 / 1.00)")
 
 
 def t_fixed_component_set():

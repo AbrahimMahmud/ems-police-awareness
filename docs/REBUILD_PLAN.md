@@ -31,6 +31,26 @@ A test that passes before the fix and after the fix tests nothing. Each check
 asserts the *corrected* property, so today it fails. The count of FAILs is the
 work remaining, and it should only go down.
 
+### Prefer a data check to a source grep
+
+A check that greps a script for the right-looking code proves the code says the
+right thing, not that the output has the right property.
+
+This is not hypothetical. `T.composite_after_avg` originally searched
+`12_build_cai.py` with a non-greedy DOTALL regex. When P1.1 edited an unrelated
+part of that file, the regex found a match somewhere else and the check flipped
+to PASS — while the defect was completely untouched and the composite still had
+SD 0.67 on its reference window. **A false PASS is worse than no check**: it
+retires a finding that is still live.
+
+It was caught only because the gate flags *any* unintended flip, including a
+flip in the direction you were hoping for. Rewritten as an assertion on the
+built index, it correctly reports FAIL.
+
+So: where the property is arithmetic, test the arithmetic. 13 checks are still
+source greps; each should become a data check when its phase runs and the data
+it needs exists.
+
 ---
 
 ## 1. The gate between every phase

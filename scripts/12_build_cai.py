@@ -29,12 +29,18 @@ Outputs:
 import numpy as np
 import pandas as pd
 
-from config import DATA_PROCESSED, DATA_REFERENCE, OUTPUTS_TABLES
+from config import (
+    CAI_D_COMPONENTS,
+    CAI_S_COMPONENTS,
+    DATA_PROCESSED,
+    DATA_REFERENCE,
+    OUTPUTS_TABLES,
+)
 
 OUTPUTS_TABLES.mkdir(parents=True, exist_ok=True)
 
-D_COMPONENTS = ["wiki_ext", "trends_us", "trends_nyc", "trends_victims"]
-S_COMPONENTS = ["gdelt_news", "gdelt_tv"]
+D_COMPONENTS = list(CAI_D_COMPONENTS)
+S_COMPONENTS = list(CAI_S_COMPONENTS)
 RACE_COMPONENTS = {"cai_d_black": "wiki_black", "cai_d_nonblack": "wiki_nonblack"}
 STD_WINDOW = ("2017-01-01", "2019-12-31")   # never a window containing Floyd
 FLOYD = ("2020-05-26", "2020-07-10")

@@ -82,6 +82,28 @@ MH_BROAD_GROUPS = MH_NARROW_GROUPS + ("od_poison_drug",)
 PRIMARY_AWARENESS = "cai_d"
 AWARENESS_VARIANTS = ("cai_d", "cai_d_black", "cai_d_nonblack", "cai_s")
 
+# The component baskets are HERE, not in 12_build_cai.py, so that the audit
+# suite and the build script cannot disagree about what the index contains.
+#
+# trends_victims was dropped on 2026-09-09 (findings T2, L2, T8). Two
+# independent reasons, either sufficient:
+#   1. It was never in the units it claimed. 11c computes `ratio = df[name]`
+#      with no denominator, so each victim series is a within-window 0-100
+#      rank and every sizeable victim — Walter Scott through George Floyd —
+#      saturates at exactly 100. The component counted open windows, not
+#      attention.
+#   2. Its availability is caused by the treatment. Google Trends only returns
+#      a victim-name series once volume clears a reporting floor, so the
+#      component is present on high-attention days and missing on quiet ones.
+#      In a mean-of-available-components index that pushes the index up
+#      precisely when attention is high, partly by construction — the index
+#      would partly measure itself.
+# Cost of dropping it: near zero. The three always-on components correlate
+# 0.985 with the index as previously built.
+CAI_D_COMPONENTS = ("wiki_ext", "trends_us", "trends_nyc")
+CAI_S_COMPONENTS = ("gdelt_news", "gdelt_tv")
+CAI_D_COMPONENTS_RETIRED = ("trends_victims",)
+
 # Legacy Twitter variants, available only via 02_build_awareness.py and used
 # only by 03b_bridge_legacy.py. Never a treatment in a reported result.
 LEGACY_AWARENESS = "aware_log"
