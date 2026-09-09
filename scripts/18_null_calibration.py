@@ -47,6 +47,8 @@ Usage:
 """
 
 import argparse
+import os
+from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
 import pandas as pd
@@ -72,6 +74,8 @@ parser.add_argument("--rho", type=float, default=0.6, help="AR(1) used if no rea
 parser.add_argument("--alpha", type=float, default=0.05)
 parser.add_argument("--day-shock", type=float, default=0.35,
                     help="citywide day shock SD, as a fraction of sigma (finding S6)")
+parser.add_argument("--jobs", type=int, default=0,
+                    help="parallel workers; 0 = cpu_count()-1")
 args = parser.parse_args()
 
 OUTPUTS_TABLES.mkdir(parents=True, exist_ok=True)
@@ -114,7 +118,7 @@ cd_effect = rng.normal(0, sigma * 0.5, len(cds))
 T, N = len(dates), len(cds)
 
 
-def synthetic_panel():
+def synthetic_panel(rng):
     """A panel with the real serial structure and NO episode effect.
 
     Includes a CITYWIDE day shock common to all districts (finding S6). Without
@@ -139,17 +143,40 @@ def synthetic_panel():
 
 
 # ---------------------------------------------------------------------------
-pvals, effects = [], []
-for i in range(1, args.sims + 1):
-    obs, p, _ = randomization_p(synthetic_panel(), starts, "edp_share",
-                                EVENT_WINDOW_PRE, EVENT_WINDOW_POST, args.draws, rng)
+# Each sim gets its OWN rng, spawned from one seed sequence. That makes the run
+# reproducible independently of how many workers execute it — the sequential
+# version's results depended on scheduling order, which is not a property you
+# want in the artifact that licenses the confirmatory p-value.
+#
+# Parallel because the estimator got more expensive when it got correct:
+# clustering on date and retaining every window day (findings S6, S5) pushed one
+# sim past two minutes, so 1000 sims x 200 draws does not finish sequentially.
+SEEDS = np.random.SeedSequence(18_20260908).spawn(args.sims)
+
+
+def one_sim(seed):
+    """Run a single synthetic panel end to end. Returns (obs, p) or None."""
+    r = np.random.default_rng(seed)
+    obs, p, _ = randomization_p(synthetic_panel(r), starts, "edp_share",
+                                EVENT_WINDOW_PRE, EVENT_WINDOW_POST, args.draws, r)
     if obs is None or np.isnan(p):
-        continue
-    pvals.append(p)
-    effects.append(obs)
-    if i % 25 == 0:
-        cur = np.mean(np.array(pvals) < args.alpha)
-        print(f"  {i}/{args.sims} sims — rejection rate so far {cur:.3f}")
+        return None
+    return float(obs), float(p)
+
+
+pvals, effects = [], []
+jobs = args.jobs or max(1, (os.cpu_count() or 2) - 1)
+print(f"running {args.sims} sims x {args.draws} draws on {jobs} workers")
+done = 0
+with ProcessPoolExecutor(max_workers=jobs) as ex:
+    for res in ex.map(one_sim, SEEDS, chunksize=1):
+        done += 1
+        if res is not None:
+            effects.append(res[0])
+            pvals.append(res[1])
+        if done % 25 == 0 and pvals:
+            cur = np.mean(np.array(pvals) < args.alpha)
+            print(f"  {done}/{args.sims} sims — rejection rate so far {cur:.3f}", flush=True)
 
 pvals = np.array(pvals)
 effects = np.array(effects)
