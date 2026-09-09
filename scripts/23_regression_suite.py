@@ -352,13 +352,26 @@ def s_calibration_can_fail():
 
 
 def s_stale_calibration_artifact():
-    """R3: the committed PASS artifact came from a 12-sim smoke test."""
+    """R3: a real calibration must exist, at real size, with a real verdict.
+
+    An ABSENT artifact is BLOCKED, never PASS. The first version of this check
+    returned PASS when the file was missing ("no stale artifact"), so deleting
+    the stale 12-sim file passed the check with no calibration having run at
+    all. That is the third check in this rebuild that could pass for the wrong
+    reason, after the DOTALL regex and the check that admitted only one of two
+    valid fixes. "Nothing to complain about" is not the same as "verified".
+    """
     f = OUTPUTS_TABLES / "null_calibration.csv"
     if not f.exists():
-        return "PASS", "no stale artifact"
+        return "BLOCKED", "no calibration artifact — run 18_null_calibration.py"
     d = pd.read_csv(f).set_index("metric")["value"].to_dict()
     n = float(d.get("n_sims_completed", 0))
-    return ("FAIL" if n < 200 else "PASS", f"artifact has n_sims={n:.0f} (needs >=200)")
+    verdict = str(d.get("VERDICT", "?"))
+    if n < 200:
+        return "FAIL", f"artifact has n_sims={n:.0f} (needs >=200)"
+    if verdict != "CALIBRATED":
+        return "FAIL", f"n_sims={n:.0f} but VERDICT={verdict}"
+    return "PASS", f"n_sims={n:.0f}, VERDICT={verdict}"
 
 
 def s_ppml_wired():
