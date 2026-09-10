@@ -657,12 +657,76 @@ def e_no_mega_episode():
     return ("FAIL" if span > 28 else "PASS", f"longest episode {span} days (cap 28)")
 
 
+def e_frozen_list_untouched():
+    """The pre-registered episode list must be byte-identical to git HEAD.
+
+    Its entire value is that it was fixed before any outcome was examined, so
+    regenerating it in place destroys the evidence of that ordering — and a
+    reviewer cannot tell a correction from a result-driven edit after the fact.
+
+    This check exists because it already happened: on 2026-09-10
+    13_extension_episodes.py overwrote the frozen file, since its output path
+    had never been changed when the index rebuild began. It was caught by
+    `git status`, restored, and verified byte-identical. Nothing downstream had
+    consumed the overwritten version. A guard beats vigilance.
+    """
+    import subprocess
+    f = DATA_REFERENCE / "confirmation_episodes.csv"
+    if not f.exists():
+        return "FAIL", "the frozen episode list is missing"
+    r = subprocess.run(["git", "show", f"HEAD:data/reference/{f.name}"],
+                       cwd=PROJECT_ROOT, capture_output=True)
+    if r.returncode != 0:
+        return "BLOCKED", "cannot read the committed version from git"
+    same = r.stdout == f.read_bytes()
+    return ("PASS" if same else "FAIL",
+            "byte-identical to HEAD" if same
+            else "MODIFIED — restore with: git checkout -- data/reference/"
+                 + f.name)
+
+
 def e_labels_not_from_twitter():
-    """E/R2/X: episode labels ranked by the retired Twitter volume."""
-    s = src("13_extension_episodes.py")
-    return ("PASS" if "tweet_volume" not in s else "FAIL",
-            "labels from live source" if "tweet_volume" not in s
-            else "candidate_events ranked by retired tweet_volume")
+    """E5/L6/R2: episode labels must rank by attention, not by file order.
+
+    Tests the OUTPUT, not the absence of a word. The first version checked that
+    "tweet_volume" no longer appeared in the source, which deleting the line
+    would have satisfied without replacing the ranking — the same weak-proxy
+    shape as the basket check that passed when a column disappeared.
+
+    The file-order signature is specific and testable: when every candidate tied
+    at 0.0, the stable sort returned the registry's own date-descending order,
+    so the label was simply the two most recent deaths in the window. A real
+    attention ranking disagrees with that most of the time, and leaves a window
+    with no readership unlabelled rather than defaulting.
+    """
+    f = DATA_REFERENCE / "confirmation_episodes_rebuilt.csv"
+    if not f.exists():
+        return "BLOCKED", "no rebuilt episode list — run 13_extension_episodes.py"
+    from config import ATTRIBUTION_LOOKBACK_DAYS
+    ep = pd.read_csv(f, parse_dates=["start", "end"])
+    reg = pd.read_csv(DATA_REFERENCE / "victim_registry.csv", parse_dates=["date"])
+
+    file_order, labelled = 0, 0
+    for _, r in ep.iterrows():
+        lab = str(r.get("candidate_events") or "").strip()
+        if not lab:
+            continue
+        labelled += 1
+        lo = r["start"] - pd.Timedelta(days=ATTRIBUTION_LOOKBACK_DAYS)
+        near = reg[(reg["date"] >= lo) & (reg["date"] <= r["end"])]
+        # the retired ranking's output: registry file order, date descending
+        default = "; ".join(near.sort_values("date", ascending=False)["name"].head(2))
+        if default and lab == default:
+            file_order += 1
+
+    if labelled == 0:
+        return "FAIL", "no episode carries a label"
+    share = file_order / labelled
+    blank = int((ep["candidate_events"].isna()
+                 | (ep["candidate_events"].astype(str).str.strip() == "")).sum())
+    return ("PASS" if share < 0.25 else "FAIL",
+            f"{file_order}/{labelled} labels match the file-order default "
+            f"({share:.0%}); {blank} windows left unlabelled")
 
 
 def e_attribution_lookback():
@@ -762,6 +826,7 @@ CHECKS = [
     ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),
     ("E.threshold_stringency", "D5,L5", "episode threshold is constant stringency", e_threshold_constant_stringency),
     ("E.no_mega_episode", "E3,D7", "no episode exceeds its analysis window", e_no_mega_episode),
+    ("E.frozen_list_untouched", "D3", "frozen episode list unmodified", e_frozen_list_untouched),
     ("E.labels_live_source", "E5,L6,R2", "episode labels not from retired Twitter", e_labels_not_from_twitter),
     ("E.attribution_lookback", "E2", "attribution lookback >= 60 days", e_attribution_lookback),
     ("O.ems_complete", "O5", "EMS extract covers the full source", o_ems_download_complete),

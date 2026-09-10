@@ -29,6 +29,8 @@ Outputs:
 import numpy as np
 import pandas as pd
 
+from attribution import label_window, load_attention
+
 from config import (
     ATTRIBUTION_LOOKBACK_DAYS,
     CAI_D_COMPONENTS,
@@ -199,33 +201,9 @@ top = std.nlargest(20, "cai_d").reset_index()[["date", "cai_d", "cai_s"]]
 # An article title is one person, so the namesake collapse cannot happen. The
 # lookback is ATTRIBUTION_LOOKBACK_DAYS rather than 14 because video releases,
 # indictments and verdicts spike well after the death (finding E2).
-pv_path = DATA_REFERENCE / "wiki_pageviews_by_article.csv"
-dec_path = DATA_REFERENCE / "basket_decisions.csv"
-if not (pv_path.exists() and dec_path.exists()):
-    raise SystemExit(
-        "episode attribution needs wiki_pageviews_by_article.csv and "
-        "basket_decisions.csv — run 11_fetch_awareness_components.py --only "
-        "wiki_ext and 27_finalise_basket.py --apply first. Refusing to fall "
-        "back to the retired Twitter ranking (findings E5, L6, R2).")
-
-pv_art = pd.read_csv(pv_path, parse_dates=["date"])
-dec = pd.read_csv(dec_path)
-art2person = dec.set_index("article")["person"].to_dict()
-pv_art["person_key"] = pv_art["article"].map(art2person).str.lower()
-
-attr = []
-for d in top["date"]:
-    lo = d - pd.Timedelta(days=ATTRIBUTION_LOOKBACK_DAYS)
-    near = reg[(reg["date"] >= lo) & (reg["date"] <= d)]
-    # Attention to each candidate over the window, summed across that person's
-    # article titles (a page move splits the series across titles).
-    w = pv_art[(pv_art["date"] >= lo) & (pv_art["date"] <= d)]
-    prom = w.groupby("person_key")["views"].sum()
-    near = near.assign(prom=near["name"].str.lower().map(prom).fillna(0.0))
-    # Only name a candidate that actually drew attention. An all-zero window
-    # gets an empty label rather than whatever the file order happens to be.
-    near = near[near["prom"] > 0].sort_values("prom", ascending=False)
-    attr.append("; ".join(near["name"].head(2)) if len(near) else "")
+attention = load_attention()
+attr = [label_window(reg, attention, d, d, ATTRIBUTION_LOOKBACK_DAYS)
+        for d in top["date"]]
 top["candidate_events"] = attr
 top.to_csv(OUTPUTS_TABLES / "cai_top_days.csv", index=False)
 
