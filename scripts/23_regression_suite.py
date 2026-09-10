@@ -123,6 +123,71 @@ def t_anchor_monthly():
             f"within-month step (SD units): {', '.join(detail)} — worst {worst:.3f}")
 
 
+def t_local_series_uncensored():
+    """T10: the NYC-local attention series must have no censored days.
+
+    The point of moving off Google Trends for the local component is that
+    pageviews are counts, so the reporting floor that made trends_nyc unusable
+    (42.6% zero days, 70.8% in 2024) does not exist. Asserted per YEAR, not
+    overall, because the Trends censoring was concentrated in the later years
+    and an overall figure would have hidden it.
+    """
+    f = DATA_REFERENCE / "wiki_nyc_daily.csv"
+    if not f.exists():
+        return "BLOCKED", "no local series — run 28_build_nyc_attention.py"
+    d = pd.read_csv(f, parse_dates=["date"])
+    out = []
+    for comp, g in d.groupby("component"):
+        by = g.groupby(g["date"].dt.year)["value"].apply(lambda x: float((x == 0).mean()))
+        out.append((comp, float(by.max()), int(by.idxmax())))
+    worst = max(out, key=lambda t: t[1])
+    return ("PASS" if worst[1] < 0.02 else "FAIL",
+            f"worst year {worst[0]} {worst[2]}: {worst[1]:.1%} zero days"
+            if worst[1] >= 0.02 else
+            f"{len(out)} series, no year above 2% zero days")
+
+
+def t_index_not_single_article():
+    """T11: no single article may carry the index's biggest days.
+
+    Content validation, not coverage. A count index summed over a small basket
+    is dominated by whichever article gets linked somewhere high-traffic: the
+    first wiki_nyc build peaked on 2022-06-06, a one-day 70x spike in
+    Killing_of_Amadou_Diallo (488 -> 35,418 -> 527) with no news trigger. Every
+    coverage diagnostic looked excellent while the peak was an artifact.
+
+    The same build had earlier peaked on 2024-12-10 — the UnitedHealthcare CEO
+    shooting — because the basket had been seeded from "Deaths by person in New
+    York City" and required no police involvement. Both failures were invisible
+    to a check that measured zero-days and distinct-values, which is why this
+    check looks at WHO drives the top days instead.
+    """
+    arts = DATA_REFERENCE / "wiki_nyc_articles.csv"
+    daily = DATA_REFERENCE / "wiki_nyc_daily.csv"
+    if not (arts.exists() and daily.exists()):
+        return "BLOCKED", "no local basket on disk"
+    a = pd.read_csv(arts)
+    kept = a[a["keep"]]
+    if kept.empty:
+        return "FAIL", "the local basket is empty"
+    per = DATA_REFERENCE / "wiki_nyc_per_article.csv"
+    if not per.exists():
+        return "BLOCKED", ("no per-article local series — 28_build_nyc_attention.py "
+                           "must persist it for this check to validate content")
+    pa = pd.read_csv(per, parse_dates=["date"]).pivot_table(
+        index="date", columns="article", values="views", aggfunc="sum").fillna(0.0)
+    tot = pa.sum(axis=1)
+    top = tot.nlargest(10)
+    shares = [(d, float(pa.loc[d].max() / v)) for d, v in top.items() if v > 0]
+    if not shares:
+        return "FAIL", "no positive days in the local index"
+    worst_day, worst_share = max(shares, key=lambda t: t[1])
+    n_bad = sum(1 for _, sh in shares if sh > 0.80)
+    return ("PASS" if worst_share <= 0.80 else "FAIL",
+            f"{n_bad}/10 top days are >80% one article; worst {worst_day.date()} "
+            f"at {worst_share:.0%}")
+
+
 def t_nyc_break():
     """T1: trends_nyc level break from the scale=1.0 stitching fallback."""
     st = pd.read_csv(DATA_REFERENCE / "cai_trends_daily.csv", parse_dates=["date"])
@@ -913,6 +978,8 @@ def m_register_sync():
 # ===========================================================================
 CHECKS = [
     ("T.anchor_monthly", "X1,T4", "Trends anchor rescales all days, not just 1-7", t_anchor_monthly),
+    ("T.local_uncensored", "T10", "NYC-local series has no censored days", t_local_series_uncensored),
+    ("T.index_not_one_article", "T11", "index top days are not one article", t_index_not_single_article),
     ("T.nyc_break", "T1", "trends_nyc has no artificial level break", t_nyc_break),
     ("T.nyc_censoring", "T3,L3", "trends_nyc is a level, not a censored indicator", t_nyc_censored),
     ("T.victims_topic_units", "T2,L2", "trends_victims divided by topic term", t_victims_saturate),
