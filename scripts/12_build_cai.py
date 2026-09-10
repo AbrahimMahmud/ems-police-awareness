@@ -49,11 +49,33 @@ STD_WINDOW = ("2017-01-01", "2019-12-31")   # never a window containing Floyd
 FLOYD = ("2020-05-26", "2020-07-10")
 
 parts = [pd.read_csv(DATA_REFERENCE / "cai_components_daily.csv", parse_dates=["date"])]
-anchored = DATA_REFERENCE / "cai_trends_anchored.csv"
-if anchored.exists():
-    parts.append(pd.read_csv(anchored, parse_dates=["date"]))  # anchored US/NYC + victim terms
-else:
-    parts.append(pd.read_csv(DATA_REFERENCE / "cai_trends_daily.csv", parse_dates=["date"]))
+
+# The Trends source is named EXPLICITLY. It used to be chosen by file existence:
+# if cai_trends_anchored.csv was present it won, otherwise the stitched daily
+# file was used. That is a silent-staleness trap - the anchored file survives a
+# refetch of the daily file, so a rebuilt series would be quietly ignored while
+# the index kept using the retired query. It nearly happened here on 2026-09-10.
+#
+# ANCHORING IS RETIRED (findings X1/T4/T5/L4). Three independent reasons:
+#   1. It never worked. 11c requested a 10-year window, which Trends answers at
+#      MONTHLY granularity, and the 7-day mask then rescaled only days 1-7 of
+#      each month - leaving a permanent -0.408 SD within-month step, significant
+#      in 9 of 10 years.
+#   2. It is not needed. Anchoring trends_us is close to a no-op: the corrected
+#      anchor correlates 0.996 with the pure stitched series, because the 11b
+#      chain has no drift for it to correct.
+#   3. It cannot fix trends_nyc, which is the series that does drift: 49 of the
+#      120 monthly NYC anchor values are exactly zero.
+# The stitched daily series is now the source, with its per-boundary link
+# diagnostics committed alongside it.
+parts.append(pd.read_csv(DATA_REFERENCE / "cai_trends_daily.csv", parse_dates=["date"]))
+
+_stale = DATA_REFERENCE / "cai_trends_anchored.csv"
+if _stale.exists():
+    raise SystemExit(
+        f"{_stale.name} still exists. Anchoring is retired; that file holds the "
+        "pre-2026-09-10 single-term query and would silently override the "
+        "refetched series. Move it to data/reference/archive/ and re-run.")
 
 # --- race-split victim attention from per-victim Wikipedia pageviews ---
 # Only the wiki component is available at victim granularity: trends_victims is

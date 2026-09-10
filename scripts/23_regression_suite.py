@@ -84,19 +84,43 @@ def _components():
 
 
 def t_anchor_monthly():
-    """X1/T4: the 'weekly' anchor is monthly, so only days 1-7 are rescaled."""
-    st = pd.read_csv(DATA_REFERENCE / "cai_trends_daily.csv", parse_dates=["date"])
-    an = pd.read_csv(DATA_REFERENCE / "cai_trends_anchored.csv", parse_dates=["date"])
-    s = st[st.component == "trends_us"].set_index("date")["value"]
-    a = an[an.component == "trends_us"].set_index("date")["value"]
-    j = pd.concat([s.rename("s"), a.rename("a")], axis=1).dropna()
-    j = j[j.s > 0]
-    late = j[j.index.day > 7]
-    ratio_late = (late.a / late.s)
-    # defect present when late-month days are EXACTLY unrescaled (ratio == 1)
-    untouched = float((ratio_late.sub(1).abs() < 1e-9).mean())
-    return ("FAIL" if untouched > 0.99 else "PASS",
-            f"{untouched:.1%} of day>7 rows unrescaled (defect if ~100%)")
+    """X1/T4/T5/L4: no within-month step in the Trends series CAI-D actually uses.
+
+    Asserts the PROPERTY on data, and accepts either sanctioned repair - fix the
+    anchor, or drop anchoring. The first version measured the fraction of day>7
+    rows whose anchored/stitched ratio was exactly 1.0, which had two defects
+    the reviewers demonstrated: it reported PASS if days 8+ were multiplied by
+    1.0000001 with the -0.408 SD step completely intact, and it FALSE-FAILED the
+    "drop anchoring" repair that the plan itself sanctions - and if the anchored
+    file were deleted it raised FileNotFoundError, so that repair could never
+    show PASS by any route.
+
+    The defect was a mask that rescaled only days 1-7 of each month, so the test
+    is simply whether days 1-7 and days 8+ sit at the same level.
+    """
+    from config import CAI_D_COMPONENTS
+    f = DATA_REFERENCE / "cai_trends_daily.csv"
+    if not f.exists():
+        return "BLOCKED", "no Trends series on disk"
+    stale = DATA_REFERENCE / "cai_trends_anchored.csv"
+    if stale.exists():
+        return "FAIL", ("cai_trends_anchored.csv still present — it would silently "
+                        "override the stitched series in 12_build_cai.py")
+    d = pd.read_csv(f, parse_dates=["date"])
+    d = d[d["component"].isin(CAI_D_COMPONENTS)]
+    if d.empty:
+        return "BLOCKED", "no CAI-D Trends components in the file"
+    worst, detail = 0.0, []
+    for comp, g in d.groupby("component"):
+        x = np.log1p(g["value"].astype(float))
+        early = x[g["date"].dt.day <= 7]
+        late = x[g["date"].dt.day > 7]
+        sd = float(x.std(ddof=0)) or 1.0
+        step = abs(float(early.mean() - late.mean())) / sd
+        detail.append(f"{comp} {step:.3f}")
+        worst = max(worst, step)
+    return ("PASS" if worst < 0.10 else "FAIL",
+            f"within-month step (SD units): {', '.join(detail)} — worst {worst:.3f}")
 
 
 def t_nyc_break():
