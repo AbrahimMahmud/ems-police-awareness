@@ -67,3 +67,6 @@ data/processed/wiki_probe_cache/
 
 # Wikipedia category cache (regenerable; scripts/24_build_wiki_basket.py)
 data/processed/wiki_cat_cache/
+
+# Wikidata SPARQL response cache (regenerable; scripts/26_resolve_basket_scope.py)
+data/processed/wikidata_cache/

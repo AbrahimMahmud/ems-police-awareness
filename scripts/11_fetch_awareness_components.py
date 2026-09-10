@@ -10,6 +10,7 @@ Google Trends (CAI-D) is fetched by 11b (separate: different client/rate limits)
 Output: data/reference/cai_components_daily.csv (long: date, component, value)
 """
 
+import argparse
 import hashlib
 import json
 import time
@@ -24,6 +25,17 @@ from config import DATA_REFERENCE
 UA = {"User-Agent": "ems-police-awareness-research/1.0 (academic research)"}
 FROZEN_QUERY = '("police shooting" OR "police killing" OR "killed by police" OR "police brutality")'
 START, END = "2015-01-01", "2024-12-31"
+
+# --only lets one component be refetched without re-hitting the others. The
+# whole-file overwrite below means a partial GDELT failure would otherwise
+# truncate components that were fine, and GDELT is persistently rate-limited
+# from this egress IP. Components not selected are carried over from the
+# existing file rather than being dropped.
+_ap = argparse.ArgumentParser()
+_ap.add_argument("--only", default=None,
+                 choices=["wiki_ext", "gdelt_tv", "gdelt_news"],
+                 help="refetch just this component, preserving the others")
+ARGS = _ap.parse_args()
 
 
 def get_json(url, tries=6):
@@ -46,38 +58,39 @@ def get_json(url, tries=6):
 rows = []
 
 # --- Wikipedia pageviews, extended window, all resolved articles ---
-res = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv")
-articles = res.dropna(subset=["article"]).drop_duplicates("article")["article"].tolist()
-# Record which articles were ACTUALLY summed, and whether each returned data.
-# Without this, wiki_ext can be built from a stale basket while the basket file
-# on disk says something else — the index and its documented inputs drift apart
-# silently, and every check that reads the basket file reports a property the
-# index does not have. Articles that error out are recorded too, so a basket of
-# 121 that silently became 60 is visible instead of merely smaller.
-used = []
-wiki_daily = {}
-for i, art in enumerate(articles):
-    u = (f"https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/"
-         f"en.wikipedia/all-access/user/{urllib.parse.quote(art)}/daily/20150701/20241231")
-    try:
-        items = get_json(u)["items"]
-        for it in items:
-            d = it["timestamp"][:8]
-            wiki_daily[d] = wiki_daily.get(d, 0) + it["views"]
-        used.append({"article": art, "days": len(items),
-                     "views": sum(it["views"] for it in items), "ok": True})
-    except RuntimeError:
-        print(f"  wiki skip: {art}")
-        used.append({"article": art, "days": 0, "views": 0, "ok": False})
-    time.sleep(0.4)
+if ARGS.only in (None, "wiki_ext"):
+ res = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv")
+ articles = res.dropna(subset=["article"]).drop_duplicates("article")["article"].tolist()
+ # Record which articles were ACTUALLY summed, and whether each returned data.
+ # Without this, wiki_ext can be built from a stale basket while the basket file
+ # on disk says something else — the index and its documented inputs drift apart
+ # silently, and every check that reads the basket file reports a property the
+ # index does not have. Articles that error out are recorded too, so a basket of
+ # 121 that silently became 60 is visible instead of merely smaller.
+ used = []
+ wiki_daily = {}
+ for i, art in enumerate(articles):
+     u = (f"https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/"
+          f"en.wikipedia/all-access/user/{urllib.parse.quote(art)}/daily/20150701/20241231")
+     try:
+         items = get_json(u)["items"]
+         for it in items:
+             d = it["timestamp"][:8]
+             wiki_daily[d] = wiki_daily.get(d, 0) + it["views"]
+         used.append({"article": art, "days": len(items),
+                      "views": sum(it["views"] for it in items), "ok": True})
+     except RuntimeError:
+         print(f"  wiki skip: {art}")
+         used.append({"article": art, "days": 0, "views": 0, "ok": False})
+     time.sleep(0.4)
 
-pd.DataFrame(used).to_csv(DATA_REFERENCE / "wiki_ext_basket_used.csv", index=False)
-print(f"  wiki_ext: summed {sum(u['ok'] for u in used)} of {len(used)} basket articles")
-for d, v in wiki_daily.items():
-    rows.append({"date": d, "component": "wiki_ext", "value": v})
+ pd.DataFrame(used).to_csv(DATA_REFERENCE / "wiki_ext_basket_used.csv", index=False)
+ print(f"  wiki_ext: summed {sum(u['ok'] for u in used)} of {len(used)} basket articles")
+ for d, v in wiki_daily.items():
+     rows.append({"date": d, "component": "wiki_ext", "value": v})
 
 # --- GDELT TV (cable airtime share), chunked by 2 years ---
-for y0 in range(2015, 2025, 1):
+for y0 in (range(2015, 2025, 1) if ARGS.only in (None, 'gdelt_tv') else []):
     q = urllib.parse.quote(FROZEN_QUERY + " (station:CNN OR station:MSNBC OR station:FOXNEWS)")
     u = (f"https://api.gdeltproject.org/api/v2/tv/tv?query={q}"
          f"&mode=timelinevol&format=json&datanorm=perc"
@@ -93,7 +106,7 @@ for y0 in range(2015, 2025, 1):
 try:
     # --- GDELT DOC (news volume), chunked by 2 years ---
     # GDELT DOC fulltext begins 2017-01-01; 2015-16 news tier unavailable (documented)
-    for y0 in range(2017, 2025, 1):
+    for y0 in (range(2017, 2025, 1) if ARGS.only in (None, 'gdelt_news') else []):
         q = urllib.parse.quote(FROZEN_QUERY + " sourcecountry:US")
         u = (f"https://api.gdeltproject.org/api/v2/doc/doc?query={q}"
              f"&mode=timelinevol&format=json"
@@ -107,9 +120,17 @@ except RuntimeError as e:
 
 out = pd.DataFrame(rows)
 out["date"] = pd.to_datetime(out["date"])
-out = out.sort_values(["component", "date"])
 path = DATA_REFERENCE / "cai_components_daily.csv"
+if ARGS.only and path.exists():
+    prev = pd.read_csv(path, parse_dates=["date"])
+    kept = prev[prev["component"] != ARGS.only]
+    print(f"  carrying over {len(kept):,} rows for "
+          f"{sorted(kept['component'].unique())} unchanged")
+    out = pd.concat([kept, out], ignore_index=True)
+out = out.sort_values(["component", "date"])
 out.to_csv(path, index=False)
+print("  component row counts: "
+      + str(out.groupby("component").size().to_dict()))
 
 log = pd.DataFrame([{
     "source_id": "S11", "description": f"CAI components gdelt_news/gdelt_tv/wiki_ext {START}..{END}; query={FROZEN_QUERY}",
