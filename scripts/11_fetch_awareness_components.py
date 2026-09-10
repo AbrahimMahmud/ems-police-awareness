@@ -14,6 +14,7 @@ import argparse
 import hashlib
 import json
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
@@ -38,9 +39,27 @@ _ap.add_argument("--only", default=None,
 ARGS = _ap.parse_args()
 
 
+class NotFound(RuntimeError):
+    """The resource does not exist. Permanent — never worth retrying."""
+
+
 def get_json(url, tries=6):
-    """GDELT rate limiter returns a plain-text message, not an HTTP error;
-    detect it and back off hard (60s+) before retrying."""
+    """Fetch JSON, distinguishing permanent failures from transient ones.
+
+    The previous version caught every exception identically and slept
+    15/30/45/60/75s before giving up, so ONE nonexistent article cost 225
+    seconds of doing nothing. A 121-article basket containing two dead titles
+    spends most of an hour asleep, and the run looks hung rather than busy —
+    which is exactly how it looked.
+
+    A 404 is a fact about the world, not a temporary condition, so it is raised
+    at once and the caller records the article as missing. 429 and 503 are
+    transient and honour Retry-After when the server sends one.
+
+    GDELT is a separate case: its rate limiter returns HTTP 200 with a
+    plain-text body rather than a status code, so it can only be detected by
+    reading the body.
+    """
     for a in range(tries):
         try:
             body = urllib.request.urlopen(
@@ -50,9 +69,16 @@ def get_json(url, tries=6):
                 time.sleep(60 + 30 * a)
                 continue
             return json.loads(body)
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                raise NotFound(url[:120]) from None
+            if e.code in (429, 503):
+                time.sleep(int(e.headers.get("Retry-After") or 0) or min(60, 5 * 2 ** a))
+                continue
+            time.sleep(5 * (a + 1))
         except Exception:
-            time.sleep(15 * (a + 1))
-    raise RuntimeError(f"failed: {url[:120]}")
+            time.sleep(5 * (a + 1))
+    raise RuntimeError(f"failed after {tries} tries: {url[:120]}")
 
 
 rows = []
@@ -69,7 +95,10 @@ if ARGS.only in (None, "wiki_ext"):
  # 121 that silently became 60 is visible instead of merely smaller.
  used = []
  wiki_daily = {}
- for i, art in enumerate(articles):
+ print(f"  wiki_ext: fetching {len(articles)} basket articles", flush=True)
+ for i, art in enumerate(articles, 1):
+     if i % 20 == 0:
+         print(f"    {i}/{len(articles)}", flush=True)
      u = (f"https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/"
           f"en.wikipedia/all-access/user/{urllib.parse.quote(art)}/daily/20150701/20241231")
      try:
@@ -78,10 +107,16 @@ if ARGS.only in (None, "wiki_ext"):
              d = it["timestamp"][:8]
              wiki_daily[d] = wiki_daily.get(d, 0) + it["views"]
          used.append({"article": art, "days": len(items),
-                      "views": sum(it["views"] for it in items), "ok": True})
-     except RuntimeError:
-         print(f"  wiki skip: {art}")
-         used.append({"article": art, "days": 0, "views": 0, "ok": False})
+                      "views": sum(it["views"] for it in items), "ok": True,
+                      "reason": ""})
+     except NotFound:
+         print(f"  wiki skip (no such article): {art}", flush=True)
+         used.append({"article": art, "days": 0, "views": 0, "ok": False,
+                      "reason": "404"})
+     except RuntimeError as e:
+         print(f"  wiki skip (fetch failed): {art} — {e}", flush=True)
+         used.append({"article": art, "days": 0, "views": 0, "ok": False,
+                      "reason": "fetch failed"})
      time.sleep(0.4)
 
  pd.DataFrame(used).to_csv(DATA_REFERENCE / "wiki_ext_basket_used.csv", index=False)
