@@ -87,6 +87,26 @@ rows = []
 if ARGS.only in (None, "wiki_ext"):
  res = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv")
  articles = res.dropna(subset=["article"]).drop_duplicates("article")["article"].tolist()
+
+ # Historical titles. Wikimedia records pageviews per TITLE and does not carry
+ # them across a page move, so fetching only the current canonical title
+ # discards everything before a rename - including the spike at the moment of
+ # death. Measured: Killing_of_Alton_Sterling holds 128,855 views from
+ # 2021-04-25, while Shooting_of_Alton_Sterling holds 1,861,004 from 2016-07-06.
+ # 57 of 117 basket articles showed under 60% of expected coverage.
+ #
+ # 29_resolve_article_titles.py discovers every former title from the redirects
+ # API and writes the map. Refusing to run without it is deliberate: silently
+ # falling back to one title per article is how this defect survived being
+ # diagnosed and having a fix written for it.
+ _tm = DATA_REFERENCE / "article_title_map.csv"
+ if not _tm.exists():
+     raise SystemExit(
+         f"{_tm.name} is missing. Run 29_resolve_article_titles.py first. "
+         "Fetching only canonical titles silently discards pre-rename attention "
+         "for roughly half the basket.")
+ title_map = (pd.read_csv(_tm).groupby("article")["title"]
+              .apply(list).to_dict())
  # Record which articles were ACTUALLY summed, and whether each returned data.
  # Without this, wiki_ext can be built from a stale basket while the basket file
  # on disk says something else — the index and its documented inputs drift apart
@@ -100,32 +120,45 @@ if ARGS.only in (None, "wiki_ext"):
  for i, art in enumerate(articles, 1):
      if i % 20 == 0:
          print(f"    {i}/{len(articles)}", flush=True)
-     u = (f"https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/"
-          f"en.wikipedia/all-access/user/{urllib.parse.quote(art)}/daily/20150701/20241231")
-     try:
-         items = get_json(u)["items"]
+     titles = title_map.get(art, [art])
+     # Per-day MAX across a victim's titles, not the sum. After a rename the old
+     # title keeps receiving traffic through the redirect, so summing
+     # double-counts that residual. Max is exact before the rename (only one
+     # title has traffic) and conservative after (the new title dominates).
+     by_day, n_ok = {}, 0
+     for t in titles:
+         u = (f"https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/"
+              f"en.wikipedia/all-access/user/{urllib.parse.quote(t)}"
+              f"/daily/20150701/20241231")
+         try:
+             items = get_json(u)["items"]
+         except NotFound:
+             continue
+         except RuntimeError as e:
+             print(f"  wiki skip (fetch failed): {t} — {e}", flush=True)
+             continue
+         finally:
+             time.sleep(0.4)
+         n_ok += 1
          for it in items:
              d = it["timestamp"][:8]
-             wiki_daily[d] = wiki_daily.get(d, 0) + it["views"]
-         used.append({"article": art, "days": len(items),
-                      "views": sum(it["views"] for it in items), "ok": True,
-                      "reason": ""})
+             by_day[d] = max(by_day.get(d, 0), it["views"])
+
+     if not by_day:
+         print(f"  wiki skip (no series under any title): {art}", flush=True)
+         used.append({"article": art, "days": 0, "views": 0, "ok": False,
+                      "reason": "no series", "n_titles": len(titles)})
+         continue
+
+     for d, v in by_day.items():
+         wiki_daily[d] = wiki_daily.get(d, 0) + v
          # Keep the per-article series, not just the sum. Episode labelling
          # needs to know WHICH victim drew attention in a given window, and
-         # the summed wiki_ext cannot answer that — which is why labelling
-         # fell back to the retired Twitter volume (finding E5/L6/R2).
-         for it in items:
-             per_article.append({"article": art, "date": it["timestamp"][:8],
-                                 "views": it["views"]})
-     except NotFound:
-         print(f"  wiki skip (no such article): {art}", flush=True)
-         used.append({"article": art, "days": 0, "views": 0, "ok": False,
-                      "reason": "404"})
-     except RuntimeError as e:
-         print(f"  wiki skip (fetch failed): {art} — {e}", flush=True)
-         used.append({"article": art, "days": 0, "views": 0, "ok": False,
-                      "reason": "fetch failed"})
-     time.sleep(0.4)
+         # the summed wiki_ext cannot answer that (finding E5/L6/R2).
+         per_article.append({"article": art, "date": d, "views": v})
+     used.append({"article": art, "days": len(by_day),
+                  "views": sum(by_day.values()), "ok": True, "reason": "",
+                  "n_titles": n_ok})
 
  pd.DataFrame(used).to_csv(DATA_REFERENCE / "wiki_ext_basket_used.csv", index=False)
  pa = pd.DataFrame(per_article)
