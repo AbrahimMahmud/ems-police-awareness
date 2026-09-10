@@ -1,11 +1,43 @@
 # Rebuild plan
 
-**Status: 26 checks — 15 FAIL, 0 BLOCKED, 11 PASS.** Target: 26 PASS.
+**Status: 29 checks — 8 FAIL, 1 BLOCKED, 20 PASS.** Target: all PASS.
 
 Progress log (each line is one gate that ran clean, no regressions):
 
-| Date | Phase | Fixed | Checks passing |
-|---|---|---|---|
+| Phase | Fixed | Passing |
+|---|---|---|
+| mechanism | suite + baseline + register sync | 1 |
+| P1.1 | dropped `trends_victims`; corrected two checks that could not fail | 2 |
+| P0 + P4 | EMS extract whole; O4; all five estimator defects; calibration gate | 10 |
+| P0 | panel built — last BLOCKED cleared | 11 |
+| T9 | registry-coverage finding + canary check | 11 |
+| P5 | freeze guard: not tautological, full coverage, samples disjoint, proved able to fire | 15 |
+| P1.5 | composite standardised after averaging, fixed component set | 17 |
+| X5/R8 | PPML counts arm wired and recovering a planted rate change | 18 |
+| P1.4 | article basket rebuilt from live sources | 20 |
+
+### Checks that could pass for the wrong reason — five found so far
+
+Every one was caught by the gate flagging an *unintended* flip, including flips
+toward PASS. They are listed because the pattern is the point: a check that
+reports success without verifying anything is worse than no check, since it
+retires a live finding.
+
+1. `T.composite_after_avg` — a non-greedy DOTALL regex matched elsewhere in the
+   file after an unrelated edit. Reported PASS while `cai_d` still had SD 0.67.
+2. `T.victims_topic_units` — admitted only one of two valid fixes, so dropping
+   the component would have left it FAIL forever.
+3. `S.no_stale_calibration` — returned PASS when the artifact was **absent**, so
+   deleting the stale file "passed" it with no calibration having run.
+4. `D.guard_coverage` — grepped for a function name, so renaming the entry point
+   (the actual fix) made the fixed scripts read as unguarded.
+5. `T.wiki_basket_live` — returned PASS as soon as a column disappeared. Dropping
+   a column is not fixing a selection.
+
+All five now assert on data or behaviour. **Prefer a data check to a source
+grep**: where the property is arithmetic, test the arithmetic.
+
+---|---|---|---|
 | 09-09 | mechanism | suite + baseline + register sync | 1 |
 | 09-09 | P1.1 | dropped `trends_victims`; corrected two checks that could not fail | 2 |
 | 09-09 | P0 + P4 | EMS extract whole; O4; all five estimator defects; calibration gate | 10 |
