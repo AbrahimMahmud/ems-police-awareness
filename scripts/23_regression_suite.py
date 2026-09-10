@@ -123,6 +123,47 @@ def t_anchor_monthly():
             f"within-month step (SD units): {', '.join(detail)} — worst {worst:.3f}")
 
 
+def t_title_agg_no_trend():
+    """The sum-across-titles aggregation must not be measuring title accumulation.
+
+    wiki_ext sums a victim's pageviews across every historical title, because
+    Wikimedia attributes a view to the exact title requested and readers arrive
+    through different redirects: George Floyd's Death_of, Killing_of and
+    Murder_of cover the SAME 1,681 days at 7.59M / 7.14M / 3.89M views. Views
+    that were triple counted would be identical, so these are distinct readers
+    and a per-day max would discard most of them.
+
+    The hazard in summing is that titles ACCUMULATE within an article (George
+    Floyd gained 14 in 2020, 5 in 2021, 3 in 2022), so a sum can drift upward
+    for a reason unrelated to attention - the same trend bias that disqualified
+    the log1p aggregation.
+
+    Measured at adoption: sum and max correlate 0.9995 on the standardised
+    series, mean absolute difference 0.044 SD, with the sum running +0.012 SD
+    in 2015-2019 against +0.065 SD in 2020-2024. Small, and mostly absorbed by
+    the within-year quantile threshold, but it is toward the later years where
+    the exposed confirmation stratum sits, so it is bounded here rather than
+    assumed to stay small.
+    """
+    f = DATA_REFERENCE / "wiki_ext_aggregation_diagnostic.csv"
+    if not f.exists():
+        return "BLOCKED", "no aggregation diagnostic — rerun 11 --only wiki_ext"
+    d = pd.read_csv(f, parse_dates=["date"])
+    z = {}
+    for col in ("sum", "max"):
+        x = np.log1p(d[col].astype(float))
+        ref = x[(d["date"] >= "2017-01-01") & (d["date"] <= "2019-12-31")]
+        z[col] = (x - ref.mean()) / ref.std(ddof=0)
+    diff = z["sum"] - z["max"]
+    early = float(diff[d["date"] < "2020-01-01"].mean())
+    late = float(diff[d["date"] >= "2020-01-01"].mean())
+    drift, mad = abs(late - early), float(diff.abs().mean())
+    ok = drift < 0.15 and mad < 0.15
+    return ("PASS" if ok else "FAIL",
+            f"sum vs max: mean |diff| {mad:.3f} SD, drift {drift:.3f} SD "
+            f"({early:+.3f} early, {late:+.3f} late)")
+
+
 def t_local_series_uncensored():
     """T10: the NYC-local attention series must have no censored days.
 
@@ -987,6 +1028,7 @@ def m_register_sync():
 # ===========================================================================
 CHECKS = [
     ("T.anchor_monthly", "X1,T4", "Trends anchor rescales all days, not just 1-7", t_anchor_monthly),
+    ("T.title_agg_no_trend", "T12", "title aggregation is not measuring accumulation", t_title_agg_no_trend),
     ("T.local_uncensored", "T10", "NYC-local series has no censored days", t_local_series_uncensored),
     ("T.index_not_one_article", "T11", "index top days are not one article", t_index_not_single_article),
     ("T.nyc_break", "T1", "trends_nyc has no artificial level break", t_nyc_break),

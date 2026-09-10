@@ -67,6 +67,12 @@ PV = ("https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/"
       "en.wikipedia/all-access/user/{}/daily/{}/{}")
 START, END = "20150701", "20241231"
 
+# Historical titles, shared with wiki_ext. Absent map = refuse, do not silently
+# fall back to canonical-only fetching (that is how the defect survived once).
+_TM = DATA_REFERENCE / "article_title_map.csv"
+TITLE_MAP = ({} if not _TM.exists()
+             else pd.read_csv(_TM).groupby("article")["title"].apply(list).to_dict())
+
 # SEEDS MUST BE POLICE-SPECIFIC.
 #
 # The first version of this script also seeded from "Deaths by person in New
@@ -161,14 +167,33 @@ def categories_for(titles):
     return out
 
 
-def pageviews(article):
-    u = PV.format(urllib.parse.quote(article.replace(" ", "_"), safe=""), START, END)
+def _one_title(title):
+    u = PV.format(urllib.parse.quote(title.replace(" ", "_"), safe=""), START, END)
     try:
         with urllib.request.urlopen(urllib.request.Request(u, headers=UA), timeout=45) as r:
             items = json.load(r)["items"]
         return pd.Series({pd.Timestamp(i["timestamp"][:8]): i["views"] for i in items})
     except Exception:
         return None
+
+
+def pageviews(article):
+    """Sum across every historical title, as wiki_ext does.
+
+    The rename defect applies here identically: fetching only the current
+    canonical title discards everything before a page move, including the spike
+    at the moment of death. Eric Garner alone gains 4.5x from this
+    (1,383,319 -> 6,227,155 views).
+    """
+    titles = TITLE_MAP.get(article, [article])
+    total = None
+    for t in titles:
+        s = _one_title(t)
+        time.sleep(0.25)
+        if s is None or s.empty:
+            continue
+        total = s if total is None else total.add(s, fill_value=0)
+    return total
 
 
 def main():

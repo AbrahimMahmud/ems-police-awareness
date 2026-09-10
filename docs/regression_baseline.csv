@@ -1,5 +1,6 @@
 check,findings,description,state,detail
 T.anchor_monthly,"X1,T4","Trends anchor rescales all days, not just 1-7",PASS,"within-month step (SD units): trends_nyc 0.034, trends_us 0.023 — worst 0.034"
+T.title_agg_no_trend,T12,title aggregation is not measuring accumulation,PASS,"sum vs max: mean |diff| 0.044 SD, drift 0.055 SD (+0.010 early, +0.065 late)"
 T.local_uncensored,T10,NYC-local series has no censored days,PASS,"2 series, no year above 2% zero days"
 T.index_not_one_article,T11,index top days are not one article,PASS,top-day elevation persists 10 days (median); 2/10 are one- or two-day flashes
 T.nyc_break,T1,trends_nyc has no artificial level break,PASS,post/pre median positive = 0.58x (defect if >2)
@@ -8,7 +9,7 @@ T.victims_topic_units,"T2,L2",trends_victims divided by topic term,PASS,dropped 
 T.composite_after_avg,D5,composite standardised after averaging,PASS,reference-window mean=+0.0000 sd=1.0000 (target 0.00 / 1.00)
 T.fixed_component_set,D5,CAI-D requires a fixed component set,PASS,"all 3,472 scored days use 3 components"
 T.basket_not_registry_gated,T9,basket reaches victims MPV omits,PASS,121 articles; reaches MPV-omitted victims
-T.wiki_ext_matches_basket,"X2,T9",wiki_ext built from the current basket,PASS,wiki_ext built from all 121 basket articles (117 returned data)
+T.wiki_ext_matches_basket,"X2,T9",wiki_ext built from the current basket,PASS,wiki_ext built from all 121 basket articles (119 returned data)
 T.wiki_basket_live,X2,wiki basket not selected by retired Twitter,PASS,"121 articles, 121 dated, 24 killed after 2020 (span 2013-01-27..2024-09-19)"
 S.reference_day,"S2,D1",event-time reference is day -1,PASS,"reference is day -1; estimated -14..14, n=28"
 S.placebo_count,"S1,E1,L1,X4,D2",placebo draws keep the real episode count,PASS,100% of draws keep all 30 episodes; mean 30.0
@@ -23,12 +24,12 @@ D.freeze_disjoint,D3,confirmation sample disjoint from discovery,PASS,explicit c
 D.guard_coverage,"D3,X11",every outcome-artifact reader calls the guard,PASS,all readers of 3 outcome artifacts guarded (4 documented exemptions)
 D.incident_disclosed,F1,freeze incident stays in the record,PASS,"incident F1 recorded in the register and disclosed, dated, in the paper master"
 D.guard_can_fire,"D3,D4",freeze guard actually rejects things,PASS,guard fires on all 4 rejection cases
-E.threshold_stringency,"D5,L5,E6",episode threshold is constant stringency,PASS,stringency 10.1%-10.3% by year (spread 0.2%); all 80 peaks clear their year's cut
-E.no_mega_episode,"E3,D7,E6",no episode exceeds its analysis window,PASS,"80 episodes, span median 3 max 14 (cap 14)"
+E.threshold_stringency,"D5,L5,E6",episode threshold is constant stringency,PASS,stringency 10.1%-10.3% by year (spread 0.2%); all 72 peaks clear their year's cut
+E.no_mega_episode,"E3,D7,E6",no episode exceeds its analysis window,PASS,"72 episodes, span median 4 max 14 (cap 14)"
 E.frozen_list_untouched,D3,frozen episode list unmodified,PASS,byte-identical to HEAD
-E.labels_live_source,"E5,L6,R2",episode labels not from retired Twitter,PASS,0/80 labels match the file-order default (0%); 52 windows left unlabelled
+E.labels_live_source,"E5,L6,R2",episode labels not from retired Twitter,PASS,0/72 labels match the file-order default (0%); 42 windows left unlabelled
 E.attribution_lookback,E2,attribution lookback >= 60 days,PASS,ATTRIBUTION_LOOKBACK_DAYS=60 (needs >=60)
 O.ems_complete,O5,EMS extract covers the full source,PASS,"60 pages, last ends 2026-06-30, complete"
 O.panel_exists,O5,panel_cd_day.parquet exists,PASS,present
 O.dropna_groupby,O4,missing-district rows not silently dropped,PASS,dropna=False
-M.register_sync,O5,register and suite have not drifted apart,PASS,43/61 findings tagged; all 30 blocking covered
+M.register_sync,O5,register and suite have not drifted apart,PASS,44/62 findings tagged; all 31 blocking covered
