@@ -6,7 +6,7 @@ T.victims_topic_units,"T2,L2",trends_victims divided by topic term,PASS,dropped 
 T.composite_after_avg,D5,composite standardised after averaging,PASS,reference-window mean=-0.0000 sd=1.0000 (target 0.00 / 1.00)
 T.fixed_component_set,D5,CAI-D requires a fixed component set,PASS,"all 3,472 scored days use 3 components"
 T.basket_not_registry_gated,T9,basket reaches victims MPV omits,PASS,121 articles; reaches MPV-omitted victims
-T.wiki_ext_matches_basket,"X2,T9",wiki_ext built from the current basket,BLOCKED,basket has 121 articles; wiki_ext not yet rebuilt from it
+T.wiki_ext_matches_basket,"X2,T9",wiki_ext built from the current basket,PASS,wiki_ext built from all 121 basket articles (117 returned data)
 T.wiki_basket_live,X2,wiki basket not selected by retired Twitter,PASS,"121 articles, 121 dated, 24 killed after 2020 (span 2013-01-27..2024-09-19)"
 S.reference_day,"S2,D1",event-time reference is day -1,PASS,"reference is day -1; estimated -14..14, n=28"
 S.placebo_count,"S1,E1,L1,X4,D2",placebo draws keep the real episode count,PASS,100% of draws keep all 30 episodes; mean 30.0
@@ -20,10 +20,10 @@ D.freeze_not_tautological,D3,freeze guard is not a tautology,PASS,guard is indep
 D.freeze_disjoint,D3,confirmation sample disjoint from discovery,PASS,explicit confirmation window
 D.guard_coverage,D3,every panel reader calls the guard,PASS,all panel readers guarded (2 documented exemptions)
 D.guard_can_fire,"D3,D4",freeze guard actually rejects things,PASS,guard fires on all 4 rejection cases
-E.threshold_stringency,"D5,L5",episode threshold is constant stringency,FAIL,share above threshold ranges 0.5%-54.6% by year
+E.threshold_stringency,"D5,L5",episode threshold is constant stringency,FAIL,share above threshold ranges 10.7%-66.4% by year
 E.no_mega_episode,"E3,D7",no episode exceeds its analysis window,FAIL,longest episode 128 days (cap 28)
 E.labels_live_source,"E5,L6,R2",episode labels not from retired Twitter,FAIL,candidate_events ranked by retired tweet_volume
-E.attribution_lookback,E2,attribution lookback >= 60 days,FAIL,lookback 14d (needs >=60)
+E.attribution_lookback,E2,attribution lookback >= 60 days,PASS,ATTRIBUTION_LOOKBACK_DAYS=60 (needs >=60)
 O.ems_complete,O5,EMS extract covers the full source,PASS,"60 pages, last ends 2026-06-30, complete"
 O.panel_exists,O5,panel_cd_day.parquet exists,PASS,present
 O.dropna_groupby,O4,missing-district rows not silently dropped,PASS,dropna=False
