@@ -157,8 +157,44 @@ LAGS = tuple(range(0, 29))                 # every k, 0..28 (meeting note)
 LEADS = tuple(range(1, 15))                # pre-trend checks, 1..14 (meeting note)
 ROLLING_WINDOWS = ((0, 2), (3, 5), (6, 8), (9, 11), (12, 14))  # meeting note
 
-# Episode definition (plan §4.1): runs of days with cai_d > EPISODE_Z_THRESHOLD,
-# merged when separated by fewer than EPISODE_MERGE_GAP_DAYS days.
+# Episode definition — REWRITTEN 2026-09-10. Two changes, both disclosed in the
+# CONFIRMATION_PLAN addendum because they alter a pre-registered construct.
+#
+# 1. THRESHOLD: a fixed level is not a fixed stringency. `cai_d > 1.0` selected
+#    between 10.7% and 66.4% of the days in a year depending on the year, because
+#    the index is unit-variance on its 2017-2019 reference window but has a strong
+#    level shift across years. A within-calendar-year quantile is constant
+#    stringency by construction: the top EPISODE_RATE of every year, always.
+#
+# 2. CONSTRUCT: from REGIME to SHOCK. The old rule merged runs of high days
+#    separated by short gaps, which on 2020 produced a single 184-day episode
+#    swallowing the whole Floyd summer — one observation in a ±14 day design,
+#    hiding at least eight distinct attention shocks including Daniel Prude, a
+#    Black man killed during a mental-health crisis and the most on-hypothesis
+#    event in the dataset. Verified across four rule variants: no parameter
+#    inside the "sustained elevated level" family removes it, because the
+#    plateau is a true feature of 2020. So an episode is no longer "attention was
+#    high for a stretch" but "attention to a specific killing began on day X" —
+#    a local peak, with its onset, bounded so it never exceeds the window it is
+#    analysed with.
+#
+# This is legitimate ONLY because we remain blind to every outcome. The same
+# correction made after the confirmatory run would be worthless.
+EPISODE_RATE = 0.10               # ENTRY: top 10% of days within each calendar year
+# EXIT is deliberately looser than entry (hysteresis). Using the entry bar to end
+# an episode as well collapses the rule to points: attention decays below the top
+# decile within a day or two of a peak, so 44 of 84 episodes came out as single
+# days with a median span of 0. A shock has a sharp onset and a slow tail, and an
+# episode that ends the moment it stops being top-decile measures the onset only.
+# Entering at p90 and leaving at p75 is the standard hysteresis form and was one
+# of the candidate rules evaluated.
+EPISODE_EXIT_RATE = 0.25          # EXIT: stay in the episode while in the top 25%
+EPISODE_PEAK_WINDOW_DAYS = 7      # a peak is the max over ±this many days
+EPISODE_MIN_SEPARATION_DAYS = 14  # two peaks closer than this are one shock
+EPISODE_MAX_DAYS = 14             # never longer than the ±14 analysis window
+EPISODE_MAX_ONSET_LEAD_DAYS = 7   # how far before the peak an onset may sit
+
+# Retired, kept so the diff from the frozen list is legible.
 EPISODE_Z_THRESHOLD = 1.0
 EPISODE_MERGE_GAP_DAYS = 7
 

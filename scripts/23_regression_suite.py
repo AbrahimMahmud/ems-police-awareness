@@ -674,25 +674,72 @@ def d_guard_can_fire():
 # EPISODES
 # ===========================================================================
 def e_threshold_constant_stringency():
-    """E/T: a fixed 1.0 threshold is a different quantile every year."""
+    """D5/L5/E6: the episode rule must apply the same stringency in every year.
+
+    Asserts on the SELECTED DAYS, recomputed from the current index — not on a
+    per-year count read off the artifact. A count-only check passes on the
+    quietest 10% of each year just as happily as on the loudest, and it cannot
+    tell a fresh artifact from one regenerated against a stale index.
+
+    So this recomputes the within-year cut from cai_daily.parquet and requires
+    (a) the realised rate to match EPISODE_RATE in every year, and (b) every
+    episode peak in the artifact to actually clear its own year's cut.
+    """
+    from config import EPISODE_RATE
     f = DATA_PROCESSED / "cai_daily.parquet"
     if not f.exists():
         return "BLOCKED", "cai_daily.parquet absent"
-    d = pd.read_parquet(f)
+    d = pd.read_parquet(f).dropna(subset=["cai_d"]).copy()
     d["date"] = pd.to_datetime(d["date"])
-    d = d.set_index("date")
-    q = d.groupby(d.index.year)["cai_d"].apply(lambda s: (s > 1.0).mean())
-    spread = float(q.max() - q.min())
-    return ("FAIL" if spread > 0.10 else "PASS",
-            f"share above threshold ranges {q.min():.1%}-{q.max():.1%} by year")
+    d["year"] = d["date"].dt.year
+    cut = d.groupby("year")["cai_d"].quantile(1.0 - EPISODE_RATE)
+    rate = d.assign(hi=d["cai_d"] > d["year"].map(cut)).groupby("year")["hi"].mean()
+    spread = float(rate.max() - rate.min())
+    if spread > 0.02:
+        return "FAIL", (f"stringency varies {rate.min():.1%}-{rate.max():.1%} by year "
+                        f"(spread {spread:.1%}, need <=2pp)")
+
+    # Tie the artifact to THIS index: every peak must clear its own year's cut.
+    art = DATA_REFERENCE / "confirmation_episodes_rebuilt.csv"
+    if not art.exists():
+        return "BLOCKED", "no rebuilt episode list to tie the rule to"
+    ep = pd.read_csv(art, parse_dates=["peak_date"])
+    ep["year"] = ep["peak_date"].dt.year
+    below = ep[ep["peak_cai_d"] < ep["year"].map(cut) - 1e-9]
+    if len(below):
+        return "FAIL", (f"{len(below)} episode peaks fall below their own year's cut — "
+                        "the artifact was built from a different index")
+    return "PASS", (f"stringency {rate.min():.1%}-{rate.max():.1%} by year "
+                    f"(spread {spread:.1%}); all {len(ep)} peaks clear their year's cut")
 
 
 def e_no_mega_episode():
-    """E/T2.4: no episode may exceed the window it is analysed with."""
-    f = DATA_REFERENCE / "confirmation_episodes.csv"
+    """E3/D7/E6: episodes must be bounded shocks, not plateaus or points.
+
+    Asserts on the SPAN DISTRIBUTION, because that is what degenerates. The
+    previous version read only the max span off the FROZEN file, so it could
+    never reflect a rebuild; and a metric computed over a fixed +/-14 window
+    around a START is capped at 29 days by construction and structurally cannot
+    detect a mega-episode, whose pathology lives in its END.
+
+    Two-sided on purpose: `max <= cap` catches the 235-day plateau, and
+    `median >= 1` catches the opposite degenerate case where the rule collapses
+    to `end = start` and every episode is a single point.
+    """
+    from config import EPISODE_MAX_DAYS
+    f = DATA_REFERENCE / "confirmation_episodes_rebuilt.csv"
+    if not f.exists():
+        return "BLOCKED", "no rebuilt episode list — run 13_extension_episodes.py"
     ep = pd.read_csv(f, parse_dates=["start", "end"])
-    span = (ep["end"] - ep["start"]).dt.days.max()
-    return ("FAIL" if span > 28 else "PASS", f"longest episode {span} days (cap 28)")
+    span = (ep["end"] - ep["start"]).dt.days
+    mx, med = int(span.max()), float(span.median())
+    if mx > EPISODE_MAX_DAYS:
+        return "FAIL", f"longest episode {mx} days (cap {EPISODE_MAX_DAYS})"
+    if med < 1:
+        return "FAIL", (f"median span {med:.0f} days — the rule has collapsed to points; "
+                        f"{int((span == 0).sum())}/{len(ep)} episodes are single days")
+    return "PASS", (f"{len(ep)} episodes, span median {med:.0f} max {mx} "
+                    f"(cap {EPISODE_MAX_DAYS})")
 
 
 def e_frozen_list_untouched():
@@ -863,8 +910,8 @@ CHECKS = [
     ("D.guard_coverage", "D3,X11", "every outcome-artifact reader calls the guard", d_guard_coverage),
     ("D.incident_disclosed", "F1", "freeze incident stays in the record", d_incident_disclosed),
     ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),
-    ("E.threshold_stringency", "D5,L5", "episode threshold is constant stringency", e_threshold_constant_stringency),
-    ("E.no_mega_episode", "E3,D7", "no episode exceeds its analysis window", e_no_mega_episode),
+    ("E.threshold_stringency", "D5,L5,E6", "episode threshold is constant stringency", e_threshold_constant_stringency),
+    ("E.no_mega_episode", "E3,D7,E6", "no episode exceeds its analysis window", e_no_mega_episode),
     ("E.frozen_list_untouched", "D3", "frozen episode list unmodified", e_frozen_list_untouched),
     ("E.labels_live_source", "E5,L6,R2", "episode labels not from retired Twitter", e_labels_not_from_twitter),
     ("E.attribution_lookback", "E2", "attribution lookback >= 60 days", e_attribution_lookback),

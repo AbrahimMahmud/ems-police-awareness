@@ -21,12 +21,12 @@ D.freeze_disjoint,D3,confirmation sample disjoint from discovery,PASS,explicit c
 D.guard_coverage,"D3,X11",every outcome-artifact reader calls the guard,PASS,all readers of 3 outcome artifacts guarded (4 documented exemptions)
 D.incident_disclosed,F1,freeze incident stays in the record,PASS,"incident F1 recorded in the register and disclosed, dated, in the paper master"
 D.guard_can_fire,"D3,D4",freeze guard actually rejects things,PASS,guard fires on all 4 rejection cases
-E.threshold_stringency,"D5,L5",episode threshold is constant stringency,FAIL,share above threshold ranges 10.7%-66.4% by year
-E.no_mega_episode,"E3,D7",no episode exceeds its analysis window,FAIL,longest episode 128 days (cap 28)
+E.threshold_stringency,"D5,L5,E6",episode threshold is constant stringency,PASS,stringency 10.1%-10.3% by year (spread 0.2%); all 84 peaks clear their year's cut
+E.no_mega_episode,"E3,D7,E6",no episode exceeds its analysis window,PASS,"84 episodes, span median 2 max 14 (cap 14)"
 E.frozen_list_untouched,D3,frozen episode list unmodified,PASS,byte-identical to HEAD
-E.labels_live_source,"E5,L6,R2",episode labels not from retired Twitter,PASS,0/94 labels match the file-order default (0%); 64 windows left unlabelled
+E.labels_live_source,"E5,L6,R2",episode labels not from retired Twitter,PASS,0/84 labels match the file-order default (0%); 55 windows left unlabelled
 E.attribution_lookback,E2,attribution lookback >= 60 days,PASS,ATTRIBUTION_LOOKBACK_DAYS=60 (needs >=60)
 O.ems_complete,O5,EMS extract covers the full source,PASS,"60 pages, last ends 2026-06-30, complete"
 O.panel_exists,O5,panel_cd_day.parquet exists,PASS,present
 O.dropna_groupby,O4,missing-district rows not silently dropped,PASS,dropna=False
-M.register_sync,O5,register and suite have not drifted apart,PASS,40/56 findings tagged; all 27 blocking covered
+M.register_sync,O5,register and suite have not drifted apart,PASS,41/59 findings tagged; all 28 blocking covered
