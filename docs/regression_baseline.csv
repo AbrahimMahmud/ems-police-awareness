@@ -1,5 +1,7 @@
 check,findings,description,state,detail
 T.anchor_monthly,"X1,T4","Trends anchor rescales all days, not just 1-7",PASS,"within-month step (SD units): trends_nyc 0.034, trends_us 0.023 — worst 0.034"
+T.local_uncensored,T10,NYC-local series has no censored days,PASS,"2 series, no year above 2% zero days"
+T.index_not_one_article,T11,index top days are not one article,PASS,top-day elevation persists 10 days (median); 2/10 are one- or two-day flashes
 T.nyc_break,T1,trends_nyc has no artificial level break,PASS,post/pre median positive = 0.58x (defect if >2)
 T.nyc_censoring,"T3,L3","trends_nyc is a level, not a censored indicator",FAIL,"43% zeros overall, by-year spread 45%"
 T.victims_topic_units,"T2,L2",trends_victims divided by topic term,PASS,dropped from CAI_D_COMPONENTS
@@ -29,4 +31,4 @@ E.attribution_lookback,E2,attribution lookback >= 60 days,PASS,ATTRIBUTION_LOOKB
 O.ems_complete,O5,EMS extract covers the full source,PASS,"60 pages, last ends 2026-06-30, complete"
 O.panel_exists,O5,panel_cd_day.parquet exists,PASS,present
 O.dropna_groupby,O4,missing-district rows not silently dropped,PASS,dropna=False
-M.register_sync,O5,register and suite have not drifted apart,PASS,41/59 findings tagged; all 28 blocking covered
+M.register_sync,O5,register and suite have not drifted apart,PASS,43/61 findings tagged; all 30 blocking covered

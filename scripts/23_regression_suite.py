@@ -148,44 +148,53 @@ def t_local_series_uncensored():
 
 
 def t_index_not_single_article():
-    """T11: no single article may carry the index's biggest days.
+    """T11: the index's biggest days must be sustained events, not viral spikes.
 
-    Content validation, not coverage. A count index summed over a small basket
-    is dominated by whichever article gets linked somewhere high-traffic: the
-    first wiki_nyc build peaked on 2022-06-06, a one-day 70x spike in
-    Killing_of_Amadou_Diallo (488 -> 35,418 -> 527) with no news trigger. Every
-    coverage diagnostic looked excellent while the peak was an artifact.
+    Tests PERSISTENCE, not concentration. The first version of this check
+    required that no single article carry more than 80% of a top day, and it
+    failed 10 of 10 top days - including 2020-09-09, which is the Daniel Prude
+    bodycam release and a real event. Single-article dominance is INHERENT to
+    the construct: an attention shock about one killing means one article
+    dominates. That check encoded a feature as a defect.
 
-    The same build had earlier peaked on 2024-12-10 — the UnitedHealthcare CEO
-    shooting — because the basket had been seeded from "Deaths by person in New
-    York City" and required no police involvement. Both failures were invisible
-    to a check that measured zero-days and distinct-values, which is why this
-    check looks at WHO drives the top days instead.
+    What actually separates the two known cases is how long the elevation lasts:
+
+      Killing_of_Amadou_Diallo, 2022-06-06 (viral link, no news trigger)
+        441  422  475  35418  6272  527  427 ...   -> 2 days above 3x baseline
+      Killing_of_Daniel_Prude, 2020-09-09 (bodycam release)
+        8671 11375 23812 44714 12377 5583 3533 ... -> 11 days above 3x baseline
+
+    A real attention event sustains for days; a viral link spikes and collapses.
+    So: for each of the index's top days, take the article driving it and count
+    how many days near it are elevated. Requiring the MEDIAN across top days
+    keeps the check robust to one genuine one-day event.
     """
-    arts = DATA_REFERENCE / "wiki_nyc_articles.csv"
-    daily = DATA_REFERENCE / "wiki_nyc_daily.csv"
-    if not (arts.exists() and daily.exists()):
-        return "BLOCKED", "no local basket on disk"
-    a = pd.read_csv(arts)
-    kept = a[a["keep"]]
-    if kept.empty:
-        return "FAIL", "the local basket is empty"
     per = DATA_REFERENCE / "wiki_nyc_per_article.csv"
     if not per.exists():
         return "BLOCKED", ("no per-article local series — 28_build_nyc_attention.py "
-                           "must persist it for this check to validate content")
+                           "must persist it for content to be validated at all")
     pa = pd.read_csv(per, parse_dates=["date"]).pivot_table(
         index="date", columns="article", values="views", aggfunc="sum").fillna(0.0)
+    if pa.empty:
+        return "FAIL", "the local basket is empty"
     tot = pa.sum(axis=1)
     top = tot.nlargest(10)
-    shares = [(d, float(pa.loc[d].max() / v)) for d, v in top.items() if v > 0]
-    if not shares:
-        return "FAIL", "no positive days in the local index"
-    worst_day, worst_share = max(shares, key=lambda t: t[1])
-    n_bad = sum(1 for _, sh in shares if sh > 0.80)
-    return ("PASS" if worst_share <= 0.80 else "FAIL",
-            f"{n_bad}/10 top days are >80% one article; worst {worst_day.date()} "
-            f"at {worst_share:.0%}")
+
+    persist = []
+    for d in top.index:
+        art = pa.loc[d].idxmax()
+        s_art = pa[art]
+        base = s_art[(s_art.index >= d - pd.Timedelta(days=30))
+                     & (s_art.index < d - pd.Timedelta(days=3))].median()
+        win = s_art[(s_art.index >= d - pd.Timedelta(days=3))
+                    & (s_art.index <= d + pd.Timedelta(days=7))]
+        persist.append(int((win > 3 * max(base, 1.0)).sum()))
+
+    med = float(np.median(persist))
+    n_flash = sum(1 for x in persist if x <= 2)
+    return ("PASS" if med >= 3 else "FAIL",
+            f"top-day elevation persists {med:.0f} days (median); "
+            f"{n_flash}/10 are one- or two-day flashes")
 
 
 def t_nyc_break():
