@@ -553,6 +553,12 @@ GUARD_EXEMPT = {
     "01_build_panel.py",
     # The auditor itself: it must be able to read the raw panel to check it.
     "23_regression_suite.py",
+    # The two extract builders WRITE the outcome artifacts from the raw SODA
+    # pages. They cannot filter to a sample window: 01_build_panel.py needs the
+    # full extract to build the lag/lead buffer, and the citywide trends file is
+    # a descriptive 2005+ series by design. They are producers, not examiners.
+    "00_local_ems_extract.py",
+    "00b_download_ems_extract.py",
 }
 
 
@@ -564,6 +570,7 @@ def d_guard_coverage():
     so renaming the entry point to `select_sample` — the actual fix for the
     tautology — made this check report the fixed scripts as unguarded.
     """
+    from config import OUTCOME_ARTIFACTS
     entries = ("select_sample", "assert_no_confirmation_outcomes",
                "assert_discovery_only")
     missing = []
@@ -571,11 +578,42 @@ def d_guard_coverage():
         if f.name in GUARD_EXEMPT:
             continue
         t = f.read_text()
-        if "panel_cd_day.parquet" in t and not any(e in t for e in entries):
-            missing.append(f.name)
+        reads = [a for a in OUTCOME_ARTIFACTS if a in t]
+        if reads and not any(e in t for e in entries):
+            missing.append(f"{f.name}({','.join(a.split('.')[0] for a in reads)})")
     return ("PASS" if not missing else "FAIL",
-            f"all panel readers guarded ({len(GUARD_EXEMPT)} documented exemptions)"
+            f"all readers of {len(OUTCOME_ARTIFACTS)} outcome artifacts guarded "
+            f"({len(GUARD_EXEMPT)} documented exemptions)"
             if not missing else f"unguarded: {missing}")
+
+
+def d_incident_disclosed():
+    """F1: the freeze incident must stay in the record, in both places.
+
+    This is a DISCLOSURE obligation, so "the text exists in the record" is
+    genuinely the property, not a proxy for it - unlike the source greps this
+    suite has had to replace. The failure mode it guards against is real and
+    specific: an incident quietly dropped from the register during a later edit,
+    leaving a pre-registration record that overstates how clean the freeze was.
+
+    Requires the incident in BOTH the finding register and the paper master,
+    because the register is an internal artifact and the master is what the
+    Methods section is written from. Losing it from either one loses it from
+    somewhere that matters.
+    """
+    reg = pd.read_csv(DATA_REFERENCE.parent.parent / "docs" / "AUDIT_FINDINGS.csv")
+    in_register = "F1" in set(reg["id"])
+    master = PROJECT_ROOT / "docs" / "PAPER_MASTER.md"
+    if not master.exists():
+        return "FAIL", "docs/PAPER_MASTER.md is missing; the incident has no disclosure home"
+    m = master.read_text()
+    disclosed = "freeze incident" in m.lower()
+    dated = "2026-09-10" in m
+    if not in_register:
+        return "FAIL", "incident F1 is not in AUDIT_FINDINGS.csv"
+    if not (disclosed and dated):
+        return "FAIL", f"PAPER_MASTER.md: disclosed={disclosed} dated={dated}"
+    return "PASS", "incident F1 recorded in the register and disclosed, dated, in the paper master"
 
 
 def d_guard_can_fire():
@@ -822,7 +860,8 @@ CHECKS = [
     ("S.ppml_wired", "X5,R8", "counts/PPML arm actually called", s_ppml_wired),
     ("D.freeze_not_tautological", "D3", "freeze guard is not a tautology", d_freeze_not_tautological),
     ("D.freeze_disjoint", "D3", "confirmation sample disjoint from discovery", d_freeze_enforces_disjoint),
-    ("D.guard_coverage", "D3", "every panel reader calls the guard", d_guard_coverage),
+    ("D.guard_coverage", "D3,X11", "every outcome-artifact reader calls the guard", d_guard_coverage),
+    ("D.incident_disclosed", "F1", "freeze incident stays in the record", d_incident_disclosed),
     ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),
     ("E.threshold_stringency", "D5,L5", "episode threshold is constant stringency", e_threshold_constant_stringency),
     ("E.no_mega_episode", "E3,D7", "no episode exceeds its analysis window", e_no_mega_episode),

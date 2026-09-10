@@ -18,7 +18,8 @@ S.no_stale_calibration,R3,no stale low-n calibration artifact,PASS,"n_sims=200, 
 S.ppml_wired,"X5,R8",counts/PPML arm actually called,PASS,PPML recovers planted rate change: -0.1446 vs log(0.85)=-0.1625
 D.freeze_not_tautological,D3,freeze guard is not a tautology,PASS,guard is independent
 D.freeze_disjoint,D3,confirmation sample disjoint from discovery,PASS,explicit confirmation window
-D.guard_coverage,D3,every panel reader calls the guard,PASS,all panel readers guarded (2 documented exemptions)
+D.guard_coverage,"D3,X11",every outcome-artifact reader calls the guard,PASS,all readers of 3 outcome artifacts guarded (4 documented exemptions)
+D.incident_disclosed,F1,freeze incident stays in the record,PASS,"incident F1 recorded in the register and disclosed, dated, in the paper master"
 D.guard_can_fire,"D3,D4",freeze guard actually rejects things,PASS,guard fires on all 4 rejection cases
 E.threshold_stringency,"D5,L5",episode threshold is constant stringency,FAIL,share above threshold ranges 10.7%-66.4% by year
 E.no_mega_episode,"E3,D7",no episode exceeds its analysis window,FAIL,longest episode 128 days (cap 28)
@@ -28,4 +29,4 @@ E.attribution_lookback,E2,attribution lookback >= 60 days,PASS,ATTRIBUTION_LOOKB
 O.ems_complete,O5,EMS extract covers the full source,PASS,"60 pages, last ends 2026-06-30, complete"
 O.panel_exists,O5,panel_cd_day.parquet exists,PASS,present
 O.dropna_groupby,O4,missing-district rows not silently dropped,PASS,dropna=False
-M.register_sync,O5,register and suite have not drifted apart,PASS,38/54 findings tagged; all 25 blocking covered
+M.register_sync,O5,register and suite have not drifted apart,PASS,40/56 findings tagged; all 27 blocking covered

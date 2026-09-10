@@ -61,6 +61,25 @@ ANALYSIS_END = DISCOVERY_END
 PANEL_BUFFER_START = "2016-12-01"   # covers 28-day lags before analysis start
 PANEL_BUFFER_END = "2021-01-31"     # covers 14-day leads after analysis end
 
+# Every artifact that contains OUTCOME data, named here so freeze coverage is a
+# property of a list rather than of one hard-coded filename (finding X11, and
+# incident F1 which is how it was found).
+#
+# The guard used to be keyed on the single string "panel_cd_day.parquet", so its
+# guarantee was exactly that wide and no wider: ems_citywide_day_trends.parquet
+# and ems_cd_day_calltype.parquet were unguarded by construction, and a passing
+# D.guard_coverage was read as "outcome data is guarded" when it only ever meant
+# "panel readers are guarded". On 2026-09-10 an audit agent took that unguarded
+# path and read confirmation-period outcomes.
+#
+# A NEW OUTCOME ARTIFACT MUST BE ADDED HERE. The check reads this list, so an
+# unlisted outcome file is a check failure rather than a silent gap.
+OUTCOME_ARTIFACTS = (
+    "panel_cd_day.parquet",            # district x day analysis panel
+    "ems_cd_day_calltype.parquet",     # district x day x call type extract
+    "ems_citywide_day_trends.parquet", # citywide daily call-group counts, 2005+
+)
+
 MIN_TOTAL_CALLS_FOR_SHARE = 5        # primary; sensitivities at 3 and 10 (I17/plan §4.5)
 MIN_CALLS_SENSITIVITY = (3, 10)
 
