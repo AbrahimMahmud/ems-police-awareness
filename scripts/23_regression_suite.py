@@ -222,18 +222,71 @@ def t_basket_not_registry_gated():
             else f"{len(arts)} articles; missing MPV-omitted victims: {missing}")
 
 
+def t_wiki_ext_matches_basket():
+    """The index must be BUILT from the basket on disk, not merely accompanied by it.
+
+    Replacing wikipedia_article_resolution.csv makes every basket check pass
+    instantly, but wiki_ext does not change until 11_fetch_awareness_components
+    re-fetches pageviews for the new articles. Until then the file says 121
+    articles and the index is still the sum of the old 45 — the checks would
+    report a property the treatment index does not have. That is the false-PASS
+    pattern this suite exists to catch, so it must not be introduced by the
+    suite's own fix.
+
+    11 now writes wiki_ext_basket_used.csv listing what it actually summed. This
+    compares that to the basket, and BLOCKS (never passes) when the fetch has
+    not been run.
+    """
+    basket = DATA_REFERENCE / "wikipedia_article_resolution.csv"
+    used = DATA_REFERENCE / "wiki_ext_basket_used.csv"
+    if not basket.exists():
+        return "BLOCKED", "no basket file"
+    want = set(pd.read_csv(basket)["article"].dropna())
+    if not used.exists():
+        return "BLOCKED", f"basket has {len(want)} articles; wiki_ext not yet rebuilt from it"
+    u = pd.read_csv(used)
+    got = set(u["article"])
+    ok_n = int(u["ok"].sum()) if "ok" in u.columns else len(u)
+    missing, extra = want - got, got - want
+    if missing or extra:
+        return "FAIL", f"{len(missing)} basket articles never fetched, {len(extra)} stale"
+    return "PASS", f"wiki_ext built from all {len(want)} basket articles ({ok_n} returned data)"
+
+
 def t_wiki_basket_twitter():
-    """X2: wiki_ext article basket is selected by retired Twitter volume."""
+    """X2: the basket must cover the whole study window, not end in 2020.
+
+    Tests COVERAGE, not the absence of a column. The first version returned PASS
+    as soon as `tweet_volume` was gone from the resolution file — but dropping a
+    column is not the same as fixing the selection, and rewriting the file in any
+    format at all would have passed it. The defect was never the column: it was
+    that Twitter coverage stops at death-year 2020, so the basket contained zero
+    victims killed after 2020 and the index could not measure attention in the
+    extension years at all.
+
+    Dates come from basket_decisions.csv where available and the registry
+    otherwise, because 39 of the basket's victims are not in the registry
+    (finding T9) and would otherwise read as undated.
+    """
     res = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv")
-    if "tweet_volume" not in res.columns:
-        return "PASS", "no tweet_volume column"
-    reg = pd.read_csv(DATA_REFERENCE / "victim_registry.csv", parse_dates=["date"])
-    killed = reg.groupby("name")["date"].min()
-    have = res[res.article.notna()].copy()
-    have["killed"] = have["name"].map(killed)
-    post2020 = int((have["killed"] > "2020-12-31").sum())
-    return ("FAIL" if post2020 == 0 else "PASS",
-            f"{post2020} basket victims killed after 2020 (defect if 0)")
+    arts = set(res["article"].dropna())
+    dec = DATA_REFERENCE / "basket_decisions.csv"
+    dates = pd.Series(dtype="datetime64[ns]")
+    if dec.exists():
+        d = pd.read_csv(dec, parse_dates=["death_date"])
+        dates = d[d["article"].isin(arts)].set_index("article")["death_date"]
+    if dates.notna().sum() == 0:
+        reg = pd.read_csv(DATA_REFERENCE / "victim_registry.csv", parse_dates=["date"])
+        killed = reg.groupby("name")["date"].min()
+        dates = res.set_index("article")["name"].map(killed)
+    dated = dates.dropna()
+    if dated.empty:
+        return "BLOCKED", f"{len(arts)} basket articles, none with a resolvable date"
+    post2020 = int((dated > "2020-12-31").sum())
+    span = f"{dated.min().date()}..{dated.max().date()}"
+    return ("PASS" if post2020 > 0 else "FAIL",
+            f"{len(arts)} articles, {len(dated)} dated, {post2020} killed after 2020 "
+            f"(span {span})")
 
 
 # ===========================================================================
@@ -682,6 +735,7 @@ CHECKS = [
     ("T.composite_after_avg", "D5", "composite standardised after averaging", t_composite_after_avg),
     ("T.fixed_component_set", "D5", "CAI-D requires a fixed component set", t_fixed_component_set),
     ("T.basket_not_registry_gated", "T9", "basket reaches victims MPV omits", t_basket_not_registry_gated),
+    ("T.wiki_ext_matches_basket", "X2,T9", "wiki_ext built from the current basket", t_wiki_ext_matches_basket),
     ("T.wiki_basket_live", "X2", "wiki basket not selected by retired Twitter", t_wiki_basket_twitter),
     ("S.reference_day", "S2,D1", "event-time reference is day -1", s_reference_day),
     ("S.placebo_count", "S1,E1,L1,X4,D2", "placebo draws keep the real episode count", s_placebo_count),

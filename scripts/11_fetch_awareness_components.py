@@ -48,17 +48,31 @@ rows = []
 # --- Wikipedia pageviews, extended window, all resolved articles ---
 res = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv")
 articles = res.dropna(subset=["article"]).drop_duplicates("article")["article"].tolist()
+# Record which articles were ACTUALLY summed, and whether each returned data.
+# Without this, wiki_ext can be built from a stale basket while the basket file
+# on disk says something else — the index and its documented inputs drift apart
+# silently, and every check that reads the basket file reports a property the
+# index does not have. Articles that error out are recorded too, so a basket of
+# 121 that silently became 60 is visible instead of merely smaller.
+used = []
 wiki_daily = {}
 for i, art in enumerate(articles):
     u = (f"https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/"
          f"en.wikipedia/all-access/user/{urllib.parse.quote(art)}/daily/20150701/20241231")
     try:
-        for it in get_json(u)["items"]:
+        items = get_json(u)["items"]
+        for it in items:
             d = it["timestamp"][:8]
             wiki_daily[d] = wiki_daily.get(d, 0) + it["views"]
+        used.append({"article": art, "days": len(items),
+                     "views": sum(it["views"] for it in items), "ok": True})
     except RuntimeError:
         print(f"  wiki skip: {art}")
+        used.append({"article": art, "days": 0, "views": 0, "ok": False})
     time.sleep(0.4)
+
+pd.DataFrame(used).to_csv(DATA_REFERENCE / "wiki_ext_basket_used.csv", index=False)
+print(f"  wiki_ext: summed {sum(u['ok'] for u in used)} of {len(used)} basket articles")
 for d, v in wiki_daily.items():
     rows.append({"date": d, "component": "wiki_ext", "value": v})
 
