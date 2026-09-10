@@ -1,0 +1,16 @@
+metric,value
+n_sims_completed,200
+ri_draws_per_sim,200
+ar1_rho,0.1851
+nominal_alpha,0.05
+empirical_rejection_rate,0.065
+acceptable_range_lo,0.0198
+acceptable_range_hi,0.0802
+median_p,0.5025
+mean_null_stat,9.12286261021534
+ks_statistic,0.055
+ks_p_uniform,0.5617
+min_sims_required,200
+rate_ok,1
+uniform_ok,1
+VERDICT,CALIBRATED

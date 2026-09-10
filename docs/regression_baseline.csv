@@ -14,7 +14,7 @@ S.joint_test,"S3,R7",statistic sees a dip-then-rebound,PASS,"dip-then-rebound: s
 S.cluster_by_date,S6,"SEs clustered by date, not hetero",PASS,vcov=CRV1
 S.prewindow_truncation,"S5,E4","contested district-days reassigned, not deleted",PASS,0 dup district-days; 30/30 episodes keep day -1; 100% of window days retained
 S.calibration_can_fail,"S4,X3,R3",calibration verdict can fail,PASS,min-n enforced + uniformity test
-S.no_stale_calibration,R3,no stale low-n calibration artifact,FAIL,artifact has n_sims=4 (needs >=200)
+S.no_stale_calibration,R3,no stale low-n calibration artifact,PASS,"n_sims=200, VERDICT=CALIBRATED"
 S.ppml_wired,"X5,R8",counts/PPML arm actually called,PASS,PPML recovers planted rate change: -0.1446 vs log(0.85)=-0.1625
 D.freeze_not_tautological,D3,freeze guard is not a tautology,PASS,guard is independent
 D.freeze_disjoint,D3,confirmation sample disjoint from discovery,PASS,explicit confirmation window
