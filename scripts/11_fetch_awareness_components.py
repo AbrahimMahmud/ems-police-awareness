@@ -116,16 +116,32 @@ if ARGS.only in (None, "wiki_ext"):
  used = []
  per_article = []
  wiki_daily = {}
+ wiki_daily_max = {}
+ n_titles_day = {}
  print(f"  wiki_ext: fetching {len(articles)} basket articles", flush=True)
  for i, art in enumerate(articles, 1):
      if i % 20 == 0:
          print(f"    {i}/{len(articles)}", flush=True)
      titles = title_map.get(art, [art])
-     # Per-day MAX across a victim's titles, not the sum. After a rename the old
-     # title keeps receiving traffic through the redirect, so summing
-     # double-counts that residual. Max is exact before the rename (only one
-     # title has traffic) and conservative after (the new title dominates).
-     by_day, n_ok = {}, 0
+     # BOTH aggregations are computed, because the right one is not obvious and
+     # the wrong one is not visible in any coverage diagnostic.
+     #
+     # SUM: Wikimedia attributes a pageview to the exact title requested, so a
+     # reader arriving via "Death of George Floyd" and one arriving via "Murder
+     # of George Floyd" are two distinct views of the same content. The evidence
+     # they are distinct: those two titles cover the SAME 1,681 days with
+     # different magnitudes (7.59M vs 3.89M). Triple-counted views would be
+     # identical, not different. So the sum is the total attention to the topic.
+     #
+     # MAX: the conservative alternative. Its risk is under-counting whenever
+     # readers are split across live redirects, which is the normal case here.
+     #
+     # The hazard in SUM is a TIME TREND: titles accumulate within an article
+     # (George Floyd gained 14 titles in 2020, 5 in 2021, 3 in 2022), so later
+     # years can have more contributing titles and drift upward for a reason
+     # that has nothing to do with attention. Both series are written and
+     # T.title_agg_no_trend decides between them on the data.
+     by_day, by_day_max, n_ok = {}, {}, 0
      for t in titles:
          u = (f"https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/"
               f"en.wikipedia/all-access/user/{urllib.parse.quote(t)}"
@@ -142,7 +158,8 @@ if ARGS.only in (None, "wiki_ext"):
          n_ok += 1
          for it in items:
              d = it["timestamp"][:8]
-             by_day[d] = max(by_day.get(d, 0), it["views"])
+             by_day[d] = by_day.get(d, 0) + it["views"]
+             by_day_max[d] = max(by_day_max.get(d, 0), it["views"])
 
      if not by_day:
          print(f"  wiki skip (no series under any title): {art}", flush=True)
@@ -152,6 +169,8 @@ if ARGS.only in (None, "wiki_ext"):
 
      for d, v in by_day.items():
          wiki_daily[d] = wiki_daily.get(d, 0) + v
+         wiki_daily_max[d] = wiki_daily_max.get(d, 0) + by_day_max.get(d, 0)
+         n_titles_day[d] = n_titles_day.get(d, 0) + 1
          # Keep the per-article series, not just the sum. Episode labelling
          # needs to know WHICH victim drew attention in a given window, and
          # the summed wiki_ext cannot answer that (finding E5/L6/R2).
@@ -169,6 +188,21 @@ if ARGS.only in (None, "wiki_ext"):
  print(f"  wiki_ext: summed {sum(u['ok'] for u in used)} of {len(used)} basket articles")
  for d, v in wiki_daily.items():
      rows.append({"date": d, "component": "wiki_ext", "value": v})
+
+ # Diagnostic for the aggregation choice: the same days under both rules, and
+ # how many articles contributed. If sum/max drifts over time the sum is picking
+ # up title accumulation rather than attention, and the max series is primary.
+ agg = pd.DataFrame({
+     "date": pd.to_datetime(list(wiki_daily.keys())),
+     "sum": list(wiki_daily.values()),
+     "max": [wiki_daily_max[d] for d in wiki_daily],
+     "n_articles": [n_titles_day[d] for d in wiki_daily],
+ }).sort_values("date")
+ agg.to_csv(DATA_REFERENCE / "wiki_ext_aggregation_diagnostic.csv", index=False)
+ r = (agg["sum"] / agg["max"].replace(0, pd.NA)).dropna()
+ by_year = r.groupby(agg.loc[r.index, "date"].dt.year).median()
+ print("  sum/max ratio by year (a trend here means SUM is biased):")
+ print("    " + "  ".join(f"{y}:{v:.2f}" for y, v in by_year.items()), flush=True)
 
 # --- GDELT TV (cable airtime share), chunked by 2 years ---
 for y0 in (range(2015, 2025, 1) if ARGS.only in (None, 'gdelt_tv') else []):
