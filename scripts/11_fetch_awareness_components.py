@@ -94,6 +94,7 @@ if ARGS.only in (None, "wiki_ext"):
  # index does not have. Articles that error out are recorded too, so a basket of
  # 121 that silently became 60 is visible instead of merely smaller.
  used = []
+ per_article = []
  wiki_daily = {}
  print(f"  wiki_ext: fetching {len(articles)} basket articles", flush=True)
  for i, art in enumerate(articles, 1):
@@ -109,6 +110,13 @@ if ARGS.only in (None, "wiki_ext"):
          used.append({"article": art, "days": len(items),
                       "views": sum(it["views"] for it in items), "ok": True,
                       "reason": ""})
+         # Keep the per-article series, not just the sum. Episode labelling
+         # needs to know WHICH victim drew attention in a given window, and
+         # the summed wiki_ext cannot answer that — which is why labelling
+         # fell back to the retired Twitter volume (finding E5/L6/R2).
+         for it in items:
+             per_article.append({"article": art, "date": it["timestamp"][:8],
+                                 "views": it["views"]})
      except NotFound:
          print(f"  wiki skip (no such article): {art}", flush=True)
          used.append({"article": art, "days": 0, "views": 0, "ok": False,
@@ -120,6 +128,11 @@ if ARGS.only in (None, "wiki_ext"):
      time.sleep(0.4)
 
  pd.DataFrame(used).to_csv(DATA_REFERENCE / "wiki_ext_basket_used.csv", index=False)
+ pa = pd.DataFrame(per_article)
+ pa["date"] = pd.to_datetime(pa["date"])
+ pa.to_csv(DATA_REFERENCE / "wiki_pageviews_by_article.csv", index=False)
+ print(f"  per-article daily series: {len(pa):,} rows over "
+       f"{pa['article'].nunique()} articles", flush=True)
  print(f"  wiki_ext: summed {sum(u['ok'] for u in used)} of {len(used)} basket articles")
  for d, v in wiki_daily.items():
      rows.append({"date": d, "component": "wiki_ext", "value": v})

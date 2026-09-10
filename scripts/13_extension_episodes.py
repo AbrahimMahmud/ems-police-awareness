@@ -12,6 +12,7 @@ Output: data/reference/confirmation_episodes.csv (committed)
 import pandas as pd
 
 from config import (
+    ATTRIBUTION_LOOKBACK_DAYS,
     DATA_PROCESSED,
     DATA_REFERENCE,
     EPISODE_MERGE_GAP_DAYS,
@@ -37,7 +38,8 @@ prom = vol.set_index(vol["name"].str.lower())["tweet_volume"]
 rows = []
 for i, ep in enumerate(episodes, 1):
     peak = cai[cai["date"].between(ep["start"], ep["end"])].nlargest(1, "cai_d").iloc[0]
-    near = reg[(reg["date"] >= ep["start"] - pd.Timedelta(days=14)) & (reg["date"] <= ep["end"])]
+    near = reg[(reg["date"] >= ep["start"] - pd.Timedelta(days=ATTRIBUTION_LOOKBACK_DAYS))
+               & (reg["date"] <= ep["end"])]
     near = near.assign(p=near["name"].str.lower().map(prom).fillna(0)).sort_values("p", ascending=False)
     rows.append({
         "episode": i,

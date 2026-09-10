@@ -143,6 +143,16 @@ ROLLING_WINDOWS = ((0, 2), (3, 5), (6, 8), (9, 11), (12, 14))  # meeting note
 EPISODE_Z_THRESHOLD = 1.0
 EPISODE_MERGE_GAP_DAYS = 7
 
+# How far back from an episode to look for the killing that plausibly caused it.
+# Was 14 days, which is shorter than the death-to-attention lag this literature
+# documents (finding E2): video releases, indictments, autopsy findings and
+# verdicts routinely spike weeks or months after the death. Daniel Prude died
+# 2020-03-30 and the bodycam footage was released 2020-09-02 — five months. A
+# 14-day window attributes that attention to whoever happened to die in the
+# fortnight before the spike, which is how the largest non-2020 episode came to
+# be labelled with the wrong person.
+ATTRIBUTION_LOOKBACK_DAYS = 60
+
 # High-visibility days for the DID (plan §5.2): top decile of aware_log in analysis window.
 DID_EVENT_QUANTILE = 0.90
 

@@ -666,11 +666,22 @@ def e_labels_not_from_twitter():
 
 
 def e_attribution_lookback():
-    """E2: 14-day lookback is shorter than the death-to-attention lag."""
+    """E2: the attribution lookback must exceed the death-to-attention lag.
+
+    Reads the CONSTANT rather than grepping for a numeric literal. The first
+    version matched the first `Timedelta(days=N)` in the file, so replacing the
+    hard-coded 14 with a named constant — the actual fix — would have made it
+    read 0 and fail.
+
+    60 days is a floor, not a comfortable margin: Daniel Prude died 2020-03-30
+    and the bodycam footage was released 2020-09-02, five months later.
+    """
+    from config import ATTRIBUTION_LOOKBACK_DAYS as d
     s = src("13_extension_episodes.py")
-    m = re.search(r"Timedelta\(days=(\d+)\)", s)
-    days = int(m.group(1)) if m else 0
-    return ("PASS" if days >= 60 else "FAIL", f"lookback {days}d (needs >=60)")
+    hard = re.findall(r"Timedelta\(days=(\d+)\)", s)
+    if hard:
+        return "FAIL", f"still hard-codes Timedelta(days={hard[0]}) instead of the constant"
+    return ("PASS" if d >= 60 else "FAIL", f"ATTRIBUTION_LOOKBACK_DAYS={d} (needs >=60)")
 
 
 # ===========================================================================
