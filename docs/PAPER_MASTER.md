@@ -437,8 +437,45 @@ volume cleared Google's reporting floor — i.e. on high-attention days. In a
 mean-of-available index, its presence pushed the index up precisely when attention
 was high, *by construction*. The index partly measured itself.
 
+**The redirect that hid a victim.** Wikipedia category membership is a property of
+a *page*, and a redirect is a page — so the category walk collected redirects
+alongside articles and could not tell them apart. 39 of 482 candidates were
+redirects. Where a redirect *and* its target both survived, the person was counted
+twice (nine victims, 449,549 views). Where only the redirect survived, the
+candidacy rule tested the redirect's title — which has no "Killing of" prefix — so
+the article was never considered at all. **Walter Scott**, shot in the back while
+fleeing in April 2015 and filmed, one of the defining cases of the period, was
+absent from the treatment index entirely. So was Jordan Edwards, killed inside the
+discovery window.
+
+**An error path that produced a plausible basket.** Wikidata returned HTTP 503
+eight times, the scope resolver raised, and the finaliser went on to build a
+basket against a *stale* scope file from a previous session — excluding 29
+articles with the reason "no date resolvable", when the truth for many was "we
+never asked". `Killing_of_Adam_Toledo` was dropped that way. Nothing in the output
+distinguished a real absence from a failed fetch; only the `FAIL` line in the run
+manifest showed it. The finaliser now refuses to decide anything unless every
+candidate has a scope row.
+
+**A rate limit that deleted the largest case.** The NYC basket builder returned
+`None` on *any* exception when fetching a title's pageviews, so a 429 was
+indistinguishable from "this title has no data". One run hit three rate limits and
+produced a basket in which Eric Garner had **vanished** and Amadou Diallo had
+fallen from 2,772,084 views to 633,194 — and it exited 0 with a normal-looking
+summary. Consecutive runs disagreed about which victims existed.
+
 **Fifteen checks that could pass for the wrong reason.** See §7.5. This is the most
 transferable lesson in the project.
+
+**The pattern behind all of them.** Every defect in this section is the same shape:
+*an error path that is indistinguishable from success*. A rename that silently
+drops history, a rate limit read as "no data", a truncated API response read as "no
+categories", a failed query read as "no date", a redirect read as an article. None
+announced itself; each produced output that looked exactly like correct output. The
+methodological claim this paper can make is not that we avoided these — we did not
+— but that we built the apparatus that finds them, and that the apparatus found
+them repeatedly *after* the point where a careful project would normally have
+stopped looking.
 
 ### 5.3 The freeze incidents — **two**, both disclosed
 
