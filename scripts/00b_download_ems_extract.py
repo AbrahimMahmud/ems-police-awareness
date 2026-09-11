@@ -29,10 +29,12 @@ from pathlib import Path
 PAGES_DIR = DATA_PROCESSED / "ems_pages"
 PAGES_DIR.mkdir(parents=True, exist_ok=True)
 offset = 0
+pages_cached = pages_downloaded = 0
 while True:
     pf = PAGES_DIR / f"page_{offset:09d}.parquet"
     if pf.exists():
         n = len(pd.read_parquet(pf, columns=["incident_datetime"]))
+        pages_cached += 1
         print(f"offset {offset:,}: cached ({n:,} rows)", flush=True)
         if n < PAGE:
             break
@@ -53,6 +55,7 @@ while True:
     if len(df) == 0:
         break
     df.to_parquet(pf, index=False)
+    pages_downloaded += 1
     print(f"offset {offset:,}: {len(df):,} rows", flush=True)
     if len(df) < PAGE:
         break
@@ -77,6 +80,29 @@ keep = (
     & ~ems["transfer_indicator"].isin(truthy)
     & ~ems["disp"].isin(excl_disp)
 )
+# FINDING O1 — the cancelled dispatches are kept, in their own artifact.
+#
+# The disposition filter drops CANCEL / NOTSNT / DUP / 87, and it does so
+# DIFFERENTIALLY: measured on the discovery window, it removes 7.47% of EDP calls
+# against 0.76-0.77% of altmen and asthma — a 9.9x ratio across families with
+# more than 10,000 calls — and within EDP it swings from 6.28% (2017) to 8.75%
+# (2019).
+#
+# That matters because of what the outcome MEANS here. A cancelled EDP dispatch
+# is still someone calling 911 about a mental-health crisis; the hypothesis is
+# about what New Yorkers ASK FOR, not about what EMS ultimately did. Filtering
+# them out is defensible as the standard definition of a real dispatch, but it is
+# a choice, and it removes the calls most likely to be affected.
+#
+# Measured effect on the outcome (discovery window, 86,140 district-days): the
+# mean mental-health share rises from 0.1083 to 0.1119, +3.3%, and the two series
+# correlate 0.9758. Small — but "small" is a finding, not an assumption, and it
+# could only be established by keeping the counts.
+#
+# So the primary extract still applies the filter, and the excluded calls are
+# written alongside it so the sensitivity can actually be run rather than merely
+# promised in a limitations section.
+excluded = ems[~keep].copy()
 ems = ems[keep].copy()
 ems["incident_date"] = ems["incident_ts"].dt.normalize()
 ems["communitydistrict"] = pd.to_numeric(ems["communitydistrict"], errors="coerce")
@@ -108,6 +134,19 @@ if True in by_year.columns:
     print(rate.to_string())
 out1 = DATA_PROCESSED / "ems_cd_day_calltype.parquet"
 g1.to_parquet(out1, index=False)
+
+# The excluded calls, same grain, so mh_share_incl_cancelled is a join away.
+excluded["incident_date"] = excluded["incident_ts"].dt.normalize()
+excluded["communitydistrict"] = pd.to_numeric(excluded["communitydistrict"], errors="coerce")
+ex_win = excluded[excluded["incident_date"].between("2014-12-01", "2024-12-31")]
+gx = (ex_win.groupby(["incident_date", "communitydistrict", "final_call_type",
+                      "disp"], dropna=False)
+      .size().rename("n_calls").reset_index())
+outx = DATA_PROCESSED / "ems_cd_day_calltype_excluded.parquet"
+gx.to_parquet(outx, index=False)
+print(f"Wrote {outx}: {len(gx):,} rows, "
+      f"{int(gx['n_calls'].sum()):,} excluded calls "
+      f"({gx['n_calls'].sum() / (g1['n_calls'].sum() + gx['n_calls'].sum()):.2%} of in-window volume)")
 print(f"Wrote {out1}: {len(g1):,} rows, {g1['incident_date'].min()} -> {g1['incident_date'].max()}")
 
 # Extract 2: citywide daily trends, full period
@@ -121,7 +160,15 @@ out2 = DATA_PROCESSED / "ems_citywide_day_trends.parquet"
 g2.to_parquet(out2, index=False)
 print(f"Wrote {out2}: {len(g2):,} rows")
 
+# Say whether this run actually fetched anything. accessed_utc otherwise claims a
+# download that did not happen: re-running on cached pages rewrites the artifact
+# from bytes fetched days earlier, and a register that cannot tell those apart
+# slowly stops meaning anything.
+_src = (f"{pages_downloaded} page(s) downloaded, {pages_cached} read from cache"
+        if pages_downloaded else
+        f"NO NETWORK FETCH — rebuilt from {pages_cached} cached page(s)")
 log_source(
     "S1b",
-    "EMS Incident Dispatch Data via SODA API (7 columns, paged), replaces user-local export",
+    "EMS Incident Dispatch Data via SODA API (7 columns, paged), replaces "
+    f"user-local export; {_src}",
     BASE, out_file=out1)
