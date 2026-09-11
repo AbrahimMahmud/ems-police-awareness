@@ -120,6 +120,17 @@ same pattern. Our worst one is B-HEARD (§5.5).
   page rename.** Many of these articles were renamed from "Shooting of X" to
   "Killing of X" during 2020–21. See §5.2 — this destroyed most of the signal
   before we caught it.
+- **Wikipedia's `agent=user` classification allegedly changed in April 2020**,
+  non-retroactively, which would split the sample at the largest treatment
+  episode. **Tested and the mechanism does not hold.** Comparing Apr 1–May 20
+  against Feb–Mar within each year (so Floyd, May 25, is outside the window), the
+  basket runs **+2.1 SD** above its non-event-year norm in 2020 — but an
+  11-article *evergreen* control (Photosynthesis, Chess, DNA, …) moves +0.02,
+  essentially flat. A reclassification is article-agnostic and would move the
+  control too. 2021 shows a larger anomaly still (**+5.5 SD**) from the Chauvin
+  verdict and Daunte Wright, events nobody disputes. This bounds any
+  classification effect to less than the event signal; it does not prove none
+  occurred.
 - **Google Trends returns a sample, not a census**, and rescales to 0–100 against a
   moving base. The same query issued twice returns different numbers.
 - **Mapping Police Violence has real coverage gaps**, and they are not random with
@@ -189,6 +200,27 @@ years. We also cannot gate the basket on the registry (§5.6).
 
 **Layer 3.** `scripts/24_build_wiki_basket.py` walks the live Wikipedia category
 tree; `scripts/26_resolve_basket_scope.py` resolves date/country from Wikidata;
+**A gap found on 2026-09-11, and its root cause (finding T18).** Category
+membership on Wikipedia is a property of a *page*, and a redirect is a page — so
+the category walk collected redirects alongside articles and could not tell them
+apart. **39 of 482 candidates (8%) were redirects.** Two consequences, filed as
+separate defects before the common cause was found:
+
+- **Duplicates.** A redirect and its target both survived into the basket, so the
+  person was counted twice — `Eric_Garner` beside `Killing_of_Eric_Garner`,
+  `Freddie_Gray` beside `Killing_of_Freddie_Gray`, eight in all.
+- **Losses.** Where only the redirect was collected, the candidacy rule tested the
+  *redirect's* title, which usually has no person prefix, so the article was never
+  considered. **Walter Scott was absent from the treatment index entirely** —
+  shot in the back while fleeing in April 2015, on video, one of the defining
+  cases of the study period. Summed across his historical titles he carries
+  2,228,711 views, which would rank him **15th of 121** basket articles, and the
+  redirect that stood in for him peaks on **2016-07-08**, the Sterling/Castile week
+  that is this index's strongest content validation. Jordan Edwards, killed
+  2017-04-29 inside the discovery window, was lost the same way.
+
+Redirects are now resolved at the point of collection, which fixes both at source.
+
 `scripts/27_finalise_basket.py` applies the scope rule and writes
 `data/reference/wikipedia_article_resolution.csv`.
 
@@ -203,6 +235,22 @@ select its own inputs, which is the defect that retired `trends_victims`.
 
 **Layer 1.** An episode is a burst of unusual attention. We find the days when the
 index is far above normal, and treat the start of each burst as an event.
+
+**An episode is not a killing, and the paper must not imply that it is.** Measured
+across the 75 rebuilt episodes, the article drawing the most attention in the
+window belongs to someone who died **more than a year earlier in 52 of them
+(69%)**, and within the 60-day attribution lookback in only **9 (12%)**. Episode 33
+(2019-07-16) is Eric Garner, 1,825 days after his death — the week the DOJ
+declined to charge Pantaleo. Episode 73 (2024-08-09) is Michael Brown, 3,653 days
+— the Ferguson tenth anniversary, to the day.
+
+That is not a defect in the treatment. Attention to police violence on the
+anniversary of a killing, or on the day charges are declined, **is** attention to
+police violence, and it is exactly the kind of salience shock the hypothesis is
+about. But it changes what the estimand means: this design tests whether *bursts
+of public attention* move EMS demand, where those bursts are driven by
+anniversaries, trials, verdicts and prosecutorial decisions at least as often as
+by new killings. Any sentence implying "after a police killing" would be false.
 
 **Layer 2 — DECIDED 2026-09-10, and this is a change to the pre-registered
 construct.** The original rule was a *regime* rule: "attention was high for a
