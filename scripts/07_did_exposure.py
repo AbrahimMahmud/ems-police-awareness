@@ -30,6 +30,7 @@ from config import (
     DID_CONTROL_SENSITIVITY,
     FREEZE_ACTIVE,
 )
+from event_study import build_stack
 from freeze_guard import freeze_banner, select_sample
 
 freeze_banner("07_did_exposure")
@@ -65,17 +66,26 @@ ep = ep.sort_values("start").reset_index(drop=True)
 print(f"episodes in scope: {len(ep)} ({'discovery only' if FREEZE_ACTIVE else 'all periods'})")
 starts = ep["start"].tolist()
 
-frames = []
-for i, s in enumerate(starts):
-    lo, hi = s - pd.Timedelta(days=7), s + pd.Timedelta(days=7)
-    if i + 1 < len(starts):  # truncate at next episode
-        hi = min(hi, starts[i + 1] - pd.Timedelta(days=1))
-    w = panel[panel["incident_date"].between(lo, hi)].copy()
-    w["episode"] = i + 1
-    w["rel_day"] = (w["incident_date"] - s).dt.days
-    frames.append(w)
-win = pd.concat(frames, ignore_index=True)
-win = win[win["rel_day"] != 0]
+# FINDING S7. This used to build its own windows, truncating FORWARD only:
+#     hi = min(start_i + 7, start_{i+1} - 1)
+# with no backward truncation at the previous episode. So whenever consecutive
+# starts were less than 14 days apart, the days [start_{i+1} - 7, start_i + 7]
+# landed in BOTH windows - post days of episode i and pre days of episode i+1 -
+# and pd.concat kept both copies. The same district-day was then treated for one
+# event and control for another, which is defect I4 exactly: the thing
+# build_stack() was written to eliminate. The docstring above claimed "no
+# overlap", which was false in the backward direction.
+#
+# Measured on the frozen list's discovery subset: 4 of 29 consecutive gaps are
+# under 14 days and 28 calendar days were double-counted.
+#
+# build_stack assigns each contested district-day to the NEARER episode, so no
+# observation is used twice and none is discarded (S5). Day 0 is dropped here
+# because this design compares the week after against the week before.
+win = build_stack(panel, starts, pre=7, post=7)
+if win.empty:
+    raise SystemExit("build_stack returned nothing — no episode has a usable window")
+win = win[win["rel_day"] != 0].copy()
 win["post"] = (win["rel_day"] > 0).astype(int)
 
 rows, path_rows = [], []

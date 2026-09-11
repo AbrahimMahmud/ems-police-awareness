@@ -576,7 +576,7 @@ currently assumed rather than estimated. Under investigation.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **46 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **48 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass. All of
 them currently pass.
 

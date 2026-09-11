@@ -21,6 +21,7 @@ import pandas as pd
 
 from config import DATA_REFERENCE
 from provenance import log_source
+from wiki_titles import collapse_duplicates, load_title_map
 
 UA = {"User-Agent": "ems-police-awareness-research/1.0 (academic research)"}
 FROZEN_QUERY = '("police shooting" OR "police killing" OR "killed by police" OR "police brutality")'
@@ -86,6 +87,17 @@ rows = []
 if ARGS.only in (None, "wiki_ext"):
  res = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv")
  articles = res.dropna(subset=["article"]).drop_duplicates("article")["article"].tolist()
+
+ # COLLAPSE DUPLICATE PEOPLE before fetching anything. Each article is summed
+ # across all of its historical titles below, so an article that is ITSELF a
+ # historical title of another kept article enters the basket twice. Nine
+ # victims were double-counted this way - Eric_Garner alongside
+ # Killing_of_Eric_Garner, Freddie_Gray alongside Killing_of_Freddie_Gray and
+ # seven more, 449,549 views - and it corrupted episode attribution as well as
+ # the index (finding T17). The rule lives in wiki_titles.py because 28 needs it
+ # too, and writing it twice is how this defect came to exist in one and not the
+ # other.
+ articles, _dropped = collapse_duplicates(articles, load_title_map())
 
  # Historical titles. Wikimedia records pageviews per TITLE and does not carry
  # them across a page move, so fetching only the current canonical title

@@ -327,6 +327,106 @@ def t_wiki_fetch_complete():
                     f"{nodata} with no data, 0 failed")
 
 
+def t_no_duplicate_person_articles():
+    """T17: no basket article may also be a historical title of another basket article.
+
+    Wikimedia records pageviews per title, so 11 sums each article across all of
+    its historical titles. If a bare-name title is ALSO admitted as an article in
+    its own right, that person enters wiki_ext twice.
+
+    Measured when this was written: 9 of 119 usable articles were duplicates of
+    this kind - Eric_Garner (280,937 views) alongside Killing_of_Eric_Garner,
+    Freddie_Gray (91,238) alongside Killing_of_Freddie_Gray, and seven more,
+    449,549 views in total or 0.35% of the basket.
+
+    Small in aggregate and concentrated in specific victims, which is the worse
+    property: it over-weights exactly the people whose articles were renamed, and
+    it corrupts episode ATTRIBUTION, where two episodes were labelled with the
+    bare-name title rather than the canonical one.
+
+    This is the same defect that was found and fixed in 28_build_nyc_attention.py
+    for Daniel_Prude, and never propagated to 11. Found here by testing E7.
+    """
+    u = DATA_REFERENCE / "wiki_ext_basket_used.csv"
+    tm = DATA_REFERENCE / "article_title_map.csv"
+    if not (u.exists() and tm.exists()):
+        return "BLOCKED", "basket or title map absent — run 29 then 11"
+    used = pd.read_csv(u)
+    titles = pd.read_csv(tm)
+    kept = set(used[used["ok"]]["article"])
+    alias = {}
+    for a, g in titles.groupby("article"):
+        for t in g["title"]:
+            if t != a:
+                alias.setdefault(t, []).append(a)
+    dupes = [(a, alias[a]) for a in sorted(kept)
+             if a in alias and any(o in kept for o in alias[a])]
+    if not dupes:
+        return "PASS", f"{len(kept)} usable articles, none is a title of another"
+    lost = int(used[used["article"].isin([a for a, _ in dupes])]["views"].sum())
+    total = int(used[used["ok"]]["views"].sum())
+    return "FAIL", (f"{len(dupes)} article(s) double-count a person "
+                    f"({lost:,} views = {lost / total:.2%}): "
+                    + ", ".join(f"{a}->{o[0]}" for a, o in dupes[:3]))
+
+
+def s_did_no_shared_days():
+    """S7: no district-day may be treated for one episode and control for another.
+
+    07_did_exposure.py used to build its own windows, truncating FORWARD only -
+    hi = min(start_i + 7, start_{i+1} - 1) - with no backward truncation. When
+    consecutive starts were under 14 days apart, days [start_{i+1} - 7,
+    start_i + 7] landed in BOTH windows, and pd.concat kept both copies. Defect
+    I4 exactly, in the script whose docstring asserted "no overlap".
+
+    Tests the PROPERTY on the stack 07 ACTUALLY BUILDS, by running the same
+    construction and checking key uniqueness. An earlier version of this check
+    re-implemented the OLD window logic and counted collisions in it - which
+    tested the episode list rather than the script, and would have gone on
+    failing after 07 was fixed, and passing if someone merely pointed 07 at a
+    more widely spaced episode list without fixing anything.
+
+    The naive count is still reported as DETAIL, because it says how much the
+    repair is worth on the current episode list: 28 double-counted calendar days
+    on the frozen discovery subset, and zero on the rebuilt one.
+    """
+    import importlib
+    f = DATA_REFERENCE / "confirmation_episodes.csv"
+    pq = DATA_PROCESSED / "panel_cd_day.parquet"
+    if not (f.exists() and pq.exists()):
+        return "BLOCKED", "episode list or panel absent"
+    from config import FREEZE_ACTIVE
+    ep = pd.read_csv(f, parse_dates=["start"])
+    if FREEZE_ACTIVE and "period" in ep.columns:
+        ep = ep[ep["period"] == "discovery"]
+    starts = sorted(ep["start"].tolist())
+
+    # what 07's OLD construction would double-count, for scale
+    seen = {}
+    for i, st in enumerate(starts):
+        hi = st + pd.Timedelta(days=7)
+        if i + 1 < len(starts):
+            hi = min(hi, starts[i + 1] - pd.Timedelta(days=1))
+        for d in pd.date_range(st - pd.Timedelta(days=7), hi, freq="D"):
+            seen[d] = seen.get(d, 0) + 1
+    naive_doubled = sum(1 for n in seen.values() if n > 1)
+
+    sys.path.insert(0, str(SCRIPTS))
+    es = importlib.import_module("event_study")
+    panel = pd.read_parquet(pq)
+    fg = importlib.import_module("freeze_guard")
+    panel = fg.select_sample(panel, where="23_regression_suite:S7")
+    stack = es.build_stack(panel, starts, pre=7, post=7)
+    if stack.empty:
+        return "BLOCKED", "build_stack returned nothing on this panel"
+    dup = int(stack.duplicated(["communitydistrict", "incident_date"]).sum())
+    return ("PASS" if dup == 0 else "FAIL",
+            f"{dup} district-day(s) appear in two episode windows in the stack "
+            f"07 builds ({len(stack):,} rows, {stack['episode'].nunique()} episodes); "
+            f"07's old construction would have double-counted {naive_doubled} "
+            f"calendar day(s)")
+
+
 def t_no_lost_history():
     """T12: no article's pageview series starts after the article existed.
 
@@ -1738,6 +1838,8 @@ CHECKS = [
     ("X.csv_reproducible", "X15", "derived weights round-trip exactly", x_derived_csv_reproducible),
     ("X.no_stale_attribution", "X7", "DATA_AUDIT no longer misattributes 378->630", x_no_stale_audit_attribution),
     ("T.wiki_fetch_complete", "T15", "no basket article lost a title to a failed fetch", t_wiki_fetch_complete),
+    ("T.no_duplicate_person", "T17", "no basket article duplicates another person", t_no_duplicate_person_articles),
+    ("S.did_no_shared_days", "S7", "no district-day is treated and control at once", s_did_no_shared_days),
     ("T.no_lost_history", "T12", "no article series starts after the article existed", t_no_lost_history),
     ("T.local_uncensored", "T10", "NYC-local series has no censored days", t_local_series_uncensored),
     ("T.index_not_one_article", "T11", "index top days are not one article", t_index_not_single_article),

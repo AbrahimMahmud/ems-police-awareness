@@ -61,6 +61,7 @@ import pandas as pd
 
 from config import DATA_REFERENCE
 from provenance import log_source
+from wiki_titles import collapse_duplicates
 
 UA = {"User-Agent": "ems-police-awareness-research/1.0 (academic; contact via repository)"}
 API = "https://en.wikipedia.org/w/api.php"
@@ -338,28 +339,13 @@ def main():
         kept.append(a)
         print(f"  ok  {a:<46} days={len(s):5d} views={int(s.sum()):>9,}")
 
-    # COLLAPSE ARTICLES THAT ARE THE SAME PERSON. pageviews() already sums each
-    # article across its historical titles, so an article that is ITSELF a
-    # historical title of another kept article would be counted twice - once
-    # inside the canonical article's sum, and again as its own basket entry.
-    # "Daniel_Prude" and "Killing_of_Daniel_Prude" were exactly this: the title
-    # map lists Daniel_Prude as a title of Killing_of_Daniel_Prude, and both
-    # were in the basket, so Prude entered wiki_nys twice.
-    alias_of = {}
-    for canonical, titles in TITLE_MAP.items():
-        for t in titles:
-            if t != canonical:
-                alias_of[t] = canonical
-    dropped = [a for a in list(series) if alias_of.get(a) in series]
+    # Same rule as 11, from the one module that owns it (finding T17).
+    kept, dropped = collapse_duplicates(kept, TITLE_MAP)
     for a in dropped:
-        print(f"  --  {a}: dropped, it is a historical title of "
-              f"{alias_of[a]}, which is already in the basket")
         del series[a]
-        kept.remove(a)
         b.loc[b["article"] == a, "keep"] = False
-        b.loc[b["article"] == a, "reason"] = f"duplicate: historical title of {alias_of[a]}"
-    if dropped:
-        print(f"  collapsed {len(dropped)} duplicate article(s)")
+        b.loc[b["article"] == a, "reason"] = (
+            f"duplicate: historical title of {dropped[a][0]}")
 
     b.to_csv(DATA_REFERENCE / "wiki_nyc_articles.csv", index=False)
     if not series:
