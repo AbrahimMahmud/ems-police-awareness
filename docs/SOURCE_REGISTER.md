@@ -10,7 +10,7 @@ Sources: 19 (13 live, 4 retired, 2 unverifiable).
 Every verification result ever recorded, including failures, is in
 `data/reference/source_verification_log.csv`, which is append-only.
 
-Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unverifiable, 83 verified
+Last scan: **2026-09-11T19:47:43+00:00** — 18 skipped, 2 template, 6 unverifiable, 66 verified
 
 ## S1 — NYC EMS Incident Dispatch Data
 
@@ -18,7 +18,7 @@ Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unveri
 - **Publisher**: Fire Department of the City of New York, via NYC Open Data
 - **Dataset id**: `76xm-jjuj`
 - **Landing page**: https://data.cityofnewyork.us/Public-Safety/EMS-Incident-Dispatch-Data/76xm-jjuj
-- **Endpoint**: `https://data.cityofnewyork.us/resource/76xm-jjuj.csv` — _verified_ (HEAD 200 text/csv; charset=UTF-8)
+- **Endpoint**: `https://data.cityofnewyork.us/resource/76xm-jjuj.csv` — _skipped_ (--offline)
 - **Access**: SODA API, 7 columns, paged, by scripts/00b_download_ems_extract.py (S1b)
 - **What we take**: incident_datetime, communitydistrict, final_call_type, disposition and identifiers; aggregated to community-district x day x call type
 - **Role**: outcome - every EMS call count and share
@@ -35,7 +35,7 @@ Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unveri
 
 - **Status**: live
 - **Publisher**: Fire Department of the City of New York, via NYC Open Data
-- **Endpoint**: `https://data.cityofnewyork.us/resource/76xm-jjuj.csv` — _verified_ (HEAD 200 text/csv; charset=UTF-8)
+- **Endpoint**: `https://data.cityofnewyork.us/resource/76xm-jjuj.csv` — _skipped_ (--offline)
 - **Access**: scripts/00b_download_ems_extract.py
 - **What we take**: the full 2015-2024 span at community-district x day x call-type granularity
 - **Role**: outcome
@@ -73,7 +73,7 @@ Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unveri
 
 - **Status**: retired
 - **Publisher**: The Washington Post; cleaned copy supplied by Prof. Steil
-- **Endpoint**: `https://github.com/washingtonpost/data-police-shootings` — _unreachable_ (GET HTTP 403 Forbidden - our access, not necessarily the resource (egress policy?))
+- **Endpoint**: `https://github.com/washingtonpost/data-police-shootings` — _skipped_ (--offline)
 - **Access**: file handed over; the public original is the GitHub repository
 - **What we take**: victim race attribution, in the retired race-split awareness indices
 - **Role**: superseded by S10 (Mapping Police Violence), which covers all causes of death rather than shootings only
@@ -112,7 +112,7 @@ Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unveri
 
 - **Status**: live
 - **Publisher**: NYC Department of City Planning (official ACS tabulation)
-- **Endpoint**: `https://s-media.nyc.gov/agencies/dcp/assets/files/excel/data-tools/census/acs/demo_2019_acs5yr_nta.xlsx` — _verified_ (HEAD 200 application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)
+- **Endpoint**: `https://s-media.nyc.gov/agencies/dcp/assets/files/excel/data-tools/census/acs/demo_2019_acs5yr_nta.xlsx` — _skipped_ (--offline)
 - **Access**: scripts/09_fetch_public_data.py
 - **What we take**: population and race shares per NTA2020, aggregated to the 59 community districts
 - **Role**: period-matched demographics for heterogeneity
@@ -127,7 +127,7 @@ Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unveri
 
 - **Status**: live
 - **Publisher**: Wikimedia Foundation, Pageviews REST API
-- **Endpoint**: `https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/` — _verified_ (HEAD 200 application/json; charset=utf-8 (probe https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/Killing_of_George_Floyd/daily/20200525/20200601))
+- **Endpoint**: `https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/` — _skipped_ (--offline)
 - **Access**: scripts/09_fetch_public_data.py
 - **What we take**: daily per-victim pageviews, 2017-2020
 - **Role**: the ONLY victim-level series, so it is the input to the race-split components in 12_build_cai.py. It is NOT the wiki_ext basket (that is S11).
@@ -143,7 +143,7 @@ Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unveri
 
 - **Status**: live
 - **Publisher**: Wikimedia Foundation
-- **Endpoint**: `https://en.wikipedia.org/api/rest_v1/page/summary/` — _verified_ (HEAD 200 application/json; charset=utf-8; profile="https://www.mediawiki.org/wiki/Specs/Summary/1.5.0" (probe https://en.wikipedia.org/api/rest_v1/page/summary/Killing_of_George_Floyd))
+- **Endpoint**: `https://en.wikipedia.org/api/rest_v1/page/summary/` — _skipped_ (--offline)
 - **Access**: scripts/09_fetch_public_data.py, scripts/26_resolve_basket_scope.py
 - **What we take**: article extracts, used to confirm a candidate article is about a police killing
 - **Role**: article resolution and basket screening
@@ -155,7 +155,7 @@ Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unveri
 
 - **Status**: live
 - **Publisher**: Mapping Police Violence
-- **Endpoint**: `https://mappingpoliceviolence.us/s/MPVDatasetDownload.xlsx` — _verified_ (HEAD 200 application/vnd.openxmlformats-officedocument.spreadsheetml.sheet -> https://static1.squarespace.com/static/54ecf211e4b0ed744420c5b6/t/6a8a0f4b345aa5414009c041/1787432779239/MPVDatasetDownload.xlsx)
+- **Endpoint**: `https://mappingpoliceviolence.us/s/MPVDatasetDownload.xlsx` — _skipped_ (--offline)
 - **Access**: scripts/10_build_victim_registry.py
 - **What we take**: name, date, race, cause, city, state, mental-illness flag for police killings 2013-2024
 - **Role**: victim registry: episode labelling, basket screening, race attribution
@@ -170,9 +170,9 @@ Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unveri
 
 - **Status**: live
 - **Publisher**: The GDELT Project; Wikimedia Foundation
-- **Endpoint**: `https://api.gdeltproject.org/api/v2/doc/doc` — _verified_ (HEAD 200 application/json; charset=utf-8 (probe https://api.gdeltproject.org/api/v2/doc/doc?query=%22police+brutality%22&mode=timelinevol&format=json&startdatetime=20200525000000&enddatetime=20200601000000))
-- **Endpoint**: `https://api.gdeltproject.org/api/v2/tv/tv` — _verified_ (HEAD 200 text/html; charset=utf-8 (probe https://api.gdeltproject.org/api/v2/tv/tv?query=%22police+brutality%22&mode=timelinevol&format=json&datanorm=perc&datacomb=sep&startdatetime=20200525000000&enddatetime=20200601000000))
-- **Endpoint**: `https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/` — _verified_ (HEAD 200 application/json; charset=utf-8 (probe https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/Killing_of_George_Floyd/daily/20200525/20200601))
+- **Endpoint**: `https://api.gdeltproject.org/api/v2/doc/doc` — _skipped_ (--offline)
+- **Endpoint**: `https://api.gdeltproject.org/api/v2/tv/tv` — _skipped_ (--offline)
+- **Endpoint**: `https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/` — _skipped_ (--offline)
 - **Access**: scripts/11_fetch_awareness_components.py
 - **What we take**: daily article volume (gdelt_news), daily TV mention volume (gdelt_tv), and summed daily pageviews across the victim basket (wiki_ext)
 - **Role**: gdelt_news and gdelt_tv are the supply tier CAI-S; wiki_ext is a demand-tier component of CAI-D
@@ -189,7 +189,7 @@ Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unveri
 
 - **Status**: live
 - **Publisher**: Google
-- **Endpoint**: `https://trends.google.com` — _verified_ (HEAD 200 text/html; charset=utf-8 -> https://trends.google.com/trends/)
+- **Endpoint**: `https://trends.google.com` — _skipped_ (--offline)
 - **Access**: scripts/11b_fetch_trends.py via pytrends
 - **What we take**: daily index for a fixed term basket, United States and NYC DMA 501, stitched from 180-day windows with 60-day overlaps by through-origin regression
 - **Role**: trends_us is a CAI-D component; trends_nyc was one and is being retired
@@ -204,7 +204,7 @@ Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unveri
 
 - **Status**: retired
 - **Publisher**: Google
-- **Endpoint**: `https://trends.google.com` — _verified_ (HEAD 200 text/html; charset=utf-8 -> https://trends.google.com/trends/)
+- **Endpoint**: `https://trends.google.com` — _skipped_ (--offline)
 - **Access**: scripts/11c_trends_anchor_and_victims.py via pytrends
 - **What we take**: nothing - retired on 2026-09-10 in commit f7789d1
 - **Role**: retired; its artifact was deleted and 12_build_cai.py now REFUSES to run if it reappears
@@ -218,7 +218,7 @@ Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unveri
 
 - **Status**: live
 - **Publisher**: derived from S1 by server-side aggregation
-- **Endpoint**: `https://data.cityofnewyork.us/resource/76xm-jjuj.json` — _verified_ (HEAD 200 application/json;charset=utf-8)
+- **Endpoint**: `https://data.cityofnewyork.us/resource/76xm-jjuj.json` — _skipped_ (--offline)
 - **Access**: scripts/16_bheard_exposure.py
 - **What we take**: counts of 2015-2024 EMS incidents by (police precinct, community district), normalised to weights
 - **Role**: maps B-HEARD's precinct-level rollout onto the 59 community districts
@@ -232,7 +232,7 @@ Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unveri
 
 - **Status**: live
 - **Publisher**: NYC Mayor's Office of Community Mental Health; validated against the NYC Independent Budget Office precinct-level report
-- **Endpoint**: `https://mentalhealth.cityofnewyork.us/b-heard` — _verified_ (HEAD 200 text/html; charset=UTF-8)
+- **Endpoint**: `https://mentalhealth.cityofnewyork.us/b-heard` — _skipped_ (--offline)
 - **Access**: hand-assembled from published announcements; scripts/16_bheard_exposure.py registers it
 - **What we take**: the date each precinct began B-HEARD response
 - **Role**: the principal confound control. B-HEARD diverts mental-health 911 calls away from police, which moves the outcome in the same direction as H1.
@@ -246,7 +246,7 @@ Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unveri
 
 - **Status**: live
 - **Publisher**: Wikimedia Foundation
-- **Endpoint**: `https://query.wikidata.org/sparql` — _verified_ (HEAD 200 application/sparql-results+json;charset=utf-8 (probe https://query.wikidata.org/sparql?format=json&query=SELECT%20%3Fd%20WHERE%20%7B%20wd%3AQ93544244%20wdt%3AP570%20%3Fd%20%7D))
+- **Endpoint**: `https://query.wikidata.org/sparql` — _skipped_ (--offline)
 - **Access**: scripts/27_finalise_basket.py (cached under data/processed/wikidata_cache/)
 - **What we take**: date of death, country, and person-hood for each candidate basket article
 - **Role**: the primary death-date source for the basket: 108 of 161 candidates are dated from Wikidata, 38 from the registry, 15 unresolved
@@ -259,7 +259,7 @@ Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unveri
 
 - **Status**: live
 - **Publisher**: Wikimedia Foundation
-- **Endpoint**: `https://en.wikipedia.org/w/api.php` — _verified_ (HEAD 200 application/json; charset=utf-8 (probe https://en.wikipedia.org/w/api.php?action=query&format=json&prop=redirects&rdlimit=max&titles=Killing%20of%20George%20Floyd))
+- **Endpoint**: `https://en.wikipedia.org/w/api.php` — _skipped_ (--offline)
 - **Access**: scripts/29_resolve_article_titles.py
 - **What we take**: every title redirecting to an article (its historical titles), and each title's first revision date
 - **Role**: closes the rename defect T12. Fetching one canonical title discarded everything before a page move, including the spike at the moment of death; summing across historical titles recovered 79,082,746 views across 106 of 127 articles.
@@ -274,8 +274,8 @@ Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unveri
 
 - **Status**: live
 - **Publisher**: Wikimedia Foundation
-- **Endpoint**: `https://en.wikipedia.org/w/api.php` — _verified_ (HEAD 200 application/json; charset=utf-8 (probe https://en.wikipedia.org/w/api.php?action=query&format=json&list=categorymembers&cmtitle=Category%3ADeaths%20by%20law%20enforcement%20in%20New%20York%20(state)&cmlimit=5))
-- **Endpoint**: `https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/` — _verified_ (HEAD 200 application/json; charset=utf-8 (probe https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/Killing_of_George_Floyd/daily/20200525/20200601))
+- **Endpoint**: `https://en.wikipedia.org/w/api.php` — _skipped_ (--offline)
+- **Endpoint**: `https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/` — _skipped_ (--offline)
 - **Access**: scripts/28_build_nyc_attention.py (cached under data/processed/wiki_cat_cache/)
 - **What we take**: articles in the NYC police-incident categories, screened to require a police marker AND an incident form AND a New York marker; then their summed daily pageviews
 - **Role**: wiki_nyc - the uncensored city-local attention component that replaces trends_nyc

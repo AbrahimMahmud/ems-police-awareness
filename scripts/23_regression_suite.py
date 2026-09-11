@@ -1072,6 +1072,13 @@ GUARD_EXEMPT = {
     "01_build_panel.py",
     # The auditor itself: it must be able to read the raw panel to check it.
     "23_regression_suite.py",
+    # The orchestrator. It NAMES every outcome artifact in its stage table and
+    # records each one's size, sha256 and ROW COUNT in the run manifest — but it
+    # never loads a value: parquet row counts come from the file footer and CSV
+    # counts from newlines. It runs each stage as a subprocess, and those stages
+    # carry their own guards. Verified by reading artifact_fact(): there is no
+    # pd.read_* of an outcome file anywhere in it.
+    "run_all.py",
     # The two extract builders WRITE the outcome artifacts from the raw SODA
     # pages. They cannot filter to a sample window: 01_build_panel.py needs the
     # full extract to build the lag/lead buffer, and the citywide trends file is

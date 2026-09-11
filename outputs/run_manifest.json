@@ -1,0 +1,209 @@
+{
+  "git": {
+    "commit": "d096fd7a4e7bbb5db7c6da5c6f364ac74983238e",
+    "dirty": true,
+    "dirty_files": 7
+  },
+  "freeze_active": true,
+  "wall_seconds": 20.3,
+  "stages": [
+    {
+      "script": "01_build_panel.py",
+      "kind": "build",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 3.4,
+      "inputs": [
+        {
+          "path": "data/processed/ems_cd_day_calltype.parquet",
+          "exists": true,
+          "bytes": 7249638,
+          "sha256": "6247a7239559f930bb6e1706106ff2020054b126583571f3035f20afa08a95dc",
+          "rows": 4876509
+        }
+      ],
+      "outputs": [
+        {
+          "path": "data/processed/panel_cd_day.parquet",
+          "exists": true,
+          "bytes": 1721190,
+          "sha256": "368ef577520149caacbb61da51afd12fc587ab024ce976639eff489313641739",
+          "rows": 89857
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "12_build_cai.py",
+      "kind": "build",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 1.0,
+      "inputs": [
+        {
+          "path": "data/reference/cai_components_daily.csv",
+          "exists": true,
+          "bytes": 249454,
+          "sha256": "dbb89a5aa3380194da98ac3a075131b91014e3a9c649646c317e5a81f11ecfcf",
+          "rows": 9232
+        },
+        {
+          "path": "data/reference/cai_trends_daily.csv",
+          "exists": true,
+          "bytes": 264074,
+          "sha256": "f18c11eb209350bd115e9c0436065a0984ce6bb1506a90452e66c7df26dd16e6",
+          "rows": 7306
+        }
+      ],
+      "outputs": [
+        {
+          "path": "data/processed/cai_daily.parquet",
+          "exists": true,
+          "bytes": 199947,
+          "sha256": "a4287b0cd6b7a4508f466cdcc04e6295fa622d36d3eb383903b81275c38d020f",
+          "rows": 3653
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "02b_build_cai_lags.py",
+      "kind": "build",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 0.5,
+      "inputs": [
+        {
+          "path": "data/processed/cai_daily.parquet",
+          "exists": true,
+          "bytes": 199947,
+          "sha256": "a4287b0cd6b7a4508f466cdcc04e6295fa622d36d3eb383903b81275c38d020f",
+          "rows": 3653
+        }
+      ],
+      "outputs": [
+        {
+          "path": "data/processed/awareness_lags.parquet",
+          "exists": true,
+          "bytes": 2072828,
+          "sha256": "b4af4f930b88bd25977478d543b13a260e575e128c6f8053e7094d37472f9cab",
+          "rows": 1523
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "13_extension_episodes.py",
+      "kind": "build",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 1.5,
+      "inputs": [
+        {
+          "path": "data/processed/cai_daily.parquet",
+          "exists": true,
+          "bytes": 199947,
+          "sha256": "a4287b0cd6b7a4508f466cdcc04e6295fa622d36d3eb383903b81275c38d020f",
+          "rows": 3653
+        }
+      ],
+      "outputs": [
+        {
+          "path": "data/reference/confirmation_episodes_rebuilt.csv",
+          "exists": true,
+          "bytes": 4816,
+          "sha256": "2c881993aeb5c65722bac04064f8b2e2c88a0053e1e61b5db55a0f3d89fddf7b",
+          "rows": 75
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "22_pipeline_check.py",
+      "kind": "check",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 0.7,
+      "inputs": [
+        {
+          "path": "data/processed/panel_cd_day.parquet",
+          "exists": true,
+          "bytes": 1721190,
+          "sha256": "368ef577520149caacbb61da51afd12fc587ab024ce976639eff489313641739",
+          "rows": 89857
+        }
+      ],
+      "outputs": [],
+      "tail": ""
+    },
+    {
+      "script": "20_data_audit.py",
+      "kind": "check",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 1.1,
+      "inputs": [],
+      "outputs": [
+        {
+          "path": "outputs/tables/data_audit.csv",
+          "exists": true,
+          "bytes": 4036,
+          "sha256": "883fd40533d63455cbe7bf4eeb3095429df4f0b49c1dc47a1e2069230e3e5fe8",
+          "rows": 46
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "31_verify_sources.py",
+      "kind": "check",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 4.2,
+      "inputs": [],
+      "outputs": [],
+      "tail": ""
+    },
+    {
+      "script": "23_regression_suite.py",
+      "kind": "check",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 7.2,
+      "inputs": [],
+      "outputs": [
+        {
+          "path": "outputs/tables/regression_suite.csv",
+          "exists": true,
+          "bytes": 6198,
+          "sha256": "94203097aa101ec9fecdf963d5416db3b6645b65a58a79141d582968e890d4a2",
+          "rows": 46
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "22_pipeline_check.py",
+      "kind": "check",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 0.5,
+      "inputs": [
+        {
+          "path": "outputs/tables/regression_suite.csv",
+          "exists": true,
+          "bytes": 6198,
+          "sha256": "94203097aa101ec9fecdf963d5416db3b6645b65a58a79141d582968e890d4a2",
+          "rows": 46
+        }
+      ],
+      "outputs": [],
+      "tail": ""
+    }
+  ],
+  "summary": {
+    "PASS": 9,
+    "FAIL": 0,
+    "BLOCKED": 0
+  }
+}
