@@ -28,7 +28,8 @@ S.ppml_wired,"X5,R8",counts/PPML arm actually called,PASS,PPML recovers planted 
 D.freeze_not_tautological,D3,freeze guard is not a tautology,PASS,guard is independent
 D.freeze_disjoint,D3,confirmation sample disjoint from discovery,PASS,explicit confirmation window
 D.guard_coverage,"D3,X11,X9",every outcome-artifact reader calls the guard,PASS,all readers of 3 outcome artifacts guarded (4 documented exemptions)
-D.incident_disclosed,F1,freeze incident stays in the record,PASS,"incident F1 recorded in the register and disclosed, dated, in the paper master"
+D.soda_guarded,F2,"the source API is guarded, not only the artifacts",PASS,"5 declared producer(s), each with a recorded reason; no other script queries 76xm-jjuj unguarded"
+D.incident_disclosed,F1,freeze incident stays in the record,PASS,"2 incident(s) recorded and named in the disclosure section, dated: ['F1', 'F2']"
 D.guard_can_fire,"D3,D4",freeze guard actually rejects things,PASS,guard fires on all 4 rejection cases
 E.threshold_stringency,"D5,L5,E6",episode threshold is constant stringency,PASS,stringency 10.1%-10.3% by year (spread 0.2%); all 75 peaks clear their year's cut
 E.no_mega_episode,"E3,D7,E6",no episode exceeds its analysis window,PASS,"75 episodes, span median 3 max 14 (cap 14)"
@@ -42,5 +43,5 @@ V.artifacts_current,T14,no artifact predates the script that writes it,PASS,"4 a
 V.sources_verified,"X8,X14",every source verified after its last write,PASS,"26 artifacts, all verified after their last write"
 V.no_duplicate_source_ids,"X8,X13","one row per source id, no collisions",PASS,"11 rows, 11 ids, no collisions"
 V.claims_reproduce,X14,every claimed number recomputes from its artifact,PASS,43 claims recomputed and found verbatim in the document
-V.links_resolve,X14,every endpoint has a dated result,PASS,"15 endpoints, last result recorded; 2 unreachable from here (['S11', 'S4'])"
-M.register_sync,O5,register and suite have not drifted apart,PASS,56/68 findings tagged; all 35 blocking covered
+V.links_resolve,X14,every endpoint has a dated result,PASS,"15 endpoints, last result recorded; 1 unreachable from here (['S4'])"
+M.register_sync,O5,register and suite have not drifted apart,PASS,57/69 findings tagged; all 36 blocking covered

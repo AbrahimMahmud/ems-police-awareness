@@ -10,7 +10,7 @@ Sources: 19 (13 live, 4 retired, 2 unverifiable).
 Every verification result ever recorded, including failures, is in
 `data/reference/source_verification_log.csv`, which is append-only.
 
-Last scan: **2026-09-11T01:41:43+00:00** — 2 template, 2 unreachable, 6 unverifiable, 82 verified
+Last scan: **2026-09-11T07:40:28+00:00** — 2 template, 1 unreachable, 6 unverifiable, 83 verified
 
 ## S1 — NYC EMS Incident Dispatch Data
 
@@ -170,7 +170,7 @@ Last scan: **2026-09-11T01:41:43+00:00** — 2 template, 2 unreachable, 6 unveri
 
 - **Status**: live
 - **Publisher**: The GDELT Project; Wikimedia Foundation
-- **Endpoint**: `https://api.gdeltproject.org/api/v2/doc/doc` — _unreachable_ (rate limited (HTTP 429) after 3 attempts - not a verdict on the endpoint)
+- **Endpoint**: `https://api.gdeltproject.org/api/v2/doc/doc` — _verified_ (HEAD 200 application/json; charset=utf-8 (probe https://api.gdeltproject.org/api/v2/doc/doc?query=%22police+brutality%22&mode=timelinevol&format=json&startdatetime=20200525000000&enddatetime=20200601000000))
 - **Endpoint**: `https://api.gdeltproject.org/api/v2/tv/tv` — _verified_ (HEAD 200 text/html; charset=utf-8 (probe https://api.gdeltproject.org/api/v2/tv/tv?query=%22police+brutality%22&mode=timelinevol&format=json&datanorm=perc&datacomb=sep&startdatetime=20200525000000&enddatetime=20200601000000))
 - **Endpoint**: `https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/` — _verified_ (HEAD 200 application/json; charset=utf-8 (probe https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/Killing_of_George_Floyd/daily/20200525/20200601))
 - **Access**: scripts/11_fetch_awareness_components.py

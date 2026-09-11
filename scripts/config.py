@@ -61,6 +61,12 @@ ANALYSIS_END = DISCOVERY_END
 PANEL_BUFFER_START = "2016-12-01"   # covers 28-day lags before analysis start
 PANEL_BUFFER_END = "2021-01-31"     # covers 14-day leads after analysis end
 
+# The OUTCOME SOURCE itself, not just the files derived from it. Freeze coverage
+# was a list of artifacts, so querying this dataset directly bypassed every guard
+# in the project - which is exactly how incident F2 happened (see PAPER_MASTER
+# 5.3). D.soda_guarded keys on this constant.
+EMS_DATASET_ID = "76xm-jjuj"
+
 # Every artifact that contains OUTCOME data, named here so freeze coverage is a
 # property of a list rather than of one hard-coded filename (finding X11, and
 # incident F1 which is how it was found).
@@ -94,13 +100,35 @@ VALID_CDS = (
 assert len(VALID_CDS) == 59
 
 # ---------------------------------------------------------------------------
-# Call type groups (I10, I11). Codes from the official data dictionary sheet
-# "Call Type Descriptions" in EMS_incident_dispatch_data_description.xlsx.
+# Call type groups (I10, I11).
+#
+# TWO FALSE COMMENTS WERE REMOVED HERE (finding O3). Both were load-bearing: one
+# named the authority for the codes, the other was the stated justification for
+# the grouping, and neither was true.
+#
+#  1. "Codes from the official data dictionary sheet 'Call Type Descriptions'."
+#     Verified directly against data/raw/EMS_incident_dispatch_data_description
+#     (1).xlsx: that sheet has 271 codes and contains ONLY "EDP = PSYCHIATRIC
+#     PATIENT". EDPC, EDPM, EDPW and T-EDP are all UNDOCUMENTED, and edp is the
+#     only group here with undocumented members. The real basis for including
+#     them is the observed recode pattern, which is weaker and must be stated
+#     as such in the paper.
+#
+#  2. "family total stable ~125k/yr while EDP alone falls." False. Annual family
+#     totals run 108,384 (2016) to 141,910 (2024) - a 47% range that matches
+#     "~125k" only in 2017-2018. Those figures come from the F2 freeze access
+#     and are cited here rather than re-derived, because re-deriving them would
+#     be a THIRD confirmation-period read; see PAPER_MASTER.md 5.3.
+#
+# The grouping itself stands - EDPC really is a progressive recode of EDP, and
+# omitting the recode codes creates a time-trending undercount - but it rests on
+# a pattern in the data, not on documentation, and the family total is not flat.
 # ---------------------------------------------------------------------------
 CALL_TYPE_GROUPS = {
-    # EDP family: EDPC appears mid-2018 as a progressive recode of EDP (family
-    # total stable ~125k/yr while EDP alone falls); EDPM appears 2021; omitting
-    # them (as the original analysis did) creates a time-trending undercount.
+    # EDP family. EDPC appears mid-2018 as a progressive recode of EDP; EDPM
+    # appears 2021-06-03; T-EDP appears 2020-06-05 and is ~0.2% of the family.
+    # See O3 for what each birth date does and does not imply, and 5.3 for the
+    # freeze access that established them.
     "edp": ["EDP", "EDPC", "EDPM", "EDPW", "T-EDP"],
     "altmen": ["ALTMEN", "ALTMFC", "ALTMFT"],
     # JUMPDC, OD, ODC, POISON never occur in 2016-2021 (legacy codes); kept out.

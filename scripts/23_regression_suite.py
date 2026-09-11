@@ -1041,6 +1041,29 @@ def d_freeze_enforces_disjoint():
 # Scripts that read the panel but must NOT route it through select_sample, with
 # the reason. Exemptions are listed here rather than being implicit, so adding
 # one is a visible edit in a diff instead of a script quietly going unchecked.
+# Scripts allowed to query the EMS SOURCE dataset directly. Each needs a reason,
+# for the same purpose GUARD_EXEMPT has one: an undocumented exemption list is a
+# way to make a check stop complaining rather than a way to record a decision.
+SODA_PRODUCERS = {
+    # Write the outcome extracts from the raw SODA pages. They cannot filter:
+    # 01_build_panel.py needs the full extract for the lag/lead buffer, and the
+    # citywide trends file is a descriptive 2005+ series by design.
+    "00_local_ems_extract.py",
+    "00b_download_ems_extract.py",
+    # Builds the precinct -> community-district crosswalk by SERVER-SIDE
+    # aggregation: counts of incidents per (precinct, CD) pooled over 2015-2024,
+    # with no time dimension, no call type and no share. It is geography, not
+    # outcome - which district a precinct's calls land in - and filtering it to
+    # the discovery window would bias the weights that carry B-HEARD exposure.
+    # It does pool over confirmation years, and that is why it is declared here
+    # rather than left silent.
+    "16_bheard_exposure.py",
+    # The auditor and the source verifier: both must be able to NAME the dataset
+    # in order to check that everything else handles it correctly.
+    "23_regression_suite.py",
+    "31_verify_sources.py",
+}
+
 GUARD_EXEMPT = {
     # Builds the panel, including the lag/lead buffer that deliberately extends
     # to PANEL_BUFFER_END = 2021-01-31 — inside a confirmation window. Filtering
@@ -1083,33 +1106,97 @@ def d_guard_coverage():
             if not missing else f"unguarded: {missing}")
 
 
+def d_soda_source_guarded():
+    """F2: the freeze guard protects ARTIFACTS, so the source API bypasses it.
+
+    Coverage is a list of files under data/processed/. NYC OpenData 76xm-jjuj is
+    not a file - any script (or any agent) that queries it directly reads
+    confirmation-period outcomes with no guard in the path at all. That is how
+    incident F2 happened: verifying finding O3 needed call-type birth dates, the
+    question was put straight to SODA, and it came back with precinct-level EDPM
+    counts for June 2021 comparing B-HEARD pilot precincts against the rest.
+    Nothing failed, because nothing was watching.
+
+    D.guard_coverage cannot catch this - it looks for scripts that READ the
+    outcome artifacts. So the dataset id itself is treated as an outcome source:
+    a script naming it must either be a declared producer (it writes the extract
+    and cannot filter) or route through freeze_guard.
+    """
+    from config import EMS_DATASET_ID
+    producers = SODA_PRODUCERS
+    entries = ("select_sample", "assert_no_confirmation_outcomes",
+               "assert_discovery_only", "freeze_banner")
+    unguarded = []
+    for f in sorted(SCRIPTS.glob("*.py")):
+        if f.name in producers:
+            continue
+        t = f.read_text()
+        if EMS_DATASET_ID in t and not any(e in t for e in entries):
+            unguarded.append(f.name)
+    return ("FAIL" if unguarded else "PASS",
+            f"scripts querying {EMS_DATASET_ID} without the guard: {unguarded}"
+            if unguarded else
+            f"{len(producers)} declared producer(s), each with a recorded reason; "
+            f"no other script queries {EMS_DATASET_ID} unguarded")
+
+
 def d_incident_disclosed():
-    """F1: the freeze incident must stay in the record, in both places.
+    """F1, F2: EVERY freeze incident must stay in the record, in both places.
 
     This is a DISCLOSURE obligation, so "the text exists in the record" is
     genuinely the property, not a proxy for it - unlike the source greps this
-    suite has had to replace. The failure mode it guards against is real and
-    specific: an incident quietly dropped from the register during a later edit,
-    leaving a pre-registration record that overstates how clean the freeze was.
+    suite has had to replace. The failure mode is real and specific: an incident
+    quietly dropped during a later edit, leaving a pre-registration record that
+    overstates how clean the freeze was.
 
-    Requires the incident in BOTH the finding register and the paper master,
-    because the register is an internal artifact and the master is what the
-    Methods section is written from. Losing it from either one loses it from
-    somewhere that matters.
+    Keyed on every finding whose id starts with F, not on the literal "F1". The
+    first version named F1, so when a SECOND incident was found on 2026-09-11 -
+    a direct SODA query that read precinct-level confirmation-window outcomes -
+    this check would have gone on passing while the register described the
+    freeze as having one breach. A disclosure check that cannot see a new
+    disclosure is worse than none, because it certifies the omission.
+
+    Requires each incident in BOTH the finding register and the paper master:
+    the register is internal, the master is what Methods is written from.
     """
-    reg = pd.read_csv(DATA_REFERENCE.parent.parent / "docs" / "AUDIT_FINDINGS.csv")
-    in_register = "F1" in set(reg["id"])
+    reg = pd.read_csv(PROJECT_ROOT / "docs" / "AUDIT_FINDINGS.csv")
+    incidents = sorted(i for i in reg["id"].astype(str)
+                       if re.fullmatch(r"F\d+", i))
+    if not incidents:
+        return "BLOCKED", "no freeze incidents in the register to check"
     master = PROJECT_ROOT / "docs" / "PAPER_MASTER.md"
     if not master.exists():
-        return "FAIL", "docs/PAPER_MASTER.md is missing; the incident has no disclosure home"
+        return "FAIL", "docs/PAPER_MASTER.md is missing; incidents have no disclosure home"
     m = master.read_text()
-    disclosed = "freeze incident" in m.lower()
-    dated = "2026-09-10" in m
-    if not in_register:
-        return "FAIL", "incident F1 is not in AUDIT_FINDINGS.csv"
-    if not (disclosed and dated):
-        return "FAIL", f"PAPER_MASTER.md: disclosed={disclosed} dated={dated}"
-    return "PASS", "incident F1 recorded in the register and disclosed, dated, in the paper master"
+    # The incident must appear IN THE DISCLOSURE SECTION, not merely somewhere in
+    # the document. The first version accepted the incident id OR any date from
+    # its title, and 2026-09-11 appears all over this document for unrelated
+    # reasons - so deleting F2's disclosure entirely still passed. A disclosure
+    # check that matches an unrelated date certifies the omission it exists to
+    # catch.
+    heads = [i for i in range(len(m))
+             if m.startswith("#", i) and (i == 0 or m[i - 1] == "\n")]
+    section = ""
+    for n, i in enumerate(heads):
+        line_end = m.index("\n", i)
+        if "freeze incident" in m[i:line_end].lower():
+            nxt = next((h for h in heads[n + 1:]
+                        if m[h:m.index("\n", h)].startswith(("## ", "# "))), len(m))
+            section = m[i:nxt]
+            break
+    if not section:
+        return "FAIL", "PAPER_MASTER.md has no freeze-incident section"
+    missing = [fid for fid in incidents
+               if not re.search(rf"\b{fid}\b", section)]
+    if missing:
+        return "FAIL", (f"{len(missing)} incident(s) in the register but not named in "
+                        f"the freeze-incident section of PAPER_MASTER.md: {missing}")
+    undated = [fid for fid in incidents
+               if not re.search(r"\d{4}-\d{2}-\d{2}", section)]
+    if undated:
+        return "FAIL", "the freeze-incident section carries no dates"
+    return "PASS", (f"{len(incidents)} incident(s) recorded and named in the "
+                    f"disclosure section, dated: {incidents}")
 
 
 def d_guard_can_fire():
@@ -1667,6 +1754,7 @@ CHECKS = [
     ("D.freeze_not_tautological", "D3", "freeze guard is not a tautology", d_freeze_not_tautological),
     ("D.freeze_disjoint", "D3", "confirmation sample disjoint from discovery", d_freeze_enforces_disjoint),
     ("D.guard_coverage", "D3,X11,X9", "every outcome-artifact reader calls the guard", d_guard_coverage),
+    ("D.soda_guarded", "F2", "the source API is guarded, not only the artifacts", d_soda_source_guarded),
     ("D.incident_disclosed", "F1", "freeze incident stays in the record", d_incident_disclosed),
     ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),
     ("E.threshold_stringency", "D5,L5,E6", "episode threshold is constant stringency", e_threshold_constant_stringency),

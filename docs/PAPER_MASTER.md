@@ -392,17 +392,49 @@ was high, *by construction*. The index partly measured itself.
 **Fifteen checks that could pass for the wrong reason.** See §7.5. This is the most
 transferable lesson in the project.
 
-### 5.3 The freeze incident (2026-09-10) — disclosed
+### 5.3 The freeze incidents — **two**, both disclosed
 
-During an automated audit, an agent computed the citywide mental-health call share
-by year for 2005–2026, including confirmation years, in order to demonstrate that
-`ems_citywide_day_trends.parquet` had no freeze guard. It deliberately did not
-restate the values.
+**F1 (2026-09-10).** During an automated audit, an agent computed the citywide
+mental-health call share by year for 2005–2026, including confirmation years, in
+order to demonstrate that `ems_citywide_day_trends.parquet` had no freeze guard.
+It deliberately did not restate the values.
 
 Narrow — a citywide annual aggregate of a level series, with no episode alignment,
-no treatment merge, no district variation, and no test of H1 — but real. Recorded
-as an incident; materiality is for the supervisor to judge, not us. The gap that
-allowed it (outcome files outside the guard's coverage) is being closed.
+no treatment merge, no district variation, and no test of H1 — but real.
+
+**F2 (found 2026-09-11, and it had never been recorded).** Verifying finding O3
+required knowing when each EDP-family call type was born, and that question was
+answered by querying NYC OpenData `76xm-jjuj` **directly**. The SODA API is not an
+artifact, so no freeze guard sees it: coverage is a list of files in
+`data/processed/`, and a direct query bypasses all of it.
+
+What was read, precisely: first-record timestamps and whole-period totals per call
+type; citywide monthly counts across the 2021-05/06 boundary; annual EDP-family
+totals including 2016 and 2024; and — the part that matters — **precinct-level
+EDPM counts for June 2021**, with the three B-HEARD pilot precincts compared
+against the rest.
+
+That is **district-level variation in the confirmation window, compared across the
+B-HEARD boundary**, and it is materially more than F1. It did not touch the
+attention index, episode dates, event-time alignment, or any test of H1. But **a
+specification decision was taken on the result**: EDPM was retained in the EDP
+family because the comparison refuted the claim that it is the B-HEARD routing
+code. That is exactly the class of decision the freeze exists to keep uninformed
+by confirmation data.
+
+The decision is defensible on other grounds — a routing code would concentrate in
+pilot precincts, and EDPM appears citywide from its first day — but "defensible on
+other grounds" is a judgement for the supervisor, not a reason to leave an access
+unrecorded.
+
+**Why it went unnoticed for a day.** F1 was reported by the agent that caused it,
+which created the impression the freeze had exactly one breach. F2 produced a
+finding full of confirmation-period numbers and nobody asked where they came
+from: the numbers were read as *evidence*, not as an *access*.
+
+Materiality for both is for the supervisor to judge, not us. Both gaps are being
+closed: outcome artifacts outside the guard's coverage (F1), and the source API
+that no artifact guard can see (F2).
 
 ### 5.4 Counts vs shares — a finding that reverses
 
@@ -544,7 +576,7 @@ currently assumed rather than estimated. Under investigation.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **45 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **46 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass. All of
 them currently pass.
 
