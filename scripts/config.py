@@ -144,7 +144,51 @@ AWARENESS_VARIANTS = ("cai_d", "cai_d_black", "cai_d_nonblack", "cai_s")
 #      would partly measure itself.
 # Cost of dropping it: near zero. The three always-on components correlate
 # 0.985 with the index as previously built.
-CAI_D_COMPONENTS = ("wiki_ext", "trends_us", "trends_nyc")
+# CAI-D IS A NATIONAL ATTENTION INDEX. There is no city-local component, and
+# that is a measurement decision taken on evidence rather than a gap.
+#
+# trends_nyc was dropped (2026-09-11). Three independent reasons, any one of
+# which would be enough:
+#   1. CENSORED. Exactly zero on 42.6% of days - 26% in 2020 rising to 71% in
+#      2024 - because Google suppresses region-days below an undisclosed volume
+#      floor. On those days it is an indicator of clearing the floor, not a
+#      level, and the censoring is worst in the years the exposed confirmation
+#      stratum sits in.
+#   2. BROKEN BY STITCHING. Two boundaries (2015-12-27, 2022-07-23) drop the
+#      level 0.32x and 0.26x with no corroboration in wiki_ext, because a
+#      censored overlap window leaves too few positive days to estimate a scale.
+#   3. Dropping it costs almost nothing: the national-only index correlates
+#      0.9695 with the index as previously built, and keeps the same top days.
+#
+# wiki_nyc was BUILT as its uncensored replacement and then REJECTED
+# (2026-09-11) — not for measuring the wrong thing, but because it cannot be
+# both LOCAL and DISJOINT from the national basket:
+#   - it has no censored days, and correlates +0.54 with wiki_ext and +0.62 with
+#     trends_us, so it is measuring attention to police violence;
+#   - but 3 of its 7 NYC articles are already in the national wiki_ext basket
+#     (Eric Garner, Akai Gurley, Deborah Danner) and those three are 67% of all
+#     its views — Eric Garner alone is 61%. Including it double-counts them;
+#   - making it disjoint leaves 4 articles whose most recent killing is from
+#     1999, none inside the study window;
+#   - the disjoint series' variance beyond the national components (R2 = 0.454)
+#     is Amadou Diallo artifacts: all 8 of its largest residuals are a 2022
+#     viral spike and anniversary runs, and on 7 actual NYC police-violence
+#     events in the window the residual is negative for 3 of them;
+#   - substituting it drops 2016-07-08 (Sterling and Castile) out of the index's
+#     top five, losing the strongest validation the index has.
+# It survives as a validation exhibit, not as treatment.
+#
+# CORRECTION (T14): the first version of this note rejected wiki_nyc for the
+# OPPOSITE reason — a -0.18 correlation with trends_us and Diallo anniversary
+# dominance. Those numbers came from a stale artifact: 28_build_nyc_attention.py
+# had the historical-title fix but had never been re-run, so the series was
+# still canonical-title-only and was missing Eric Garner entirely. The
+# conclusion survived the correction; none of the reasons did.
+#
+# The locality question does not disappear, it moves: whether an episode
+# contains an NYC killing is an EPISODE ATTRIBUTE for heterogeneity, not a
+# component of the treatment index.
+CAI_D_COMPONENTS = ("wiki_ext", "trends_us")
 CAI_S_COMPONENTS = ("gdelt_news", "gdelt_tv")
 CAI_D_COMPONENTS_RETIRED = ("trends_victims",)
 

@@ -1,14 +1,19 @@
 check,findings,description,state,detail
-T.anchor_monthly,"X1,T4","Trends anchor rescales all days, not just 1-7",PASS,"within-month step (SD units): trends_nyc 0.034, trends_us 0.023 — worst 0.034"
+T.anchor_monthly,"X1,T4,T5,L4","Trends anchor rescales all days, not just 1-7",PASS,within-month step (SD units): trends_us 0.023 — worst 0.023
 T.title_agg_no_trend,T12,title aggregation is not measuring accumulation,PASS,"sum vs max: mean |diff| 0.044 SD, drift 0.055 SD (+0.010 early, +0.065 late)"
+T.realised_coverage,T7,register asserts no span the data lacks,PASS,11 registered artifacts; no asserted span exceeds the realised one
+X.csv_reproducible,X15,derived weights round-trip exactly,PASS,"w_cd_calls_from_precinct is stored at 12 dp and equals the recomputation exactly, so a re-run is byte-identical"
+X.no_stale_attribution,X7,DATA_AUDIT no longer misattributes 378->630,PASS,"the 378/630 comparison carries its correction, including the 377 counterfactual that shows the component moved one day"
+T.wiki_fetch_complete,T15,no basket article lost a title to a failed fetch,BLOCKED,basket file predates failure recording; re-run 11 so a failed title can be told from a title with no data
 T.no_lost_history,T12,no article series starts after the article existed,PASS,"119 articles, start lag median 0d max 3d; 0 start >7d late"
 T.local_uncensored,T10,NYC-local series has no censored days,PASS,"2 series, no year above 2% zero days"
-T.index_not_one_article,T11,index top days are not one article,PASS,top-day elevation persists 10 days (median); 2/10 are one- or two-day flashes
-T.nyc_break,T1,trends_nyc has no artificial level break,PASS,post/pre median positive = 0.58x (defect if >2)
-T.nyc_censoring,"T3,L3","trends_nyc is a level, not a censored indicator",FAIL,"43% zeros overall, by-year spread 45%"
-T.victims_topic_units,"T2,L2",trends_victims divided by topic term,PASS,dropped from CAI_D_COMPONENTS
+T.index_not_one_article,T11,index top days are not one article,PASS,top-day elevation persists 11 days (median); 0/10 are one- or two-day flashes
+T.no_stitch_break,T1,no stitched component has an artificial level break,PASS,"58 boundaries, 0 uncorroborated jump(s) in the index; 2 in retired components: ['trends_nyc@2015-12-27 0.32x (wiki_ext 1.10x)', 'trends_nyc@2022-07-23 0.26x (wiki_ext 0.98x)']; 1 unidentified scale(s): ['trends_us@2016-04-25 r2=-0.44']"
+T.components_agree,"T10,T11",index components measure the same construct,PASS,"corr with the mean of the others (floor 0.15): wiki_ext +0.479, trends_us +0.479"
+T.index_uncensored,"T3,L3",no component in the index is a censored indicator,PASS,"zeros/by-year-spread — wiki_ext 0%/0%, trends_us 0%/1%; trends_nyc 43%/45% (not in the index), wiki_nyc 0%/0% (not in the index)"
+T.victims_topic_units,"T2,L2,T8",trends_victims divided by topic term,PASS,dropped from CAI_D_COMPONENTS
 T.composite_after_avg,D5,composite standardised after averaging,PASS,reference-window mean=+0.0000 sd=1.0000 (target 0.00 / 1.00)
-T.fixed_component_set,D5,CAI-D requires a fixed component set,PASS,"all 3,472 scored days use 3 components"
+T.fixed_component_set,D5,CAI-D requires a fixed component set,PASS,"all 3,472 scored days use 2 components"
 T.basket_not_registry_gated,T9,basket reaches victims MPV omits,PASS,121 articles; reaches MPV-omitted victims
 T.wiki_ext_matches_basket,"X2,T9",wiki_ext built from the current basket,PASS,wiki_ext built from all 121 basket articles (119 returned data)
 T.wiki_basket_live,X2,wiki basket not selected by retired Twitter,PASS,"121 articles, 121 dated, 24 killed after 2020 (span 2013-01-27..2024-09-19)"
@@ -22,19 +27,20 @@ S.no_stale_calibration,R3,no stale low-n calibration artifact,PASS,"n_sims=200, 
 S.ppml_wired,"X5,R8",counts/PPML arm actually called,PASS,PPML recovers planted rate change: -0.1446 vs log(0.85)=-0.1625
 D.freeze_not_tautological,D3,freeze guard is not a tautology,PASS,guard is independent
 D.freeze_disjoint,D3,confirmation sample disjoint from discovery,PASS,explicit confirmation window
-D.guard_coverage,"D3,X11",every outcome-artifact reader calls the guard,PASS,all readers of 3 outcome artifacts guarded (4 documented exemptions)
+D.guard_coverage,"D3,X11,X9",every outcome-artifact reader calls the guard,PASS,all readers of 3 outcome artifacts guarded (4 documented exemptions)
 D.incident_disclosed,F1,freeze incident stays in the record,PASS,"incident F1 recorded in the register and disclosed, dated, in the paper master"
 D.guard_can_fire,"D3,D4",freeze guard actually rejects things,PASS,guard fires on all 4 rejection cases
-E.threshold_stringency,"D5,L5,E6",episode threshold is constant stringency,PASS,stringency 10.1%-10.3% by year (spread 0.2%); all 72 peaks clear their year's cut
-E.no_mega_episode,"E3,D7,E6",no episode exceeds its analysis window,PASS,"72 episodes, span median 4 max 14 (cap 14)"
+E.threshold_stringency,"D5,L5,E6",episode threshold is constant stringency,PASS,stringency 10.1%-10.3% by year (spread 0.2%); all 75 peaks clear their year's cut
+E.no_mega_episode,"E3,D7,E6",no episode exceeds its analysis window,PASS,"75 episodes, span median 3 max 14 (cap 14)"
 E.frozen_list_untouched,D3,frozen episode list unmodified,PASS,byte-identical to HEAD
-E.labels_live_source,"E5,L6,R2",episode labels not from retired Twitter,PASS,0/72 labels match the file-order default (0%); 42 windows left unlabelled
+E.labels_live_source,"E5,L6,R2",episode labels not from retired Twitter,PASS,0/75 labels match the file-order default (0%); 40 windows left unlabelled
 E.attribution_lookback,E2,attribution lookback >= 60 days,PASS,ATTRIBUTION_LOOKBACK_DAYS=60 (needs >=60)
 O.ems_complete,O5,EMS extract covers the full source,PASS,"60 pages, last ends 2026-06-30, complete"
 O.panel_exists,O5,panel_cd_day.parquet exists,PASS,present
 O.dropna_groupby,O4,missing-district rows not silently dropped,PASS,dropna=False
+V.artifacts_current,T14,no artifact predates the script that writes it,PASS,"4 artifact(s) match their generating script's code; 7 predate fingerprinting (['S10', 'S11', 'S12', 'S13', 'S1b', 'S7', 'S8'])"
 V.sources_verified,"X8,X14",every source verified after its last write,PASS,"26 artifacts, all verified after their last write"
-V.no_duplicate_source_ids,"X8,X13","one row per source id, no collisions",PASS,"9 rows, 9 ids, no collisions"
-V.claims_reproduce,X14,every claimed number recomputes from its artifact,PASS,32 claims recomputed and found verbatim in the document
-V.links_resolve,X14,every endpoint has a dated result,PASS,"15 endpoints, last result recorded; 1 unreachable from here (['S4'])"
-M.register_sync,O5,register and suite have not drifted apart,PASS,47/66 findings tagged; all 33 blocking covered
+V.no_duplicate_source_ids,"X8,X13","one row per source id, no collisions",PASS,"11 rows, 11 ids, no collisions"
+V.claims_reproduce,X14,every claimed number recomputes from its artifact,PASS,43 claims recomputed and found verbatim in the document
+V.links_resolve,X14,every endpoint has a dated result,PASS,"15 endpoints, last result recorded; 2 unreachable from here (['S11', 'S4'])"
+M.register_sync,O5,register and suite have not drifted apart,PASS,56/68 findings tagged; all 35 blocking covered

@@ -1,0 +1,15 @@
+metric,value,note
+corr_wiki_nyc_wiki_ext,0.5427190818991996,standardised 2015-07..2024-12
+corr_wiki_nyc_trends_us,0.6184796100201868,standardised
+corr_disjoint_wiki_ext,0.5843628556578612,basket minus articles shared with wiki_ext
+corr_current_vs_national,0.9694531107522185,3-component index vs national-only
+corr_current_vs_wiki_nyc_sub,0.9434030245972048,3-component vs substituting wiki_nyc
+wiki_nyc_articles_nyc,11.0,articles in the strict NYC basket
+wiki_nyc_overlap_articles,3.0,also in the national basket
+wiki_nyc_overlap_view_share,0.5894902604724527,their share of wiki_nyc views
+wiki_nyc_garner_view_share,0.5345715477491338,Eric Garner's share
+wiki_nyc_disjoint_articles,8.0,left once made disjoint
+wiki_nyc_disjoint_latest_death,2012.0,latest killing year in the disjoint basket
+disjoint_r2_on_national,0.45368865457316443,variance explained by the national components
+disjoint_top8_resid_diallo,6.0,"of the 8 largest residuals, how many are Diallo"
+wiki_nyc_single_article_share_median,0.47625487112090203,median share of a day from ONE article

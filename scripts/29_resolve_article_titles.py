@@ -50,6 +50,7 @@ import urllib.request
 import pandas as pd
 
 from config import DATA_REFERENCE
+from provenance import log_source
 
 UA = {"User-Agent": "ems-police-awareness-research/1.0 (academic; contact via repository)"}
 API = "https://en.wikipedia.org/w/api.php"
@@ -184,14 +185,34 @@ def key_words(title):
 
 
 def redirects_for(titles):
-    """Every title redirecting to each of up to 50 pages per call."""
+    """Every title redirecting to each of up to 50 pages per call.
+
+    FOLLOWS CONTINUATION. rdlimit="max" caps the RESPONSE, not the page: when a
+    50-title batch has more redirects than one response holds, the API returns a
+    `continue` cursor and the rest are simply absent. Ignoring that cursor
+    silently shortens the historical-title list - which is the entire mechanism
+    the rename fix (T12) depends on, so a truncated list quietly reintroduces
+    the defect it was written to close. The identical bug was found in
+    28_build_nyc_attention.py's category fetch, where it made the basket differ
+    between consecutive runs (T15).
+    """
     out = {}
     for i in range(0, len(titles), 50):
         chunk = [t.replace("_", " ") for t in titles[i:i + 50]]
-        d = api(prop="redirects", rdlimit="max", titles="|".join(chunk))
-        for p in d.get("query", {}).get("pages", {}).values():
-            out[p["title"].replace(" ", "_")] = [
-                r["title"].replace(" ", "_") for r in p.get("redirects", [])]
+        cont, seen = {}, {}
+        while True:
+            d = api(prop="redirects", rdlimit="max", titles="|".join(chunk), **cont)
+            for pg in d.get("query", {}).get("pages", {}).values():
+                key = pg["title"].replace(" ", "_")
+                seen.setdefault(key, [])
+                seen[key] += [r["title"].replace(" ", "_")
+                              for r in pg.get("redirects", [])]
+            if "continue" not in d:
+                break
+            cont = d["continue"]
+            time.sleep(1)
+        for k, v in seen.items():
+            out[k] = list(dict.fromkeys(v))
         time.sleep(1)
     return out
 
@@ -237,6 +258,14 @@ def main():
         base = key_words(a)
         cands = [a]
         for r in red.get(a, []):
+            # MAINSPACE ONLY. "Draft:George_Floyd" and
+            # "User:EDG_543/Killing_of_Daunte_Wright" are editor workspace
+            # pages, not public attention, and 14 of them were in the map.
+            # Their magnitude is trivial - 1,462 views of 134,415,883, or
+            # 0.0011% - but they are the wrong KIND of thing to count, and a
+            # draft that later goes viral would not be trivial.
+            if ":" in r:
+                continue
             # keep only redirects that share a substantive word (the person's
             # name), so "CD Man" -> Killing of Alton Sterling is not probed
             if base & key_words(r):
@@ -283,6 +312,12 @@ def main():
     # regenerable, and paper claims rest on these numbers, so they have to
     # survive a fresh clone.
     rep.to_csv(DATA_REFERENCE / "rename_recovery.csv", index=False)
+    log_source(
+        "S17",
+        f"Historical titles and first revisions for {rep.shape[0]} articles "
+        f"({len(tm)} title-series) from the MediaWiki redirects and revisions APIs",
+        "https://en.wikipedia.org/w/api.php",
+        out_file=DATA_REFERENCE / "article_title_map.csv")
 
     multi = rep[rep["n_titles"] > 1]
     print(f"\n{len(tm)} title-series over {rep.shape[0]} articles")

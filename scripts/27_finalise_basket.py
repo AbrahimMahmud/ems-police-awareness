@@ -47,6 +47,7 @@ import unicodedata
 import pandas as pd
 
 from config import DATA_REFERENCE
+from provenance import log_source
 
 PERSON_PREFIXES = ("Killing_of_", "Shooting_of_", "Death_of_", "Murder_of_",
                    "Police_shooting_of_")
@@ -134,6 +135,12 @@ def main():
     cols = ["article", "person", "death_date", "date_source", "country",
             "in_registry", "decision", "reason"]
     df[cols].to_csv(DATA_REFERENCE / "basket_decisions.csv", index=False)
+    log_source("D2", f"Basket scope decisions: {int((df['decision'] == 'include').sum())} "
+                     f"include, {int((df['decision'] == 'exclude').sum())} exclude; "
+                     f"death dates from "
+                     + str(df["date_source"].value_counts().to_dict()),
+               "derived from Wikidata (S16) and the victim registry (S10)",
+               out_file=DATA_REFERENCE / "basket_decisions.csv")
 
     keep = df[df["decision"] == "include"].copy()
     print(f"candidates {len(df)} -> included {len(keep)} articles "

@@ -10,7 +10,7 @@ Sources: 19 (13 live, 4 retired, 2 unverifiable).
 Every verification result ever recorded, including failures, is in
 `data/reference/source_verification_log.csv`, which is append-only.
 
-Last scan: **2026-09-11T00:12:14+00:00** — 2 template, 1 unreachable, 6 unverifiable, 72 verified
+Last scan: **2026-09-11T01:41:43+00:00** — 2 template, 2 unreachable, 6 unverifiable, 82 verified
 
 ## S1 — NYC EMS Incident Dispatch Data
 
@@ -170,7 +170,7 @@ Last scan: **2026-09-11T00:12:14+00:00** — 2 template, 1 unreachable, 6 unveri
 
 - **Status**: live
 - **Publisher**: The GDELT Project; Wikimedia Foundation
-- **Endpoint**: `https://api.gdeltproject.org/api/v2/doc/doc` — _verified_ (HEAD 200 application/json; charset=utf-8 (probe https://api.gdeltproject.org/api/v2/doc/doc?query=%22police+brutality%22&mode=timelinevol&format=json&startdatetime=20200525000000&enddatetime=20200601000000))
+- **Endpoint**: `https://api.gdeltproject.org/api/v2/doc/doc` — _unreachable_ (rate limited (HTTP 429) after 3 attempts - not a verdict on the endpoint)
 - **Endpoint**: `https://api.gdeltproject.org/api/v2/tv/tv` — _verified_ (HEAD 200 text/html; charset=utf-8 (probe https://api.gdeltproject.org/api/v2/tv/tv?query=%22police+brutality%22&mode=timelinevol&format=json&datanorm=perc&datacomb=sep&startdatetime=20200525000000&enddatetime=20200601000000))
 - **Endpoint**: `https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/` — _verified_ (HEAD 200 application/json; charset=utf-8 (probe https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/Killing_of_George_Floyd/daily/20200525/20200601))
 - **Access**: scripts/11_fetch_awareness_components.py
@@ -279,9 +279,9 @@ Last scan: **2026-09-11T00:12:14+00:00** — 2 template, 1 unreachable, 6 unveri
 - **Access**: scripts/28_build_nyc_attention.py (cached under data/processed/wiki_cat_cache/)
 - **What we take**: articles in the NYC police-incident categories, screened to require a police marker AND an incident form AND a New York marker; then their summed daily pageviews
 - **Role**: wiki_nyc - the uncensored city-local attention component that replaces trends_nyc
-- **Artifact**: `data/reference/wiki_nyc_articles.csv` — _verified_ (sha256 5957f170624a9a60, 501 rows; not registered in data_sources.csv)
-- **Artifact**: `data/reference/wiki_nyc_daily.csv` — _verified_ (sha256 78bdc607d06dd5dd, 6,944 rows, 2015-07-01..2024-12-31; not registered in data_sources.csv)
-- **Artifact**: `data/reference/wiki_nyc_per_article.csv` — _verified_ (sha256 5bebc81f679a8cc7, 38,192 rows, 2015-07-01..2024-12-31; not registered in data_sources.csv)
+- **Artifact**: `data/reference/wiki_nyc_articles.csv` — _verified_ (sha256 abb0d075af0e382f, 501 rows; not registered in data_sources.csv)
+- **Artifact**: `data/reference/wiki_nyc_daily.csv` — _verified_ (sha256 1ebfe7c1bcd158d2, 6,944 rows, 2015-07-01..2024-12-31; matches the provenance register)
+- **Artifact**: `data/reference/wiki_nyc_per_article.csv` — _verified_ (sha256 a82130d42a41569e, 52,080 rows, 2015-07-01..2024-12-31; not registered in data_sources.csv)
 - **Known flaws**:
   - The basket is thin - roughly ten NYC articles, mostly historical cases - so much of the series is anniversary and spillover traffic rather than contemporaneous local attention. This bounds how strongly the locality claim can be made.
   - An early version measured notable NYC deaths generally (Babe Ruth, John Lennon, the UnitedHealthcare CEO shooting) because the filter required NYC and death but never police involvement.

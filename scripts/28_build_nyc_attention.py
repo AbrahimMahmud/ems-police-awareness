@@ -60,6 +60,7 @@ import urllib.request
 import pandas as pd
 
 from config import DATA_REFERENCE
+from provenance import log_source
 
 UA = {"User-Agent": "ems-police-awareness-research/1.0 (academic; contact via repository)"}
 API = "https://en.wikipedia.org/w/api.php"
@@ -129,7 +130,14 @@ def api(**params):
         try:
             with urllib.request.urlopen(urllib.request.Request(url, headers=UA),
                                         timeout=45) as r:
-                return json.load(r)
+                d = json.load(r)
+            # The API answers HTTP 200 with an {"error": ...} body for a bad
+            # parameter mix, so returning it makes a rejected query
+            # indistinguishable from a page that genuinely has no data.
+            if "error" in d:
+                raise RuntimeError(f"wikipedia api error: {d['error'].get('code')}: "
+                                   f"{d['error'].get('info')}")
+            return d
         except urllib.error.HTTPError as e:
             if e.code in (429, 503):
                 wait = int(e.headers.get("Retry-After") or 0) or min(60, 5 * 2 ** attempt)
@@ -154,27 +162,84 @@ def category_members(cat):
 
 
 def categories_for(titles):
-    """Own categories for up to 50 titles per call."""
+    """Own categories for up to 50 titles per call, FOLLOWING CONTINUATION.
+
+    cllimit="max" is a cap per RESPONSE, not per page. When a 50-title batch has
+    more categories than one response holds, the API returns a `continue` cursor
+    and the rest are simply absent. The first version of this function ignored
+    that cursor, so an article could silently arrive with a truncated category
+    list - and this basket is selected BY category ("no New York marker in its
+    categories").
+
+    It is not a stable error either: which titles get truncated depends on how
+    the API packs the batch, so consecutive runs disagreed. Two runs an hour
+    apart produced different baskets - one kept Kenneth Chamberlain and dropped
+    Sean Bell, the other the reverse, and the second found Ramarley Graham and
+    Randolph Evans that the first had missed. A basket that changes between runs
+    cannot support any claim about the series built from it.
+    """
     out = {}
     for i in range(0, len(titles), 50):
         chunk = titles[i:i + 50]
-        d = api(prop="categories", clshow="!hidden", cllimit="max",
-                titles="|".join(chunk))
-        for p in d.get("query", {}).get("pages", {}).values():
-            out[p["title"]] = [c["title"].replace("Category:", "")
-                               for c in p.get("categories", [])]
+        cont, seen = {}, {}
+        while True:
+            d = api(prop="categories", clshow="!hidden", cllimit="max",
+                    titles="|".join(chunk), **cont)
+            for pg in d.get("query", {}).get("pages", {}).values():
+                seen.setdefault(pg["title"], [])
+                seen[pg["title"]] += [c["title"].replace("Category:", "")
+                                      for c in pg.get("categories", [])]
+            if "continue" not in d:
+                break
+            cont = d["continue"]
+            time.sleep(1)
+        for k, v in seen.items():
+            out[k] = sorted(set(v))
         time.sleep(1)
     return out
 
 
+class TitleFetchFailed(RuntimeError):
+    """The request did not succeed. NOT the same as the title having no views."""
+
+
 def _one_title(title):
+    """Daily views for one exact title. Raises on failure; None means a real 404.
+
+    THE DEFECT THIS REPLACES (T15). The body was one try/except returning None
+    on ANY exception, so a rate-limited request was indistinguishable from a
+    title with no data, and the caller treated None as "contributes nothing".
+
+    Under rate limiting that silently shrinks the series. One run hit three 429s
+    and produced a basket in which Killing_of_Eric_Garner, the largest NYC case,
+    had VANISHED entirely, Amadou Diallo fell from 2,772,084 views to 633,194
+    and Sean Bell from 1,292,831 to 3,220. Nothing in the output said anything
+    had failed: the run printed its usual summary and exited 0, and an article
+    that lost every title was dropped with the reason "no series" - which reads
+    exactly like a correct decision.
+
+    A failure must stop the run, not quietly shrink the data.
+    """
     u = PV.format(urllib.parse.quote(title.replace(" ", "_"), safe=""), START, END)
-    try:
-        with urllib.request.urlopen(urllib.request.Request(u, headers=UA), timeout=45) as r:
-            items = json.load(r)["items"]
-        return pd.Series({pd.Timestamp(i["timestamp"][:8]): i["views"] for i in items})
-    except Exception:
-        return None
+    for attempt in range(6):
+        try:
+            with urllib.request.urlopen(urllib.request.Request(u, headers=UA),
+                                        timeout=45) as r:
+                items = json.load(r)["items"]
+            return pd.Series({pd.Timestamp(i["timestamp"][:8]): i["views"]
+                              for i in items})
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return None          # genuinely no series for this exact title
+            if e.code in (429, 503):
+                wait = int(e.headers.get("Retry-After") or 0) or min(60, 5 * 2 ** attempt)
+                print(f"    pageviews HTTP {e.code} on {title}; waiting {wait}s", flush=True)
+                time.sleep(wait)
+                continue
+            time.sleep(5 * (attempt + 1))
+        except Exception:
+            time.sleep(5 * (attempt + 1))
+    raise TitleFetchFailed(title)
 
 
 def pageviews(article):
@@ -273,6 +338,29 @@ def main():
         kept.append(a)
         print(f"  ok  {a:<46} days={len(s):5d} views={int(s.sum()):>9,}")
 
+    # COLLAPSE ARTICLES THAT ARE THE SAME PERSON. pageviews() already sums each
+    # article across its historical titles, so an article that is ITSELF a
+    # historical title of another kept article would be counted twice - once
+    # inside the canonical article's sum, and again as its own basket entry.
+    # "Daniel_Prude" and "Killing_of_Daniel_Prude" were exactly this: the title
+    # map lists Daniel_Prude as a title of Killing_of_Daniel_Prude, and both
+    # were in the basket, so Prude entered wiki_nys twice.
+    alias_of = {}
+    for canonical, titles in TITLE_MAP.items():
+        for t in titles:
+            if t != canonical:
+                alias_of[t] = canonical
+    dropped = [a for a in list(series) if alias_of.get(a) in series]
+    for a in dropped:
+        print(f"  --  {a}: dropped, it is a historical title of "
+              f"{alias_of[a]}, which is already in the basket")
+        del series[a]
+        kept.remove(a)
+        b.loc[b["article"] == a, "keep"] = False
+        b.loc[b["article"] == a, "reason"] = f"duplicate: historical title of {alias_of[a]}"
+    if dropped:
+        print(f"  collapsed {len(dropped)} duplicate article(s)")
+
     b.to_csv(DATA_REFERENCE / "wiki_nyc_articles.csv", index=False)
     if not series:
         raise SystemExit("no NYC articles survived — refusing to write an empty component")
@@ -298,6 +386,12 @@ def main():
         print("  zero share by year: " + " ".join(f"{y}:{p:.0%}" for y, p in by.items()))
     out = pd.concat(frames, ignore_index=True)
     out.to_csv(DATA_REFERENCE / "wiki_nyc_daily.csv", index=False)
+    log_source(
+        "S18",
+        f"NYC/NYS police-incident Wikipedia attention; {len(nyc_cols)} NYC articles, "
+        f"{len(df.columns)} NYS; category walk + pageviews summed across historical titles",
+        "https://en.wikipedia.org/w/api.php",
+        out_file=DATA_REFERENCE / "wiki_nyc_daily.csv")
 
     # Per-article series, so the index's CONTENT can be validated and not just
     # its coverage. Without this a viral day on one article is invisible to

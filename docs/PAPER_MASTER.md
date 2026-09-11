@@ -158,13 +158,15 @@ unusual is today compared to a normal day".
 - **Why not Twitter?** The project originally used a Twitter volume series. It was
   retired because its collection methodology is undocumented and it cannot be
   re-fetched by anyone else. A measure a referee cannot reproduce is not a measure.
-- **What we gave up:** the index is now honestly a **national** attention index
-  plus one NYC-local search component. See §4.3.
+- **What we gave up:** the index is honestly a **national** attention index, with
+  no city-local component at all. That is a decision taken on evidence, not a
+  gap — both candidate local components were measured and both failed. See §4.3.
 
 ### Layer 3 — technical
 
-`CAI_D_COMPONENTS = ("wiki_ext", "trends_us", "trends_nyc")` — `scripts/config.py`.
-Built by `scripts/12_build_cai.py`.
+`CAI_D_COMPONENTS = ("wiki_ext", "trends_us")` — `scripts/config.py`.
+Built by `scripts/12_build_cai.py`. Two components, one measuring reading and one
+measuring searching; they correlate 0.479, which is the point of a composite.
 
 Each component is log1p-transformed and standardised on the 2017-01-01→2019-12-31
 reference window (deliberately excluding 2020). A day is scored **only if every
@@ -222,7 +224,7 @@ fixed level to a **fixed within-year quantile**, because a fixed cut is not a
 constant stringency: it selected 10.7%–66.4% of days depending on the year.
 
 Status: **implemented** (`scripts/13_extension_episodes.py`, 2026-09-10). Frozen
-list = 70 episodes; rebuilt list = 72 episodes. The stringency really is constant
+list = 70 episodes; rebuilt list = 75 episodes. The stringency really is constant
 now — the rule selects 10.1%–10.3% of days in every year — and no episode spans
 more than 14 days from start to end, against 235 under the regime rule. The
 frozen file stays byte-identical on disk; the rebuilt list is written separately
@@ -231,25 +233,79 @@ is published as a disclosed deviation.
 
 ### 4.3 What the index can and cannot claim
 
-`trends_nyc` was the only nominally NYC-local component, and it is censored:
-42.6% of its days are exactly zero — Google's low-volume reporting floor — rising
-from 26% censored in 2020 to 71% in 2024.
+`trends_nyc` was the only nominally NYC-local component. It is **retired from
+CAI-D as of 2026-09-11**, and the replacement built for it was rejected too. The
+index is national. Both decisions were made on measurements, and both
+measurements are worth stating, because "we have a local component" was load-
+bearing for the paper's framing.
 
-**The refetch helped and did not solve it.** On 2026-09-10 the series was refetched
-with the "Police brutality" topic entity and a wider term basket, which cut the
-zero share from 79% to 42.6% and removed the 4.48× stitching break (that break was
-caused by an all-zero overlap window). But on 26–71% of days, depending on the
-year, the series is still not a level at all: it is an indicator of clearing
-Google's reporting floor. The censoring is worst in 2021–2024, which is exactly
-where the exposed confirmation stratum sits, so it is not a limitation we can
-caveat and move past.
+**Why `trends_nyc` had to go — three independent reasons.**
 
-**DECIDED, after the refetch:** retire `trends_nyc` from CAI-D and replace it with
-`wiki_nyc`, built from Wikipedia pageviews on NYC police-incident articles
-(`scripts/28_build_nyc_attention.py`). Pageviews are a census, not a sampled index
-rescaled to 0–100, so `wiki_nyc` has **no censored days in any year**. The cost is
-a thin basket (§9), which bounds the locality claim; the benefit is that the
-city-local component is a measurement rather than a threshold indicator.
+1. **It is censored.** 42.6% of its days are exactly zero — Google suppresses
+   region-days below an undisclosed volume floor — rising from 26% censored in
+   2020 to 71% in 2024. On those days it is not a level at all; it is an
+   indicator of clearing the floor. The censoring is worst in 2021–2024, exactly
+   where the exposed confirmation stratum sits. A 2026-09-10 refetch with the
+   "Police brutality" topic entity and a wider term basket cut the zero share
+   from 79% to 42.6% and removed a 4.48× stitching break, but did not solve it.
+2. **Stitching breaks it.** Two boundaries (2015-12-27, 2022-07-23) drop the
+   level to 0.32× and 0.26× with no corroborating move in `wiki_ext` — because a
+   censored overlap window leaves too few positive days to estimate a scale
+   from. This is a *consequence* of (1), which is why it could not be tuned away.
+3. **It costs almost nothing to drop.** The national-only index correlates
+   **0.9695** with the index as previously built, and keeps the same top days.
+
+**Why `wiki_nyc` — built specifically to replace it — was rejected.** It is built
+from Wikipedia pageviews on NYC police-incident articles and delivers what it was
+designed for: **no censored days in any year**, correlating **0.54** with
+`wiki_ext` and **0.62** with `trends_us`, so it is measuring the right thing. It
+fails on something else — it cannot be made *both* local *and* disjoint from the
+national basket.
+
+- The basket is **11 NYC articles**, and **3 of them are already in the national
+  `wiki_ext` basket**: Eric Garner, Akai Gurley, Deborah Danner. Those three are
+  **59% of all `wiki_nyc` views**, and **Eric Garner alone is 53%**. Adding the
+  component as built would give those three victims most of a third of the
+  index — double-counting, not locality.
+- Making it disjoint leaves **8 articles**, and the most recent killing among
+  them is **2012** (Ramarley Graham; the rest run from 1975 to 2006). **None is
+  inside the study window**, which begins 2015-07-01.
+- The disjoint series carries variance the national components do not explain —
+  R² is **0.454** — but that residual is not local news. **6 of its 8 largest
+  positive residuals are Amadou Diallo**: a single-day viral spike on 2022-06-06
+  and anniversary runs around 4 February.
+- Tested directly against seven NYC police-violence events inside the window
+  (Delrawn Small, Deborah Danner, Saheed Vassell, Kawaski Trawick, Daniel Prude's
+  bodycam release, Jordan Neely, Win Rozario), the residual is inconsistent and
+  **negative for three of them**. It does not reliably detect NYC events.
+- Substituting it still **drops 2016-07-08 (Sterling and Castile) out of the
+  index's top five**, losing the strongest content validation the index has.
+
+So the component is not rejected for measuring the wrong thing — it is rejected
+because its local content *is* its national content, and what remains once the
+overlap is removed is a set of pre-2015 cases whose independent movement is
+Diallo anniversary traffic. It survives as a validation exhibit, never as
+treatment.
+
+> **These numbers were wrong twice before they were right, and that is the
+> finding (T14, T15).** An earlier version of this section rejected `wiki_nyc` on
+> the *opposite* grounds — a **−0.18** correlation with `trends_us` and
+> anniversary-dominated peaks. Those came from a **stale artifact**:
+> `28_build_nyc_attention.py` had been given the historical-title fix and never
+> re-run, so the series was still canonical-title-only and was missing Eric
+> Garner entirely. Re-running it exposed two further defects in the same script —
+> a category fetch that ignored the API's continuation cursor, so consecutive
+> runs produced **different baskets**; and a per-title pageview fetch that
+> returned `None` on any exception, so one rate-limited run produced a basket
+> with Eric Garner **gone** and Diallo down from 2,772,084 views to 633,194,
+> exiting 0 with a normal-looking summary. Only the third rebuild, with both
+> fixed, is the one reported above.
+>
+> The conclusion survived all three revisions. **None of the original reasons
+> did.** An artifact is only as current as its last run, and a measurement quoted
+> from a file nobody regenerated is a claim nobody checked — which is why
+> `V.artifacts_current` now compares every artifact against a fingerprint of its
+> generating script's code.
 
 **Do not claim this is "a return to the frozen spec."** The design document names
 a topic *and* victim-name terms; we implemented the first, dropped the second, and
@@ -488,10 +544,9 @@ currently assumed rather than estimated. Under investigation.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **39 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
-where BLOCKED means "could not evaluate" and is deliberately *not* a pass. One
-check currently fails: `T.nyc_censoring`, which is a live defect rather than a
-stale test (§4.3), and which R1 closes by retiring `trends_nyc` from the index.
+check — **45 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+where BLOCKED means "could not evaluate" and is deliberately *not* a pass. All of
+them currently pass.
 
 The pass count is deliberately not quoted here. It changes with every run, so a
 number in prose would either be wrong or would have to be edited constantly —
@@ -540,7 +595,7 @@ found; rebuild the data and the value no longer matches. A number that cannot be
 regenerated is a check failure, not a typo. Every claim in this document is
 registered and currently reproduces.
 
-Four checks hold it in place — `V.sources_verified` (which **BLOCKS, never
+Four checks hold the registers in place — `V.sources_verified` (which **BLOCKS, never
 passes, when no scan has run**), `V.no_duplicate_source_ids`,
 `V.claims_reproduce`, `V.links_resolve` — and each was defeated on purpose
 before being accepted: a claim edited to a wrong value fails; truncating the
@@ -594,8 +649,16 @@ the plain-language reading beside each number.
 
 ## 9. Limitations, in the order a referee will raise them
 
-1. **The treatment is largely a national attention index.** One NYC-local search
-   component, and it is heavily censored.
+1. **The treatment is a national attention index, with no local component.**
+   Both candidates were built and both were rejected on measurement (§4.3):
+   `trends_nyc` is censored on 26–71% of days depending on the year, and
+   `wiki_nyc` cannot be both local and disjoint from the national basket —
+   67% of its views come from three articles already in `wiki_ext`, and removing
+   them leaves four articles whose most recent killing is from 1999. The paper
+   therefore tests whether *national* attention moves NYC demand, and treats the
+   presence of an NYC killing in an episode as a heterogeneity dimension rather
+   than as treatment. **We cannot separately identify New Yorkers' own attention
+   from national attention**, and no claim in the paper should imply otherwise.
 2. **Registry coverage gaps correlate with the hypothesis** (§5.6).
 3. **Wikipedia pageviews do not exist before 2015-07-01.** Hard floor.
 4. **Google Trends is a sample, not a census**, and its precision degrades over the
@@ -617,12 +680,12 @@ the plain-language reading beside each number.
 | Decision | Owner | Status |
 |---|---|---|
 | Materiality of the freeze incident | Justin | open |
-| Sign-off on the rebuilt episode list (70→94, 6 shared starts) | Justin | open |
+| Sign-off on the rebuilt episode list (70 → 75) | Justin | open |
 | Jordan Neely: pre-specified in `CONFIRMATION_PLAN.md:23-25` but killed by a civilian, not police | Justin + Abrahim | open |
 | Registered Report vs conventional submission | Justin | open |
 | H2 (NYC Well) and H3 — in, out, or amended | Justin | open |
-| `trends_nyc`: broaden the basket | **decided** 2026-09-10 | implementing |
-| Episode construct: regime → shock | **decided** 2026-09-10 | implementing |
+| `trends_nyc`: retire from CAI-D; `wiki_nyc` rejected as its replacement; index is national | **decided** 2026-09-11 | done |
+| Episode construct: regime → shock | **decided** 2026-09-10 | done |
 | Bridge exhibit → simulation instead | **decided** 2026-09-09 | pending |
 
 ---

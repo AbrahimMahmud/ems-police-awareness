@@ -24,6 +24,7 @@ from config import (
     EPISODE_PEAK_WINDOW_DAYS,
     EPISODE_RATE,
 )
+from provenance import log_source
 
 cai = pd.read_parquet(DATA_PROCESSED / "cai_daily.parquet")
 cai = cai.dropna(subset=["cai_d"]).sort_values("date").reset_index(drop=True)
@@ -119,6 +120,16 @@ out = pd.DataFrame(rows)
 FROZEN = DATA_REFERENCE / "confirmation_episodes.csv"
 REBUILT = DATA_REFERENCE / "confirmation_episodes_rebuilt.csv"
 out.to_csv(REBUILT, index=False)
+# Derived, not fetched - but it is a committed artifact, so it carries the same
+# provenance record as any source, including the fingerprint of the code that
+# produced it. That is what V.artifacts_current compares against (finding T14).
+log_source("D1", f"Episode list under the shock rule: {len(out)} episodes "
+                 f"({(out['period'] == 'discovery').sum()} discovery, "
+                 f"{(out['period'] == 'extension').sum()} extension), "
+                 f"within-year quantile threshold, span capped at "
+                 f"{EPISODE_MAX_DAYS} days",
+           "derived from data/processed/cai_daily.parquet",
+           out_file=REBUILT)
 print(f"wrote {REBUILT.name} — the frozen {FROZEN.name} is untouched")
 
 if FROZEN.exists():

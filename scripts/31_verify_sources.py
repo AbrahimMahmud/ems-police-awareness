@@ -229,6 +229,22 @@ def check_artifact(src, rel):
                         f"(registered {row['accessed_utc'].iloc[-1]})")
 
 
+def _normalise(text):
+    """Collapse whitespace, and map the typographic minus to ASCII.
+
+    Whitespace: a claim is about what the document SAYS, not how it is
+    line-wrapped, so reflowing a paragraph must not break every claim whose text
+    straddles a line break.
+
+    U+2212 MINUS SIGN: the document is written in proper typography and says
+    "-0.18" with a real minus, while Python renders a hyphen-minus. Only the
+    minus is mapped - NOT the en dash, which is a range separator here ("2015-
+    2024") and mapping it would create false matches rather than prevent false
+    failures.
+    """
+    return " ".join(text.replace("\u2212", "-").split())
+
+
 def check_claim(row, doc_cache):
     """Recompute a claimed number and require the document to say it."""
     doc = PROJECT_ROOT / str(row["doc"])
@@ -240,7 +256,7 @@ def check_claim(row, doc_cache):
         # a paragraph breaks every claim whose text straddles a line break -
         # which would train us to loosen the templates until they stop testing
         # anything.
-        doc_cache[doc] = " ".join(doc.read_text().split())
+        doc_cache[doc] = _normalise(doc.read_text())
     text = doc_cache[doc]
 
     # pandas reads an empty CSV cell as NaN, and str(nan) == "nan" - which is a
@@ -277,11 +293,11 @@ def check_claim(row, doc_cache):
     except Exception as e:
         return "failed", f"format {row['fmt']!r} failed on {value!r}: {e}"
 
-    expect = " ".join(str(row["template"]).replace("{}", rendered).split())
+    expect = _normalise(str(row["template"]).replace("{}", rendered))
     if expect in text:
         return "verified", f"computed {rendered}; document agrees"
     # Distinguish "the number moved" from "the sentence was rewritten".
-    stem = " ".join(str(row["template"]).split("{}")[0].split()).strip()
+    stem = _normalise(str(row["template"]).split("{}")[0]).strip()
     if stem and stem in text:
         return "mismatch", (f"computed {rendered}, but the document does not say "
                             f"{expect!r} (the surrounding wording is present, so "

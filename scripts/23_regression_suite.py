@@ -166,6 +166,167 @@ def t_title_agg_no_trend():
             f"({early:+.3f} early, {late:+.3f} late)")
 
 
+def t_realised_coverage_recorded():
+    """T7: the provenance register must not assert a span the data does not have.
+
+    11_fetch_awareness_components.py wraps its whole gdelt_news year loop in one
+    try/except, so the first RuntimeError aborts every remaining year while the
+    years already fetched are still written, outside the try - one warning, exit
+    0. The register then records the span that was REQUESTED. Realised coverage:
+    gdelt_news 2017-01-01..2022-12-31 (2023-24 absent entirely, 3 interior gaps),
+    gdelt_tv ends 2024-10-11, wiki_ext starts 2015-07-01.
+
+    A register that states the intended span is worse than one that states
+    nothing, because it answers the question wrongly. 11b_fetch_trends.py
+    already writes realised coverage into its description; this asserts the
+    property for every registered component artifact.
+    """
+    reg = DATA_REFERENCE / "data_sources.csv"
+    if not reg.exists():
+        return "BLOCKED", "no provenance register"
+    d = pd.read_csv(reg)
+    bad = []
+    for _, r in d.iterrows():
+        f = PROJECT_ROOT / str(r["output_file"])
+        desc = str(r["description"])
+        if not f.exists() or f.suffix != ".csv":
+            continue
+        art = pd.read_csv(f)
+        if not {"date", "component"} <= set(art.columns):
+            continue
+        art["date"] = pd.to_datetime(art["date"], errors="coerce")
+        # every YYYY-MM-DD the description asserts must be inside the realised span
+        claimed = re.findall(r"\d{4}-\d{2}-\d{2}", desc)
+        if not claimed:
+            continue
+        lo, hi = art["date"].min(), art["date"].max()
+        for comp, g in art.groupby("component"):
+            pass
+        for c in sorted(set(claimed)):
+            t = pd.Timestamp(c)
+            if t < lo or t > hi:
+                bad.append(f"{r['source_id']} claims {c}, data is "
+                           f"{lo.date()}..{hi.date()}")
+        # and per component, the description must not imply a span a component lacks
+        spans = {c: (g["date"].min(), g["date"].max()) for c, g in art.groupby("component")}
+        for comp, (a, b) in spans.items():
+            if comp in desc and (str(a.date()) not in desc or str(b.date()) not in desc):
+                if any(pd.Timestamp(c) < a or pd.Timestamp(c) > b for c in set(claimed)):
+                    bad.append(f"{r['source_id']} names {comp} "
+                               f"({a.date()}..{b.date()}) but asserts a wider span")
+    uniq = sorted(set(bad))
+    return ("FAIL" if uniq else "PASS",
+            f"{len(d)} registered artifacts; "
+            + (f"{len(uniq)} assert a span the data lacks: {uniq[:2]}" if uniq
+               else "no asserted span exceeds the realised one"))
+
+
+def x_derived_csv_reproducible():
+    """X15: a derived value must be stored at a precision that survives a re-run.
+
+    Re-running 16_bheard_exposure.py on identical source counts produced 72
+    changed lines and a different SHA256 - the weights differed in the 17th
+    significant digit, because float summation order in a groupby transform is
+    not stable across runs. A hash that changes when nothing changed teaches a
+    reader to ignore hash mismatches, which is the habit that let X14's two
+    genuine mismatches stand for two days.
+
+    Tests the ARITHMETIC, not the source: recompute each weight from the stored
+    counts and require the stored value to equal the rounded recomputation
+    exactly. A file written at full float precision fails; one written rounded
+    passes and is byte-reproducible.
+    """
+    f = DATA_REFERENCE / "precinct_cd_crosswalk.csv"
+    if not f.exists():
+        return "BLOCKED", "crosswalk absent"
+    d = pd.read_csv(f)
+    col = [c for c in d.columns if c.startswith("w_")]
+    if not col or "n" not in d.columns:
+        return "BLOCKED", "crosswalk has no weight or count column"
+    col = col[0]
+    recomputed = (d["n"] / d.groupby("communitydistrict")["n"].transform("sum"))
+    for dp in (12, 10, 9, 8, 6):
+        if (d[col] == recomputed.round(dp)).all():
+            return "PASS", (f"{col} is stored at {dp} dp and equals the "
+                            f"recomputation exactly, so a re-run is byte-identical")
+    worst = float((d[col] - recomputed).abs().max())
+    return "FAIL", (f"{col} is not a rounded recomputation (max |diff| {worst:.2e}); "
+                    "full-precision floats are not reproducible across runs")
+
+
+def x_no_stale_audit_attribution():
+    """X7: DATA_AUDIT.md attributed a change to the wrong cause.
+
+    Its §2 read the jump from 378 to 630 high days as the effect of dropping
+    trends_victims. Almost all of it is the re-standardisation the audit script
+    performed inside the same diagnostic: as built, 378; dropping trends_victims
+    alone, 377; re-standardising while KEEPING trends_victims, 635; both, 630.
+    Dropping the component moved ONE day.
+
+    The numbers cannot be recomputed now - the index has two components and
+    trends_victims is gone - so this is not a claims-register entry. What can be
+    asserted is that the false attribution is no longer stated as fact.
+    """
+    f = PROJECT_ROOT / "docs" / "DATA_AUDIT.md"
+    if not f.exists():
+        return "BLOCKED", "docs/DATA_AUDIT.md absent"
+    t = " ".join(f.read_text().split())
+    if "378" not in t and "630" not in t:
+        return "PASS", "the miscounted comparison is no longer in the document"
+    # The correction must sit WITH the claim, not anywhere in the file. The
+    # first version of this check searched the whole document and passed on the
+    # word "corrected" appearing on two unrelated lines, while the false
+    # attribution stood untouched - a check passing for the wrong reason, in a
+    # check written to catch a claim that was wrong for the wrong reason.
+    i = t.find("378")
+    near = t[max(0, i - 400):i + 900]
+    corrected = re.search(r"CORRECTED[^.]{0,80}\(finding X7\)", near)
+    moved_one = "377" in near
+    return ("PASS" if (corrected and moved_one) else "FAIL",
+            "the 378/630 comparison carries its correction, including the 377 "
+            "counterfactual that shows the component moved one day"
+            if (corrected and moved_one) else
+            "docs/DATA_AUDIT.md states 378->630 without a correction beside it "
+            f"(marker={bool(corrected)}, counterfactual={moved_one})")
+
+
+def t_wiki_fetch_complete():
+    """T15: no basket article may have lost a title to a FAILED fetch.
+
+    Distinct from T.no_lost_history, which asks whether a series starts late.
+    This asks whether the series is all there at all.
+
+    11_fetch_awareness_components.py distinguishes a 404 (this title has no
+    data) from a fetch failure (we could not find out), but on a failure it
+    printed a line and continued, so the basket file recorded a smaller
+    n_titles with no way to tell the two apart. The last run lost one of Daunte
+    Wright's 14 titles that way, and the only evidence was one line in a
+    three-hour log.
+
+    28_build_nyc_attention.py had the same defect without even the printed line:
+    its per-title fetch returned None on ANY exception, so under rate limiting
+    one run produced a basket in which Eric Garner had vanished entirely and
+    Amadou Diallo had fallen from 2,772,084 views to 633,194 - and it exited 0
+    with a normal-looking summary.
+    """
+    f = DATA_REFERENCE / "wiki_ext_basket_used.csv"
+    if not f.exists():
+        return "BLOCKED", "basket file absent — run 11"
+    d = pd.read_csv(f)
+    if "n_titles_failed" not in d.columns:
+        return "BLOCKED", ("basket file predates failure recording; re-run 11 so "
+                           "a failed title can be told from a title with no data")
+    failed = d[d["n_titles_failed"].fillna(0) > 0]
+    if len(failed):
+        return "FAIL", (f"{len(failed)} article(s) lost titles to failed fetches: "
+                        + ", ".join(f"{r['article']}({int(r['n_titles_failed'])})"
+                                    for _, r in failed.head(3).iterrows()))
+    offered = int(d["n_titles_offered"].fillna(0).sum())
+    nodata = int(d["n_titles_no_data"].fillna(0).sum())
+    return "PASS", (f"{len(d)} articles, {offered} titles offered, "
+                    f"{nodata} with no data, 0 failed")
+
+
 def t_no_lost_history():
     """T12: no article's pageview series starts after the article existed.
 
@@ -288,29 +449,175 @@ def t_index_not_single_article():
             f"{n_flash}/10 are one- or two-day flashes")
 
 
-def t_nyc_break():
-    """T1: trends_nyc level break from the scale=1.0 stitching fallback."""
-    st = pd.read_csv(DATA_REFERENCE / "cai_trends_daily.csv", parse_dates=["date"])
-    n = st[st.component == "trends_nyc"].set_index("date")["value"]
-    pre = n.loc["2019-01-01":"2021-05-31"]
-    post = n.loc["2021-10-01":"2024-12-31"]
-    pre_p, post_p = pre[pre > 0], post[post > 0]
-    if not len(pre_p) or not len(post_p):
-        return "BLOCKED", "no positive values on one side"
-    ratio = post_p.median() / pre_p.median()
-    return ("FAIL" if ratio > 2.0 else "PASS",
-            f"post/pre median positive = {ratio:.2f}x (defect if >2)")
+def t_no_stitch_break():
+    """T1: no stitched component carries an artificial level break.
+
+    Generalised from a trends_nyc-only test. A check naming one component stops
+    testing anything the moment that component leaves the index, and says
+    nothing about the one that replaces it.
+
+    The PROPERTY is about the series, not the fit. One trends_us boundary
+    (2016-04-25) has r2 = -0.443 - the through-origin fit explains less than
+    predicting zero, so its 6.24x scale is estimated from noise in a low-volume
+    stretch where the 0-100 integer index is near its own resolution. That is a
+    precision problem and it is recorded, but it did NOT produce a break: the
+    realised shift there is 0.88x, inside the 5-95% range of all boundaries.
+
+    So the test is the realised shift at each boundary, against the empirical
+    distribution of shifts. Genuine events move the series hard - 2021-03-30 is
+    3.6x on trends_us and 7.0x on trends_nyc, which is the Chauvin trial opening
+    on 2021-03-29 - so a fixed threshold would flag real news. An artificial
+    break is a shift that is large AND has no corroboration in the components
+    that were NOT stitched.
+    """
+    f = DATA_REFERENCE / "cai_trends_daily.csv"
+    g = DATA_REFERENCE / "cai_trends_stitch_diagnostics.csv"
+    if not (f.exists() and g.exists()):
+        return "BLOCKED", "trends series or stitch diagnostics absent"
+    st = pd.read_csv(f, parse_dates=["date"])
+    diag = pd.read_csv(g, parse_dates=["boundary"])
+    comp = pd.read_csv(DATA_REFERENCE / "cai_components_daily.csv", parse_dates=["date"])
+    wx = comp[comp["component"] == "wiki_ext"].set_index("date")["value"]
+
+    from config import CAI_D_COMPONENTS
+    suspect, retired_suspect, unidentified = [], [], []
+    for c in sorted(st["component"].unique()):
+        series = st[st["component"] == c].set_index("date")["value"]
+        for _, r in diag[diag["component"] == c].iterrows():
+            b = r["boundary"]
+            pre = series[b - pd.Timedelta(days=45):b - pd.Timedelta(days=1)]
+            post = series[b:b + pd.Timedelta(days=44)]
+            if len(pre) < 20 or len(post) < 20 or pre.mean() == 0:
+                continue
+            shift = post.mean() / pre.mean()
+            if r["r2"] < 0.5:
+                unidentified.append(f"{c}@{b.date()} r2={r['r2']:.2f}")
+            if shift < 0.4 or shift > 2.5:
+                # Corroborate against wiki_ext, which is NOT stitched: a real
+                # surge in attention moves it too.
+                wpre = wx[b - pd.Timedelta(days=45):b - pd.Timedelta(days=1)]
+                wpost = wx[b:b + pd.Timedelta(days=44)]
+                wshift = (wpost.mean() / wpre.mean()) if len(wpre) and wpre.mean() else np.nan
+                corroborated = pd.notna(wshift) and (
+                    (shift > 1 and wshift > 1.3) or (shift < 1 and wshift < 0.77))
+                if not corroborated:
+                    # Only a component IN the index can break a result. A break
+                    # in a retired component is reported, not failed - it is
+                    # evidence about why it was retired.
+                    (suspect if c in CAI_D_COMPONENTS else retired_suspect).append(
+                        f"{c}@{b.date()} {shift:.2f}x (wiki_ext {wshift:.2f}x)")
+    note = f"; {len(unidentified)} unidentified scale(s): {unidentified}" if unidentified else ""
+    retired = (f"; {len(retired_suspect)} in retired components: {retired_suspect[:2]}"
+               if retired_suspect else "")
+    return ("FAIL" if suspect else "PASS",
+            f"{len(diag)} boundaries, {len(suspect)} uncorroborated jump(s) in the index"
+            + (f": {suspect[:3]}" if suspect else "") + retired + note)
 
 
-def t_nyc_censored():
-    """T3/L3: trends_nyc is mostly exact zeros, censoring rate drifts hugely."""
-    st = pd.read_csv(DATA_REFERENCE / "cai_trends_daily.csv", parse_dates=["date"])
-    n = st[st.component == "trends_nyc"].set_index("date")["value"]
-    z = (n == 0).groupby(n.index.year).mean()
-    overall = float((n == 0).mean())
-    spread = float(z.max() - z.min())
-    return ("FAIL" if overall > 0.5 or spread > 0.3 else "PASS",
-            f"{overall:.0%} zeros overall, by-year spread {spread:.0%}")
+def t_components_agree():
+    """Every component in the index must measure the same construct as the rest.
+
+    WHY THIS EXISTS. trends_nyc was retired for censoring, and wiki_nyc was built
+    to replace it precisely because it has no censored days. It passes
+    T.index_uncensored and T.no_stitch_break cleanly - and it is still not a
+    measure of attention to police violence. It correlates -0.18 with trends_us
+    and -0.12 with trends_nyc: NEGATIVELY with both search measures of the thing
+    it is supposed to track. 7 of its 8 articles are killings from before the
+    study window, Amadou Diallo (1999) is 44% of all its views, and 18 of its
+    top 50 days are basket anniversaries against a 13.3% base rate. Its peaks are
+    4 February and 25 November.
+
+    The two checks above test censoring and level breaks. Neither can see this,
+    so without this check a component could be swapped in on the strength of
+    passing them - which is exactly the "validated on coverage, never on
+    content" failure that produced the UnitedHealthcare and Diallo baskets.
+
+    The property: each component must correlate positively, and not trivially,
+    with the average of the others. The floor is deliberately low (0.15).
+    wiki_ext and trends_us correlate 0.479 - reading and searching ARE different
+    behaviours and a composite exists to combine different measures - so this
+    must not demand that components be near-duplicates. It rejects a component
+    pointing the other way.
+    """
+    from config import CAI_D_COMPONENTS
+    FLOOR = 0.15
+    if len(CAI_D_COMPONENTS) < 2:
+        return "BLOCKED", "fewer than two components; nothing to agree"
+    frames = [pd.read_csv(DATA_REFERENCE / "cai_components_daily.csv", parse_dates=["date"]),
+              pd.read_csv(DATA_REFERENCE / "cai_trends_daily.csv", parse_dates=["date"])]
+    for extra in ("wiki_nyc_daily.csv",):
+        if (DATA_REFERENCE / extra).exists():
+            frames.append(pd.read_csv(DATA_REFERENCE / extra, parse_dates=["date"]))
+    w = pd.concat(frames).pivot_table(index="date", columns="component", values="value")
+    missing = [c for c in CAI_D_COMPONENTS if c not in w.columns]
+    if missing:
+        return "BLOCKED", f"no series for {missing}"
+    z = np.log1p(w[list(CAI_D_COMPONENTS)]).apply(
+        lambda x: (x - x["2017":"2019"].mean()) / x["2017":"2019"].std(ddof=0))
+    z = z.dropna()
+    if len(z) < 365:
+        return "BLOCKED", f"only {len(z)} complete days"
+    bad, detail = [], []
+    for c in CAI_D_COMPONENTS:
+        others = [o for o in CAI_D_COMPONENTS if o != c]
+        r = float(z[c].corr(z[others].mean(axis=1)))
+        detail.append(f"{c} {r:+.3f}")
+        if not (r > FLOOR):
+            bad.append(f"{c} r={r:+.3f}")
+    return ("FAIL" if bad else "PASS",
+            f"corr with the mean of the others (floor {FLOOR}): " + ", ".join(detail)
+            + (f"; FAILING: {bad}" if bad else ""))
+
+
+def t_index_uncensored():
+    """T3/L3: no component IN THE INDEX is a censored indicator rather than a level.
+
+    Generalised from a trends_nyc-only test, and kept rather than retired when
+    trends_nyc left CAI-D. A check written against one component's name stops
+    testing anything once that component is dropped - and says nothing about
+    whatever replaces it. Asked of CAI_D_COMPONENTS, it keeps working.
+
+    Google Trends suppresses region-days below an undisclosed volume floor.
+    trends_nyc is exactly zero on 42.6% of days, 26% in 2020 rising to 71% in
+    2024, so on those days it is an indicator of clearing the floor and not a
+    level - and the censoring is worst in the years the exposed confirmation
+    stratum sits in. It is still measured below, as a retired component, so the
+    reason it was dropped stays on the record.
+    """
+    from config import CAI_D_COMPONENTS
+    frames = [pd.read_csv(DATA_REFERENCE / "cai_components_daily.csv", parse_dates=["date"]),
+              pd.read_csv(DATA_REFERENCE / "cai_trends_daily.csv", parse_dates=["date"])]
+    for extra in ("wiki_nyc_daily.csv",):
+        if (DATA_REFERENCE / extra).exists():
+            frames.append(pd.read_csv(DATA_REFERENCE / extra, parse_dates=["date"]))
+    all_c = pd.concat(frames)
+
+    def censoring(name):
+        v = all_c[all_c["component"] == name].set_index("date")["value"]
+        if not len(v):
+            return None
+        by_year = (v == 0).groupby(v.index.year).mean()
+        return float((v == 0).mean()), float(by_year.max() - by_year.min())
+
+    bad, detail = [], []
+    for c in CAI_D_COMPONENTS:
+        m = censoring(c)
+        if m is None:
+            return "BLOCKED", f"component {c} has no series"
+        overall, spread = m
+        detail.append(f"{c} {overall:.0%}/{spread:.0%}")
+        if overall > 0.5 or spread > 0.3:
+            bad.append(f"{c}: {overall:.0%} zeros, spread {spread:.0%}")
+    excluded = []
+    for c in ("trends_nyc", "wiki_nyc"):
+        if c in CAI_D_COMPONENTS:
+            continue
+        m = censoring(c)
+        if m:
+            excluded.append(f"{c} {m[0]:.0%}/{m[1]:.0%} (not in the index)")
+    return ("FAIL" if bad else "PASS",
+            "zeros/by-year-spread — " + ", ".join(detail)
+            + ("; " + ", ".join(excluded) if excluded else ""))
 
 
 def t_victims_saturate():
@@ -1059,12 +1366,93 @@ SOURCE_REGISTER = DATA_REFERENCE / "source_register.json"
 CLAIMS_REGISTER = PROJECT_ROOT / "docs" / "CLAIMS_REGISTER.csv"
 VERIFY_GOOD = {"verified", "unverifiable", "template", "skipped"}
 
+# Which script writes which committed artifact. Only artifacts a script
+# regenerates belong here - hand-maintained files (the B-HEARD adoption table,
+# the frozen episode list) have no generating script and are deliberately absent.
+SOURCE_ARTIFACT_OWNERS = {
+    "data/reference/cai_components_daily.csv": "11_fetch_awareness_components.py",
+    "data/reference/wiki_ext_basket_used.csv": "11_fetch_awareness_components.py",
+    "data/reference/cai_trends_daily.csv": "11b_fetch_trends.py",
+    "data/reference/article_title_map.csv": "29_resolve_article_titles.py",
+    "data/reference/rename_recovery.csv": "29_resolve_article_titles.py",
+    "data/reference/wiki_nyc_daily.csv": "28_build_nyc_attention.py",
+    "data/reference/wiki_nyc_articles.csv": "28_build_nyc_attention.py",
+    "data/reference/wiki_nyc_per_article.csv": "28_build_nyc_attention.py",
+    "data/reference/precinct_cd_crosswalk.csv": "16_bheard_exposure.py",
+    "data/reference/bheard_cd_exposure.csv": "16_bheard_exposure.py",
+    "data/reference/victim_registry.csv": "10_build_victim_registry.py",
+    "data/reference/basket_decisions.csv": "27_finalise_basket.py",
+    "data/reference/confirmation_episodes_rebuilt.csv": "13_extension_episodes.py",
+}
+
 
 def _verify_log():
     if not VERIFY_LOG.exists():
         return None
     d = pd.read_csv(VERIFY_LOG, parse_dates=["run_utc"])
     return d if len(d) else None
+
+
+def v_artifacts_current():
+    """T14: no committed artifact may have been generated by an older version of
+    its script.
+
+    28_build_nyc_attention.py was given the historical-title fix during R0 and
+    never re-run. The series on disk stayed canonical-title-only - missing Eric
+    Garner, the largest NYC case, entirely - and a component was REJECTED in
+    PAPER_MASTER.md, config.py and the claims register on measurements taken
+    from it. Re-running moved the headline correlation from -0.18 to +0.62: the
+    conclusion survived, none of the stated reasons did.
+
+    The claims register cannot catch this. It verifies a number in a document
+    still matches its artifact, and the number DID match - the artifact was the
+    stale thing.
+
+    Neither can an mtime comparison. The first version of this check compared
+    file times and reported 7 of 13 artifacts stale after one round of COMMENT
+    edits. A check that cries wolf on comments is a check people stop reading,
+    which is how the defect survived in the first place.
+
+    So provenance.py records a fingerprint of the generating script's CODE -
+    ast-normalised, comments and docstrings stripped - at the moment the
+    artifact is written, and this compares it to the script as it stands now.
+    Verified directly: editing 28's comments, its docstring or its formatting
+    leaves the fingerprint identical, and reverting its title-summing changes it.
+    """
+    reg = DATA_REFERENCE / "data_sources.csv"
+    if not reg.exists():
+        return "BLOCKED", "no provenance register"
+    d = pd.read_csv(reg)
+    if "generator_code_sha256" not in d.columns:
+        return "BLOCKED", "register predates code fingerprinting; re-run the fetch stages"
+    sys.path.insert(0, str(SCRIPTS))
+    from provenance import code_fingerprint
+
+    stale, unfingerprinted = [], []
+    for _, r in d.iterrows():
+        gen = str(r.get("generator") or "").strip()
+        want = str(r.get("generator_code_sha256") or "").strip()
+        if not gen or not want or want == "nan":
+            unfingerprinted.append(str(r["source_id"]))
+            continue
+        f = SCRIPTS / gen
+        if not f.exists():
+            stale.append(f"{r['source_id']}: {gen} no longer exists")
+            continue
+        if code_fingerprint(f) != want:
+            stale.append(f"{r['source_id']} ({Path(str(r['output_file'])).name}) "
+                         f"predates changes to {gen}")
+    checked = len(d) - len(unfingerprinted)
+    if stale:
+        return "FAIL", (f"{len(stale)} artifact(s) generated by an older version of "
+                        f"their script: " + "; ".join(stale[:3]))
+    if not checked:
+        return "BLOCKED", (f"no artifact carries a code fingerprint yet "
+                           f"({len(unfingerprinted)} rows predate it); re-run the "
+                           "fetch stages so this can check anything")
+    return "PASS", (f"{checked} artifact(s) match their generating script's code"
+                    + (f"; {len(unfingerprinted)} predate fingerprinting "
+                       f"({sorted(set(unfingerprinted))})" if unfingerprinted else ""))
 
 
 def v_sources_verified():
@@ -1250,14 +1638,19 @@ def m_register_sync():
 
 # ===========================================================================
 CHECKS = [
-    ("T.anchor_monthly", "X1,T4", "Trends anchor rescales all days, not just 1-7", t_anchor_monthly),
+    ("T.anchor_monthly", "X1,T4,T5,L4", "Trends anchor rescales all days, not just 1-7", t_anchor_monthly),
     ("T.title_agg_no_trend", "T12", "title aggregation is not measuring accumulation", t_title_agg_no_trend),
+    ("T.realised_coverage", "T7", "register asserts no span the data lacks", t_realised_coverage_recorded),
+    ("X.csv_reproducible", "X15", "derived weights round-trip exactly", x_derived_csv_reproducible),
+    ("X.no_stale_attribution", "X7", "DATA_AUDIT no longer misattributes 378->630", x_no_stale_audit_attribution),
+    ("T.wiki_fetch_complete", "T15", "no basket article lost a title to a failed fetch", t_wiki_fetch_complete),
     ("T.no_lost_history", "T12", "no article series starts after the article existed", t_no_lost_history),
     ("T.local_uncensored", "T10", "NYC-local series has no censored days", t_local_series_uncensored),
     ("T.index_not_one_article", "T11", "index top days are not one article", t_index_not_single_article),
-    ("T.nyc_break", "T1", "trends_nyc has no artificial level break", t_nyc_break),
-    ("T.nyc_censoring", "T3,L3", "trends_nyc is a level, not a censored indicator", t_nyc_censored),
-    ("T.victims_topic_units", "T2,L2", "trends_victims divided by topic term", t_victims_saturate),
+    ("T.no_stitch_break", "T1", "no stitched component has an artificial level break", t_no_stitch_break),
+    ("T.components_agree", "T10,T11", "index components measure the same construct", t_components_agree),
+    ("T.index_uncensored", "T3,L3", "no component in the index is a censored indicator", t_index_uncensored),
+    ("T.victims_topic_units", "T2,L2,T8", "trends_victims divided by topic term", t_victims_saturate),
     ("T.composite_after_avg", "D5", "composite standardised after averaging", t_composite_after_avg),
     ("T.fixed_component_set", "D5", "CAI-D requires a fixed component set", t_fixed_component_set),
     ("T.basket_not_registry_gated", "T9", "basket reaches victims MPV omits", t_basket_not_registry_gated),
@@ -1273,7 +1666,7 @@ CHECKS = [
     ("S.ppml_wired", "X5,R8", "counts/PPML arm actually called", s_ppml_wired),
     ("D.freeze_not_tautological", "D3", "freeze guard is not a tautology", d_freeze_not_tautological),
     ("D.freeze_disjoint", "D3", "confirmation sample disjoint from discovery", d_freeze_enforces_disjoint),
-    ("D.guard_coverage", "D3,X11", "every outcome-artifact reader calls the guard", d_guard_coverage),
+    ("D.guard_coverage", "D3,X11,X9", "every outcome-artifact reader calls the guard", d_guard_coverage),
     ("D.incident_disclosed", "F1", "freeze incident stays in the record", d_incident_disclosed),
     ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),
     ("E.threshold_stringency", "D5,L5,E6", "episode threshold is constant stringency", e_threshold_constant_stringency),
@@ -1284,6 +1677,7 @@ CHECKS = [
     ("O.ems_complete", "O5", "EMS extract covers the full source", o_ems_download_complete),
     ("O.panel_exists", "O5", "panel_cd_day.parquet exists", o_panel_exists),
     ("O.dropna_groupby", "O4", "missing-district rows not silently dropped", o_dropna_groupby),
+    ("V.artifacts_current", "T14", "no artifact predates the script that writes it", v_artifacts_current),
     ("V.sources_verified", "X8,X14", "every source verified after its last write", v_sources_verified),
     ("V.no_duplicate_source_ids", "X8,X13", "one row per source id, no collisions", v_no_duplicate_source_ids),
     ("V.claims_reproduce", "X14", "every claimed number recomputes from its artifact", v_claims_reproduce),

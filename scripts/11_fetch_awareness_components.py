@@ -140,7 +140,7 @@ if ARGS.only in (None, "wiki_ext"):
      # years can have more contributing titles and drift upward for a reason
      # that has nothing to do with attention. Both series are written and
      # T.title_agg_no_trend decides between them on the data.
-     by_day, by_day_max, n_ok = {}, {}, 0
+     by_day, by_day_max, n_ok, n_fail, n_404 = {}, {}, 0, 0, 0
      for t in titles:
          u = (f"https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/"
               f"en.wikipedia/all-access/user/{urllib.parse.quote(t)}"
@@ -148,8 +148,15 @@ if ARGS.only in (None, "wiki_ext"):
          try:
              items = get_json(u)["items"]
          except NotFound:
+             n_404 += 1
              continue
          except RuntimeError as e:
+             # Counted into the ARTIFACT, not only printed. A failure that
+             # exists solely in a three-hour stdout log is a failure nobody
+             # sees: the last run of this script lost one of Daunte Wright's
+             # 14 titles and the basket file recorded n_titles=13 with no way
+             # to tell that apart from a title that has no data (finding T15).
+             n_fail += 1
              print(f"  wiki skip (fetch failed): {t} — {e}", flush=True)
              continue
          finally:
@@ -163,7 +170,9 @@ if ARGS.only in (None, "wiki_ext"):
      if not by_day:
          print(f"  wiki skip (no series under any title): {art}", flush=True)
          used.append({"article": art, "days": 0, "views": 0, "ok": False,
-                      "reason": "no series", "n_titles": len(titles)})
+                      "reason": "all titles failed" if n_fail else "no series",
+                      "n_titles": n_ok, "n_titles_offered": len(titles),
+                      "n_titles_no_data": n_404, "n_titles_failed": n_fail})
          continue
 
      for d, v in by_day.items():
@@ -176,7 +185,8 @@ if ARGS.only in (None, "wiki_ext"):
          per_article.append({"article": art, "date": d, "views": v})
      used.append({"article": art, "days": len(by_day),
                   "views": sum(by_day.values()), "ok": True, "reason": "",
-                  "n_titles": n_ok})
+                  "n_titles": n_ok, "n_titles_offered": len(titles),
+                  "n_titles_no_data": n_404, "n_titles_failed": n_fail})
 
  pd.DataFrame(used).to_csv(DATA_REFERENCE / "wiki_ext_basket_used.csv", index=False)
  pa = pd.DataFrame(per_article)
@@ -215,22 +225,37 @@ for y0 in (range(2015, 2025, 1) if ARGS.only in (None, 'gdelt_tv') else []):
         rows.append({"date": pt["date"][:8], "component": "gdelt_tv", "value": pt["value"]})
     time.sleep(15)
 
-# GDELT DOC: persistently rate-limited from this egress IP; tolerate failure
-# per AWARENESS_INDEX_DESIGN (missing-component rule) and mark pending.
-try:
-    # --- GDELT DOC (news volume), chunked by 2 years ---
-    # GDELT DOC fulltext begins 2017-01-01; 2015-16 news tier unavailable (documented)
-    for y0 in (range(2017, 2025, 1) if ARGS.only in (None, 'gdelt_news') else []):
-        q = urllib.parse.quote(FROZEN_QUERY + " sourcecountry:US")
-        u = (f"https://api.gdeltproject.org/api/v2/doc/doc?query={q}"
-             f"&mode=timelinevol&format=json"
-             f"&startdatetime={y0}0101000000&enddatetime={y0}1231235959")
+# GDELT DOC: persistently rate-limited from this egress IP; tolerate failure per
+# AWARENESS_INDEX_DESIGN (missing-component rule) and mark pending.
+#
+# FINDING T7. The whole year loop used to sit inside ONE try/except, so the
+# first RuntimeError abandoned every remaining year while the years already
+# fetched were still written below - one warning, exit 0, and a register that
+# recorded the span REQUESTED. That is how gdelt_news came to end at 2022-12-31
+# while the provenance row said 2024-12-31.
+#
+# Per-year now: one year failing costs that year, not the rest, and every
+# failure is named and counted rather than summarised as "unavailable".
+gdelt_failed = []
+for y0 in (range(2017, 2025, 1) if ARGS.only in (None, 'gdelt_news') else []):
+    q = urllib.parse.quote(FROZEN_QUERY + " sourcecountry:US")
+    u = (f"https://api.gdeltproject.org/api/v2/doc/doc?query={q}"
+         f"&mode=timelinevol&format=json"
+         f"&startdatetime={y0}0101000000&enddatetime={y0}1231235959")
+    try:
         js = get_json(u)
-        for pt in js["timeline"][0]["data"]:
-            rows.append({"date": pt["date"][:8], "component": "gdelt_news", "value": pt["value"]})
+    except (RuntimeError, NotFound) as e:
+        gdelt_failed.append(y0)
+        print(f"  gdelt_news {y0} FAILED: {type(e).__name__}: {str(e)[:90]}", flush=True)
         time.sleep(15)
-except RuntimeError as e:
-    print(f"gdelt_news UNAVAILABLE (rate-limited): {e}")
+        continue
+    n0 = len(rows)
+    for pt in js["timeline"][0]["data"]:
+        rows.append({"date": pt["date"][:8], "component": "gdelt_news", "value": pt["value"]})
+    print(f"  gdelt_news {y0}: {len(rows) - n0} days", flush=True)
+    time.sleep(15)
+if gdelt_failed:
+    print(f"gdelt_news INCOMPLETE: {len(gdelt_failed)} year(s) missing: {gdelt_failed}")
 
 out = pd.DataFrame(rows)
 out["date"] = pd.to_datetime(out["date"])
@@ -246,9 +271,16 @@ out.to_csv(path, index=False)
 print("  component row counts: "
       + str(out.groupby("component").size().to_dict()))
 
+# REALISED coverage, not the requested span (finding T7). A register that states
+# the span we asked for answers the question wrongly, which is worse than not
+# answering it.
+_realised = out.groupby("component")["date"].agg(["min", "max", "count"])
 log_source(
     "S11",
-    f"CAI components gdelt_news/gdelt_tv/wiki_ext {START}..{END}; query={FROZEN_QUERY}",
+    ("CAI components from GDELT DOC/TV and Wikimedia pageviews; "
+     f"query={FROZEN_QUERY}; realised "
+     + "; ".join(f"{c}={r['min'].date()}..{r['max'].date()} n={r['count']}"
+                 for c, r in _realised.iterrows())),
     "https://api.gdeltproject.org/api/v2 + https://wikimedia.org/api/rest_v1",
     out_file=path)
 

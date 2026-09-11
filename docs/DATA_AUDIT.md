@@ -68,9 +68,19 @@ precisely on high-attention days — partly by construction rather than by
 measurement. A referee is entitled to say the index partly measures itself.
 
 **Fix.** Drop `trends_victims` from CAI-D. The cost is small: the three always-on
-components correlate **0.985** with the index as built. The effect on the episode
-list is not small — 378 high days as built versus 630 without it — which is
-precisely the §1 scaling problem restated.
+components correlate **0.985** with the index as built.
+
+> **CORRECTED 2026-09-11 (finding X7).** This paragraph originally read "the
+> effect on the episode list is not small — 378 high days as built versus 630
+> without it". That attributed the change to the wrong cause. Almost all of it
+> was the re-standardisation this audit script performed inside the same
+> diagnostic, not the dropped component. Measured against
+> `data/processed/cai_daily.parquet` as it then stood: as built, 378; dropping
+> `trends_victims` alone, **377**; re-standardising while *keeping*
+> `trends_victims`, 635; both together, 630. **Dropping the component moved one
+> day.** The original sentence is left here, struck through, rather than
+> deleted, because the point of this document is the record of what was believed
+> and when.
 
 ---
 
