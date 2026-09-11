@@ -143,6 +143,46 @@ def walk(roots, max_depth=MAX_DEPTH):
     return articles, seen_cat
 
 
+def resolve_redirects(titles, batch=50):
+    """Map every redirect in `titles` to the page it points at.
+
+    WHY (findings T13/T17/T18). Category membership is a property of a PAGE, and
+    a redirect is a page. The walk therefore collects redirects as if they were
+    articles, and two separate defects follow:
+
+      DUPLICATES. When both a redirect and its target survive into the basket,
+      the same person is counted twice. Eight did: Eric_Garner alongside
+      Killing_of_Eric_Garner, Freddie_Gray alongside Killing_of_Freddie_Gray,
+      and six more.
+
+      LOSSES. When only the redirect is collected, the candidacy rule in 26 -
+      article starts with a person prefix OR the name matched the registry -
+      tests the REDIRECT's title, which usually has neither. The article is then
+      never considered at all. Walter_Lamar_Scott is a redirect to
+      Killing_of_Walter_Scott, so Walter Scott - whose summed titles are
+      2,228,711 views, which would rank 15th of 121 basket articles - was
+      missing from the treatment index entirely. Jordan_Edwards_(shooting_victim)
+      -> Murder_of_Jordan_Edwards was lost the same way, killed 2017-04-29,
+      inside the discovery window.
+
+    Measured on the committed candidate list: 39 of 482 candidates (8%) are
+    redirects.
+
+    Resolving here, at the point of collection, fixes both at the source. It is
+    strictly better than repairing them downstream, because a redirect that
+    reaches the basket has already lost the information needed to repair it.
+    """
+    out = {}
+    titles = list(titles)
+    for i in range(0, len(titles), batch):
+        chunk = [t.replace("_", " ") for t in titles[i:i + batch]]
+        d = _get({"titles": "|".join(chunk), "redirects": 1})
+        for r in d.get("query", {}).get("redirects", []):
+            out[r["from"].replace(" ", "_")] = r["to"].replace(" ", "_")
+        time.sleep(0.5)
+    return out
+
+
 def victim_name(title):
     """Strip the article-title framing to get the person's name."""
     t = title
@@ -171,6 +211,22 @@ def main():
         [c.lower().startswith("date") for c in reg.columns].index(True)]
     reg[date_col] = pd.to_datetime(reg[date_col], errors="coerce")
     by_name = reg.dropna(subset=[date_col]).groupby("name")[date_col].min()
+
+    # Resolve redirects BEFORE anything is decided about a candidate, and keep
+    # the target's category attribution. If a redirect and its target are both
+    # present, they merge into one entry rather than two.
+    red = resolve_redirects(sorted(articles))
+    if red:
+        merged = {}
+        for title, cat in sorted(articles.items()):
+            tgt = red.get(title.replace(" ", "_"), title).replace("_", " ")
+            merged.setdefault(tgt, cat)
+        n_lost = sum(1 for f, t in red.items()
+                     if t.replace("_", " ") not in articles)
+        print(f"resolved {len(red)} redirect(s); {len(articles)} -> {len(merged)} "
+              f"distinct articles ({n_lost} target(s) the walk had not collected "
+              "directly)")
+        articles = merged
 
     rows = []
     for title, cat in sorted(articles.items()):
