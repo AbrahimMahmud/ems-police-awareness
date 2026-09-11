@@ -10,7 +10,7 @@ Sources: 19 (13 live, 4 retired, 2 unverifiable).
 Every verification result ever recorded, including failures, is in
 `data/reference/source_verification_log.csv`, which is append-only.
 
-Last scan: **2026-09-11T19:47:43+00:00** — 18 skipped, 2 template, 6 unverifiable, 66 verified
+Last scan: **2026-09-11T20:14:56+00:00** — 4 mismatch, 18 skipped, 2 template, 6 unverifiable, 62 verified
 
 ## S1 — NYC EMS Incident Dispatch Data
 
@@ -250,7 +250,7 @@ Last scan: **2026-09-11T19:47:43+00:00** — 18 skipped, 2 template, 6 unverifia
 - **Access**: scripts/27_finalise_basket.py (cached under data/processed/wikidata_cache/)
 - **What we take**: date of death, country, and person-hood for each candidate basket article
 - **Role**: the primary death-date source for the basket: 108 of 161 candidates are dated from Wikidata, 38 from the registry, 15 unresolved
-- **Artifact**: `data/reference/basket_decisions.csv` — _verified_ (sha256 c2ca055d09357245, 161 rows, 1958-04-25..2024-09-19; not registered in data_sources.csv)
+- **Artifact**: `data/reference/basket_decisions.csv` — _verified_ (sha256 ec5113e2839843e5, 174 rows, 1958-04-25..2024-09-19; not registered in data_sources.csv)
 - **Cite as**: Wikidata. https://www.wikidata.org
 - **Known flaws**:
   - Community-edited, so a date can change; the cache pins what we used.

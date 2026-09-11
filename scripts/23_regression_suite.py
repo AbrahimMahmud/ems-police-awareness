@@ -327,6 +327,44 @@ def t_wiki_fetch_complete():
                     f"{nodata} with no data, 0 failed")
 
 
+def t_no_redirect_candidates():
+    """T18: no basket candidate may be a Wikipedia redirect rather than an article.
+
+    Category membership is a property of a PAGE, and a redirect is a page, so the
+    category walk collected redirects as if they were articles and could not tell
+    them apart. 39 of 482 candidates (8%) were redirects, with two consequences:
+
+      a redirect AND its target both survive -> the person is counted twice
+        (9 cases, 449,549 views; finding T17);
+      only the redirect survives -> the candidacy rule tests the REDIRECT's
+        title, which has no person prefix, so the article is never considered.
+        WALTER SCOTT was absent from the treatment index entirely this way -
+        2,228,711 views summed across his titles, which would rank 15th of 121 -
+        and Jordan Edwards, killed inside the discovery window, with him.
+
+    Checked against data/reference/redirect_resolution.csv, which 24 writes, so
+    this needs no network. A check that requires the API is a check that gets
+    skipped, and this one has to run on every commit.
+    """
+    r = DATA_REFERENCE / "redirect_resolution.csv"
+    b = DATA_REFERENCE / "wiki_basket.csv"
+    if not b.exists():
+        return "BLOCKED", "wiki_basket.csv absent — run 24"
+    if not r.exists():
+        return "BLOCKED", ("no redirect_resolution.csv — re-run 24_build_wiki_basket.py; "
+                           "without it, whether a candidate is a redirect is unknowable offline")
+    res = pd.read_csv(r)
+    basket = set(pd.read_csv(b)["article"])
+    still = sorted(basket & set(res["redirect"]))
+    recovered = res[~res["target_was_collected_directly"]]
+    if still:
+        return "FAIL", (f"{len(still)} candidate(s) are redirects, not articles: "
+                        f"{still[:4]}")
+    return "PASS", (f"{len(basket)} candidates, none a redirect; "
+                    f"{len(res)} resolved, {len(recovered)} target(s) the walk had "
+                    "not collected directly")
+
+
 def t_no_duplicate_person_articles():
     """T17: no basket article may also be a historical title of another basket article.
 
@@ -1213,6 +1251,97 @@ def d_guard_coverage():
             if not missing else f"unguarded: {missing}")
 
 
+def x_bheard_wired_and_inert():
+    """X6: the B-HEARD control is IN a model, and adding it changes no discovery number.
+
+    Two properties, and the second is the one that matters.
+
+    WIRED. 16_bheard_exposure.py built the exposure table, IBO-validated it, and
+    committed it — and no model read it. Not one. The ratified control for this
+    project's most serious confound was computed and connected to nothing. It
+    went unnoticed because B-HEARD starts 2021-06-01 and the freeze restricts
+    every model to 2017-2020, so adding it changes nothing anyone has estimated.
+    That is exactly why it has to be wired BEFORE the freeze lifts: afterwards,
+    adding a control is a specification change.
+
+    INERT ON DISCOVERY. Since exposure is identically zero there, adding it must
+    leave every discovery coefficient NUMERICALLY UNCHANGED. This refits the
+    event study with and without it and compares. A non-zero difference means the
+    precinct-to-community-district crosswalk has put exposure somewhere it cannot
+    be — an error that would otherwise surface only in the confirmatory run,
+    where it could not be fixed.
+
+    This is a CP2 gate item, asserted rather than remembered.
+    """
+    import importlib
+    pq = DATA_PROCESSED / "panel_cd_day.parquet"
+    ep_f = DATA_REFERENCE / "confirmation_episodes_rebuilt.csv"
+    if not (pq.exists() and ep_f.exists()):
+        return "BLOCKED", "panel or episode list absent"
+    sys.path.insert(0, str(SCRIPTS))
+    try:
+        bh = importlib.import_module("bheard")
+    except Exception as e:
+        return "FAIL", f"bheard module missing or broken: {type(e).__name__}: {e}"
+
+    readers = [f.name for f in sorted(SCRIPTS.glob("*.py"))
+               if f.name not in ("bheard.py", "16_bheard_exposure.py",
+                                 "23_regression_suite.py", "20_data_audit.py",
+                                 "run_all.py", "22_pipeline_check.py")
+               and ("attach_bheard" in f.read_text() or "from bheard import" in f.read_text())]
+    if not readers:
+        return "FAIL", "no model reads the B-HEARD exposure control"
+
+    from config import (BHEARD_BOUND_PRIMARY, EVENT_WINDOW_POST, EVENT_WINDOW_PRE,
+                        MIN_TOTAL_CALLS_FOR_SHARE)
+    es = importlib.import_module("event_study")
+    fg = importlib.import_module("freeze_guard")
+    panel = pd.read_parquet(pq)
+    panel["incident_date"] = pd.to_datetime(panel["incident_date"])
+    panel = fg.select_sample(panel, where="23_regression_suite:X6")
+    panel = panel[panel["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE].copy()
+    panel["dow"] = panel["incident_date"].dt.dayofweek
+
+    withb = bh.attach(panel, bound=BHEARD_BOUND_PRIMARY)
+    inert, mx = bh.is_inert(withb)
+    from config import FREEZE_ACTIVE
+    if FREEZE_ACTIVE and not inert:
+        return "FAIL", (f"B-HEARD exposure is non-zero (max {mx:.4g}) inside the "
+                        "discovery sample — the crosswalk is wrong")
+
+    ep = pd.read_csv(ep_f, parse_dates=["start"])
+    if FREEZE_ACTIVE and "period" in ep.columns:
+        ep = ep[ep["period"] == "discovery"]
+    starts = ep["start"].tolist()
+    base = es.build_stack(panel, starts, EVENT_WINDOW_PRE, EVENT_WINDOW_POST)
+    if base.empty:
+        return "BLOCKED", "no usable event windows on this panel"
+    m0 = es.fit_event_study(base, "edp_share")
+    if m0 is None:
+        return "BLOCKED", "baseline event study not estimable"
+
+    import warnings
+    import pyfixest as pf
+    stack2 = es.build_stack(withb, starts, EVENT_WINDOW_PRE, EVENT_WINDOW_POST)
+    d = stack2.dropna(subset=["edp_share"])
+    fml = (f"edp_share ~ i(rel_day, ref={es.EVENT_REFERENCE_DAY}) + bheard_exposure "
+           f"| ep_cd + dow")
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            m1 = pf.feols(fml, d, vcov={"CRV1": es.CLUSTER_VAR})
+    except Exception as e:
+        return "FAIL", f"model with the control does not estimate: {type(e).__name__}: {e}"
+    c0, c1 = m0.coef(), m1.coef()
+    shared = [k for k in c0.index if k in c1.index]
+    if not shared:
+        return "FAIL", "no shared coefficients between the two fits"
+    diff = float(np.max(np.abs(c0[shared].values - c1[shared].values)))
+    return ("PASS" if diff < 1e-10 else "FAIL",
+            f"read by {readers}; exposure max {mx:.4g} on the active sample; "
+            f"max |coef difference| over {len(shared)} coefficients = {diff:.3e}")
+
+
 def d_soda_source_guarded():
     """F2: the freeze guard protects ARTIFACTS, so the source API bypasses it.
 
@@ -1838,6 +1967,7 @@ CHECKS = [
     ("X.csv_reproducible", "X15", "derived weights round-trip exactly", x_derived_csv_reproducible),
     ("X.no_stale_attribution", "X7", "DATA_AUDIT no longer misattributes 378->630", x_no_stale_audit_attribution),
     ("T.wiki_fetch_complete", "T15", "no basket article lost a title to a failed fetch", t_wiki_fetch_complete),
+    ("T.no_redirect_candidates", "T18", "no basket candidate is a redirect", t_no_redirect_candidates),
     ("T.no_duplicate_person", "T17", "no basket article duplicates another person", t_no_duplicate_person_articles),
     ("S.did_no_shared_days", "S7", "no district-day is treated and control at once", s_did_no_shared_days),
     ("T.no_lost_history", "T12", "no article series starts after the article existed", t_no_lost_history),
@@ -1863,6 +1993,7 @@ CHECKS = [
     ("D.freeze_not_tautological", "D3", "freeze guard is not a tautology", d_freeze_not_tautological),
     ("D.freeze_disjoint", "D3", "confirmation sample disjoint from discovery", d_freeze_enforces_disjoint),
     ("D.guard_coverage", "D3,X11,X9", "every outcome-artifact reader calls the guard", d_guard_coverage),
+    ("X.bheard_wired", "X6", "B-HEARD control is in a model and inert on discovery", x_bheard_wired_and_inert),
     ("D.soda_guarded", "F2", "the source API is guarded, not only the artifacts", d_soda_source_guarded),
     ("D.incident_disclosed", "F1", "freeze incident stays in the record", d_incident_disclosed),
     ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),

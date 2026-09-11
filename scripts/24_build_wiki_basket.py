@@ -215,6 +215,7 @@ def main():
     # Resolve redirects BEFORE anything is decided about a candidate, and keep
     # the target's category attribution. If a redirect and its target are both
     # present, they merge into one entry rather than two.
+    raw_articles = dict(articles)
     red = resolve_redirects(sorted(articles))
     if red:
         merged = {}
@@ -227,6 +228,15 @@ def main():
               f"distinct articles ({n_lost} target(s) the walk had not collected "
               "directly)")
         articles = merged
+    # Commit the resolution itself, not just its effect. Without this the fix is
+    # unverifiable offline: a check would have to re-query the API to know whether
+    # any candidate is still a redirect, and a check that needs the network is a
+    # check that gets skipped. T.no_redirect_candidates reads this.
+    pd.DataFrame(
+        [{"redirect": f, "target": t,
+          "target_was_collected_directly": t.replace("_", " ") in raw_articles}
+         for f, t in sorted(red.items())]
+    ).to_csv(DATA_REFERENCE / "redirect_resolution.csv", index=False)
 
     rows = []
     for title, cat in sorted(articles.items()):

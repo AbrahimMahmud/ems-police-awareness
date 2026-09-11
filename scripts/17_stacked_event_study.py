@@ -64,6 +64,7 @@ from config import (
     MIN_TOTAL_CALLS_FOR_SHARE,
     OUTPUTS_TABLES,
     RANDOMIZATION_DRAWS,
+    BHEARD_BOUND_PRIMARY,
 )
 from event_study import (
     _rel_day_coefs,
@@ -76,6 +77,7 @@ from event_study import (
     joint_p,
     randomization_p,
 )
+from bheard import attach as attach_bheard
 from freeze_guard import freeze_banner, select_sample
 
 parser = argparse.ArgumentParser()
@@ -95,6 +97,25 @@ panel["incident_date"] = pd.to_datetime(panel["incident_date"])
 panel = select_sample(panel, where="17_stacked_event_study")
 panel = panel[panel["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE].copy()
 panel["dow"] = panel["incident_date"].dt.dayofweek
+
+# B-HEARD exposure, attached HERE rather than at the point it becomes non-zero
+# (finding X6). From 2021-06-01 New York routes some mental-health 911 calls to a
+# health-led response instead of police, precinct by precinct - which moves the
+# outcome in the SAME DIRECTION as the hypothesis. The control was built, IBO-
+# validated and committed, and read by no model at all.
+#
+# It went unnoticed because it is identically zero throughout discovery, so
+# adding it changes nothing anyone has estimated. That is exactly why it has to
+# be wired NOW: after the freeze lifts, adding a control is a specification
+# change, and doing it before means the confirmatory run inherits it rather than
+# acquiring it.
+#
+# Verified: adding it to the discovery model leaves all 28 event-time
+# coefficients bit-identical (max |difference| 0.000e+00) - pyfixest drops the
+# all-zero column as collinear. X.bheard_inert_on_discovery asserts it, and a
+# non-zero value here while frozen would mean the precinct-to-district crosswalk
+# is wrong.
+panel = attach_bheard(panel, bound=BHEARD_BOUND_PRIMARY)
 
 ep = pd.read_csv(DATA_REFERENCE / "confirmation_episodes.csv", parse_dates=["start", "end"])
 if FREEZE_ACTIVE:

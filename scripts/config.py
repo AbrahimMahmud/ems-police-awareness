@@ -291,6 +291,16 @@ DID_EVENT_QUANTILE = 0.90
 # rates in adopting precincts, so it confounds the 2021-2024 confirmation
 # sample in the same direction as the hypothesis under test.
 BHEARD_LAUNCH = "2021-06-01"
+# Which adoption bound is primary. 17 of 31 precinct dates are low confidence, so
+# 16 emits an `early` and a `late` bound rather than pretending to a precision it
+# does not have. `early` is primary because it is the CONSERVATIVE choice for this
+# hypothesis: it credits B-HEARD with coverage sooner, so more of any decline is
+# attributed to the confound and less to attention. The other bound is a
+# pre-specified sensitivity, and a result that flips between them is a result
+# that depends on data we do not have.
+BHEARD_BOUND_PRIMARY = "early"
+BHEARD_BOUND_SENSITIVITY = "late"
+
 BHEARD_ADOPTION_CSV = DATA_REFERENCE / "bheard_precinct_adoption.csv"
 BHEARD_EXPOSURE_CSV = DATA_REFERENCE / "bheard_cd_exposure.csv"
 PRECINCT_CD_CROSSWALK_CSV = DATA_REFERENCE / "precinct_cd_crosswalk.csv"
