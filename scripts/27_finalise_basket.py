@@ -106,6 +106,30 @@ def main():
     # "Killing of Dhal Apet and Lueth Mo" covers two victims; date on the first.
     df["k"] = df["person"].str.split(" and ").str[0].map(norm)
 
+    # THE SCOPE FILE MUST COVER THE CANDIDATES IT IS BEING USED ON.
+    #
+    # 26_resolve_basket_scope.py can fail — Wikidata returned HTTP 503 eight
+    # times on 2026-09-11 and the run raised, resolving nothing. This script then
+    # finalised a 174-candidate basket against a STALE 164-row scope file from a
+    # previous session and produced a perfectly plausible-looking result, in
+    # which 29 articles were excluded with the reason "no date resolvable from
+    # Wikidata or the registry".
+    #
+    # That reason was false for an unknown number of them. The true reason was
+    # "we never asked about this article". A basket whose membership is decided
+    # by which API calls happened to succeed is not a basket, and nothing in the
+    # output distinguished the two cases.
+    missing = sorted(set(df["article"]) - set(scope["article"]))
+    if missing:
+        raise SystemExit(
+            f"scope resolution covers {len(scope)} articles but this basket has "
+            f"{len(df)} candidates; {len(missing)} have no scope row at all, e.g. "
+            f"{missing[:5]}.\n"
+            "Re-run 26_resolve_basket_scope.py (the cache makes it resumable; use "
+            "--batch 50 if Wikidata is returning 503). REFUSING to finalise a "
+            "basket whose membership would be decided by which API calls "
+            "succeeded.")
+
     sc = scope.set_index("article")
     df["wd_date"] = pd.to_datetime(df["article"].map(sc["date"]), errors="coerce")
     df["country"] = df["article"].map(sc["country"])
@@ -121,7 +145,10 @@ def main():
         if r["country"] in NON_US:
             return "exclude", f"not a US killing (country={r['country']})"
         if pd.isna(r["death_date"]):
-            return "exclude", "no date resolvable from Wikidata or the registry"
+            # Reachable only when the article HAS a scope row (asserted above)
+            # and Wikidata genuinely holds no date of death for it, and no
+            # registry name matched. That is a real absence, not a failed fetch.
+            return "exclude", "no date of death in Wikidata, and no registry match"
         d = r["death_date"]
         if d < pd.Timestamp(IN_RANGE[0]):
             return "exclude", f"before the registry era ({d.date()})"
