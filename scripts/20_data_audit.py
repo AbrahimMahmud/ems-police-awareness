@@ -24,7 +24,14 @@ Output: outputs/tables/data_audit.csv  (one row per check, with a PASS/FLAG verd
 import numpy as np
 import pandas as pd
 
-from config import ANALYSIS_END, ANALYSIS_START, DATA_PROCESSED, DATA_REFERENCE, OUTPUTS_TABLES
+from config import (
+    ANALYSIS_END,
+    ANALYSIS_START,
+    CAI_D_COMPONENTS,
+    DATA_PROCESSED,
+    DATA_REFERENCE,
+    OUTPUTS_TABLES,
+)
 
 OUTPUTS_TABLES.mkdir(parents=True, exist_ok=True)
 pd.set_option("display.width", 200)
@@ -40,9 +47,22 @@ def record(check, value, verdict, note=""):
 
 # ---------------------------------------------------------------------------
 print("\n== 1. component coverage ==")
+# Read exactly the files 12_build_cai.py reads. This audit used to read
+# cai_trends_anchored.csv, which was deleted when anchoring was retired
+# (f7789d1), so from that commit until 2026-09-10 this script raised
+# FileNotFoundError on its first statement and produced no audit at all -
+# while "audit flags non-increasing" was being recorded as satisfied. An audit
+# that cannot run is not a clean audit, so the anchored file is now an explicit
+# refusal (matching 12) rather than a silent dependency.
+_stale = DATA_REFERENCE / "cai_trends_anchored.csv"
+if _stale.exists():
+    raise SystemExit(
+        f"{_stale.name} still exists. Anchoring is retired; move it to "
+        "data/reference/archive/ and re-run (see 12_build_cai.py).")
+
 comp = pd.concat([
     pd.read_csv(DATA_REFERENCE / "cai_components_daily.csv", parse_dates=["date"]),
-    pd.read_csv(DATA_REFERENCE / "cai_trends_anchored.csv", parse_dates=["date"]),
+    pd.read_csv(DATA_REFERENCE / "cai_trends_daily.csv", parse_dates=["date"]),
 ], ignore_index=True)
 wide = comp.pivot_table(index="date", columns="component", values="value")
 wide = wide.reindex(pd.date_range("2015-01-01", "2024-12-31", freq="D"))
@@ -75,56 +95,126 @@ record("episode_flag_rate_by_component_count", " / ".join(f"{v:.1f}%" for v in f
 
 # ---------------------------------------------------------------------------
 print("\n== 4. is component availability endogenous to attention? ==")
-ALWAYS_ON = ["wiki_ext", "trends_us", "trends_nyc"]
-sub = cai.dropna(subset=ALWAYS_ON)
-base = sub[ALWAYS_ON].mean(axis=1)
-present = sub["trends_victims"].notna()
-gap = float(base[present].mean() - base[~present].mean())
-record("trends_victims_selection_gap", f"{gap:+.3f} SD",
-       "FLAG" if abs(gap) > 0.15 else "PASS",
-       "mean of always-on components when trends_victims present vs absent")
+# The component set comes from config, not a second list here. This block used
+# to hardcode ["wiki_ext", "trends_us", "trends_nyc"] and then test one named
+# component, trends_victims - which was dropped from the index (finding T8), so
+# the audit raised KeyError and check 4 onward never ran.
+#
+# The PROPERTY is what matters and it is not about any one component: if a
+# component is missing on days that are systematically quieter or louder than
+# average, then "which components exist" is itself a function of attention, and
+# the index changes meaning across regimes rather than only changing precision.
+# So it is now asked of every component in the index that has any missing day.
+present_cols = [c for c in CAI_D_COMPONENTS if c in cai.columns]
+missing_cols = [c for c in CAI_D_COMPONENTS if c not in cai.columns]
+record("cai_d_components_present", f"{len(present_cols)}/{len(CAI_D_COMPONENTS)}",
+       "FLAG" if missing_cols else "PASS",
+       f"absent from the component files: {missing_cols}" if missing_cols
+       else f"{present_cols}")
 
+always_on = [c for c in present_cols if cai[c].notna().all()]
+intermittent = [c for c in present_cols if not cai[c].notna().all()]
+if not always_on:
+    record("component_selection_gap", "n/a", "FLAG",
+           "no component is complete, so there is no stable base to compare against")
+for c in intermittent:
+    base = cai[always_on].mean(axis=1)
+    have = cai[c].notna()
+    gap = float(base[have].mean() - base[~have].mean())
+    record(f"selection_gap_{c}", f"{gap:+.3f} SD",
+           "FLAG" if abs(gap) > 0.15 else "PASS",
+           f"mean of the always-on components on days {c} exists vs does not")
+if not intermittent:
+    record("component_selection_gap", "none", "PASS",
+           f"every component in the index is complete: {present_cols}")
+
+base = cai[always_on].mean(axis=1)
 ref = base.loc[ANALYSIS_START:"2019-12-31"]
 alt = (base - ref.mean()) / ref.std(ddof=0)
 record("corr_cai_d_vs_always_on_only", f"{cai['cai_d'].corr(alt):.3f}", "INFO",
-       "dropping trends_victims barely changes the ranking")
+       "index vs the complete-components-only alternative: ranking")
 record("high_days_as_built_vs_always_on", f"{int(cai['high'].sum())} vs {int((alt > 1).sum())}",
-       "INFO", "but it changes how many days clear the threshold")
+       "INFO", "index vs that alternative: days clearing the threshold")
 
 # ---------------------------------------------------------------------------
-print("\n== 5-6. per-victim Wikipedia pageviews ==")
-pv = pd.read_csv(DATA_REFERENCE / "wikipedia_pageviews_victims.csv", parse_dates=["date"])
-res = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv")
+print("\n== 5-6. Wikipedia basket coverage ==")
+# This block used to audit wikipedia_pageviews_victims.csv (the LEGACY top-150
+# basket, selected by Twitter volume and spanning only 2017-2020) and to read a
+# tweet_volume column that no longer exists, so it raised KeyError and checks
+# 5-12 never ran. Worse than the crash: even working, it audited a retired
+# artifact, so the live wiki_ext basket could have been broken - as it was, by
+# the rename defect (T12) - with this reporting nothing.
+#
+# It now audits the basket the index is actually built from.
 reg = pd.read_csv(DATA_REFERENCE / "victim_registry.csv", parse_dates=["date"])
-# A name can appear more than once (97 namesakes in the registry), so keep every
-# killing date per name and treat a label as valid if ANY of them fits the window.
 killed_all = reg.groupby("name")["date"].apply(list)
-killed = reg.drop_duplicates("name").set_index("name")["date"]   # for single-date reporting
+killed = reg.drop_duplicates("name").set_index("name")["date"]
 
-per = pv.groupby("name").agg(days=("date", "size"), first=("date", "min"), views=("views", "sum"))
-per["killed"] = per.index.map(killed)
-# A series is legitimately short when the article postdates the killing. It is
-# suspect when the victim died long before the window but the series is tiny.
-per["expected_from"] = per["killed"].clip(lower=pd.Timestamp(ANALYSIS_START))
-per["expected_days"] = (pd.Timestamp(ANALYSIS_END) - per["expected_from"]).dt.days + 1
-per["shortfall"] = per["expected_days"] - per["days"]
-suspect = per[(per["days"] < 30) & (per["expected_days"] > 365)]
+used = pd.read_csv(DATA_REFERENCE / "wiki_ext_basket_used.csv")
+# Death dates come from basket_decisions.csv, the FINALISED basket, where every
+# article carries a date from Wikidata or the registry. wiki_basket.csv is the
+# raw candidate list and leaves 39 of these 121 blank, because its date comes
+# from an exact-string registry match that middle names and suffixes defeat
+# ("Tamir Rice" vs the registry's "Tamir E. Rice") - finding T13. Reading the
+# candidate list here produced five coverage flags that were purely an artifact
+# of the missing dates.
+dec = pd.read_csv(DATA_REFERENCE / "basket_decisions.csv", parse_dates=["death_date"])
+death_by_article = dec.dropna(subset=["death_date"]).set_index("article")["death_date"]
 
-record("wiki_victims_resolved", f"{res['article'].notna().sum()} / {len(res)}", "INFO",
-       f"{res.loc[res['article'].notna(), 'tweet_volume'].sum() / res['tweet_volume'].sum():.1%} of tweet volume")
-record("wiki_series_suspiciously_short", len(suspect),
-       "FLAG" if len(suspect) else "PASS",
-       "victim died >1yr before window end but series has <30 days")
-for nm, r in suspect.iterrows():
-    art = res.loc[res["name"] == nm, "article"]
-    record(f"  suspect_{nm.replace(' ', '_')}", f"{int(r['days'])}d / {int(r['views'])} views",
-           "FLAG", f"killed {r['killed'].date()}, resolved to {art.iloc[0] if len(art) else '?'}")
+# The denominator is the span wiki_ext ACTUALLY covers, read from the component
+# file, not a window literal. Wikimedia's per-article daily pageviews begin
+# 2015-07-01, so an earlier expectation would flag every article at once; and
+# comparing a full-span day count against a discovery-window expectation, as an
+# earlier version of this check did, is wrong in both directions.
+_wx = comp[comp["component"] == "wiki_ext"]["date"]
+WIKI_FROM, WIKI_TO = _wx.min(), _wx.max()
 
-legit = per[(per["days"] < per["expected_days"]) & (per["killed"] > pd.Timestamp(ANALYSIS_START))]
-record("wiki_series_short_but_legitimate", len(legit), "PASS",
-       "article postdates the killing; correct behaviour, not a gap")
+per = used.set_index("article").copy()
+per["killed"] = per.index.map(death_by_article)
+per["expected_from"] = per["killed"].clip(lower=WIKI_FROM)
+per["expected_days"] = (WIKI_TO - per["expected_from"]).dt.days + 1
+per["coverage"] = per["days"] / per["expected_days"]
 
-# ---------------------------------------------------------------------------
+record("wiki_basket_span", f"{WIKI_FROM.date()}..{WIKI_TO.date()}", "INFO",
+       "realised wiki_ext span; the denominator for coverage below")
+no_date = int(per["killed"].isna().sum())
+record("wiki_articles_without_death_date", no_date,
+       "FLAG" if no_date else "PASS",
+       "coverage cannot be assessed without one; not assumed to be fine")
+
+record("wiki_basket_articles", f"{int(per['ok'].sum())} / {len(per)}", "INFO",
+       "articles with a usable series / articles attempted")
+record("wiki_basket_titles_per_article",
+       f"{per['n_titles'].mean():.2f} mean, {int(per['n_titles'].max())} max", "INFO",
+       "historical titles summed per article (rename recovery, T12)")
+
+# THE COVERAGE PROPERTY the rename defect violated: before the fix, 57 of 117
+# articles sat under 60% of expected days and nothing said so.
+low = per[(per["coverage"] < 0.60) & (per["expected_days"] > 365) & per["ok"]
+          & per["killed"].notna()]
+record("wiki_articles_below_60pct_coverage", len(low),
+       "FLAG" if len(low) else "PASS",
+       "usable article, >1yr expected, under 60% of expected days")
+for art, r in low.nlargest(10, "expected_days").iterrows():
+    record(f"  low_cov_{art}", f"{r['coverage']:.0%} ({int(r['days'])}d)", "FLAG",
+           f"expected {int(r['expected_days'])}d from "
+           f"{pd.Timestamp(r['expected_from']).date()} (died "
+           f"{pd.Timestamp(r['killed']).date()})")
+
+nots = per[~per["ok"]]
+record("wiki_basket_unusable", len(nots), "INFO" if len(nots) else "PASS",
+       "reasons: " + str(nots["reason"].value_counts().to_dict()) if len(nots) else "")
+
+# The legacy per-victim file is still live for ONE thing: the race-split
+# components in 12_build_cai.py. Audit it as that input and nothing more.
+pv = pd.read_csv(DATA_REFERENCE / "wikipedia_pageviews_victims.csv", parse_dates=["date"])
+pv_named = pv["name"].map(lambda n: n in killed_all.index)
+record("racesplit_input_span", f"{pv['date'].min().date()}..{pv['date'].max().date()}",
+       "FLAG" if pd.Timestamp(pv["date"].min()) > pd.Timestamp(ANALYSIS_START)
+       else "PASS",
+       f"legacy top-150 file; {pv['name'].nunique()} victims, "
+       f"{pv_named.mean():.0%} matched to the registry")
+
 print("\n== 7-8. registry and demographics ==")
 record("registry_rows", f"{len(reg):,}", "PASS", f"{reg['date'].min().date()}..{reg['date'].max().date()}")
 record("registry_duplicate_rows", int(reg.duplicated().sum()),

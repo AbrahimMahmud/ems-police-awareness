@@ -36,7 +36,7 @@ difference is reported so the choice is inspectable rather than asserted.
 
 Outputs:
   data/reference/article_title_map.csv   article, title, days, views, first, last
-  outputs/tables/rename_recovery.csv     per-article before/after coverage
+  data/reference/rename_recovery.csv     per-article before/after coverage
 """
 
 import argparse
@@ -49,7 +49,7 @@ import urllib.request
 
 import pandas as pd
 
-from config import DATA_REFERENCE, OUTPUTS_TABLES
+from config import DATA_REFERENCE
 
 UA = {"User-Agent": "ems-police-awareness-research/1.0 (academic; contact via repository)"}
 API = "https://en.wikipedia.org/w/api.php"
@@ -76,7 +76,17 @@ def api(**params):
         try:
             with urllib.request.urlopen(urllib.request.Request(url, headers=UA),
                                         timeout=45) as r:
-                return json.load(r)
+                d = json.load(r)
+            # The API answers 200 with an {"error": ...} body for a bad
+            # parameter mix. Returning that dict makes a rejected query
+            # indistinguishable from a page that simply has no data - which is
+            # exactly how the first version of first_revision() reported "not
+            # dated" for all 559 titles while the API was saying "rvlimit may
+            # only be used on a single page".
+            if "error" in d:
+                raise RuntimeError(f"wikipedia api error: {d['error'].get('code')}: "
+                                   f"{d['error'].get('info')}")
+            return d
         except urllib.error.HTTPError as e:
             if e.code in (429, 503):
                 time.sleep(int(e.headers.get("Retry-After") or 0) or min(60, 5 * 2 ** attempt))
@@ -113,6 +123,61 @@ def pageviews(title):
     raise RuntimeError(f"could not fetch {title}")
 
 
+def first_revision(titles):
+    """Timestamp of each page's earliest revision, up to 50 pages per call.
+
+    WHY IT IS NEEDED. After the rename fix, 28 basket articles still have a
+    pageview series that starts more than 90 days after the victim died. Two
+    very different things look identical in that statistic:
+
+      the article did not exist yet   -> correct; there was no attention to record
+      a rename is still eating history -> the defect T12 was supposed to close
+
+    Without a creation date the coverage check cannot tell them apart, so it
+    would either flag 28 correct articles or excuse a live defect. With one,
+    expected coverage runs from max(death, creation, 2015-07-01) and any
+    remaining lag is real.
+
+    A page move takes the history with it, so the OLD title becomes a redirect
+    page created on the move date. The earliest first revision ACROSS a victim's
+    titles is therefore the date the topic first had an article, which is what
+    the expectation needs.
+    """
+    out, failed = {}, []
+    for n, t in enumerate(titles, 1):
+        # ONE title per call: rvdir=newer and rvlimit are rejected outright for
+        # multiple titles, so there is no batched form of this query.
+        try:
+            d = api(prop="revisions", rvlimit=1, rvdir="newer", rvprop="timestamp",
+                    titles=t.replace("_", " "))
+        except RuntimeError as e:
+            failed.append((t, str(e)))
+            continue
+        for pg in d.get("query", {}).get("pages", {}).values():
+            revs = pg.get("revisions") or []
+            if revs:
+                out[pg["title"].replace(" ", "_")] = revs[0]["timestamp"][:10]
+        time.sleep(0.2)
+        if n % 100 == 0:
+            print(f"    {n}/{len(titles)} titles", flush=True)
+    for t, e in failed:
+        print(f"    creation date unresolved for {t}: {e}")
+    return out
+
+
+def add_creation_dates(tm):
+    """Attach each title's creation date to the title map."""
+    titles = sorted(set(tm["title"]))
+    print(f"resolving first revision for {len(titles)} titles")
+    created = first_revision(titles)
+    tm["created"] = tm["title"].map(created)
+    n = tm["created"].notna().sum()
+    print(f"  {n}/{len(tm)} titles dated")
+    per = tm.dropna(subset=["created"]).groupby("article")["created"].min()
+    print(f"  {len(per)} articles have an earliest-title creation date")
+    return tm
+
+
 def key_words(title):
     w = re.sub(r"[^a-z ]", " ", title.replace("_", " ").lower()).split()
     return {x for x in w if x not in STOPWORDS and len(x) > 2}
@@ -135,7 +200,20 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--sources", nargs="*", default=[
         "wikipedia_article_resolution.csv", "wiki_nyc_articles.csv"])
+    ap.add_argument("--creation-only", action="store_true",
+                    help="backfill creation dates on the existing title map "
+                         "without refetching any pageview series")
     args = ap.parse_args()
+
+    if args.creation_only:
+        f = DATA_REFERENCE / "article_title_map.csv"
+        if not f.exists():
+            raise SystemExit(f"{f.name} does not exist; run without "
+                             "--creation-only first")
+        tm = add_creation_dates(pd.read_csv(f))
+        tm.to_csv(f, index=False)
+        print(f"wrote {f}")
+        return
 
     arts = []
     for src in args.sources:
@@ -198,11 +276,13 @@ def main():
                   f"{canonical_views:>9,} -> {total:>10,} views "
                   f"({gain:.1f}x)" if canonical_views else "")
 
-    tm = pd.DataFrame(rows)
+    tm = add_creation_dates(pd.DataFrame(rows))
     tm.to_csv(DATA_REFERENCE / "article_title_map.csv", index=False)
     rep = pd.DataFrame(report)
-    OUTPUTS_TABLES.mkdir(parents=True, exist_ok=True)
-    rep.to_csv(OUTPUTS_TABLES / "rename_recovery.csv", index=False)
+    # data/reference/, not outputs/tables/: outputs are gitignored and
+    # regenerable, and paper claims rest on these numbers, so they have to
+    # survive a fresh clone.
+    rep.to_csv(DATA_REFERENCE / "rename_recovery.csv", index=False)
 
     multi = rep[rep["n_titles"] > 1]
     print(f"\n{len(tm)} title-series over {rep.shape[0]} articles")

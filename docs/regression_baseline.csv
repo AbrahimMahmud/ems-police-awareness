@@ -32,4 +32,8 @@ E.attribution_lookback,E2,attribution lookback >= 60 days,PASS,ATTRIBUTION_LOOKB
 O.ems_complete,O5,EMS extract covers the full source,PASS,"60 pages, last ends 2026-06-30, complete"
 O.panel_exists,O5,panel_cd_day.parquet exists,PASS,present
 O.dropna_groupby,O4,missing-district rows not silently dropped,PASS,dropna=False
-M.register_sync,O5,register and suite have not drifted apart,PASS,44/62 findings tagged; all 31 blocking covered
+V.sources_verified,"X8,X14",every source verified after its last write,PASS,"26 artifacts, all verified after their last write"
+V.no_duplicate_source_ids,"X8,X13","one row per source id, no collisions",PASS,"9 rows, 9 ids, no collisions"
+V.claims_reproduce,X14,every claimed number recomputes from its artifact,PASS,29 claims recomputed and found verbatim in the document
+V.links_resolve,X14,every endpoint has a dated result,PASS,"15 endpoints, last result recorded; 1 unreachable from here (['S4'])"
+M.register_sync,O5,register and suite have not drifted apart,PASS,47/66 findings tagged; all 33 blocking covered

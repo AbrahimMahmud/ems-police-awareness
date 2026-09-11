@@ -55,15 +55,14 @@ spread over a minimum span, and ABORTS with the diagnostics rather than guessing
 Output: data/reference/cai_trends_daily.csv (date, component, value)
 """
 
-import hashlib
 import time
-from datetime import datetime, timezone
 
 import numpy as np
 import pandas as pd
 from pytrends.request import TrendReq
 
 from config import DATA_REFERENCE
+from provenance import log_source
 
 # One payload, common normalisation. See the docstring for what is excluded.
 TOPIC = "/m/016497"                      # Google Trends topic entity "Police brutality"
@@ -183,16 +182,12 @@ print(f"\nstitch links: {len(diag)} boundaries, "
 
 # Provenance records REALISED coverage, not the intended span (finding T7).
 realised = out.groupby("component")["date"].agg(["min", "max", "count"])
-log = pd.DataFrame([{
-    "source_id": "S12",
-    "description": (f"Google Trends daily, basket {TERMS} summed on one payload scale, "
+log_source(
+    "S12",
+    (f"Google Trends daily, basket {TERMS} summed on one payload scale, "
                     f"US + NYC DMA 501, stitched {CHUNK}d/{OVERLAP}d through-origin; "
                     f"realised " + "; ".join(
                         f"{c}={r['min'].date()}..{r['max'].date()} n={r['count']}"
                         for c, r in realised.iterrows())),
-    "url": "https://trends.google.com (via pytrends)",
-    "accessed_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-    "sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "output_file": str(path),
-}])
-lp = DATA_REFERENCE / "data_sources.csv"
-log.to_csv(lp, mode="a", header=not lp.exists(), index=False)
+    "https://trends.google.com (via pytrends)",
+    out_file=path)

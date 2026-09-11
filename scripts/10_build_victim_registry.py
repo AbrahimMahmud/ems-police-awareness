@@ -8,14 +8,13 @@ belongs to whom.
 Output: data/reference/victim_registry.csv (one row per killing, 2013-2024)
 """
 
-import hashlib
 import io
 import urllib.request
-from datetime import datetime, timezone
 
 import pandas as pd
 
 from config import DATA_REFERENCE, SHOOTINGS_DB_CSV
+from provenance import log_source
 
 MPV_URL = "https://mappingpoliceviolence.us/s/MPVDatasetDownload.xlsx"
 UA = {"User-Agent": "ems-police-awareness-research/1.0 (academic research)"}
@@ -54,14 +53,8 @@ reg["wiki_article"] = reg["name"].str.strip().str.lower().map(art)
 out = DATA_REFERENCE / "victim_registry.csv"
 reg.to_csv(out, index=False)
 
-# provenance row
-row = pd.DataFrame([{
-    "source_id": "S10", "description": "Mapping Police Violence dataset (police killings 2013+)",
-    "url": MPV_URL, "accessed_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-    "sha256": hashlib.sha256(raw).hexdigest(), "output_file": str(out),
-}])
-log = DATA_REFERENCE / "data_sources.csv"
-row.to_csv(log, mode="a", header=not log.exists(), index=False)
+log_source("S10", "Mapping Police Violence dataset (police killings 2013+)",
+           MPV_URL, payload_bytes=raw, out_file=out)
 
 shoot_2017_20 = reg[reg["date"].between("2017-01-01", "2020-12-31")]
 print(f"Registry: {len(reg):,} killings 2013-2024 | race codes: {reg['race_code'].value_counts().to_dict()}")

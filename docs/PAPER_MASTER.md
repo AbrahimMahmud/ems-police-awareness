@@ -170,7 +170,7 @@ Each component is log1p-transformed and standardised on the 2017-01-01→2019-12
 reference window (deliberately excluding 2020). A day is scored **only if every
 component is present**; the composite is then **re-standardised after averaging**.
 
-Current state: **3,472 scored days**, mean `-0.000000`, SD `1.000000` on the
+Current state: **3,472 scored days**, mean `0.000000`, SD `1.000000` on the
 reference window, asserted in the build rather than assumed.
 
 ### 4.1 The article basket — which victims count
@@ -221,23 +221,40 @@ confirmatory run. It is disclosed in the `CONFIRMATION_PLAN.md` addendum.
 fixed level to a **fixed within-year quantile**, because a fixed cut is not a
 constant stringency: it selected 10.7%–66.4% of days depending on the year.
 
-Status: **implementation pending.** Frozen list = 70 episodes; the current rebuilt
-list = 94 with only 6 shared start dates.
+Status: **implemented** (`scripts/13_extension_episodes.py`, 2026-09-10). Frozen
+list = 70 episodes; rebuilt list = 72 episodes. The stringency really is constant
+now — the rule selects 10.1%–10.3% of days in every year — and no episode spans
+more than 14 days from start to end, against 235 under the regime rule. The
+frozen file stays byte-identical on disk; the rebuilt list is written separately
+to `data/reference/confirmation_episodes_rebuilt.csv`, and the diff between them
+is published as a disclosed deviation.
 
 ### 4.3 What the index can and cannot claim
 
-`trends_nyc` is the only nominally NYC-local component, and 79% of its days are
-exactly zero — Google's low-volume reporting floor, rising from 55% censored in
-2020 to 98% in 2024.
+`trends_nyc` was the only nominally NYC-local component, and it is censored:
+42.6% of its days are exactly zero — Google's low-volume reporting floor — rising
+from 26% censored in 2020 to 71% in 2024.
 
-**DECIDED 2026-09-10:** refetch with the "Police brutality" topic entity and a
-wider term set so the series clears the floor. This also removes the 4.48×
-stitching break as a side effect, because that break is caused by an all-zero
-overlap window.
+**The refetch helped and did not solve it.** On 2026-09-10 the series was refetched
+with the "Police brutality" topic entity and a wider term basket, which cut the
+zero share from 79% to 42.6% and removed the 4.48× stitching break (that break was
+caused by an all-zero overlap window). But on 26–71% of days, depending on the
+year, the series is still not a level at all: it is an indicator of clearing
+Google's reporting floor. The censoring is worst in 2021–2024, which is exactly
+where the exposed confirmation stratum sits, so it is not a limitation we can
+caveat and move past.
+
+**DECIDED, after the refetch:** retire `trends_nyc` from CAI-D and replace it with
+`wiki_nyc`, built from Wikipedia pageviews on NYC police-incident articles
+(`scripts/28_build_nyc_attention.py`). Pageviews are a census, not a sampled index
+rescaled to 0–100, so `wiki_nyc` has **no censored days in any year**. The cost is
+a thin basket (§9), which bounds the locality claim; the benefit is that the
+city-local component is a measurement rather than a threshold indicator.
 
 **Do not claim this is "a return to the frozen spec."** The design document names
-a topic *and* victim-name terms; we implement the first and drop the second. It is
-a corrected measurement, disclosed as such.
+a topic *and* victim-name terms; we implemented the first, dropped the second, and
+have now replaced the component altogether. It is a corrected measurement,
+disclosed as such.
 
 ---
 
@@ -264,12 +281,28 @@ was in the sample. Change the window and the same real attention gets a differen
 number — the coefficient moves for reasons unrelated to EMS calls. Demonstrated by
 simulation (§7.4) rather than on the retired series.
 
-**The Wikipedia rename bug.** Resolving each victim to their article's *current*
-canonical title discarded everything before the article was renamed — including the
-attention spike at the killing, which is the entire signal. `Shooting_of_Walter_Scott`
-returns 3,472 days / 1,950,646 views; `Killing_of_Walter_Scott` returns 1,370 days
-/ 231,231. **15 of 45 articles** showed this. Fix: sum pageviews across each
-article's historical titles.
+**The Wikipedia rename bug.** Wikimedia records pageviews per *title* and does not
+carry them across a page move, so resolving each victim to their article's current
+canonical title discarded everything before the rename — including the attention
+spike at the killing, which is the entire signal. `Shooting_of_Alton_Sterling`
+holds 1,861,004 views from 2016-07-06; `Killing_of_Alton_Sterling`, the title the
+basket used, holds 128,855 from 2021-04-25. That is 6.5% of his attention, and
+nothing at all from the week he was killed.
+
+This was diagnosed in the first audit and a fix was written — and **never applied
+to the production basket**, so the defect was still corrupting every CAI-D value a
+day after the audit that found it. Historical titles are now discovered from the
+MediaWiki redirects API rather than guessed from prefixes, and summed. That
+returned **79,082,746 views** across **106 of 127 articles**: Michael Brown 13.7×,
+Philando Castile 8.4×, Breonna Taylor 7.4×, Tamir Rice 6.1×, Eric Garner 4.5×.
+119 of the 121 basket articles now return a usable series.
+
+**The validation that matters is the content, not the size.** The top attention day
+of the decade is now 2016-07-08 — Alton Sterling and Philando Castile — ahead of
+the Floyd sequence, and the index peak moved from 2021-04-21 to 2020-05-30. Before
+the fix, Sterling and Castile contributed *nothing* to the week they were killed,
+which is why Sandra Bland's **anniversary** appeared to dominate July 2016. Both
+artifacts are gone.
 
 **The index scaling defect.** The index was the mean of whatever components existed
 that day. How many existed swung from 2 to 4 across the decade, and the spread of a
@@ -317,8 +350,10 @@ direction as our hypothesis.** It does not exist anywhere in the discovery windo
 which is why the discovery estimates are clean — and why the 2021–2024 confirmation
 arm requires the control.
 
-17 of 31 precincts have low-confidence adoption dates. That belongs in the
-limitations, not a footnote.
+17 of the 31 precinct dates are low confidence, 11 medium, 3 high. A pre-registered
+control resting on low-confidence dates belongs in the limitations, not a footnote;
+it is carried as exposure **bounds** rather than a point date for exactly that
+reason.
 
 ### 5.6 The registry omits the events the paper is about (finding T9)
 
@@ -437,7 +472,7 @@ currently assumed rather than estimated. Under investigation.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check. **30 checks, 25 passing.** States are PASS / FAIL / **BLOCKED** / ERROR,
+check. **38 checks, 37 passing.** States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 **The most transferable lesson in this project:** at least fifteen checks were
@@ -455,6 +490,72 @@ found that could pass for the wrong reason —
 proves the code *says* the right thing, not that the output *has* the right
 property. And a new check is not done until someone has actively tried to defeat
 it.
+
+### 7.6 The source and claims registers
+
+The recurring failure in this project is not a wrong number. It is a number that
+*reads as established because nobody re-checked it*. So three registers, all
+committed, all machine-verified by `scripts/31_verify_sources.py`:
+
+| Register | What it holds |
+|---|---|
+| `data/reference/source_register.json` | what every source **is** — publisher, endpoint, what we take, realised coverage, terms, known flaws. `docs/SOURCE_REGISTER.md` is **generated** from it, so the document a reader reviews and the scan a machine runs cannot drift apart. |
+| `docs/CLAIMS_REGISTER.csv` | every number this document claims, mapped to the artifact and the expression that produces it. |
+| `data/reference/source_verification_log.csv` | **append-only.** Every result ever recorded, including failures. |
+
+**A failed scan is a recorded result, not a retry-until-green.** Statuses are
+kept distinct: `verified`, `mismatch`, `absent`, `failed`, `unreachable`,
+`unverifiable`, `template`, `skipped`. *Unverifiable* is a real, permanent
+category — the retired Twitter files can never be re-checked and must say so
+rather than sitting silently absent. *Unreachable* says something about our
+access, not about the source: a rate limit or this container's egress policy is
+never recorded as a verdict on an endpoint.
+
+Claims are checked **in both directions**: the scan recomputes the value from
+the artifact, renders it into the registered template, and requires the result
+to appear verbatim in the document. Edit the document and the text is no longer
+found; rebuild the data and the value no longer matches. A number that cannot be
+regenerated is a check failure, not a typo. Every claim in this document is
+registered and currently reproduces.
+
+Four checks hold it in place — `V.sources_verified` (which **BLOCKS, never
+passes, when no scan has run**), `V.no_duplicate_source_ids`,
+`V.claims_reproduce`, `V.links_resolve` — and each was defeated on purpose
+before being accepted: a claim edited to a wrong value fails; truncating the
+underlying data fails; a deliberately dead URL fails; a returning id collision
+fails; a second script appending to the register fails; an artifact touched
+after its scan fails; and deleting the log **blocks** rather than passing.
+
+**What building it found.** The register was not bookkeeping — writing it
+surfaced six defects, none of which was visible in any artifact:
+
+- `data_sources.csv` held **21 rows under 9 ids**, because seven scripts each
+  appended with `mode="a"` and nothing ever re-keyed.
+- Two of those ids **collided**: `16_bheard_exposure.py` emitted S10 and S11,
+  which belong to Mapping Police Violence and the CAI components. The CSV had
+  been hand-renumbered to hide it while the script was left alone, so the
+  collision would have returned on the next run — and with one row per id it
+  would have silently overwritten two other sources' provenance.
+- The `sha256` column meant **two different things**: the network payload for
+  S7/S10, the artifact for the rest. Anything comparing it to a file would have
+  called the ACS and MPV artifacts corrupt.
+- **Two artifact hashes had genuinely stopped matching.** One was repaired by
+  re-running its fetch. The other, `wikipedia_pageviews_victims.csv`, **cannot
+  be**: its basket was chosen by the retired Twitter measure, so the artifact
+  behind the race-split components cannot be regenerated from live sources at
+  all. Its bytes are pinned with a dated reason instead — and that is a
+  limitation of the paper, not a bookkeeping note.
+- Derived CSVs were **not byte-reproducible**: re-running the crosswalk on
+  identical counts changed 72 lines and the SHA256, differing only in the 17th
+  significant digit of a float. A hash that changes when nothing changed is how
+  a reader learns to ignore hash mismatches.
+- `20_data_audit.py` — one of the two commands this project runs as its gate —
+  **had been raising `FileNotFoundError` on its first statement** ever since
+  anchoring was retired, and then `KeyError` twice more. It produced no audit at
+  all, while "audit flags non-increasing" was being recorded as satisfied. It
+  now runs: **45 checks, 16 flagged.** Its Wikipedia block was also auditing the
+  retired top-150 basket rather than the live one, so the rename defect could
+  have survived it untouched.
 
 ---
 

@@ -13,15 +13,14 @@ Outputs: data/reference/cai_trends_anchored.csv (trends_us, trends_nyc anchored,
          trends_victims), provenance row appended.
 """
 
-import hashlib
 import time
-from datetime import datetime, timezone
 
 import numpy as np
 import pandas as pd
 from pytrends.request import TrendReq
 
 from config import DATA_REFERENCE
+from provenance import log_source
 
 TOPIC = "police brutality"
 GEOS = {"trends_us": "US", "trends_nyc": "US-NY-501"}
@@ -104,12 +103,7 @@ for dt, v in victim_daily.items():
 out = pd.DataFrame(rows)
 path = DATA_REFERENCE / "cai_trends_anchored.csv"
 out.to_csv(path, index=False)
-log = pd.DataFrame([{
-    "source_id": "S13", "description": "Trends weekly-anchored daily (US, NYC) + victim-name terms in topic units",
-    "url": "https://trends.google.com (via pytrends)",
-    "accessed_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-    "sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "output_file": str(path),
-}])
-lp = DATA_REFERENCE / "data_sources.csv"
-log.to_csv(lp, mode="a", header=not lp.exists(), index=False)
+log_source("S13",
+           "Trends weekly-anchored daily (US, NYC) + victim-name terms in topic units",
+           "https://trends.google.com (via pytrends)", out_file=path)
 print(f"\nWrote {path}: {len(out):,} rows, components: {sorted(out['component'].unique())}")

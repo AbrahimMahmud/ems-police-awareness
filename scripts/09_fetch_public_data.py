@@ -13,35 +13,17 @@ Outputs (committed, small):
   data/reference/wikipedia_pageviews_victims.csv
 """
 
-import hashlib
 import io
 import json
 import time
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
 
 import pandas as pd
 
 from config import DATA_REFERENCE, TWEETS_PER_VICTIM_CSV, VALID_CDS
+from provenance import log_source
 
-SOURCES_LOG = DATA_REFERENCE / "data_sources.csv"
-
-
-def log_source(source_id, description, url, payload_bytes=None, out_file=None):
-    """Append a provenance row (see docs/DATA_PROVENANCE.md) with content hash."""
-    if payload_bytes is None and out_file is not None:
-        payload_bytes = open(out_file, "rb").read()
-    row = pd.DataFrame([{
-        "source_id": source_id,
-        "description": description,
-        "url": url,
-        "accessed_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "sha256": hashlib.sha256(payload_bytes).hexdigest() if payload_bytes else "",
-        "output_file": str(out_file) if out_file else "",
-    }])
-    header = not SOURCES_LOG.exists()
-    row.to_csv(SOURCES_LOG, mode="a", header=header, index=False)
 
 UA = {"User-Agent": "ems-police-awareness-research/1.0 (academic research)"}
 BORO = {"MN": 1, "BX": 2, "BK": 3, "QN": 4, "SI": 5}

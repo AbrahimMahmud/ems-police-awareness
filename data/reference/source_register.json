@@ -1,0 +1,429 @@
+{
+  "_README": [
+    "The definitive, machine-readable list of every data source this project uses.",
+    "docs/SOURCE_REGISTER.md is GENERATED from this file plus the verification log,",
+    "so the document and the scan can never disagree - which is the failure this",
+    "register exists to prevent. Edit this file, then run:",
+    "    python scripts/31_verify_sources.py --scan",
+    "",
+    "status:  live        currently feeds the analysis",
+    "         retired     deliberately no longer used; kept for the record",
+    "         unverifiable  cannot be re-checked from this repository, ever",
+    "                       (supplied privately, or the upstream service is gone)",
+    "",
+    "Every claim of fact in an entry must be checkable. Coverage numbers are",
+    "REALISED - measured from the artifact - never intended."
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "name": "NYC EMS Incident Dispatch Data",
+      "status": "live",
+      "publisher": "Fire Department of the City of New York, via NYC Open Data",
+      "dataset_id": "76xm-jjuj",
+      "landing_page": "https://data.cityofnewyork.us/Public-Safety/EMS-Incident-Dispatch-Data/76xm-jjuj",
+      "endpoints": [
+        "https://data.cityofnewyork.us/resource/76xm-jjuj.csv"
+      ],
+      "access": "SODA API, 7 columns, paged, by scripts/00b_download_ems_extract.py (S1b)",
+      "we_take": "incident_datetime, communitydistrict, final_call_type, disposition and identifiers; aggregated to community-district x day x call type",
+      "role": "outcome - every EMS call count and share",
+      "artifacts": [
+        "data/processed/ems_cd_day_calltype.parquet",
+        "data/processed/ems_citywide_day_trends.parquet"
+      ],
+      "cite_as": "Fire Department of the City of New York. \"EMS Incident Dispatch Data.\" NYC Open Data. https://data.cityofnewyork.us/d/76xm-jjuj",
+      "terms_url": "https://www.nyc.gov/home/terms-of-use.page",
+      "known_flaws": [
+        "The dataset is updated in place by NYC OpenData, so a re-download is not byte-reproducible; the row count and SHA256 date our extract.",
+        "Mid-2018 recode of the EDPC call type (RECORD item 19.1) - must be disclosed in the paper.",
+        "EDPM is born on 2021-06-01, the exact day B-HEARD launches, and T-EDP is born inside the largest discovery episode (finding O3)."
+      ]
+    },
+    {
+      "id": "S1b",
+      "name": "NYC EMS dispatch extract (the SODA fetch of S1)",
+      "status": "live",
+      "publisher": "Fire Department of the City of New York, via NYC Open Data",
+      "endpoints": [
+        "https://data.cityofnewyork.us/resource/76xm-jjuj.csv"
+      ],
+      "access": "scripts/00b_download_ems_extract.py",
+      "we_take": "the full 2015-2024 span at community-district x day x call-type granularity",
+      "role": "outcome",
+      "artifacts": [
+        "data/processed/ems_cd_day_calltype.parquet"
+      ],
+      "known_flaws": [
+        "Replaces an earlier user-local 6.5 GB CSV export whose provenance could not be pinned."
+      ]
+    },
+    {
+      "id": "S2",
+      "name": "Twitter per-victim daily counts, 2017-2020",
+      "status": "unverifiable",
+      "publisher": "supplied privately by Prof. Justin Steil (MIT DUSP)",
+      "endpoints": [],
+      "access": "file handed over; no endpoint, no collection metadata",
+      "we_take": "nothing - retired from the analysis",
+      "role": "retired awareness measure; the bridge exhibit is now a simulation (25_zscore_simulation.py)",
+      "artifacts": [
+        "data/raw/211118_tweet_count_name_date.csv"
+      ],
+      "known_flaws": [
+        "Collection methodology (collector, query terms, API, filtering) was never documented and the Twitter/X academic API no longer exists, so it can never be reconstructed or re-verified.",
+        "The file is not present in this repository."
+      ]
+    },
+    {
+      "id": "S3",
+      "name": "Twitter daily aggregate counts, 2017-2020",
+      "status": "unverifiable",
+      "publisher": "supplied privately by Prof. Justin Steil (MIT DUSP)",
+      "endpoints": [],
+      "access": "file handed over",
+      "we_take": "nothing - retired",
+      "role": "retired",
+      "artifacts": [
+        "data/raw/220126_final_daily_tweet_count.csv"
+      ],
+      "known_flaws": [
+        "Verified in an earlier session to be an exact daily aggregation of S2 (1,459 of 1,461 days identical, 2 off by one), so S2 and S3 are ONE dataset at two granularities, not two sources.",
+        "The file is not present in this repository."
+      ]
+    },
+    {
+      "id": "S4",
+      "name": "Washington Post Fatal Force database (cleaned copy)",
+      "status": "retired",
+      "publisher": "The Washington Post; cleaned copy supplied by Prof. Steil",
+      "endpoints": [
+        "https://github.com/washingtonpost/data-police-shootings"
+      ],
+      "access": "file handed over; the public original is the GitHub repository",
+      "we_take": "victim race attribution, in the retired race-split awareness indices",
+      "role": "superseded by S10 (Mapping Police Violence), which covers all causes of death rather than shootings only",
+      "artifacts": [
+        "data/raw/fatalpoliceshootingsCLEANED.csv"
+      ],
+      "cite_as": "The Washington Post. \"Fatal Force\" database. 2015-2021.",
+      "known_flaws": [
+        "v1 schema, 2015-01 to 2021-04 only - it cannot cover the confirmation window.",
+        "Shootings only, so it omits the custody and taser deaths that are the most on-hypothesis events (finding T9).",
+        "The cleaned copy differs from the public original by unrecorded edits; the file is not present in this repository."
+      ]
+    },
+    {
+      "id": "S5",
+      "name": "2010 Census SF1 demographic profile by community district",
+      "status": "retired",
+      "publisher": "NYC Department of City Planning (Census 2010 SF1)",
+      "endpoints": [],
+      "access": "workbook in the repository",
+      "we_take": "community-district demographics, 2010 vintage",
+      "role": "superseded by S7 as the primary vintage; kept as a heterogeneity robustness comparison",
+      "artifacts": [
+        "data/raw/sf1_dp_cd_demoprofile.xlsx"
+      ],
+      "known_flaws": [
+        "2010 vintage is 5-14 years before the study period."
+      ]
+    },
+    {
+      "id": "S6",
+      "name": "Victim curation table (manual)",
+      "status": "retired",
+      "publisher": "constructed in-project from public news reporting; per-row source notes in the file",
+      "endpoints": [],
+      "access": "committed CSV",
+      "we_take": "race and incident-type attribution for tweet volume unmatched to S4",
+      "role": "retired with the Twitter measure",
+      "artifacts": [
+        "data/reference/victim_curation_table.csv"
+      ],
+      "known_flaws": [
+        "Manual, and low-confidence rows were never verified by a second reader."
+      ]
+    },
+    {
+      "id": "S7",
+      "name": "ACS 2015-2019 5-year demographic profile, NTA2020 level",
+      "status": "live",
+      "publisher": "NYC Department of City Planning (official ACS tabulation)",
+      "endpoints": [
+        "https://s-media.nyc.gov/agencies/dcp/assets/files/excel/data-tools/census/acs/demo_2019_acs5yr_nta.xlsx"
+      ],
+      "access": "scripts/09_fetch_public_data.py",
+      "we_take": "population and race shares per NTA2020, aggregated to the 59 community districts",
+      "role": "period-matched demographics for heterogeneity",
+      "artifacts": [
+        "data/reference/acs_2019_cd_demographics.csv"
+      ],
+      "cite_as": "U.S. Census Bureau, American Community Survey 2015-2019 5-Year Estimates; tabulated by NYC Department of City Planning.",
+      "known_flaws": [
+        "NTA2020 GeoIDs embed the community district (BK0301 = Brooklyn CD 3), so aggregation to 59 CDs is exact - but NTAs do not nest inside CDs for every geography, and the audit checks the share sums rather than assuming.",
+        "Race shares sum to 86.7-98.9 percent; the remainder is other/multiracial.",
+        "The Census Bureau API route was abandoned on 2026-07-12 when it began requiring a key."
+      ]
+    },
+    {
+      "id": "S8",
+      "name": "Wikimedia pageviews, legacy top-150 victim basket",
+      "status": "live",
+      "publisher": "Wikimedia Foundation, Pageviews REST API",
+      "endpoints": [
+        "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/"
+      ],
+      "access": "scripts/09_fetch_public_data.py",
+      "we_take": "daily per-victim pageviews, 2017-2020",
+      "role": "the ONLY victim-level series, so it is the input to the race-split components in 12_build_cai.py. It is NOT the wiki_ext basket (that is S11).",
+      "artifacts": [
+        "data/reference/wikipedia_pageviews_victims.csv"
+      ],
+      "known_flaws": [
+        "The basket was selected by Twitter volume, which is a retired measure, so its membership is not reproducible from live sources.",
+        "Covers 2017-2020 only, so it cannot serve the confirmation window.",
+        "Fetched by canonical title only, so it carries the rename defect T12 that S11 has been repaired for.",
+        "Its registered SHA256 does not match the artifact on disk: the file was replaced by a later run that did not re-register it (finding X14).",
+        "It cannot be regenerated from live sources at all, because its membership was chosen by the retired Twitter measure. The race-split components of CAI-D therefore rest on an artifact whose provenance is a pinned hash rather than a reproducible fetch - a limitation for the paper, and a reason not to make the race split a headline result."
+      ],
+      "probes": {
+        "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/": "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/Killing_of_George_Floyd/daily/20200525/20200601"
+      },
+      "accepted_hashes": {
+        "data/reference/wikipedia_pageviews_victims.csv": {
+          "sha256": "e1e88d7d93c696315471532f09ee7fa8454f7ae930b4fb09bfaf2127d1374cf5",
+          "dated": "2026-09-10",
+          "reason": "Neither registered hash matches this file, and it cannot be re-registered by re-running its fetch: 09_fetch_public_data.py selects this basket from the retired Twitter per-victim file (S2), which is not in the repository and cannot be reconstructed. The bytes accepted here are pinned exactly, so any further change to the file fails this check again. Finding X14."
+        }
+      }
+    },
+    {
+      "id": "S9",
+      "name": "Wikipedia REST summary API",
+      "status": "live",
+      "publisher": "Wikimedia Foundation",
+      "endpoints": [
+        "https://en.wikipedia.org/api/rest_v1/page/summary/"
+      ],
+      "access": "scripts/09_fetch_public_data.py, scripts/26_resolve_basket_scope.py",
+      "we_take": "article extracts, used to confirm a candidate article is about a police killing",
+      "role": "article resolution and basket screening",
+      "artifacts": [
+        "data/reference/wikipedia_article_resolution.csv"
+      ],
+      "known_flaws": [
+        "A summary mentioning police is necessary but not sufficient; the basket rules in 26/27 do the real screening."
+      ],
+      "probes": {
+        "https://en.wikipedia.org/api/rest_v1/page/summary/": "https://en.wikipedia.org/api/rest_v1/page/summary/Killing_of_George_Floyd"
+      }
+    },
+    {
+      "id": "S10",
+      "name": "Mapping Police Violence",
+      "status": "live",
+      "publisher": "Mapping Police Violence",
+      "endpoints": [
+        "https://mappingpoliceviolence.us/s/MPVDatasetDownload.xlsx"
+      ],
+      "access": "scripts/10_build_victim_registry.py",
+      "we_take": "name, date, race, cause, city, state, mental-illness flag for police killings 2013-2024",
+      "role": "victim registry: episode labelling, basket screening, race attribution",
+      "artifacts": [
+        "data/reference/victim_registry.csv"
+      ],
+      "cite_as": "Mapping Police Violence. https://mappingpoliceviolence.us",
+      "known_flaws": [
+        "Updated in place, so a re-download is not byte-reproducible.",
+        "Names carry middle names and suffixes that an exact-string match misses - 25 basket articles are marked as absent from the registry when the person IS in it (finding T13).",
+        "Omits deaths that are not police killings, including Sandra Bland; this is why the article basket is deliberately not registry-gated (finding T9)."
+      ]
+    },
+    {
+      "id": "S11",
+      "name": "CAI components: GDELT news, GDELT TV, and the Wikipedia extended basket",
+      "status": "live",
+      "publisher": "The GDELT Project; Wikimedia Foundation",
+      "endpoints": [
+        "https://api.gdeltproject.org/api/v2/doc/doc",
+        "https://api.gdeltproject.org/api/v2/tv/tv",
+        "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/"
+      ],
+      "access": "scripts/11_fetch_awareness_components.py",
+      "we_take": "daily article volume (gdelt_news), daily TV mention volume (gdelt_tv), and summed daily pageviews across the victim basket (wiki_ext)",
+      "role": "gdelt_news and gdelt_tv are the supply tier CAI-S; wiki_ext is a demand-tier component of CAI-D",
+      "artifacts": [
+        "data/reference/cai_components_daily.csv",
+        "data/reference/wiki_ext_basket_used.csv",
+        "data/reference/wiki_ext_aggregation_diagnostic.csv"
+      ],
+      "cite_as": "The GDELT Project. https://www.gdeltproject.org ; Wikimedia Foundation, Pageviews API.",
+      "known_flaws": [
+        "gdelt_news covers 2017-01-01..2022-12-31 with 3 internal gaps, so it does not span the study period; gdelt_tv ends 2024-10-11.",
+        "Wikimedia daily per-article pageviews begin 2015-07-01, which sets the earliest possible index date.",
+        "Pageviews are recorded per TITLE and do not follow a page move, so a victim's attention is split across historical titles; 11 now sums across every title from the S17 title map (finding T12)."
+      ],
+      "probes": {
+        "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/": "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/Killing_of_George_Floyd/daily/20200525/20200601",
+        "https://api.gdeltproject.org/api/v2/doc/doc": "https://api.gdeltproject.org/api/v2/doc/doc?query=%22police+brutality%22&mode=timelinevol&format=json&startdatetime=20200525000000&enddatetime=20200601000000",
+        "https://api.gdeltproject.org/api/v2/tv/tv": "https://api.gdeltproject.org/api/v2/tv/tv?query=%22police+brutality%22&mode=timelinevol&format=json&datanorm=perc&datacomb=sep&startdatetime=20200525000000&enddatetime=20200601000000"
+      }
+    },
+    {
+      "id": "S12",
+      "name": "Google Trends daily search interest, US and NYC",
+      "status": "live",
+      "publisher": "Google",
+      "endpoints": [
+        "https://trends.google.com"
+      ],
+      "access": "scripts/11b_fetch_trends.py via pytrends",
+      "we_take": "daily index for a fixed term basket, United States and NYC DMA 501, stitched from 180-day windows with 60-day overlaps by through-origin regression",
+      "role": "trends_us is a CAI-D component; trends_nyc was one and is being retired",
+      "artifacts": [
+        "data/reference/cai_trends_daily.csv",
+        "data/reference/cai_trends_stitch_diagnostics.csv"
+      ],
+      "known_flaws": [
+        "Trends is a SAMPLED index rescaled to integers 0-100 within each requested window, so it is ordinal within a window and not comparable across windows without stitching.",
+        "Region-days below an undisclosed volume floor are suppressed to zero. trends_nyc is exactly zero on 42.6 percent of days, ranging from 26 percent in 2020 to 71 percent in 2024 - so on those days it is an indicator of clearing the reporting floor, not a level (findings T3/L3).",
+        "The censoring is worst in the years where the exposed confirmation stratum sits, which is why trends_nyc is being replaced by the uncensored wiki_nyc rather than merely caveated."
+      ]
+    },
+    {
+      "id": "S13",
+      "name": "Google Trends weekly-anchored daily series and victim-name terms",
+      "status": "retired",
+      "publisher": "Google",
+      "endpoints": [
+        "https://trends.google.com"
+      ],
+      "access": "scripts/11c_trends_anchor_and_victims.py via pytrends",
+      "we_take": "nothing - retired on 2026-09-10 in commit f7789d1",
+      "role": "retired; its artifact was deleted and 12_build_cai.py now REFUSES to run if it reappears",
+      "artifacts": [
+        "data/reference/cai_trends_anchored.csv"
+      ],
+      "known_flaws": [
+        "The anchoring never worked: 11c requested a 10-year window, which Trends answers at monthly granularity, and the 7-day mask then rescaled only days 1-7 of each month, leaving a permanent within-month step of -0.408 SD (findings X1/T4/T5/L4).",
+        "trends_victims was dropped from the index (finding T8).",
+        "The artifact is deliberately absent; the registry row is kept so its retirement is on the record rather than a silent disappearance."
+      ]
+    },
+    {
+      "id": "S14",
+      "name": "Police precinct to community district crosswalk",
+      "status": "live",
+      "publisher": "derived from S1 by server-side aggregation",
+      "endpoints": [
+        "https://data.cityofnewyork.us/resource/76xm-jjuj.json"
+      ],
+      "access": "scripts/16_bheard_exposure.py",
+      "we_take": "counts of 2015-2024 EMS incidents by (police precinct, community district), normalised to weights",
+      "role": "maps B-HEARD's precinct-level rollout onto the 59 community districts",
+      "artifacts": [
+        "data/reference/precinct_cd_crosswalk.csv"
+      ],
+      "known_flaws": [
+        "Weights are normalised BY COMMUNITY DISTRICT (they sum to 1.0000 for all 59 CDs, and for only 24 of 77 precincts). That is the direction B-HEARD exposure needs; the column was once named as if it were the other direction.",
+        "This script emitted source ids S10 and S11, colliding with two unrelated sources; the register was hand-renumbered to S14/S15 while the script was not, so the collision would have returned on the next run (finding X13).",
+        "Its registered SHA256 does not match the artifact: the weight column was renamed in commit dabc1a6 without re-running the fetch."
+      ]
+    },
+    {
+      "id": "S15",
+      "name": "B-HEARD precinct adoption schedule",
+      "status": "live",
+      "publisher": "NYC Mayor's Office of Community Mental Health; validated against the NYC Independent Budget Office precinct-level report",
+      "endpoints": [
+        "https://mentalhealth.cityofnewyork.us/b-heard"
+      ],
+      "access": "hand-assembled from published announcements; scripts/16_bheard_exposure.py registers it",
+      "we_take": "the date each precinct began B-HEARD response",
+      "role": "the principal confound control. B-HEARD diverts mental-health 911 calls away from police, which moves the outcome in the same direction as H1.",
+      "artifacts": [
+        "data/reference/bheard_precinct_adoption.csv",
+        "data/reference/bheard_cd_exposure.csv"
+      ],
+      "known_flaws": [
+        "17 of 31 precinct dates are low confidence, 11 medium, 3 high. A pre-registered control resting on low-confidence dates is a real limitation and is carried as exposure BOUNDS rather than a point date.",
+        "Citywide launch is 2021-06-01, so the whole discovery window is unexposed - which is what makes 'adding B-HEARD leaves discovery numerically unchanged' a usable check."
+      ]
+    },
+    {
+      "id": "S16",
+      "name": "Wikidata SPARQL endpoint",
+      "status": "live",
+      "publisher": "Wikimedia Foundation",
+      "endpoints": [
+        "https://query.wikidata.org/sparql"
+      ],
+      "access": "scripts/27_finalise_basket.py (cached under data/processed/wikidata_cache/)",
+      "we_take": "date of death, country, and person-hood for each candidate basket article",
+      "role": "the primary death-date source for the basket: 108 of 161 candidates are dated from Wikidata, 38 from the registry, 15 unresolved",
+      "artifacts": [
+        "data/reference/basket_decisions.csv"
+      ],
+      "cite_as": "Wikidata. https://www.wikidata.org",
+      "known_flaws": [
+        "Community-edited, so a date can change; the cache pins what we used."
+      ],
+      "probes": {
+        "https://query.wikidata.org/sparql": "https://query.wikidata.org/sparql?format=json&query=SELECT%20%3Fd%20WHERE%20%7B%20wd%3AQ93544244%20wdt%3AP570%20%3Fd%20%7D"
+      }
+    },
+    {
+      "id": "S17",
+      "name": "MediaWiki action API - redirects and first revisions",
+      "status": "live",
+      "publisher": "Wikimedia Foundation",
+      "endpoints": [
+        "https://en.wikipedia.org/w/api.php"
+      ],
+      "access": "scripts/29_resolve_article_titles.py",
+      "we_take": "every title redirecting to an article (its historical titles), and each title's first revision date",
+      "role": "closes the rename defect T12. Fetching one canonical title discarded everything before a page move, including the spike at the moment of death; summing across historical titles recovered 79,082,746 views across 106 of 127 articles.",
+      "artifacts": [
+        "data/reference/article_title_map.csv",
+        "outputs/tables/rename_recovery.csv"
+      ],
+      "known_flaws": [
+        "Redirects include incidental pages, so a candidate must share a substantive word with the article title.",
+        "rvdir=newer and rvlimit are rejected for multiple titles, so first revisions must be fetched one title at a time.",
+        "The API answers HTTP 200 with an error body for a bad parameter mix; the client raises on it, because an unraised error is indistinguishable from a page with no data."
+      ],
+      "probes": {
+        "https://en.wikipedia.org/w/api.php": "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=redirects&rdlimit=max&titles=Killing%20of%20George%20Floyd"
+      }
+    },
+    {
+      "id": "S18",
+      "name": "Wikipedia NYC police-incident category walk",
+      "status": "live",
+      "publisher": "Wikimedia Foundation",
+      "endpoints": [
+        "https://en.wikipedia.org/w/api.php",
+        "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/"
+      ],
+      "access": "scripts/28_build_nyc_attention.py (cached under data/processed/wiki_cat_cache/)",
+      "we_take": "articles in the NYC police-incident categories, screened to require a police marker AND an incident form AND a New York marker; then their summed daily pageviews",
+      "role": "wiki_nyc - the uncensored city-local attention component that replaces trends_nyc",
+      "artifacts": [
+        "data/reference/wiki_nyc_articles.csv",
+        "data/reference/wiki_nyc_daily.csv",
+        "data/reference/wiki_nyc_per_article.csv"
+      ],
+      "known_flaws": [
+        "The basket is thin - roughly ten NYC articles, mostly historical cases - so much of the series is anniversary and spillover traffic rather than contemporaneous local attention. This bounds how strongly the locality claim can be made.",
+        "An early version measured notable NYC deaths generally (Babe Ruth, John Lennon, the UnitedHealthcare CEO shooting) because the filter required NYC and death but never police involvement.",
+        "A second version peaked on a single-day 70x spike in one article (Killing of Amadou Diallo, 488 to 35,418 to 527 views), which the log1p transform and the persistence check now bound.",
+        "It overlaps the S11 basket on Akai Gurley, Daniel Prude and Deborah Danner, who would otherwise be counted in two components of the same index."
+      ],
+      "probes": {
+        "https://en.wikipedia.org/w/api.php": "https://en.wikipedia.org/w/api.php?action=query&format=json&list=categorymembers&cmtitle=Category%3ADeaths%20by%20law%20enforcement%20in%20New%20York%20(state)&cmlimit=5",
+        "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/": "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/Killing_of_George_Floyd/daily/20200525/20200601"
+      }
+    }
+  ]
+}

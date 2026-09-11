@@ -7,16 +7,15 @@ Produces the same two files as 00_local_ems_extract.py:
 Progress prints per page (observability lesson applied).
 """
 
-import hashlib
 import io
 import json
 import time
 import urllib.request
-from datetime import datetime, timezone
 
 import pandas as pd
 
-from config import DATA_PROCESSED, DATA_REFERENCE
+from config import DATA_PROCESSED
+from provenance import log_source
 
 BASE = "https://data.cityofnewyork.us/resource/76xm-jjuj.csv"
 COLS = ("incident_datetime,communitydistrict,final_call_type,"
@@ -122,11 +121,7 @@ out2 = DATA_PROCESSED / "ems_citywide_day_trends.parquet"
 g2.to_parquet(out2, index=False)
 print(f"Wrote {out2}: {len(g2):,} rows")
 
-row = pd.DataFrame([{
-    "source_id": "S1b", "description": "EMS Incident Dispatch Data via SODA API (7 columns, paged), replaces user-local export",
-    "url": BASE, "accessed_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-    "sha256": hashlib.sha256(out1.read_bytes()).hexdigest(), "output_file": str(out1),
-}])
-lp = DATA_REFERENCE / "data_sources.csv"
-row.to_csv(lp, mode="a", header=not lp.exists(), index=False)
-print("provenance logged")
+log_source(
+    "S1b",
+    "EMS Incident Dispatch Data via SODA API (7 columns, paged), replaces user-local export",
+    BASE, out_file=out1)

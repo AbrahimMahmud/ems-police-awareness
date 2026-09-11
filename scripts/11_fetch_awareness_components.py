@@ -11,17 +11,16 @@ Output: data/reference/cai_components_daily.csv (long: date, component, value)
 """
 
 import argparse
-import hashlib
 import json
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
 
 import pandas as pd
 
 from config import DATA_REFERENCE
+from provenance import log_source
 
 UA = {"User-Agent": "ems-police-awareness-research/1.0 (academic research)"}
 FROZEN_QUERY = '("police shooting" OR "police killing" OR "killed by police" OR "police brutality")'
@@ -247,14 +246,11 @@ out.to_csv(path, index=False)
 print("  component row counts: "
       + str(out.groupby("component").size().to_dict()))
 
-log = pd.DataFrame([{
-    "source_id": "S11", "description": f"CAI components gdelt_news/gdelt_tv/wiki_ext {START}..{END}; query={FROZEN_QUERY}",
-    "url": "api.gdeltproject.org/api/v2 + wikimedia.org/api/rest_v1",
-    "accessed_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-    "sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "output_file": str(path),
-}])
-lp = DATA_REFERENCE / "data_sources.csv"
-log.to_csv(lp, mode="a", header=not lp.exists(), index=False)
+log_source(
+    "S11",
+    f"CAI components gdelt_news/gdelt_tv/wiki_ext {START}..{END}; query={FROZEN_QUERY}",
+    "https://api.gdeltproject.org/api/v2 + https://wikimedia.org/api/rest_v1",
+    out_file=path)
 
 for c in out["component"].unique():
     s = out[out["component"] == c]

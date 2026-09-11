@@ -50,11 +50,9 @@ Outputs (committed, small):
   data/reference/bheard_cd_exposure.csv
 """
 
-import hashlib
 import json
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
 
 import pandas as pd
 
@@ -62,12 +60,11 @@ from config import (
     BHEARD_ADOPTION_CSV,
     BHEARD_EXPOSURE_CSV,
     BHEARD_LAUNCH as CFG_BHEARD_LAUNCH,
-    DATA_REFERENCE,
     PRECINCT_CD_CROSSWALK_CSV,
     VALID_CDS,
 )
+from provenance import log_source
 
-SOURCES_LOG = DATA_REFERENCE / "data_sources.csv"
 # Paths and the launch date come from config: a pre-registered control must
 # not have a second source of truth (REWORK_PLAN.md §7, "no magic numbers").
 ADOPTION_CSV = BHEARD_ADOPTION_CSV
@@ -88,22 +85,6 @@ IBO_OPERATIONAL_COUNTS = {"2022-01-01": 3, "2023-01-01": 11,
                           "2024-01-01": 25, "2025-01-01": 31}
 
 UA = {"User-Agent": "ems-police-awareness-research/1.0"}
-
-
-def log_source(source_id, description, url, payload_bytes=None, out_file=None):
-    """Append a provenance row (see docs/DATA_PROVENANCE.md) with content hash."""
-    if payload_bytes is None and out_file is not None:
-        payload_bytes = open(out_file, "rb").read()
-    row = pd.DataFrame([{
-        "source_id": source_id,
-        "description": description,
-        "url": url,
-        "accessed_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "sha256": hashlib.sha256(payload_bytes).hexdigest() if payload_bytes else "",
-        "output_file": str(out_file) if out_file else "",
-    }])
-    header = not SOURCES_LOG.exists()
-    row.to_csv(SOURCES_LOG, mode="a", header=header, index=False)
 
 
 def fetch_crosswalk():
@@ -135,7 +116,15 @@ def fetch_crosswalk():
     # each CD and NOT within each precinct. That is the direction B-HEARD exposure
     # needs: a CD's exposure is the call-weighted share covered by adopters.
     # This is the weight used to convert precinct-level adoption into CD exposure.
-    df["w_cd_calls_from_precinct"] = df["n"] / df.groupby("communitydistrict")["n"].transform("sum")
+    df["w_cd_calls_from_precinct"] = (
+        df["n"] / df.groupby("communitydistrict")["n"].transform("sum")).round(12)
+    # ROUNDED so the artifact is byte-reproducible. Re-running this on identical
+    # source counts produced a file with 72 changed lines and a different
+    # SHA256, differing only in the 17th significant digit of the weight - float
+    # summation order is not stable across runs. A provenance hash that changes
+    # when nothing changed trains everyone to ignore it, and "clean twice from a
+    # cold start" becomes unachievable. 12 decimal places is far beyond any
+    # meaningful precision for a call-share weight.
     return df.sort_values(["communitydistrict", "policeprecinct"]).reset_index(drop=True)
 
 
@@ -189,14 +178,18 @@ def main():
     print(f"  {len(xwalk)} precinct-CD pairs over {xwalk['n'].sum():,} incidents")
     print(f"  {xwalk['communitydistrict'].nunique()} CDs, "
           f"{xwalk['policeprecinct'].nunique()} precincts")
-    log_source("S10", "NYC EMS dispatch precinct x community district crosswalk "
+    # S14/S15, NOT S10/S11: those belong to Mapping Police Violence and the CAI
+    # components. This script emitted the colliding IDs and the register was
+    # hand-renumbered to hide it (finding X13); with one row per source_id, the
+    # collision would silently overwrite two other sources' provenance instead.
+    log_source("S14", "NYC EMS dispatch precinct x community district crosswalk "
                       "(server-side aggregation, 2015-2024 incidents)",
                EMS_SODA, out_file=CROSSWALK_CSV)
 
     adoption = pd.read_csv(ADOPTION_CSV)
     print(f"\nAdoption table: {len(adoption)} precincts, confidence mix: "
           f"{adoption['confidence'].value_counts().to_dict()}")
-    log_source("S11", "B-HEARD precinct adoption schedule (NYC Mayor's Office of "
+    log_source("S15", "B-HEARD precinct adoption schedule (NYC Mayor's Office of "
                       "Community Mental Health announcements; operational counts "
                       "validated against NYC IBO Jan 2026 precinct-level report)",
                "https://mentalhealth.cityofnewyork.us/b-heard", out_file=ADOPTION_CSV)

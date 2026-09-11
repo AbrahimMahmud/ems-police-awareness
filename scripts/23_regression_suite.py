@@ -33,6 +33,7 @@ run, and the same error class the audit itself was hunting.
 """
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -1002,6 +1003,179 @@ def o_dropna_groupby():
 
 
 # ===========================================================================
+# VERIFICATION — sources, links and claimed numbers
+# ===========================================================================
+VERIFY_LOG = DATA_REFERENCE / "source_verification_log.csv"
+SOURCE_REGISTER = DATA_REFERENCE / "source_register.json"
+CLAIMS_REGISTER = PROJECT_ROOT / "docs" / "CLAIMS_REGISTER.csv"
+VERIFY_GOOD = {"verified", "unverifiable", "template", "skipped"}
+
+
+def _verify_log():
+    if not VERIFY_LOG.exists():
+        return None
+    d = pd.read_csv(VERIFY_LOG, parse_dates=["run_utc"])
+    return d if len(d) else None
+
+
+def v_sources_verified():
+    """Every source has a verification result NEWER than its artifact.
+
+    A hash recorded before the file was last written proves nothing about the
+    file. Two of these were live when the register was built: S8's artifact was
+    replaced by a later run that never re-registered it, and S14's was edited in
+    commit dabc1a6 (a column rename) without re-running the fetch, so both
+    provenance rows described files that no longer existed in that form.
+
+    BLOCKED, never PASS, when no scan has run. "Nobody checked" is not "fine" -
+    that conflation is the error this whole suite exists to catch.
+    """
+    log = _verify_log()
+    if log is None:
+        return "BLOCKED", "no scan recorded — run 31_verify_sources.py --scan"
+    if not SOURCE_REGISTER.exists():
+        return "BLOCKED", "source_register.json is absent"
+    reg = json.loads(SOURCE_REGISTER.read_text())["sources"]
+    art = log[log["kind"] == "artifact"]
+    stale, unchecked, bad = [], [], []
+    for s in reg:
+        for a in s.get("artifacts", []):
+            rows = art[(art["source_id"] == s["id"]) & (art["target"] == a)]
+            if not len(rows):
+                unchecked.append(f"{s['id']}:{a}")
+                continue
+            last = rows.sort_values("run_utc").iloc[-1]
+            if last["status"] not in VERIFY_GOOD:
+                bad.append(f"{s['id']}:{Path(a).name}={last['status']}")
+                continue
+            f = PROJECT_ROOT / a
+            if f.exists() and pd.Timestamp(f.stat().st_mtime, unit="s", tz="UTC") > last["run_utc"]:
+                stale.append(f"{s['id']}:{Path(a).name}")
+    if unchecked:
+        return "BLOCKED", f"{len(unchecked)} artifact(s) never scanned: {unchecked[:3]}"
+    if bad or stale:
+        return "FAIL", (f"{len(bad)} not verified {bad[:3]}; "
+                        f"{len(stale)} verified before the file last changed {stale[:3]}")
+    return "PASS", f"{len(art['target'].unique())} artifacts, all verified after their last write"
+
+
+def v_no_duplicate_source_ids():
+    """X8/X13: one row per source, and no two scripts claiming the same id.
+
+    data/reference/data_sources.csv held 21 rows under 9 ids, because seven
+    scripts each appended with mode="a" and nothing ever re-keyed. Worse, two of
+    those ids COLLIDED: 16_bheard_exposure.py emitted S10 and S11, which belong
+    to Mapping Police Violence and the CAI components. The register had been
+    hand-renumbered to S14/S15 to hide it while the script was left alone, so
+    the collision would have returned on the next run - and with one row per id,
+    it would have silently overwritten two other sources' provenance.
+    """
+    f = DATA_REFERENCE / "data_sources.csv"
+    if not f.exists():
+        return "BLOCKED", "no provenance register"
+    d = pd.read_csv(f)
+    dupes = d["source_id"].value_counts()
+    dupes = dupes[dupes > 1]
+    emitted = {}
+    for sp in sorted(SCRIPTS.glob("*.py")):
+        for m in re.finditer(r'log_source\(\s*"([^"]+)"', sp.read_text()):
+            emitted.setdefault(m.group(1), set()).add(sp.name)
+    collisions = {k: sorted(v) for k, v in emitted.items() if len(v) > 1}
+    # Only provenance.py may WRITE the register. Any other script writing it is
+    # a second writer, and a second writer is how the append-mode duplication
+    # survived seven scripts. (Merely naming the file is fine - this check and
+    # 31_verify_sources.py both read it.)
+    appenders = []
+    for sp in sorted(SCRIPTS.glob("*.py")):
+        if sp.name == "provenance.py":
+            continue
+        t = sp.read_text()
+        if re.search(r'to_csv\(\s*\w*[Ss]?[Oo]?[Uu]?[Rr]?[Cc]?[Ee]?\w*(LOG|log|lp)\b', t) \
+                and "data_sources.csv" in t:
+            appenders.append(sp.name)
+        elif re.search(r'data_sources\.csv["\']\s*\)?\s*$.{0,200}?mode="a"', t,
+                       re.S | re.M):
+            appenders.append(sp.name)
+    if len(dupes):
+        return "FAIL", f"{len(dupes)} duplicated id(s): {dupes.to_dict()}"
+    if collisions:
+        return "FAIL", f"two scripts emit the same id: {collisions}"
+    if appenders:
+        return "FAIL", f"still appending instead of re-keying: {appenders}"
+    return "PASS", f"{len(d)} rows, {d['source_id'].nunique()} ids, no collisions"
+
+
+def v_claims_reproduce():
+    """Every number claimed in PAPER_MASTER.md recomputes from its artifact.
+
+    The register names the document, a template containing {}, the artifact and
+    the expression. The check fails in BOTH directions: edit the document and
+    the rendered text is no longer found; rebuild the data and the computed
+    value no longer matches what the document says. A number that cannot be
+    regenerated is a check failure, not a typo.
+    """
+    if not CLAIMS_REGISTER.exists():
+        return "BLOCKED", "docs/CLAIMS_REGISTER.csv is absent"
+    log = _verify_log()
+    if log is None:
+        return "BLOCKED", "no scan recorded — run 31_verify_sources.py --claims-only"
+    claims = pd.read_csv(CLAIMS_REGISTER)
+    cl = log[log["kind"] == "claim"]
+    last_run = cl["run_utc"].max()
+    cl = cl[cl["run_utc"] == last_run]
+    missing = sorted(set(claims["claim_id"]) - set(cl["target"]))
+    if missing:
+        return "BLOCKED", f"{len(missing)} claim(s) not in the latest scan: {missing[:3]}"
+    bad = cl[~cl["status"].isin(VERIFY_GOOD)]
+    docs = sorted({str(x) for x in claims["doc"]})
+    newest_doc = max((PROJECT_ROOT / x).stat().st_mtime
+                     for x in docs if (PROJECT_ROOT / x).exists())
+    if pd.Timestamp(newest_doc, unit="s", tz="UTC") > pd.Timestamp(last_run):
+        return "BLOCKED", "a claimed document changed after the last scan; rescan"
+    if len(bad):
+        return "FAIL", (f"{len(bad)} of {len(cl)} claims do not reproduce: "
+                        + "; ".join(bad["target"].head(3)))
+    return "PASS", f"{len(cl)} claims recomputed and found verbatim in the document"
+
+
+def v_links_resolve():
+    """Every registered endpoint has a recorded, dated result.
+
+    A failure is a RECORDED RESULT, not something to retry until green - so this
+    passes on a dated failure being present and visible, and fails only when an
+    endpoint has never been scanned or its last result was a hard failure. Rate
+    limits and our own egress policy are recorded as `unreachable`: they say
+    something about our access, not about the source.
+    """
+    log = _verify_log()
+    if log is None:
+        return "BLOCKED", "no scan recorded — run 31_verify_sources.py --scan"
+    if not SOURCE_REGISTER.exists():
+        return "BLOCKED", "source_register.json is absent"
+    reg = json.loads(SOURCE_REGISTER.read_text())["sources"]
+    lk = log[log["kind"] == "link"]
+    never, failed, unreachable = [], [], []
+    for s in reg:
+        for u in (s.get("endpoints") or ["(none)"]):
+            rows = lk[(lk["source_id"] == s["id"]) & (lk["target"] == u)]
+            if not len(rows):
+                never.append(f"{s['id']}:{u}")
+                continue
+            last = rows.sort_values("run_utc").iloc[-1]
+            if last["status"] == "failed":
+                failed.append(f"{s['id']}:{u}")
+            elif last["status"] == "unreachable":
+                unreachable.append(f"{s['id']}")
+    if never:
+        return "BLOCKED", f"{len(never)} endpoint(s) never scanned: {never[:2]}"
+    if failed:
+        return "FAIL", f"{len(failed)} endpoint(s) returned an error: {failed[:3]}"
+    note = f"; {len(unreachable)} unreachable from here ({sorted(set(unreachable))})" \
+        if unreachable else ""
+    return "PASS", f"{len(lk['target'].unique())} endpoints, last result recorded{note}"
+
+
+# ===========================================================================
 # META — the register and the suite must not drift apart
 # ===========================================================================
 def m_register_sync():
@@ -1060,6 +1234,10 @@ CHECKS = [
     ("O.ems_complete", "O5", "EMS extract covers the full source", o_ems_download_complete),
     ("O.panel_exists", "O5", "panel_cd_day.parquet exists", o_panel_exists),
     ("O.dropna_groupby", "O4", "missing-district rows not silently dropped", o_dropna_groupby),
+    ("V.sources_verified", "X8,X14", "every source verified after its last write", v_sources_verified),
+    ("V.no_duplicate_source_ids", "X8,X13", "one row per source id, no collisions", v_no_duplicate_source_ids),
+    ("V.claims_reproduce", "X14", "every claimed number recomputes from its artifact", v_claims_reproduce),
+    ("V.links_resolve", "X14", "every endpoint has a dated result", v_links_resolve),
     ("M.register_sync", "O5", "register and suite have not drifted apart", m_register_sync),
 ]
 
