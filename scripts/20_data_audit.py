@@ -28,6 +28,7 @@ from config import (
     ANALYSIS_END,
     ANALYSIS_START,
     CAI_D_COMPONENTS,
+    EPISODE_MAX_DAYS,
     DATA_PROCESSED,
     DATA_REFERENCE,
     OUTPUTS_TABLES,
@@ -80,18 +81,52 @@ cai = pd.read_parquet(DATA_PROCESSED / "cai_daily.parquet")
 cai["date"] = pd.to_datetime(cai["date"])
 cai = cai.set_index("date")
 
-sd_by_k = cai.groupby("n_d_components")["cai_d"].std()
-spread = float(sd_by_k.max() - sd_by_k.min())
-record("cai_d_sd_by_component_count", " / ".join(f"{v:.3f}" for v in sd_by_k),
-       "FLAG" if spread > 0.10 else "PASS",
-       f"range {spread:.3f}; a stable index would be flat")
+# Finding D5 was that the index averaged whatever components existed that day,
+# so its SD tracked DATA AVAILABILITY rather than attention. The repair was to
+# score a day only if every component is present, which makes the old
+# comparison-across-regimes degenerate - and both checks were reporting on that
+# degeneracy rather than on the property:
+#
+#   n_d_components=2  181 days, cai_d entirely NaN (correctly unscored)
+#   n_d_components=3  3,472 days, scored
+#
+# so the SD check compared NaN against 1.561 and printed "range 0.000, PASS",
+# and the flag-rate check compared 0.0% (unscored days can never exceed a
+# threshold) against 22.0% and flagged it. One passed and one failed, both for
+# reasons that had nothing to do with D5.
+#
+# What must now hold is the repair itself, so that is what is asserted.
+scored = cai["cai_d"].notna()
+full = len(CAI_D_COMPONENTS)
+bad_scored = int((scored & (cai["n_d_components"] < full)).sum())
+bad_unscored = int((~scored & (cai["n_d_components"] >= full)).sum())
+record("cai_d_scored_iff_complete", f"{bad_scored} / {bad_unscored}",
+       "FLAG" if (bad_scored or bad_unscored) else "PASS",
+       f"days scored with <{full} components / days with all {full} left unscored")
+
+sd_by_k = cai.loc[scored].groupby("n_d_components")["cai_d"].std()
+if len(sd_by_k) > 1:
+    spread = float(sd_by_k.max() - sd_by_k.min())
+    record("cai_d_sd_by_component_count", " / ".join(f"{v:.3f}" for v in sd_by_k),
+           "FLAG" if spread > 0.10 else "PASS",
+           f"range {spread:.3f} among SCORED days; a stable index would be flat")
+else:
+    record("cai_d_sd_by_component_count", f"{float(sd_by_k.iloc[0]):.3f}", "PASS",
+           f"one regime only: every scored day has all {full} components, "
+           "so there is no availability regime for the SD to track")
 
 cai["high"] = cai["cai_d"] > 1.0
-flag_rate = cai.groupby("n_d_components")["high"].mean() * 100
-rate_spread = float(flag_rate.max() - flag_rate.min())
-record("episode_flag_rate_by_component_count", " / ".join(f"{v:.1f}%" for v in flag_rate),
-       "FLAG" if rate_spread > 5 else "PASS",
-       f"range {rate_spread:.1f}pp; threshold is not a constant-SD rule")
+flag_rate = cai.loc[scored].groupby("n_d_components")["high"].mean() * 100
+if len(flag_rate) > 1:
+    rate_spread = float(flag_rate.max() - flag_rate.min())
+    record("episode_flag_rate_by_component_count",
+           " / ".join(f"{v:.1f}%" for v in flag_rate),
+           "FLAG" if rate_spread > 5 else "PASS",
+           f"range {rate_spread:.1f}pp; threshold is not a constant stringency")
+else:
+    record("episode_flag_rate_by_component_count", f"{float(flag_rate.iloc[0]):.1f}%",
+           "PASS", "one regime only; stringency across YEARS is checked by "
+                   "E.threshold_stringency in the regression suite")
 
 # ---------------------------------------------------------------------------
 print("\n== 4. is component availability endogenous to attention? ==")
@@ -112,29 +147,60 @@ record("cai_d_components_present", f"{len(present_cols)}/{len(CAI_D_COMPONENTS)}
        f"absent from the component files: {missing_cols}" if missing_cols
        else f"{present_cols}")
 
-always_on = [c for c in present_cols if cai[c].notna().all()]
-intermittent = [c for c in present_cols if not cai[c].notna().all()]
+# INTERNAL gaps only. A component that simply starts later than another is not
+# evidence of endogenous availability - wiki_ext begins 2015-07-01 because that
+# is where Wikimedia's daily pageviews begin, while the Trends series begin
+# 2015-01-01, and comparing those six months against the rest of the decade
+# produced a -0.819 SD "selection gap" that is a level difference between eras,
+# not a fact about when data exists.
+def _internal_gaps(col):
+    s = cai[col]
+    obs = s.dropna().index
+    if not len(obs):
+        return pd.Series(False, index=cai.index)
+    inside = (cai.index >= obs.min()) & (cai.index <= obs.max())
+    return pd.Series(inside & s.isna().values, index=cai.index)
+
+always_on = [c for c in present_cols if not _internal_gaps(c).any()]
+intermittent = [c for c in present_cols if _internal_gaps(c).any()]
+for c in present_cols:
+    lead = int(((cai.index < cai[c].dropna().index.min()) if cai[c].notna().any()
+                else cai.index == cai.index).sum())
+    if lead:
+        record(f"  span_start_{c}", str(cai[c].dropna().index.min().date()), "INFO",
+               f"{lead} days before this component exists at all; "
+               "excluded from the selection test as a span difference, not a gap")
 if not always_on:
     record("component_selection_gap", "n/a", "FLAG",
            "no component is complete, so there is no stable base to compare against")
 for c in intermittent:
     base = cai[always_on].mean(axis=1)
-    have = cai[c].notna()
+    have = ~_internal_gaps(c)
     gap = float(base[have].mean() - base[~have].mean())
     record(f"selection_gap_{c}", f"{gap:+.3f} SD",
            "FLAG" if abs(gap) > 0.15 else "PASS",
            f"mean of the always-on components on days {c} exists vs does not")
 if not intermittent:
     record("component_selection_gap", "none", "PASS",
-           f"every component in the index is complete: {present_cols}")
+           f"no component has an internal gap: {present_cols}")
 
-base = cai[always_on].mean(axis=1)
-ref = base.loc[ANALYSIS_START:"2019-12-31"]
-alt = (base - ref.mean()) / ref.std(ddof=0)
-record("corr_cai_d_vs_always_on_only", f"{cai['cai_d'].corr(alt):.3f}", "INFO",
-       "index vs the complete-components-only alternative: ranking")
-record("high_days_as_built_vs_always_on", f"{int(cai['high'].sum())} vs {int((alt > 1).sum())}",
-       "INFO", "index vs that alternative: days clearing the threshold")
+if intermittent:
+    base = cai[always_on].mean(axis=1)
+    ref = base.loc[ANALYSIS_START:"2019-12-31"]
+    alt = (base - ref.mean()) / ref.std(ddof=0)
+    record("corr_cai_d_vs_always_on_only", f"{cai['cai_d'].corr(alt):.3f}", "INFO",
+           "index vs the gap-free-components-only alternative: ranking")
+    record("high_days_as_built_vs_always_on",
+           f"{int(cai['high'].sum())} vs {int((alt > 1).sum())}",
+           "INFO", "index vs that alternative: days clearing the threshold")
+else:
+    # With no intermittent component the "alternative" IS the index, so this
+    # comparison returns r = 1.000 and a spurious difference in threshold
+    # crossings that comes only from re-standardising. Reporting it would be
+    # reporting on the arithmetic, not on the data.
+    record("corr_cai_d_vs_always_on_only", "n/a", "INFO",
+           "no component has an internal gap, so there is no alternative index "
+           "to compare against")
 
 # ---------------------------------------------------------------------------
 print("\n== 5-6. Wikipedia basket coverage ==")
@@ -161,6 +227,16 @@ used = pd.read_csv(DATA_REFERENCE / "wiki_ext_basket_used.csv")
 dec = pd.read_csv(DATA_REFERENCE / "basket_decisions.csv", parse_dates=["death_date"])
 death_by_article = dec.dropna(subset=["death_date"]).set_index("article")["death_date"]
 
+# Article CREATION dates, from the earliest first revision across a victim's
+# titles (29_resolve_article_titles.py). Without them, "the series starts late"
+# is ambiguous between the two things that matter most here:
+#   the article did not exist yet   -> correct; no attention existed to record
+#   a rename is still eating history -> the defect T12 was supposed to close
+tmap = pd.read_csv(DATA_REFERENCE / "article_title_map.csv",
+                   parse_dates=["first", "created"])
+created_by_article = tmap.groupby("article")["created"].min()
+first_by_article = tmap.groupby("article")["first"].min()
+
 # The denominator is the span wiki_ext ACTUALLY covers, read from the component
 # file, not a window literal. Wikimedia's per-article daily pageviews begin
 # 2015-07-01, so an earlier expectation would flag every article at once; and
@@ -171,7 +247,9 @@ WIKI_FROM, WIKI_TO = _wx.min(), _wx.max()
 
 per = used.set_index("article").copy()
 per["killed"] = per.index.map(death_by_article)
-per["expected_from"] = per["killed"].clip(lower=WIKI_FROM)
+per["created"] = per.index.map(created_by_article)
+per["first"] = per.index.map(first_by_article)
+per["expected_from"] = per[["killed", "created"]].max(axis=1).clip(lower=WIKI_FROM)
 per["expected_days"] = (WIKI_TO - per["expected_from"]).dt.days + 1
 per["coverage"] = per["days"] / per["expected_days"]
 
@@ -188,18 +266,38 @@ record("wiki_basket_titles_per_article",
        f"{per['n_titles'].mean():.2f} mean, {int(per['n_titles'].max())} max", "INFO",
        "historical titles summed per article (rename recovery, T12)")
 
-# THE COVERAGE PROPERTY the rename defect violated: before the fix, 57 of 117
-# articles sat under 60% of expected days and nothing said so.
+# THE PROPERTY THE RENAME DEFECT VIOLATED is a series that STARTS LATE, not one
+# with few days. Killing_of_Alton_Sterling began 2021-04-25 for a man killed in
+# 2016; that is lost history. A low-traffic article with scattered missing days
+# is not - Wikimedia omits days with no recorded views, so a quiet article is
+# legitimately sparse. Day count cannot tell those apart and start lag can.
+lagged = per[per["ok"] & per["first"].notna()].copy()
+lagged["lag"] = (lagged["first"] - lagged["expected_from"]).dt.days
+late = lagged[lagged["lag"] > 7]
+record("wiki_series_start_lag_max", f"{int(lagged['lag'].max())}d",
+       "FLAG" if len(late) else "PASS",
+       f"median {int(lagged['lag'].median())}d; days between max(death, article "
+       "creation) and the first observed view — a rename shows up here")
+record("wiki_articles_with_lost_history", len(late),
+       "FLAG" if len(late) else "PASS",
+       "series starting >7d after the article existed")
+for art, r in late.nlargest(10, "lag").iterrows():
+    record(f"  lost_history_{art}", f"{int(r['lag'])}d late", "FLAG",
+           f"created {pd.Timestamp(r['created']).date()}, "
+           f"first view {pd.Timestamp(r['first']).date()}")
+
+# Coverage is reported but NOT flagged: after the start-lag test above, a low
+# figure means a quiet article, which is information rather than a defect.
 low = per[(per["coverage"] < 0.60) & (per["expected_days"] > 365) & per["ok"]
           & per["killed"].notna()]
-record("wiki_articles_below_60pct_coverage", len(low),
-       "FLAG" if len(low) else "PASS",
-       "usable article, >1yr expected, under 60% of expected days")
-for art, r in low.nlargest(10, "expected_days").iterrows():
-    record(f"  low_cov_{art}", f"{r['coverage']:.0%} ({int(r['days'])}d)", "FLAG",
+record("wiki_articles_below_60pct_coverage", len(low), "INFO",
+       "sparse days on low-traffic articles; not a defect once start lag is 0")
+for art, r in low.nlargest(5, "expected_days").iterrows():
+    record(f"  low_cov_{art}", f"{r['coverage']:.0%} ({int(r['days'])}d)", "INFO",
            f"expected {int(r['expected_days'])}d from "
            f"{pd.Timestamp(r['expected_from']).date()} (died "
-           f"{pd.Timestamp(r['killed']).date()})")
+           f"{pd.Timestamp(r['killed']).date()}, article created "
+           f"{pd.Timestamp(r['created']).date()})")
 
 nots = per[~per["ok"]]
 record("wiki_basket_unusable", len(nots), "INFO" if len(nots) else "PASS",
@@ -258,6 +356,16 @@ record("bheard_effective_before_launch", int((ex["effective_from"] < "2021-06-01
 
 # ---------------------------------------------------------------------------
 print("\n== 11-12. episode labels and provenance ==")
+# BOTH lists are audited. confirmation_episodes.csv is the FROZEN artifact and
+# must stay byte-identical, so its properties are recorded as history, not as
+# things to fix; confirmation_episodes_rebuilt.csv is what the current shock
+# rule produces and is the one that has to hold. Auditing only the frozen file
+# reported a 128-day episode and 34 single-day events as live defects, when the
+# construct change had already bounded both.
+EPISODE_LISTS = [
+    ("frozen", DATA_REFERENCE / "confirmation_episodes.csv", False),
+    ("rebuilt", DATA_REFERENCE / "confirmation_episodes_rebuilt.csv", True),
+]
 ep = pd.read_csv(DATA_REFERENCE / "confirmation_episodes.csv", parse_dates=["start", "end", "peak_date"])
 bad, total = [], 0
 for _, r in ep.iterrows():
@@ -276,13 +384,25 @@ for _, r in ep.iterrows():
 record("episode_labels_out_of_window", f"{len(bad)} / {total}",
        "FLAG" if bad else "PASS", "; ".join(bad))
 
-record("episodes_total", f"{len(ep)} ({(ep['period'] == 'discovery').sum()} disc / "
-       f"{(ep['period'] == 'extension').sum()} ext)", "INFO")
-record("episodes_single_day", int((ep["n_high_days"] == 1).sum()),
-       "FLAG" if (ep["n_high_days"] == 1).sum() > len(ep) / 3 else "PASS",
-       "single threshold-grazing days counted as events")
-record("episode_longest_span_days", int((ep["end"] - ep["start"]).dt.days.max()), "FLAG",
-       "merge-gap rule collapses the 2020 summer into one event")
+for label, path, live in EPISODE_LISTS:
+    if not path.exists():
+        record(f"episodes_{label}", "absent", "FLAG" if live else "INFO",
+               f"{path.name} is not on disk")
+        continue
+    e = pd.read_csv(path, parse_dates=["start", "end", "peak_date"])
+    span = int((e["end"] - e["start"]).dt.days.max())
+    single = int((e["n_high_days"] == 1).sum())
+    record(f"episodes_{label}_total",
+           f"{len(e)} ({(e['period'] == 'discovery').sum()} disc / "
+           f"{(e['period'] == 'extension').sum()} ext)", "INFO",
+           "the live list" if live else "the frozen artifact, kept byte-identical")
+    record(f"episodes_{label}_single_day", single,
+           ("FLAG" if single > len(e) / 3 else "PASS") if live else "INFO",
+           "single threshold-grazing days counted as events")
+    record(f"episodes_{label}_longest_span_days", span,
+           ("FLAG" if span > EPISODE_MAX_DAYS else "PASS") if live else "INFO",
+           f"cap is {EPISODE_MAX_DAYS} days under the shock rule"
+           if live else "regime rule: the 2020 summer collapses into one event")
 
 ds = pd.read_csv(DATA_REFERENCE / "data_sources.csv")
 coll = ds.groupby("source_id")["description"].nunique()

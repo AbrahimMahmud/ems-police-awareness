@@ -10,7 +10,7 @@ Sources: 19 (13 live, 4 retired, 2 unverifiable).
 Every verification result ever recorded, including failures, is in
 `data/reference/source_verification_log.csv`, which is append-only.
 
-Last scan: **2026-09-11T00:00:35+00:00** — 2 template, 1 unreachable, 6 unverifiable, 65 verified
+Last scan: **2026-09-11T00:12:14+00:00** — 2 template, 1 unreachable, 6 unverifiable, 72 verified
 
 ## S1 — NYC EMS Incident Dispatch Data
 
@@ -263,7 +263,7 @@ Last scan: **2026-09-11T00:00:35+00:00** — 2 template, 1 unreachable, 6 unveri
 - **Access**: scripts/29_resolve_article_titles.py
 - **What we take**: every title redirecting to an article (its historical titles), and each title's first revision date
 - **Role**: closes the rename defect T12. Fetching one canonical title discarded everything before a page move, including the spike at the moment of death; summing across historical titles recovered 79,082,746 views across 106 of 127 articles.
-- **Artifact**: `data/reference/article_title_map.csv` — _verified_ (sha256 9673c440c82199d6, 559 rows; not registered in data_sources.csv)
+- **Artifact**: `data/reference/article_title_map.csv` — _verified_ (sha256 0a27b6dc42d3853a, 559 rows; not registered in data_sources.csv)
 - **Artifact**: `outputs/tables/rename_recovery.csv` — _verified_ (sha256 bdacd2e6adb24ce9, 127 rows; not registered in data_sources.csv)
 - **Known flaws**:
   - Redirects include incidental pages, so a candidate must share a substantive word with the article title.

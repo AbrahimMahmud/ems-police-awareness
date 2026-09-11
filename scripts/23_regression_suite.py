@@ -33,6 +33,7 @@ run, and the same error class the audit itself was hunting.
 """
 
 import argparse
+import importlib.util
 import json
 import re
 import sys
@@ -163,6 +164,54 @@ def t_title_agg_no_trend():
     return ("PASS" if ok else "FAIL",
             f"sum vs max: mean |diff| {mad:.3f} SD, drift {drift:.3f} SD "
             f"({early:+.3f} early, {late:+.3f} late)")
+
+
+def t_no_lost_history():
+    """T12: no article's pageview series starts after the article existed.
+
+    This is the property the rename defect actually violated, and it is not the
+    one the first coverage check tested. Killing_of_Alton_Sterling begins
+    2021-04-25 for a man killed in 2016 - the page was MOVED there, and the
+    pre-move series stayed under the old title. That is lost history.
+
+    A low day count is a different thing entirely: Wikimedia omits days with no
+    recorded views, so a quiet article is legitimately sparse. Counting days
+    conflates the two - it flagged 14 articles, 9 of them simply quiet - while
+    the START of the series separates them cleanly.
+
+    The comparison needs the article's CREATION date as well as the death date,
+    because an article written years after the killing correctly has no earlier
+    series. With both, every one of the 119 usable articles starts within 3 days
+    of max(death, creation), median 0.
+    """
+    tm = DATA_REFERENCE / "article_title_map.csv"
+    used = DATA_REFERENCE / "wiki_ext_basket_used.csv"
+    dec = DATA_REFERENCE / "basket_decisions.csv"
+    if not (tm.exists() and used.exists() and dec.exists()):
+        return "BLOCKED", "title map, basket or decisions absent — run 29 then 11"
+    t = pd.read_csv(tm, parse_dates=["first", "created"])
+    if "created" not in t.columns or t["created"].isna().all():
+        return "BLOCKED", "no creation dates — run 29 --creation-only"
+    u = pd.read_csv(used)
+    d = pd.read_csv(dec, parse_dates=["death_date"])
+    wiki_from = pd.Timestamp("2015-07-01")   # Wikimedia daily pageviews begin here
+
+    per = u[u["ok"]].set_index("article")
+    per = per.assign(
+        first=per.index.map(t.groupby("article")["first"].min()),
+        created=per.index.map(t.groupby("article")["created"].min()),
+        killed=per.index.map(d.dropna(subset=["death_date"])
+                             .set_index("article")["death_date"]))
+    per = per.dropna(subset=["first", "created"])
+    if per.empty:
+        return "BLOCKED", "no article has both a series and a creation date"
+    expected = per[["killed", "created"]].max(axis=1).clip(lower=wiki_from)
+    lag = (per["first"] - expected).dt.days
+    late = lag[lag > 7]
+    return ("PASS" if late.empty else "FAIL",
+            f"{len(per)} articles, start lag median {int(lag.median())}d "
+            f"max {int(lag.max())}d; {len(late)} start >7d late"
+            + (f": {list(late.nlargest(3).index)}" if len(late) else ""))
 
 
 def t_local_series_uncensored():
@@ -1109,33 +1158,33 @@ def v_claims_reproduce():
     """Every number claimed in PAPER_MASTER.md recomputes from its artifact.
 
     The register names the document, a template containing {}, the artifact and
-    the expression. The check fails in BOTH directions: edit the document and
-    the rendered text is no longer found; rebuild the data and the computed
-    value no longer matches what the document says. A number that cannot be
-    regenerated is a check failure, not a typo.
+    the expression. This fails in BOTH directions: edit the document and the
+    rendered text is no longer found; rebuild the data and the computed value no
+    longer matches what the document says. A number that cannot be regenerated
+    is a check failure, not a typo.
+
+    It RECOMPUTES here rather than reading the scan log. Trusting the log needed
+    a staleness gate ("was the document touched since the scan?"), and that gate
+    was circular: 31_verify_sources.py regenerates SOURCE_REGISTER.md, which is
+    itself a claimed document, so the check blocked after every scan. Claims
+    need no network, so there is no reason to trust a record instead of
+    measuring.
     """
     if not CLAIMS_REGISTER.exists():
         return "BLOCKED", "docs/CLAIMS_REGISTER.csv is absent"
-    log = _verify_log()
-    if log is None:
-        return "BLOCKED", "no scan recorded — run 31_verify_sources.py --claims-only"
+    spec = importlib.util.spec_from_file_location(
+        "verify_sources", SCRIPTS / "31_verify_sources.py")
+    v = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(v)
     claims = pd.read_csv(CLAIMS_REGISTER)
-    cl = log[log["kind"] == "claim"]
-    last_run = cl["run_utc"].max()
-    cl = cl[cl["run_utc"] == last_run]
-    missing = sorted(set(claims["claim_id"]) - set(cl["target"]))
-    if missing:
-        return "BLOCKED", f"{len(missing)} claim(s) not in the latest scan: {missing[:3]}"
-    bad = cl[~cl["status"].isin(VERIFY_GOOD)]
-    docs = sorted({str(x) for x in claims["doc"]})
-    newest_doc = max((PROJECT_ROOT / x).stat().st_mtime
-                     for x in docs if (PROJECT_ROOT / x).exists())
-    if pd.Timestamp(newest_doc, unit="s", tz="UTC") > pd.Timestamp(last_run):
-        return "BLOCKED", "a claimed document changed after the last scan; rescan"
-    if len(bad):
-        return "FAIL", (f"{len(bad)} of {len(cl)} claims do not reproduce: "
-                        + "; ".join(bad["target"].head(3)))
-    return "PASS", f"{len(cl)} claims recomputed and found verbatim in the document"
+    cache, bad = {}, []
+    for _, r in claims.iterrows():
+        status, detail = v.check_claim(r, cache)
+        if status not in VERIFY_GOOD:
+            bad.append(f"{r['claim_id']} ({status})")
+    if bad:
+        return "FAIL", f"{len(bad)} of {len(claims)} claims do not reproduce: " + "; ".join(bad[:3])
+    return "PASS", f"{len(claims)} claims recomputed and found verbatim in the document"
 
 
 def v_links_resolve():
@@ -1203,6 +1252,7 @@ def m_register_sync():
 CHECKS = [
     ("T.anchor_monthly", "X1,T4", "Trends anchor rescales all days, not just 1-7", t_anchor_monthly),
     ("T.title_agg_no_trend", "T12", "title aggregation is not measuring accumulation", t_title_agg_no_trend),
+    ("T.no_lost_history", "T12", "no article series starts after the article existed", t_no_lost_history),
     ("T.local_uncensored", "T10", "NYC-local series has no censored days", t_local_series_uncensored),
     ("T.index_not_one_article", "T11", "index top days are not one article", t_index_not_single_article),
     ("T.nyc_break", "T1", "trends_nyc has no artificial level break", t_nyc_break),

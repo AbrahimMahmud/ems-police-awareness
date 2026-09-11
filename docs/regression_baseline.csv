@@ -1,6 +1,7 @@
 check,findings,description,state,detail
 T.anchor_monthly,"X1,T4","Trends anchor rescales all days, not just 1-7",PASS,"within-month step (SD units): trends_nyc 0.034, trends_us 0.023 — worst 0.034"
 T.title_agg_no_trend,T12,title aggregation is not measuring accumulation,PASS,"sum vs max: mean |diff| 0.044 SD, drift 0.055 SD (+0.010 early, +0.065 late)"
+T.no_lost_history,T12,no article series starts after the article existed,PASS,"119 articles, start lag median 0d max 3d; 0 start >7d late"
 T.local_uncensored,T10,NYC-local series has no censored days,PASS,"2 series, no year above 2% zero days"
 T.index_not_one_article,T11,index top days are not one article,PASS,top-day elevation persists 10 days (median); 2/10 are one- or two-day flashes
 T.nyc_break,T1,trends_nyc has no artificial level break,PASS,post/pre median positive = 0.58x (defect if >2)
@@ -34,6 +35,6 @@ O.panel_exists,O5,panel_cd_day.parquet exists,PASS,present
 O.dropna_groupby,O4,missing-district rows not silently dropped,PASS,dropna=False
 V.sources_verified,"X8,X14",every source verified after its last write,PASS,"26 artifacts, all verified after their last write"
 V.no_duplicate_source_ids,"X8,X13","one row per source id, no collisions",PASS,"9 rows, 9 ids, no collisions"
-V.claims_reproduce,X14,every claimed number recomputes from its artifact,PASS,29 claims recomputed and found verbatim in the document
+V.claims_reproduce,X14,every claimed number recomputes from its artifact,PASS,32 claims recomputed and found verbatim in the document
 V.links_resolve,X14,every endpoint has a dated result,PASS,"15 endpoints, last result recorded; 1 unreachable from here (['S4'])"
 M.register_sync,O5,register and suite have not drifted apart,PASS,47/66 findings tagged; all 33 blocking covered

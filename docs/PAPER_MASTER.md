@@ -304,6 +304,22 @@ the fix, Sterling and Castile contributed *nothing* to the week they were killed
 which is why Sandra Bland's **anniversary** appeared to dominate July 2016. Both
 artifacts are gone.
 
+**And the fix is now provably complete, not merely larger.** "More views" is not
+evidence that nothing is still missing. The defect's actual signature is a series
+that *starts late* — `Killing_of_Alton_Sterling` began 2021-04-25 for a man killed
+in 2016, because the page was **moved** to that title and the earlier history
+stayed behind. A low day count is a different thing: Wikimedia omits days with no
+recorded views, so a quiet article is legitimately sparse, and a coverage
+threshold cannot tell the two apart. It flagged 14 articles, 9 of them merely
+quiet.
+
+Separating them needs each article's **creation date**, since an article written
+years after a killing correctly has no earlier series. With creation dates
+resolved from the MediaWiki API for all 559 titles, every one of the **119** usable
+articles starts within **3 days** of `max(death, article creation)`, median **0**.
+Nothing is still hidden behind a rename. `T.no_lost_history` asserts it, and
+restoring the defect for one victim makes the check fail with a 1,754-day lag.
+
 **The index scaling defect.** The index was the mean of whatever components existed
 that day. How many existed swung from 2 to 4 across the decade, and the spread of a
 mean moves with the number of terms averaged — so the index's SD tracked *data
@@ -472,8 +488,14 @@ currently assumed rather than estimated. Under investigation.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check. **38 checks, 37 passing.** States are PASS / FAIL / **BLOCKED** / ERROR,
-where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
+check — **39 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+where BLOCKED means "could not evaluate" and is deliberately *not* a pass. One
+check currently fails: `T.nyc_censoring`, which is a live defect rather than a
+stale test (§4.3), and which R1 closes by retiring `trends_nyc` from the index.
+
+The pass count is deliberately not quoted here. It changes with every run, so a
+number in prose would either be wrong or would have to be edited constantly —
+and a claim nobody can keep current is a claim nobody checks.
 
 **The most transferable lesson in this project:** at least fifteen checks were
 found that could pass for the wrong reason —
@@ -553,9 +575,10 @@ surfaced six defects, none of which was visible in any artifact:
   **had been raising `FileNotFoundError` on its first statement** ever since
   anchoring was retired, and then `KeyError` twice more. It produced no audit at
   all, while "audit flags non-increasing" was being recorded as satisfied. It
-  now runs: **45 checks, 16 flagged.** Its Wikipedia block was also auditing the
+  now runs: **46 checks, 1 flagged.** Its Wikipedia block was also auditing the
   retired top-150 basket rather than the live one, so the rename defect could
-  have survived it untouched.
+  have survived it untouched. The single remaining flag is B-HEARD's 17
+  low-confidence adoption dates, which is a data limitation and not a defect.
 
 ---
 
