@@ -72,8 +72,9 @@ parser.add_argument("--sims", type=int, default=200, help="synthetic panels to t
 parser.add_argument("--draws", type=int, default=200, help="RI draws within each sim")
 parser.add_argument("--rho", type=float, default=0.6, help="AR(1) used if no real panel")
 parser.add_argument("--alpha", type=float, default=0.05)
-parser.add_argument("--day-shock", type=float, default=0.35,
-                    help="citywide day shock SD, as a fraction of sigma (finding S6)")
+parser.add_argument("--day-shock", type=float, default=None,
+                    help="citywide day shock SD as a fraction of sigma; default is "
+                         "MEASURED from the panel (finding S6, S8)")
 parser.add_argument("--jobs", type=int, default=0,
                     help="parallel workers; 0 = cpu_count()-1")
 args = parser.parse_args()
@@ -88,7 +89,30 @@ cds = list(VALID_CDS)
 # Calibrate the noise structure to the real panel when it is available, so the
 # null being tested is the null of THIS design, not a generic one.
 # ---------------------------------------------------------------------------
+# FINDING S8 — 2026-09-11. This block used to estimate rho as the pooled lag-1
+# correlation of the edp_share LEVEL series and sigma as its total SD. Both
+# therefore already contained the district effect, the day-of-week effect and the
+# citywide day shock — and synthetic_panel then ADDED all three again, scaled to
+# sigma at 0.5, 0.15 and 0.35.
+#
+# Measured on the discovery panel: rho came out 0.1851 against a true residual
+# 0.0482, so the AR(1) was nearly FOUR TIMES too persistent, and total synthetic
+# variance was sigma^2 * (1 + 0.25 + 0.0225 + 0.1225) = 0.002553 against the real
+# panel's 0.001830 — 1.40x in variance, 1.18x in SD. The imposed component shares
+# were roughly double the measured ones (district 17.9% against 9.3%, day shock
+# 8.8% against 6.7%).
+#
+# The error ran in the CONSERVATIVE direction: a more dependent null is a harder
+# test, so the CALIBRATED verdict was stricter than documented rather than laxer.
+# But the docstring's claim that "the null being tested is the null of THIS
+# design" was false, and a power analysis built on this generator would inherit a
+# pessimistic MDE — which is how it was found, by reviewing a power design rather
+# than the calibration.
+#
+# Each component is now estimated from the panel and REMOVED before the next is
+# estimated, so the pieces sum to the real variance instead of stacking on it.
 rho, sigma, mu = args.rho, 0.03, 0.10
+cd_scale, dow_scale, day_scale = 0.5, 0.15, 0.35     # fallbacks, never used when calibrated
 panel_path = DATA_PROCESSED / "panel_cd_day.parquet"
 if panel_path.exists():
     real = pd.read_parquet(panel_path)
@@ -96,13 +120,30 @@ if panel_path.exists():
     real = select_sample(real, where="18_null_calibration")
     if "edp_share" in real.columns and real["edp_share"].notna().any():
         s = real.dropna(subset=["edp_share"]).sort_values(["communitydistrict", "incident_date"])
-        d = s.groupby("communitydistrict")["edp_share"]
-        lag = d.shift(1)
-        ok = lag.notna() & s["edp_share"].notna()
-        rho = float(np.corrcoef(s.loc[ok, "edp_share"], lag[ok])[0, 1])
-        sigma = float(s["edp_share"].std())
         mu = float(s["edp_share"].mean())
-        print(f"calibrated to the real panel: rho={rho:.3f} sigma={sigma:.4f} mean={mu:.4f}")
+        total_sd = float(s["edp_share"].std())
+
+        # Peel the components off in the order synthetic_panel adds them back.
+        r = s["edp_share"] - s.groupby("communitydistrict")["edp_share"].transform("mean")
+        cd_sd = float(s.groupby("communitydistrict")["edp_share"].mean().std())
+        dow_means = r.groupby(s["incident_date"].dt.dayofweek).transform("mean")
+        r = r - dow_means
+        dow_sd = float(dow_means.groupby(s["incident_date"].dt.dayofweek).first().std())
+        day_means = r.groupby(s["incident_date"]).transform("mean")
+        r = r - day_means
+        day_sd = float(day_means.groupby(s["incident_date"]).first().std())
+
+        # What is left is the idiosyncratic district-day series the AR(1) models.
+        sigma = float(r.std())
+        lag = r.groupby(s["communitydistrict"]).shift(1)
+        ok = lag.notna() & r.notna()
+        rho = float(np.corrcoef(r[ok], lag[ok])[0, 1])
+        cd_scale, dow_scale, day_scale = (cd_sd / sigma, dow_sd / sigma, day_sd / sigma)
+        print(f"calibrated to the real panel: rho={rho:.4f} sigma={sigma:.4f} mean={mu:.4f}")
+        print(f"  component scales (x sigma): district={cd_scale:.3f} "
+              f"dow={dow_scale:.3f} day_shock={day_scale:.3f}")
+        print(f"  implied total sd {np.sqrt(sigma**2 * (1 + cd_scale**2 + dow_scale**2 + day_scale**2)):.4f} "
+              f"against the panel's {total_sd:.4f}")
 else:
     print(f"real panel not built yet — using assumed rho={rho}, sigma={sigma}")
 
@@ -113,8 +154,8 @@ print(f"episode dates applied to synthetic outcomes: {len(starts)}")
 MIN_SIMS = 200          # below this the verdict is "UNDETERMINED", never a pass
 
 dow = np.array([d.dayofweek for d in dates])
-dow_effect = rng.normal(0, sigma * 0.15, 7)
-cd_effect = rng.normal(0, sigma * 0.5, len(cds))
+dow_effect = rng.normal(0, sigma * dow_scale, 7)
+cd_effect = rng.normal(0, sigma * cd_scale, len(cds))
 T, N = len(dates), len(cds)
 
 
@@ -131,7 +172,10 @@ def synthetic_panel(rng):
     y[:, 0] = rng.normal(0, sigma, N)
     for t in range(1, T):
         y[:, t] = rho * y[:, t - 1] + innov[:, t]
-    day_shock = rng.normal(0, sigma * args.day_shock, T)
+    # Scale measured from the panel, not assumed. --day-shock overrides it only
+    # when explicitly passed, so the sensitivity is still available.
+    day_shock = rng.normal(0, sigma * (args.day_shock if args.day_shock is not None
+                                       else day_scale), T)
     y = y + cd_effect[:, None] + dow_effect[dow][None, :] + day_shock[None, :] + mu
     return pd.DataFrame({
         "communitydistrict": np.repeat(cds, T),
