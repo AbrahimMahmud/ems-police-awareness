@@ -480,9 +480,33 @@ which created the impression the freeze had exactly one breach. F2 produced a
 finding full of confirmation-period numbers and nobody asked where they came
 from: the numbers were read as *evidence*, not as an *access*.
 
-Materiality for both is for the supervisor to judge, not us. Both gaps are being
-closed: outcome artifacts outside the guard's coverage (F1), and the source API
-that no artifact guard can see (F2).
+Materiality for both is for the supervisor to judge, not us. Both gaps are now
+closed in code: outcome artifacts outside the guard's coverage (F1), and the
+source API that no artifact guard can see (F2).
+
+**The posture taken from 2026-09-11, and it is reversible.** Three outcome-side
+questions remain open — the disposition filter (O1), two structural breaks that
+sit *inside* the 2015–2016 confirmation window (O2), and how EDPM is handled
+(O3) — and none can be fully settled without looking at confirmation outcomes
+again. Rather than take a third access, the decision is to **hold the line
+strictly**:
+
+- O1 is resolved on discovery data and the FDNY data dictionary only.
+- O2's handling is **pre-specified blind**: the confirmatory specification must be
+  robust to both alleged breaks whether or not they are real, with each carried as
+  a pre-registered sensitivity rather than a measured correction.
+- O3 is closed on the record already taken; nothing further is derived from it.
+
+The cost is accepted openly: if a genuine break does sit in 2015–2016, we will
+find it only after the freeze lifts, and at that point it can be **disclosed but
+not fixed**. That is the price of not spending the window's remaining credibility.
+
+This is a floor, not a ceiling. The alternative — finishing the outcome definition
+properly and then depositing a timestamped external pre-registration (OSF, or
+PCI-RR as a Registered Report), so an external timestamp replaces the internal
+freeze as the credibility mechanism — is the standard remedy once an internal
+freeze has known breaches, and remains open at any point. Holding the line now
+does not foreclose it; taking a third access would have.
 
 ### 5.4 Counts vs shares — a finding that reverses
 
