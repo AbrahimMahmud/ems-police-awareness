@@ -156,6 +156,74 @@ def fit_event_study(stack, outcome, fe="ep_cd + dow", counts=False,
         return None
 
 
+def fit_dose_response(stack, outcome, intensity, fe="ep_cd + dow", counts=False,
+                      cluster=CLUSTER_VAR, days=range(0, 8)):
+    """Event-time effect scaled by EPISODE INTENSITY, not a binary dummy.
+
+    FINDING D6. The binary design treats every episode identically, and they are
+    not identical: peak CAI-D runs 1.40 to 12.67 across the 28 discovery episodes
+    (a 9x range) and 0.57 to 12.69 across all 75 (22x), with quartiles at 1.86,
+    2.86 and 3.42. A handful of enormous episodes sit beside many marginal ones
+    and every one contributes the same indicator. That is information the design
+    throws away, and it is exactly the information a dose-response reading needs.
+
+    It also bears on T6. Treatment precision is worse in quiet stretches - the two
+    attention indicators correlate 0.90 in 2020 against 0.14 in 2024 - so quiet
+    episodes carry a noisier treatment. Averaging them in with a binary dummy
+    hides that; scaling by intensity makes it visible.
+
+    Specification: the day 0..7 indicators are interacted with the episode's
+    standardised peak intensity, so the coefficient reads as the effect per
+    standard deviation of episode size. `intensity` maps episode id -> peak, and
+    is standardised HERE rather than upstream, so the scale is a property of the
+    episodes actually in this stack rather than of whatever list produced them.
+
+    SECONDARY, and pre-specified as such. The binary arm remains primary because
+    it was pre-registered; this is disclosed as an addition made while still
+    blind to every confirmation outcome.
+    """
+    d = stack.dropna(subset=[outcome]).copy()
+    if d.empty or d["episode"].nunique() < 3:
+        return None
+    if EVENT_REFERENCE_DAY not in set(d["rel_day"]):
+        return None
+    # Intensity is keyed on the episode's START DATE, derived from the stack
+    # itself, NOT on the episode number. build_stack numbers episodes before it
+    # drops the ones that cannot identify anything, so a caller mapping by
+    # position gets a silent off-by-n the moment any episode is dropped. The
+    # start date is recoverable from the stack (incident_date - rel_day) and
+    # cannot drift.
+    d["_start"] = d["incident_date"] - pd.to_timedelta(d["rel_day"], unit="D")
+    key = {pd.Timestamp(k).normalize(): v for k, v in intensity.items()}
+    d["_dose"] = d["_start"].dt.normalize().map(key)
+    if d["_dose"].isna().any():
+        missing = sorted(d.loc[d["_dose"].isna(), "_start"].dt.date.unique())[:3]
+        raise ValueError(f"no intensity for episode start(s) {missing}; refusing "
+                         "to estimate a dose model on a partial mapping")
+    sd = d["_dose"].std(ddof=0)
+    if not sd or not np.isfinite(sd):
+        return None
+    d["_dose"] = (d["_dose"] - d["_dose"].mean()) / sd
+    d["_post"] = d["rel_day"].isin(list(days)).astype(float)
+    d["_post_dose"] = d["_post"] * d["_dose"]
+
+    vcov = {"CRV1": cluster} if cluster and cluster in d.columns else "hetero"
+    # _dose alone is absorbed by the episode x district fixed effect, so only the
+    # interaction and the post indicator are identified.
+    fml = f"{outcome} ~ _post + _post_dose | {fe}"
+    try:
+        if counts:
+            d = d[(d["total_calls"] > 0) & d[outcome].notna()].copy()
+            if d.empty:
+                return None
+            d["log_total"] = np.log(d["total_calls"])
+            return pf.fepois(fml, d, vcov=vcov, offset="log_total")
+        return pf.feols(fml, d, vcov=vcov)
+    except Exception as e:
+        _note_fit_failure(f"{outcome}:dose", counts, e)
+        return None
+
+
 def count_outcome(share_outcome):
     """The count column behind a share column: edp_share -> edp."""
     return share_outcome[:-6] if share_outcome.endswith("_share") else share_outcome
