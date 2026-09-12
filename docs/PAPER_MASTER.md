@@ -950,6 +950,31 @@ was found by reviewing a *power* design rather than the calibration itself. The
 numbers above are now in the claims register, so a future drift fails a check
 instead of sitting in prose.
 
+### 7.5b Power, and the question it cannot answer for us
+
+`scripts/19_power.py` computes a minimum detectable effect per stratum by
+simulation, with Roth's pre-trend diagnostic beside it. Two things about it are
+worth stating before any number it produces is quoted.
+
+**"Underpowered" needs something to be underpowered against, and this project has
+never named one.** A minimum effect of interest — the smallest change in
+mental-health call share that would matter to anyone — is a judgement about the
+world, not a property of the data, and nobody has written one down. The script
+therefore reports every MDE against both numbers the project has ever named: the
+−0.010 effect planted to verify the estimator recovers something, and GATE2's
+−0.00108. **These are different estimands** — a continuous-awareness
+heterogeneity coefficient against a stacked first-week level shift — and the
+ratio to each is reported separately rather than blended. Reporting both is the
+honest default. The paper still has to say which one it means, and that is a
+decision for the supervisor.
+
+**The pre-trend test is what clustering costs.** Because contested district-days
+go to the nearer episode, almost no first-week observation is lost to a
+neighbouring episode — 2 episode-days out of 592 across all three strata. The
+loss lands in the pre-period, 9–15% of it. So the price of clustered episodes is
+not a weaker estimate; it is weaker evidence that the estimate is credible, which
+is a harder thing to notice and a worse thing to have.
+
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
