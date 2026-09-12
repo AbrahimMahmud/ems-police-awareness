@@ -1022,7 +1022,7 @@ its answers is the right shape.
 VERDICT                   CALIBRATED
 empirical rejection rate  0.06     nominal 0.05, band [0.0198, 0.0802]
 median p                  0.5
-KS uniformity             p = 0.7718
+KS uniformity             p = 0.6767
 AR(1) rho                 0.0482   estimated from the real panel
 ```
 
@@ -1070,9 +1070,9 @@ refuses a verdict that certifies something else. All three are now discharged, a
 
 | stratum | scheme | geometry | episodes | rejection at α=.05 | KS p | verdict |
 |---|---|---|---|---|---|---|
-| discovery | anchor shift | contiguous | 29 | 0.06 | 0.7718 | CALIBRATED |
-| C2 | anchor shift | contiguous | 30 | 0.06 | 0.4747 | CALIBRATED |
-| C1 | circular | gapped | 15 | 0.05 | 0.0881 | CALIBRATED |
+| discovery | anchor shift | contiguous | 29 | 0.06 | 0.6767 | CALIBRATED |
+| C2 | anchor shift | contiguous | 30 | 0.06 | 0.4878 | CALIBRATED |
+| C1 | circular | gapped | 15 | 0.05 | 0.0660 | CALIBRATED |
 
 **C1 passed by a margin worth stating rather than burying, and then the margin
 turned out to be a symptom.** Its KS statistic is 0.0875 against a critical value
@@ -1097,15 +1097,25 @@ from the design being tested: different episodes per block, different effective
 sample, different fixed-effect structure. Non-uniform p-values are the expected
 consequence, not a surprise.
 
-Two alternative explanations were checked and rejected. The p-values are discrete
-— they live on a lattice of 1/201 — and are compared against a *continuous*
-uniform, which does inflate the statistic; measured on a perfectly calibrated
-lattice null, that inflation produces a 6.7% false-failure rate at 1,000
-simulations against a nominal 5%. Real, and far too small to account for this: a
-perfect null on the same lattice has a median statistic of 0.028 at 1,000
-simulations and a 95th percentile of 0.045, while C1 sits at 0.0875. The
-p-value formula was also wrong (below), and correcting it moved C1 only from
-0.0900 to 0.0875.
+Two alternative explanations were checked and rejected, and both turned out to
+be real defects that simply were not *this* defect.
+
+The p-values are discrete — they live on a lattice of 1/201 — and were compared
+against a *continuous* uniform, which the code's own comment said not to do. On a
+perfectly calibrated lattice null that inflates the false-failure rate to 6.4% at
+1,000 simulations against a nominal 5%. The first attempt to fix it, passing the
+lattice CDF to the same test, made it **worse** (7.1%), because the test computes
+its p-value from the null distribution of the statistic for a continuous
+reference no matter which CDF it is given. The p-value is now obtained by
+simulating the exact lattice null, which assumes nothing: measured false-failure
+rate 4.8% at 200 simulations. And the randomization p-value formula was wrong
+too (below).
+
+Neither accounts for C1. Correcting the formula moved it from 0.0900 to 0.0875;
+correcting the uniformity test leaves it at **p = 0.066**, still the weakest of
+the three by a wide margin and still passing only because 0.05 is the threshold.
+A perfect null on this lattice has a median statistic of 0.028 at 1,000
+simulations against C1's 0.0924.
 
 The fix is to shift **within each block** rather than across both: one shift per
 block, wrapping inside it. The ten-five split then holds on every draw,

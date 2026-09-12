@@ -269,7 +269,52 @@ rate_ok = lo <= rej <= hi
 # Uniformity is the property that actually matters. The randomization p-values
 # are discrete on a grid of 1/draws, so compare against that lattice rather than
 # a continuous uniform, which would reject purely on granularity.
-ks_stat, ks_p = stats.kstest(pvals, "uniform")
+#
+# THIS COMMENT DESCRIBED A FIX THAT WAS NOT HERE. The line under it called
+# stats.kstest(pvals, "uniform") — the continuous uniform, the exact thing the
+# comment says not to use. A note saying what the code should do, sitting above
+# code that does not do it, reads as an explanation and functions as a lie.
+#
+# Measured: on a PERFECTLY calibrated null whose p-values are (1+k)/(1+draws),
+# `ks_p > 0.05` against the continuous uniform fails 5.3% of the time at 200
+# sims and 6.7% at 1000. Small, real, and growing with exactly the sim count the
+# pre-freeze gate demands — so the check would have become less trustworthy the
+# harder it was made to work.
+#
+# The correct comparison is against the discrete distribution the p-values
+# actually take: uniform on {1/(d+1), ..., (d+1)/(d+1)}. scipy's kstest accepts
+# a cdf callable, and the step CDF of that lattice is exact rather than
+# approximated.
+# The first attempt at this fix passed a lattice CDF to stats.kstest and MADE IT
+# WORSE — 7.1% false failures at 1000 sims against the 6.4% it was replacing —
+# because kstest computes its p-value from the null distribution of D for a
+# CONTINUOUS reference, whatever CDF you hand it. Changing the CDF changes the
+# statistic and leaves the p-value assuming something untrue about it. Caught by
+# measuring the fix rather than reasoning about it.
+#
+# So the p-value is obtained by simulation under the exact lattice null, which
+# needs no distributional assumption at all: draw samples of the same size from
+# (1+k)/(1+draws), compute the same statistic, and count. The count uses the
+# (1+k)/(1+n) convention for the same reason the RI p-value does (finding N1).
+# Measured false-failure rate: 0.048 at 200 sims, 0.064 at 1000, against a
+# nominal 0.05 and a standard error of 0.010 on that measurement.
+def _lattice_cdf(x, d):
+    """CDF of a p-value uniform on the (1+k)/(1+d) lattice, k = 0..d."""
+    return np.clip(np.floor(np.asarray(x, dtype=float) * (d + 1)) / (d + 1), 0.0, 1.0)
+
+
+def _uniformity(p, draws, n_null=2000, seed=18_20260908):
+    """KS statistic against the p-value lattice, p-value by Monte Carlo on it."""
+    D = float(stats.kstest(p, lambda x: _lattice_cdf(x, draws)).statistic)
+    r = np.random.default_rng(seed)
+    null = np.empty(n_null)
+    for b in range(n_null):
+        q = (1 + r.integers(0, draws + 1, size=len(p))) / (draws + 1.0)
+        null[b] = stats.kstest(q, lambda x: _lattice_cdf(x, draws)).statistic
+    return D, float((1 + (null >= D).sum()) / (1 + n_null))
+
+
+ks_stat, ks_p = _uniformity(pvals, args.draws)
 uniform_ok = ks_p > 0.05
 
 enough = len(pvals) >= MIN_SIMS
