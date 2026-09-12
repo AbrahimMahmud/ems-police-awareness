@@ -224,9 +224,46 @@ Redirects are now resolved at the point of collection, which fixes both at sourc
 `scripts/27_finalise_basket.py` applies the scope rule and writes
 `data/reference/wikipedia_article_resolution.csv`.
 
-Current basket: **121 articles / 111 people**, span 2013-01-27→2024,
-**24 killed after 2020**. Every include/exclude decision with its reason is in
+Current basket: **120 articles / 119 people**, span 2013-01-27→2024,
+**27 killed after 2020**. Every include/exclude decision with its reason is in
 `data/reference/basket_decisions.csv`.
+
+**How we ask Wikidata, and the three things it was getting wrong** (findings N1,
+N2, N3). Deciding whether an article belongs in the basket needs three facts:
+when the person died, where, and who killed them. We look those up in Wikidata.
+Until 2026-09-12 we asked through a query language called SPARQL, and we now ask
+through Wikipedia's ordinary web API instead. We only switched after running both
+ways over the same 164 articles and comparing every field. Everything that
+differed, the new way got right:
+
+1. **Names with accents in them were being filed under a mangled spelling.** The
+   old query turned `José` into `Jos%C3%A9` before sending it, and then filed the
+   answer under that mangled name. The basket spells it `José`, so the two could
+   never be matched up, and the article looked like one Wikidata knew nothing
+   about. That is not a harmless filing error. José Campos Torres was then dated
+   by matching his *name* against a list of victims, which matched the wrong
+   person and gave him a 2014 date. Wikidata says he was killed in **1977** —
+   outside the study period entirely. A spelling mismatch put an out-of-scope
+   article into the treatment index, labelled "in range".
+2. **Some articles came back empty and nothing said so.** Ma'Khia Bryant, one of
+   the central events of April 2021, simply had no answer. The new route finds
+   her at once. We now refuse to finish the basket unless every candidate article
+   has been asked about, because "Wikidata has nothing on this person" and "we
+   never got round to asking" are completely different facts, and only the first
+   is a reason to leave someone out.
+3. **Dates were being invented one digit at a time.** Wikidata can say "May 2010"
+   without saying which day, and writes that as `2010-05-00`. The old route
+   quietly turned it into `2010-05-01` — a specific day nobody claimed — and our
+   own code then failed to read the raw form at all and recorded the article as
+   having *no* date. We now keep what Wikidata actually says and note how precise
+   it is.
+
+Between them, **twelve articles had been excluded from the basket for a reason
+that was false**. The count of articles turned away for "no date resolvable" fell
+from 28 to 16 once both problems were fixed; the other twelve moved to reasons
+that are true. Nothing in the old output looked wrong — that is the point, and it
+is why `T.exclusion_reasons_true` now re-reads the evidence behind every stated
+reason rather than trusting the sentence.
 
 The basket is deliberately **not ranked by attention** — that would let the index
 select its own inputs, which is the defect that retired `trends_victims`.
@@ -685,9 +722,15 @@ currently assumed rather than estimated. Under investigation.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **48 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
-where BLOCKED means "could not evaluate" and is deliberately *not* a pass. All of
-them currently pass.
+check — **53 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
+
+They do **not** all pass right now, and this document says so rather than
+rounding up. Six fail and two are blocked, and all eight are the same piece of
+unfinished work: the article basket is mid-rebuild, so the counts derived from it
+have moved, two artifacts still predate the script that writes them, and the null
+calibration is being regenerated after a smoke-test run overwrote it. Each is
+named with its remedy in `outputs/tables/regression_suite.csv`.
 
 The pass count is deliberately not quoted here. It changes with every run, so a
 number in prose would either be wrong or would have to be edited constantly —
@@ -771,10 +814,12 @@ surfaced six defects, none of which was visible in any artifact:
   **had been raising `FileNotFoundError` on its first statement** ever since
   anchoring was retired, and then `KeyError` twice more. It produced no audit at
   all, while "audit flags non-increasing" was being recorded as satisfied. It
-  now runs: **46 checks, 1 flagged.** Its Wikipedia block was also auditing the
+  now runs: **42 checks, 2 flagged.** Its Wikipedia block was also auditing the
   retired top-150 basket rather than the live one, so the rename defect could
-  have survived it untouched. The single remaining flag is B-HEARD's 17
-  low-confidence adoption dates, which is a data limitation and not a defect.
+  have survived it untouched. Both remaining flags are data limitations rather
+  than defects: B-HEARD's 17 low-confidence adoption dates, and 16 basket
+  articles for which Wikidata publishes no date of death, whose coverage
+  therefore cannot be assessed and is not assumed to be fine.
 
 ---
 

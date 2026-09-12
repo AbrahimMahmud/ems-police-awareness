@@ -365,6 +365,166 @@ def t_no_redirect_candidates():
                     "not collected directly")
 
 
+def s_calibration_on_residual():
+    """S8: the synthetic null must have THIS design's dependence, not a harder one.
+
+    18_null_calibration.py builds a synthetic panel out of four pieces — a
+    district effect, a day-of-week effect, a citywide day shock, and an AR(1)
+    idiosyncratic term — and its docstring claims the resulting null "is the null
+    of THIS design, not a generic one". It used to estimate the AR(1) parameters
+    from the edp_share LEVEL series, which already contains the first three
+    pieces, and then add all three back on top. The null was therefore measurably
+    more dependent and more variable than the panel it claimed to imitate: rho
+    0.1851 against a true residual 0.0482, nearly FOUR TIMES too persistent.
+
+    The error ran conservative — a harder null is a stricter gate — so the
+    CALIBRATED verdict survived it. That is exactly why a check is needed rather
+    than a note: a defect whose sign happens to be safe is the kind that stays.
+    It also means any MDE derived from this generator inherits a pessimistic
+    bias, which is how it was found at all: by reviewing a power design, not the
+    calibration.
+
+    This check recomputes both candidate values from the panel and asserts the
+    artifact carries the residual one. It is a test on the NUMBER the calibration
+    published, not on the shape of the source, so a refactor that preserves the
+    behaviour passes and one that quietly restores the level estimate does not.
+    """
+    art = OUTPUTS_TABLES / "null_calibration.csv"
+    panel_path = DATA_PROCESSED / "panel_cd_day.parquet"
+    if not art.exists():
+        return "BLOCKED", "null_calibration.csv absent — run 18_null_calibration.py"
+    if not panel_path.exists():
+        return "BLOCKED", "panel_cd_day.parquet absent — run 01_build_panel.py"
+
+    a = pd.read_csv(art).set_index("metric")["value"]
+    if "ar1_rho" not in a.index:
+        return "BLOCKED", "null_calibration.csv carries no ar1_rho"
+    rho_art = float(a["ar1_rho"])
+
+    import freeze_guard as fg
+    panel = pd.read_parquet(panel_path)
+    panel["incident_date"] = pd.to_datetime(panel["incident_date"])
+    panel = fg.select_sample(panel, where="23_regression_suite:S8")
+    s = (panel.dropna(subset=["edp_share"])
+         .sort_values(["communitydistrict", "incident_date"]))
+
+    def lag1(series, by):
+        lag = series.groupby(by).shift(1)
+        ok = lag.notna() & series.notna()
+        return float(np.corrcoef(series[ok], lag[ok])[0, 1])
+
+    cd = s["communitydistrict"]
+    rho_level = lag1(s["edp_share"], cd)
+
+    # Peel the components in the order synthetic_panel adds them back.
+    r = s["edp_share"] - s.groupby("communitydistrict")["edp_share"].transform("mean")
+    r = r - r.groupby(s["incident_date"].dt.dayofweek).transform("mean")
+    r = r - r.groupby(s["incident_date"]).transform("mean")
+    rho_resid = lag1(r, cd)
+
+    near_resid = abs(rho_art - rho_resid)
+    near_level = abs(rho_art - rho_level)
+    if near_resid > 0.02 or near_level <= near_resid:
+        # Describe what was measured; do not assert a cause the numbers do not
+        # establish. A published rho of 0.5 is nearer the level estimate than the
+        # residual one without being calibrated on either.
+        return "FAIL", (
+            f"published ar1_rho={rho_art:.4f} does not match the residual "
+            f"{rho_resid:.4f} (gap {near_resid:.4f}); the level series, which is "
+            f"the S8 defect, gives {rho_level:.4f} (gap {near_level:.4f})")
+    return "PASS", (
+        f"ar1_rho={rho_art:.4f} matches the residual {rho_resid:.4f} "
+        f"(gap {near_resid:.4f}) and not the level {rho_level:.4f}, which is the "
+        f"S8 defect the null used to carry")
+
+
+def t_exclusion_reasons_true():
+    """N1/N3: no basket article is excluded for a reason the scope file contradicts.
+
+    Every exclusion in basket_decisions.csv carries a stated reason, and a reader
+    — a referee, or this project in six months — takes that reason at face value.
+    Twelve of them were false at once, for two separate mechanisms, and NOTHING
+    in the output distinguished a false reason from a true one:
+
+      N1. The SPARQL path percent-encoded article titles and read the title back
+          out of the returned IRI, so every non-ASCII article was stored under
+          its ENCODED name. The scope row existed and could never join. José
+          Campos Torres was then dated from a registry name-match and admitted
+          as a 2014 killing; Wikidata holds 1977-05-05, which is out of range.
+          A URL-encoding mismatch put an out-of-scope article INTO the treatment
+          index, under the reason "in range".
+
+      N3. Wikidata stores a month-precision date as 2010-05-00.
+          pd.to_datetime(..., errors="coerce") makes that NaT, so the article was
+          excluded as "no date of death in Wikidata, and no registry match" while
+          Wikidata plainly held a date.
+
+    Both produce output that looks entirely reasonable. This check is the thing
+    that can tell the difference: it re-reads the scope file and asserts that
+    every "no date" exclusion is backed by an actually empty scope date.
+    """
+    d = DATA_REFERENCE / "basket_decisions.csv"
+    sc = DATA_REFERENCE / "basket_scope.csv"
+    if not d.exists() or not sc.exists():
+        return "BLOCKED", "basket_decisions.csv or basket_scope.csv absent — run 26 then 27"
+    dec = pd.read_csv(d)
+    scope = pd.read_csv(sc).set_index("article")
+    if "date" not in scope.columns:
+        return "BLOCKED", "basket_scope.csv has no date column"
+
+    nodate = dec[dec["reason"].astype(str).str.startswith("no date")]
+    has = scope["date"].astype(str).str.len().ge(10)
+    wrong = [a for a in nodate["article"] if bool(has.get(a, False))]
+
+    # An article keyed in a form that cannot join is the N1 mechanism itself.
+    unjoinable = sorted(set(scope.index) - set(dec["article"]))
+    encoded = [a for a in scope.index if "%" in str(a)]
+
+    if wrong or encoded:
+        # Report only the clause that actually fired. A message that always
+        # recites both reads as two defects when there is one, and the reader
+        # has to work out which number is the live one.
+        parts = []
+        if wrong:
+            parts.append(f"{len(wrong)} article(s) excluded as 'no date' while "
+                         f"basket_scope.csv holds a date for them: {wrong[:3]}")
+        if encoded:
+            parts.append(f"{len(encoded)} scope row(s) keyed on a percent-encoded "
+                         f"name, which can never join the basket: {encoded[:2]}")
+        return "FAIL", "; ".join(parts)
+    return "PASS", (
+        f"{len(nodate)} 'no date' exclusion(s), all backed by an empty scope date; "
+        f"0 percent-encoded keys; {len(unjoinable)} scope row(s) not among the "
+        f"decided candidates")
+
+
+def t_scope_covers_candidates():
+    """N2: every basket candidate carries a scope row, and each was actually asked.
+
+    26 used to leave candidates unresolved without saying so — Ma'Khia Bryant,
+    central to the April 2021 episode, came back empty from SPARQL and simply
+    had no row. 27 then read a 164-row scope file against 174 candidates. The
+    difference between "Wikidata holds nothing for this article" and "we never
+    asked about this article" is the difference between a basket and an accident
+    of which API calls succeeded, and only the first is a reason to exclude.
+    """
+    b = DATA_REFERENCE / "wiki_basket.csv"
+    sc = DATA_REFERENCE / "basket_scope.csv"
+    if not b.exists() or not sc.exists():
+        return "BLOCKED", "wiki_basket.csv or basket_scope.csv absent — run 24 then 26"
+    PRE = ("Killing_of_", "Shooting_of_", "Death_of_", "Murder_of_", "Police_shooting_of_")
+    bas = pd.read_csv(b).drop_duplicates("article")
+    cand = bas[bas["article"].str.startswith(PRE) | bas["in_registry"]]
+    scope = pd.read_csv(sc)
+    missing = sorted(set(cand["article"]) - set(scope["article"]))
+    if missing:
+        return "FAIL", (f"{len(missing)} of {len(cand)} candidates have no scope row "
+                        f"at all (e.g. {missing[:3]}) — re-run 26")
+    noitem = int(scope["item"].isna().sum()) if "item" in scope.columns else -1
+    return "PASS", (f"all {len(cand)} candidates carry a scope row; "
+                    f"{noitem} resolved to no Wikidata item (a recorded absence)")
+
+
 def t_no_duplicate_person_articles():
     """T17: no basket article may also be a historical title of another basket article.
 
@@ -1968,6 +2128,8 @@ CHECKS = [
     ("X.no_stale_attribution", "X7", "DATA_AUDIT no longer misattributes 378->630", x_no_stale_audit_attribution),
     ("T.wiki_fetch_complete", "T15", "no basket article lost a title to a failed fetch", t_wiki_fetch_complete),
     ("T.no_redirect_candidates", "T18", "no basket candidate is a redirect", t_no_redirect_candidates),
+    ("T.exclusion_reasons_true", "N1,N3", "no basket exclusion states a reason the scope file contradicts", t_exclusion_reasons_true),
+    ("T.scope_covers_candidates", "N2", "every basket candidate was actually asked about", t_scope_covers_candidates),
     ("T.no_duplicate_person", "T17", "no basket article duplicates another person", t_no_duplicate_person_articles),
     ("S.did_no_shared_days", "S7", "no district-day is treated and control at once", s_did_no_shared_days),
     ("T.no_lost_history", "T12", "no article series starts after the article existed", t_no_lost_history),
@@ -1989,6 +2151,7 @@ CHECKS = [
     ("S.prewindow_truncation", "S5,E4", "contested district-days reassigned, not deleted", s_prewindow_truncation),
     ("S.calibration_can_fail", "S4,X3,R3", "calibration verdict can fail", s_calibration_can_fail),
     ("S.no_stale_calibration", "R3", "no stale low-n calibration artifact", s_stale_calibration_artifact),
+    ("S.calibration_on_residual", "S8", "synthetic null has this design's dependence, not a harder one", s_calibration_on_residual),
     ("S.ppml_wired", "X5,R8", "counts/PPML arm actually called", s_ppml_wired),
     ("D.freeze_not_tautological", "D3", "freeze guard is not a tautology", d_freeze_not_tautological),
     ("D.freeze_disjoint", "D3", "confirmation sample disjoint from discovery", d_freeze_enforces_disjoint),

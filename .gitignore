@@ -68,5 +68,15 @@ data/processed/wiki_probe_cache/
 # Wikipedia category cache (regenerable; scripts/24_build_wiki_basket.py)
 data/processed/wiki_cat_cache/
 
-# Wikidata SPARQL response cache (regenerable; scripts/26_resolve_basket_scope.py)
+# Wikidata SPARQL response cache (regenerable; retired with the SPARQL transport,
+# see findings N1-N3 — kept ignored so an old checkout does not suddenly commit it)
 data/processed/wikidata_cache/
+
+# Wikidata entity cache, one file per article (regenerable; 26_resolve_basket_scope.py).
+# Keyed on the article title rather than on a batch index, so changing --batch
+# reuses it instead of discarding it, which is finding N2.
+data/processed/wikidata_entity_cache/
+
+# Cross-process pacing state for the shared Wikimedia rate-limit bucket
+# (scripts/wikimedia.py). Runtime state, never input.
+data/processed/wikimedia_state/

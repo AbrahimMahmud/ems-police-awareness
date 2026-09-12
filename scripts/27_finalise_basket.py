@@ -131,7 +131,30 @@ def main():
             "succeeded.")
 
     sc = scope.set_index("article")
-    df["wd_date"] = pd.to_datetime(df["article"].map(sc["date"]), errors="coerce")
+
+    # WIKIDATA DATES CARRY THEIR OWN PRECISION, AND pd.to_datetime DROPS THEM.
+    #
+    # A month-precision date is stored as 2010-05-00 and a year-precision one as
+    # 2015-00-00. `pd.to_datetime(..., errors="coerce")` turns both into NaT, so
+    # the article fell through to `decide()`'s no-date branch and was excluded
+    # with the reason "no date of death in Wikidata, and no registry match" —
+    # which is FALSE. Wikidata holds a date for those articles; it simply does
+    # not claim a day. Two candidates were excluded on that false reason
+    # (Killing_of_Anastasio_Hernández-Rojas 2010-05, Death_of_Elliott_Williams
+    # 2011-10), and nothing in the output distinguished them from the articles
+    # where the absence is real.
+    #
+    # The month or year is enough to decide scope here — both land unambiguously
+    # inside or outside a range whose edges are 2013-01-01 and 2024-12-31 — so
+    # the date is used, widened to the first of its period, and the precision is
+    # carried into the recorded reason rather than thrown away.
+    def wd_date(raw):
+        if not isinstance(raw, str) or len(raw) < 10:
+            return pd.NaT
+        return pd.to_datetime(raw.replace("-00", "-01"), errors="coerce")
+
+    df["wd_date"] = df["article"].map(sc["date"]).map(wd_date)
+    df["wd_precision"] = df["article"].map(sc["date_precision"]).fillna("none")
     df["country"] = df["article"].map(sc["country"])
     df["reg_date"] = df["k"].map(exact)
     df["reg_date"] = df["reg_date"].fillna(df["k"].map(first_last).map(fl))
@@ -154,13 +177,19 @@ def main():
             return "exclude", f"before the registry era ({d.date()})"
         if d > pd.Timestamp(IN_RANGE[1]):
             return "exclude", f"after the study window ({d.date()})"
-        return "include", f"in range ({d.date()}, {r['date_source']})"
+        prec = r["wd_precision"] if r["date_source"] == "wikidata" else "day"
+        note = f"{d.date()}, {r['date_source']}"
+        if prec in ("month", "year"):
+            # Say so. An inclusion resting on a month is still an inclusion, but
+            # a reader must be able to see which ones they are.
+            note += f", {prec}-precision only"
+        return "include", f"in range ({note})"
 
     df[["decision", "reason"]] = df.apply(lambda r: pd.Series(decide(r)), axis=1)
     df = df.sort_values(["decision", "death_date", "article"])
 
-    cols = ["article", "person", "death_date", "date_source", "country",
-            "in_registry", "decision", "reason"]
+    cols = ["article", "person", "death_date", "date_source", "wd_precision",
+            "country", "in_registry", "decision", "reason"]
     df[cols].to_csv(DATA_REFERENCE / "basket_decisions.csv", index=False)
     log_source("D2", f"Basket scope decisions: {int((df['decision'] == 'include').sum())} "
                      f"include, {int((df['decision'] == 'exclude').sum())} exclude; "

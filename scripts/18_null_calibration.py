@@ -258,9 +258,51 @@ out = pd.DataFrame([
                                     else "UNDETERMINED" if not enough
                                     else "NOT CALIBRATED")},
 ])
-out.to_csv(OUTPUTS_TABLES / "null_calibration.csv", index=False)
-pd.DataFrame({"sim": np.arange(1, len(pvals) + 1), "p": pvals, "effect": effects}).to_csv(
-    OUTPUTS_TABLES / "null_calibration_pvalues.csv", index=False)
+# A SMALLER RUN MAY NEVER OVERWRITE A LARGER ONE (finding D1, 2026-09-11).
+#
+# This is not hypothetical. An 8-sim x 20-draw smoke test, run to check the S8
+# calibration fix, overwrote the 200-sim CALIBRATED artifact that discharged
+# Gate C 6.3 — turning the evidence for the primary estimator's p-values into
+# "VERDICT,UNDETERMINED". outputs/tables/ is gitignored, so the good artifact
+# was not recoverable and had to be regenerated from scratch.
+#
+# Nothing warned. The run exited 0, printed a correct UNDETERMINED banner about
+# ITSELF, and said nothing about what it had just destroyed. That is the error
+# path indistinguishable from success, applied to the one artifact the design
+# cannot proceed without.
+#
+# So the gating file is written only when this run is at least as large as the
+# run already on disk. Every run still leaves its own record in a sidecar keyed
+# by n, so a small diagnostic run is never lost either — it simply cannot
+# masquerade as the verdict.
+main_csv = OUTPUTS_TABLES / "null_calibration.csv"
+pv = pd.DataFrame({"sim": np.arange(1, len(pvals) + 1), "p": pvals, "effect": effects})
+
+prior_n = 0
+if main_csv.exists():
+    try:
+        prior = pd.read_csv(main_csv).set_index("metric")["value"]
+        prior_n = int(float(prior.get("n_sims_completed", 0)))
+    except Exception as e:
+        print(f"could not read the existing verdict ({e}); treating it as absent")
+
+# The sidecar is written unconditionally, before any decision about the gate,
+# so a run that declines to publish still leaves reviewable evidence.
+out.to_csv(OUTPUTS_TABLES / f"null_calibration_n{len(pvals)}.csv", index=False)
+pv.to_csv(OUTPUTS_TABLES / f"null_calibration_pvalues_n{len(pvals)}.csv", index=False)
+
+if len(pvals) >= prior_n:
+    out.to_csv(main_csv, index=False)
+    pv.to_csv(OUTPUTS_TABLES / "null_calibration_pvalues.csv", index=False)
+    if prior_n:
+        print(f"published: {len(pvals)} sims replaces the {prior_n}-sim verdict on disk")
+else:
+    print("=" * 70)
+    print(f"REFUSING TO PUBLISH. This run completed {len(pvals)} sims; the verdict "
+          f"on disk rests on {prior_n}.")
+    print(f"Its record is in null_calibration_n{len(pvals)}.csv. "
+          "null_calibration.csv is unchanged.")
+    print("=" * 70)
 
 print("\n" + "=" * 70)
 print(out.to_string(index=False))
