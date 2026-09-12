@@ -334,6 +334,31 @@ because one of those cases caught it.
 - Attention to violence against police is in **neither**, and what removing it
   does to the 2016-07-08 peak is reported rather than quietly absorbed.
 
+**What removing the anti-police articles actually does** — measured, because
+this exclusion lands on the most load-bearing day in the project. 2016-07-08 is
+the index's highest day and its strongest validation (Alton Sterling and Philando
+Castile), and it is also the day after the Dallas attack. A reader is entitled to
+ask whether that peak was ever about Sterling and Castile at all.
+
+`scripts/33_antipolice_sensitivity.py` rebuilds the index with both articles added
+back, through the same construction, and reports both:
+
+| | published (excluded) | counterfactual (included) |
+|---|---|---|
+| cai_d on 2016-07-08 | **12.5693** | 13.1356 |
+| rank of that day | **1 of 3,472** | 1 of 3,472 |
+
+**2016-07-08 is the highest day either way.** The excluded articles add 205,332
+views that day, which raises the index by 0.57 standard deviations — real, but not
+what put that day on top. The validation survives its own strongest objection.
+
+Two things not to round away. Micah Xavier Johnson's articles carry **3,775,980
+views** across 3,099 days, which would place him among the largest dozen articles
+in a 107-article basket; this is not a marginal exclusion. And the two articles
+have traffic on **3,105 of the index's 3,472 days**, so they were contributing
+throughout rather than only in July 2016 — the largest single-day effect is
+**1.03 standard deviations, on 2017-08-16**, inside the discovery window.
+
 **Where, as well as who** (finding B2). The old country test excluded an article
 only when Wikidata *named* a country outside the US, so an article with no
 country listed passed by default — 58 of 120 did, and only 2 were ever excluded
@@ -386,7 +411,7 @@ fixed level to a **fixed within-year quantile**, because a fixed cut is not a
 constant stringency: it selected 10.7%–66.4% of days depending on the year.
 
 Status: **implemented** (`scripts/13_extension_episodes.py`, 2026-09-10). Frozen
-list = 70 episodes; rebuilt list = 75 episodes. The stringency really is constant
+list = 70 episodes; rebuilt list = 74 episodes. The stringency really is constant
 now — the rule selects 10.1%–10.3% of days in every year — and no episode spans
 more than 14 days from start to end, against 235 under the regime rule. The
 frozen file stays byte-identical on disk; the rebuilt list is written separately
@@ -535,9 +560,11 @@ This was diagnosed in the first audit and a fix was written — and **never appl
 to the production basket**, so the defect was still corrupting every CAI-D value a
 day after the audit that found it. Historical titles are now discovered from the
 MediaWiki redirects API rather than guessed from prefixes, and summed. That
-returned **79,082,746 views** across **106 of 127 articles**: Michael Brown 13.7×,
+returned **79,439,814 views**. Of the **116** articles the title resolver covered,
+**112** turned out to have more than one historical title: Michael Brown 13.7×,
 Philando Castile 8.4×, Breonna Taylor 7.4×, Tamir Rice 6.1×, Eric Garner 4.5×.
-119 of the 121 basket articles now return a usable series.
+Of the **109** articles in the published basket, **107** now return a usable
+series.
 
 **The validation that matters is the content, not the size.** The top attention day
 of the decade is now 2016-07-08 — Alton Sterling and Philando Castile — ahead of
@@ -557,7 +584,7 @@ quiet.
 
 Separating them needs each article's **creation date**, since an article written
 years after a killing correctly has no earlier series. With creation dates
-resolved from the MediaWiki API for all 559 titles, every one of the **119** usable
+resolved from the MediaWiki API for all 530 titles, every one of the **107** usable
 articles starts within **3 days** of `max(death, article creation)`, median **0**.
 Nothing is still hidden behind a rename. `T.no_lost_history` asserts it, and
 restoring the defect for one victim makes the check fail with a 1,754-day lag.

@@ -10,7 +10,7 @@ Sources: 19 (13 live, 4 retired, 2 unverifiable).
 Every verification result ever recorded, including failures, is in
 `data/reference/source_verification_log.csv`, which is append-only.
 
-Last scan: **2026-09-12T01:49:54+00:00** — 18 skipped, 2 template, 6 unverifiable, 66 verified
+Last scan: **2026-09-12T02:35:04+00:00** — 18 skipped, 2 template, 6 unverifiable, 72 verified
 
 ## S1 — NYC EMS Incident Dispatch Data
 
@@ -176,9 +176,9 @@ Last scan: **2026-09-12T01:49:54+00:00** — 18 skipped, 2 template, 6 unverifia
 - **Access**: scripts/11_fetch_awareness_components.py
 - **What we take**: daily article volume (gdelt_news), daily TV mention volume (gdelt_tv), and summed daily pageviews across the victim basket (wiki_ext)
 - **Role**: gdelt_news and gdelt_tv are the supply tier CAI-S; wiki_ext is a demand-tier component of CAI-D
-- **Artifact**: `data/reference/cai_components_daily.csv` — _verified_ (sha256 dbb89a5aa3380194, 9,232 rows, 2015-01-01..2024-12-31; matches the provenance register)
-- **Artifact**: `data/reference/wiki_ext_basket_used.csv` — _verified_ (sha256 0cffc9013f1382d2, 121 rows; not registered in data_sources.csv)
-- **Artifact**: `data/reference/wiki_ext_aggregation_diagnostic.csv` — _verified_ (sha256 a8ea321b5a7319b8, 3,472 rows, 2015-07-01..2024-12-31; not registered in data_sources.csv)
+- **Artifact**: `data/reference/cai_components_daily.csv` — _verified_ (sha256 f747bc27b7beada3, 9,232 rows, 2015-01-01..2024-12-31; matches the provenance register)
+- **Artifact**: `data/reference/wiki_ext_basket_used.csv` — _verified_ (sha256 97140b683f5a6506, 109 rows; not registered in data_sources.csv)
+- **Artifact**: `data/reference/wiki_ext_aggregation_diagnostic.csv` — _verified_ (sha256 2d37c4ad5d1c0c3d, 3,472 rows, 2015-07-01..2024-12-31; not registered in data_sources.csv)
 - **Cite as**: The GDELT Project. https://www.gdeltproject.org ; Wikimedia Foundation, Pageviews API.
 - **Known flaws**:
   - gdelt_news covers 2017-01-01..2022-12-31 with 3 internal gaps, so it does not span the study period; gdelt_tv ends 2024-10-11.
@@ -263,7 +263,7 @@ Last scan: **2026-09-12T01:49:54+00:00** — 18 skipped, 2 template, 6 unverifia
 - **Access**: scripts/29_resolve_article_titles.py
 - **What we take**: every title redirecting to an article (its historical titles), and each title's first revision date
 - **Role**: closes the rename defect T12. Fetching one canonical title discarded everything before a page move, including the spike at the moment of death; summing across historical titles recovered 79,082,746 views across 106 of 127 articles.
-- **Artifact**: `data/reference/article_title_map.csv` — _verified_ (sha256 0a27b6dc42d3853a, 559 rows; not registered in data_sources.csv)
+- **Artifact**: `data/reference/article_title_map.csv` — _verified_ (sha256 b1be98f09b916a90, 530 rows; matches the provenance register)
 - **Artifact**: `outputs/tables/rename_recovery.csv` — _verified_ (sha256 bdacd2e6adb24ce9, 127 rows; not registered in data_sources.csv)
 - **Known flaws**:
   - Redirects include incidental pages, so a candidate must share a substantive word with the article title.

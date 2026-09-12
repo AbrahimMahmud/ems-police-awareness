@@ -293,6 +293,13 @@ def check_claim(row, doc_cache):
     except Exception as e:
         return "failed", f"format {row['fmt']!r} failed on {value!r}: {e}"
 
+    # The rendered value is recorded HERE, where it exists. The first version of
+    # update_claims recovered it by regexing the human-readable detail string
+    # below — `computed (\S+?),` — which stops at the first comma. For a claim
+    # whose value is "79,439,814" that captured "79", and the updater wrote 79
+    # into the paper. A number is not a sentence; reading it back out of one is a
+    # second source of truth, and this is what that costs.
+    RENDERED[str(row["claim_id"])] = rendered
     expect = _normalise(str(row["template"]).replace("{}", rendered))
     if expect in text:
         return "verified", f"computed {rendered}; document agrees"
@@ -304,6 +311,89 @@ def check_claim(row, doc_cache):
                             f"the number differs)")
     return "mismatch", (f"computed {rendered}; the claim's wording is not in "
                         f"{row['doc']} at all - the register is stale")
+
+
+
+# Must match anything `fmt` can render: thousands separators, decimals,
+# percentages, and ISO dates (C03_wiki_start renders 2015-07-01).
+NUMBER_RE = r"[-+]?\d[\d,\-]*(?:\.\d+)?%?"
+
+
+RENDERED = {}
+
+
+def _template_regex(template):
+    """Template -> regex that matches it in the RAW document, number left open.
+
+    Whitespace is matched as \\s+ so a claim whose sentence markdown wrapped
+    across a newline is still found. The verifier already normalises whitespace
+    before comparing; the updater has to edit the real bytes, so it needs the
+    same tolerance expressed differently.
+    """
+    import re as _re
+    parts = str(template).split("{}")
+    out = []
+    for part in parts:
+        toks = part.split()
+        lead = r"\s*" if part[:1].isspace() and part.strip() else ""
+        trail = r"\s*" if part[-1:].isspace() and part.strip() else ""
+        out.append(lead + r"\s+".join(_re.escape(t) for t in toks) + trail)
+    # The parenthesised group is built FIRST and then used as the separator.
+    # Written as "(" + NUMBER_RE + ")".join(out) it parses as
+    # "(" + NUMBER_RE + (")".join(out)) — the capture group lands at the front of
+    # the pattern instead of between the literal parts, and every template
+    # matched zero places. The updater then reported "refusing to guess" on all
+    # seven claims, which reads exactly like caution rather than a broken regex.
+    return ("(" + NUMBER_RE + ")").join(out)
+
+
+def update_claims(rows, verdicts):
+    """Rewrite stated numbers to the computed ones. Mechanical, never a judgement.
+
+    ONLY for claims the verifier classed as "the number differs" — the
+    surrounding wording already matches, so nothing about the sentence's meaning
+    is being decided here. A claim whose wording is absent is left alone and
+    reported, because that is the register going stale, which is a person's
+    problem.
+
+    REFUSES on ambiguity. If the template matches zero or more than one place in
+    the document, nothing is written and the claim is reported. Silently
+    rewriting one of two matches is how a document acquires a number that is
+    right in one sentence and wrong in another.
+    """
+    import re as _re
+    changed, refused = [], []
+    by_doc = {}
+    for row, (status, detail) in zip(rows, verdicts):
+        if status != "mismatch" or "surrounding wording is present" not in detail:
+            if status == "mismatch":
+                refused.append((row["claim_id"], "wording absent — register is stale"))
+            continue
+        new = RENDERED.get(str(row["claim_id"]))
+        if new is None:
+            refused.append((row["claim_id"], "no rendered value recorded"))
+            continue
+        doc = PROJECT_ROOT / row["doc"]
+        text = by_doc.get(doc, doc.read_text() if doc.exists() else None)
+        if text is None:
+            refused.append((row["claim_id"], f"{row['doc']} does not exist"))
+            continue
+        rx = _template_regex(row["template"])
+        hits = list(_re.finditer(rx, text))
+        if len(hits) != 1:
+            refused.append((row["claim_id"],
+                            f"template matches {len(hits)} place(s); refusing to guess"))
+            continue
+        h = hits[0]
+        old = h.group(1)
+        if old == new:
+            continue
+        text = text[:h.start(1)] + new + text[h.end(1):]
+        by_doc[doc] = text
+        changed.append((row["claim_id"], row["doc"], old, new))
+    for doc, text in by_doc.items():
+        doc.write_text(text)
+    return changed, refused
 
 
 # ---------------------------------------------------------------------------
@@ -379,6 +469,9 @@ def main():
     ap.add_argument("--scan", action="store_true", help="everything, network included")
     ap.add_argument("--offline", action="store_true", help="artifacts and claims only")
     ap.add_argument("--claims-only", action="store_true", help="claims only, no network")
+    ap.add_argument("--update-claims", action="store_true",
+                    help="rewrite stated numbers to the computed ones where only the "
+                         "number differs; refuses on any ambiguous match")
     args = ap.parse_args()
     if not (args.scan or args.offline or args.claims_only):
         ap.error("choose --scan, --offline or --claims-only")
@@ -422,9 +515,36 @@ def main():
     else:
         claims = pd.read_csv(CLAIMS_CSV)
         cache = {}
+        crows, cverdicts = [], []
         for _, r in claims.iterrows():
-            rec("claim", str(r.get("source_id") or "-"), r["claim_id"],
-                *check_claim(r, cache))
+            v = check_claim(r, cache)
+            crows.append(r)
+            cverdicts.append(v)
+            rec("claim", str(r.get("source_id") or "-"), r["claim_id"], *v)
+
+        if args.update_claims:
+            changed, refused = update_claims(crows, cverdicts)
+            print("\n== claim updates ==")
+            for cid, doc, old_v, new_v in changed:
+                print(f"  {cid}: {doc} {old_v!r} -> {new_v!r}")
+            for cid, why in refused:
+                print(f"  SKIPPED {cid}: {why}")
+            if not changed and not refused:
+                print("  nothing to update")
+            if changed:
+                # Re-verify in the same run. An updater that reports what it
+                # meant to write, rather than what the document now says, is the
+                # error path indistinguishable from success all over again.
+                cache.clear()
+                print("\n== re-verified after update ==")
+                still = 0
+                for _, r in claims.iterrows():
+                    st, det = check_claim(r, cache)
+                    rec("claim", str(r.get("source_id") or "-"), r["claim_id"], st, det)
+                    if st == "mismatch":
+                        still += 1
+                        print(f"  STILL MISMATCHED {r['claim_id']}: {det[:90]}")
+                print(f"  {len(claims) - still}/{len(claims)} claims verified")
 
     log = pd.DataFrame(rows, columns=LOG_COLUMNS)
     prior = pd.read_csv(LOG_CSV) if LOG_CSV.exists() else pd.DataFrame(columns=LOG_COLUMNS)
