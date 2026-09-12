@@ -226,7 +226,14 @@ including it would make the correction depend on how often the same data is
 described. Sensitivities, the dose and B-HEARD interaction arms, and the placebos
 are outside the family and report uncorrected p-values labelled as such. A cell's
 membership is in the `family` column of the output, so the correction can be
-recomputed by a reader who disagrees with the definition.
+recomputed by a reader who disagrees with the definition. The column takes four
+values and only the first is corrected:
+
+    primary_H1    the 8 corrected tests: H1 outcomes x both arms x C1 and C2
+    sensitivity   drop-July-2016 and the broad basket
+    secondary     everything else reported beside the primary — the pooled
+                  summary, the `late` B-HEARD bound, the B-HEARD interaction arm
+    placebo       cardiac, injury and asthma; falsification, never confirmation
 
 RUNTIME
 -------
@@ -264,7 +271,39 @@ import pyfixest as pf
 # thousands of identical lines and bury everything that matters in the log.
 # Shown once, never suppressed outright: a collinearity message that stopped
 # appearing entirely would hide a genuinely degenerate specification.
-warnings.filterwarnings("once", category=UserWarning, module=r"pyfixest\..*")
+#
+# Two `warnings.filterwarnings` attempts were tried and BOTH silently did
+# nothing: `module=r"pyfixest\..*"` (which matches where a warning is issued, not
+# where it is raised) and then `action="once"` on the message, which still
+# printed one four-line block per fit — pyfixest re-enters `catch_warnings`
+# internally, so the global once-registry never suppresses anything. Each looked
+# correct and neither was, which is this project's own recurring failure mode in
+# miniature. The working version therefore does not configure the warnings
+# module at all: `fit()` captures warnings per call and `_note_warning` prints
+# each distinct one exactly once. Verified by counting the blocks, not by
+# reading the filter.
+_SEEN_WARNINGS = set()
+
+
+@contextmanager
+def collected_warnings():
+    """Capture warnings from one fit and report each distinct one once."""
+    with warnings.catch_warnings(record=True) as got:
+        warnings.simplefilter("always")
+        try:
+            yield
+        finally:
+            for w in got:
+                _note_warning(w)
+
+
+def _note_warning(w):
+    text = " ".join(str(w.message).split())
+    key = (w.category.__name__, text[:120])
+    if key in _SEEN_WARNINGS:
+        return
+    _SEEN_WARNINGS.add(key)
+    print(f"[warn] {w.category.__name__}: {text[:200]}")
 
 import freeze_guard
 from bheard import attach as attach_bheard
@@ -720,13 +759,14 @@ def fit(stack, outcome, extra=("bheard_exposure",), counts=False,
     vcov = {"CRV1": cluster} if cluster and cluster in d.columns else "hetero"
     fml = _formula(outcome, extra, fe=fe)
     try:
-        if counts:
-            d = d[(d["total_calls"] > 0) & d[outcome].notna()].copy()
-            if d.empty:
-                return None
-            d["log_total"] = np.log(d["total_calls"])
-            return pf.fepois(fml, d, vcov=vcov, offset="log_total")
-        return pf.feols(fml, d, vcov=vcov)
+        with collected_warnings():
+            if counts:
+                d = d[(d["total_calls"] > 0) & d[outcome].notna()].copy()
+                if d.empty:
+                    return None
+                d["log_total"] = np.log(d["total_calls"])
+                return pf.fepois(fml, d, vcov=vcov, offset="log_total")
+            return pf.feols(fml, d, vcov=vcov)
     except Exception as e:
         _note_failure(fml, counts, e)
         return None
