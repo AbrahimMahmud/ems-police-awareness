@@ -50,9 +50,12 @@ project has been burned by exactly that.
         is profile-free and is the headline. What IS profile-dependent is the
         RATIO b*/MDE, and it is reported for every profile precisely so nobody
         can quote the flattering one alone.
-        Measured here on one discovery-geometry draw while writing this file:
-        mean off-diagonal correlation of the day 0..7 coefficient vector 0.439
-        (the shared day -1 reference shock makes Sigma equicorrelated);
+        Measured here on discovery-geometry draws while writing this file: the
+        mean off-diagonal correlation of the day 0..7 coefficient vector runs
+        0.44 to 0.54 depending on the draw, against the reviewers' 0.515 -- the
+        stable fact is that the shared day -1 reference makes Sigma strongly
+        equicorrelated, not any one of those numbers, and the file recomputes it
+        per run and writes it to `sigma.mean_offdiag_corr`. On one such draw,
         lambda per unit 1.97e5 for the level direction against 1.34e7 for the
         trend direction, a factor of 68. b*/MDE(level) = 0.121, i.e. delta/8.25,
         against the old rule's delta/4.5 -- the old rule overstated the tolerable
@@ -69,14 +72,24 @@ project has been burned by exactly that.
         [0.8, 1.25] x the screen MDE and returned NaN when the true value fell
         outside, after spending its entire budget getting there. It always would
         have. Measured here on the real discovery geometry over 2000 accepted
-        `placebo_starts` draws: 32.1% of placebo episode starts (p10 24.1%,
-        p90 41.4%) land within 7 days of a REAL episode start, because the
-        29 discovery episodes span 1240 days inside a window that leaves the
-        whole shifted sequence only 190 free days to sit in. On C2 it is worse:
-        34.9% contaminated, 53 free days for a 1226-day sequence. Under a
+        `placebo_starts` draws, at the seed this file uses: 32.3% of placebo
+        episode starts (p10 24.1%, p90 41.4%) land within 7 days of a REAL
+        episode start, because the 29 discovery episodes span 1240 days inside a
+        window that leaves the whole shifted sequence only 190 free days to sit
+        in. On C2 it is worse: 35.1% contaminated (p10 26.7%, p90 46.7%), and 53
+        free days for a 1226-day sequence. The reviewers measured 30.8% on
+        discovery; nothing here is hard-coded from that. Under a
         planted effect at the real dates, a third of every placebo design
         absorbs genuine signal, the RI null shifts up, and the RI MDE lands far
         outside any fixed multiple of the screen MDE.
+        C1 fails earlier and for a different reason, and this file reports that
+        instead of producing a number: 40.9% of its placebo starts land outside
+        C1's own windows, because `placebo_starts` anchors a gap-permuted
+        sequence inside one contiguous [lo, hi] and C1 is two windows either side
+        of the entire discovery period. The project's PRIMARY p-value is not
+        defined on C1 as the estimator currently draws placebos. That is a
+        finding about the design, not a budget problem, and `ri_status` carries
+        it into the CSV.
         So the RI bracket here is ADAPTIVE AND SEEDED BY A PILOT, both, as the
         reviewers asked: `_bracket_power` steps out geometrically from a cheap
         low-sim pilot until it actually brackets the target, refines inside the
@@ -171,9 +184,58 @@ The count that actually governs power is neither of those. It is INFORMATION, so
 where lambda is the noncentrality per unit effect and `spaced` is the same number
 of episodes in the same calendar span placed far enough apart that no two windows
 touch. Both are measured with the real estimator; the ratio absorbs window
-truncation AND the dilution that happens when one episode's planted effect lands
-on a day the stack has labelled with a different episode's relative day. Every
-MDE in the output CSV is reported beside the n_effective it was achieved at.
+truncation AND what happens when one episode's planted effect lands on a day the
+stack has labelled with a different episode's relative day. Every MDE in the
+output CSV is reported beside the n_effective it was achieved at.
+
+AND THE FIRST WEEK LOSES ALMOST NOTHING, for a reason that is exact rather than
+empirical. `build_stack` gives a contested district-day to the NEARER episode.
+Day d of episode A sits on date A+d, whose distance to a later episode B is
+|d - (B-A)|, and that beats d exactly when 0 < B-A < 2d. So a first-week day is
+lost only to a LATER neighbour starting within 14 days -- an earlier one is always
+further away and can never take one -- and a 10-day gap costs days 6 and 7 and
+nothing else. `_geometry` computes the loss from that rule and the run ABORTS if
+build_stack disagrees with it, because if the assignment rule is not what this
+file assumes then nothing here about effective N is supported.
+
+Measured, and matching the rule exactly on all three strata:
+
+  stratum  min gap  pairs < 14d  first-week days lost  max |g - profile|
+  ---------------------------------------------------------------------
+  discovery   15d        0            0 of 232              0.000000
+  C1          16d        0            0 of 120              0.000000
+  C2          10d        1            2 of 240              0.002866
+
+where g is the day 0..7 coefficient vector the estimator returns for a unit
+planted effect: on discovery and C1 it is the planted profile to machine
+precision, and on C2 it is off by 0.29% of a unit effect. Written per run to
+`geometry.first_week_days_lost_predicted` and
+`first_week_attenuation_max_abs_dev`, so a rebuilt episode list that crowds two
+starts closer shows up as a number rather than as a surprise.
+
+So the standing worry -- neighbouring episodes truncate windows and reduce
+informative N -- is right about the mechanism and wrong about where it lands. On
+this episode list it costs 9-15% of the PRE-PERIOD and 0.8% of one stratum's
+first week. The Roth pre-test is the diagnostic that pays for it, and it is
+computed on the truncated pre-period Sigma for exactly that reason.
+
+`n_effective` is still reported, and still worth reading, but it must be read for
+what it is: a ratio of TWO ESTIMATED covariance matrices, the real geometry's and
+the spaced reference's. It is not deterministic like the two measurements above,
+and at small `--null-sims`/`--ref-sims` it is dominated by estimation noise -- a
+2-sim diagnostic run put it at 44 of 29, which is a statement about two noisy
+matrices and not about the design. Quote it only from a run at MIN_SIMS or above.
+
+One assumption is buried in all of this and is therefore made explicit and given
+a conservative counterpart: where first weeks DO overlap -- they do not on this
+list, but a rebuilt list could change that -- `plant` must decide whether two
+episodes covering a day produce twice the response. Whether two simultaneous
+attention shocks double the behavioural response is not known, so the CSV carries
+both conventions: `n_effective` / `mde_*` under additive overlap, and
+`n_effective_saturating` / `mde_analytic_saturating_overlap` under the
+conservative one where the day takes the single largest contribution instead of
+the sum. On the current list the two are identical, which is itself the check
+that no first week overlaps.
 
 THE FREEZE
 ----------
@@ -205,6 +267,30 @@ Usage:
 import argparse
 import hashlib
 import os
+
+# BLAS THREADS OFF, BEFORE numpy IS IMPORTED. Two reasons, and the first is a
+# hang this file actually produced rather than a precaution.
+#
+#  1. DEADLOCK. The workers are forked (see `_pmap`), and this script fits models
+#     in the PARENT before the first fork -- the plant-equivalence check and the
+#     unit-response measurement. A fork of a process that has already started
+#     OpenMP/BLAS worker threads gives the child an inherited, already-held
+#     mutex, and the child then blocks forever on it. Observed exactly that: the
+#     parent at futex_do_wait, the child at futex_do_wait with 0 seconds of CPU
+#     consumed, no error, no timeout -- an error path indistinguishable from a
+#     slow run, which is the failure shape this project keeps finding. Setting
+#     these before numpy loads means the thread pools are never created, so there
+#     is nothing to inherit.
+#  2. OVERSUBSCRIPTION. With JOBS processes each running an N-thread BLAS on a
+#     4-core box, the run is slower than the serial version and starves whatever
+#     else is on the machine. One thread per worker process is the right setting
+#     for a process-parallel job regardless of the deadlock.
+#
+# setdefault, so an operator who deliberately exports a different value keeps it.
+for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+           "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS"):
+    os.environ.setdefault(_v, "1")
+
 from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
@@ -289,7 +375,7 @@ RI_MIN_ACCEPT = 0.02        # placebo draws landing wholly inside the stratum
 # `_check_generator_fingerprint` for what this does and does not prove.
 FINGERPRINT_PARAMS = dict(rho=0.05, sigma=0.04, mu=0.10,
                           cd_scale=0.33, dow_scale=0.13, day_scale=0.28)
-GENERATOR_FINGERPRINT = "PLACEHOLDER"
+GENERATOR_FINGERPRINT = "9c05c9183349afbb1b487e10b8f3998633a6f210df4e251637518fec656554cc"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--outcome", default=H1_OUTCOMES[0],
@@ -582,20 +668,42 @@ def _spaced_starts(name, n):
 # ===========================================================================
 # Planting, and the equivalence it rests on
 # ===========================================================================
-def plant(frame, starts, profile, delta, outcome):
+def plant(frame, starts, profile, delta, outcome, overlap="add"):
     """Add `delta * profile[d]` to every district on date start+d, d in 0..7.
 
-    Citywide, because treatment is citywide. Overlapping episodes ADD, which is
-    what the world would do and is also the dilution channel `n_effective`
-    measures: when episode B starts inside episode A's first week, the shared
-    date carries both effects while the stack labels it with only one of their
-    relative days.
+    Citywide, because treatment is citywide.
+
+    WHAT HAPPENS WHERE TWO EPISODES OVERLAP IS AN ASSUMPTION, NOT A FACT, and it
+    changes the answer, so both conventions are available and both are reported:
+
+      "add"      two episodes covering the same day produce twice the response.
+                 This is the default because it is what an additive linear model
+                 means, and it is the convention the RI leg and the MC scan use
+                 throughout.
+      "saturate" the day takes the single largest contribution instead. Nobody
+                 knows whether two simultaneous attention shocks double the
+                 behavioural response, and if they do not, "add" credits the
+                 design with information it does not have.
+
+    This matters more than it looks. Under "add", crowding does not cost the
+    first-week test information -- it ADDS it, and the measured effective episode
+    count comes out ABOVE the nominal one. Reporting that number alone, with no
+    conservative counterpart, would be assuming the favourable answer to an open
+    question, which is the shape of defect this project keeps finding. So
+    `n_effective` and the analytic MDE are both reported under each convention
+    and the saturating one is the conservative bound.
     """
-    off = {}
+    contrib = {}
     for s in starts:
         for d, w in enumerate(profile):
             key = pd.Timestamp(s) + pd.Timedelta(days=d)
-            off[key] = off.get(key, 0.0) + float(delta) * float(w)
+            contrib.setdefault(key, []).append(float(delta) * float(w))
+    if overlap == "add":
+        off = {k: float(np.sum(v)) for k, v in contrib.items()}
+    elif overlap == "saturate":
+        off = {k: float(v[int(np.argmax(np.abs(v)))]) for k, v in contrib.items()}
+    else:
+        raise ValueError(f"unknown overlap convention {overlap!r}")
     out = frame.copy()
     out[outcome] = out[outcome] + out["incident_date"].map(off).fillna(0.0).to_numpy()
     return out
@@ -628,14 +736,15 @@ def _check_plant_equivalence(panel, starts, outcome):
 # ===========================================================================
 # Per-sim work. Module-level so ProcessPoolExecutor can reach it under fork.
 # ===========================================================================
-_CTX = {}
+def _coef_block(m, days):
+    """(coef vector, vcov block, column names) for the requested relative days.
 
-
-def _fit_coefs(stack, outcome, days):
-    """(coef vector, vcov block) for the requested relative days, or None."""
-    m = fit_event_study(stack, outcome)
-    if m is None:
-        return None
+    None when any requested day is missing, which is a real possibility: a
+    collinear event-time dummy gets dropped when a window is truncated, and a
+    statistic built from a different set of days than the one it is compared
+    against is not the same statistic (the reason MIN_FIRST_WEEK_DAYS exists in
+    event_study).
+    """
     names = _rel_day_coefs(m)
     want = [d for d in days if d in names]
     if len(want) != len(days):
@@ -644,23 +753,36 @@ def _fit_coefs(stack, outcome, days):
     allnames = [str(x) for x in m._coefnames]
     idx = [allnames.index(c) for c in cols]
     V = np.asarray(m._vcov, dtype=float)
-    return np.asarray(m.coef().loc[cols].values, dtype=float), V[np.ix_(idx, idx)], m, cols
+    return np.asarray(m.coef().loc[cols].values, dtype=float), V[np.ix_(idx, idx)], cols
 
 
-def _null_sim(seed):
+def _fit_coefs(stack, outcome, days):
+    """Fit, then take one block. Use `fit_event_study` + `_coef_block` directly
+    when more than one block is wanted: fitting twice for two blocks of the SAME
+    model doubled the cost of the null leg for nothing."""
+    m = fit_event_study(stack, outcome)
+    if m is None:
+        return None
+    blk = _coef_block(m, days)
+    return None if blk is None else (blk[0], blk[1], m, blk[2])
+
+
+def _null_sim(job):
     """One null panel: first-week and pre-period coefficient vectors and vcovs."""
-    c = _CTX
+    c, seed = job
     rng = np.random.default_rng(seed)
     panel = synthetic_panel(rng, c["dates"], c["cds"], c["rho"], c["sigma"], c["mu"],
                             c["cd_effect"], c["dow_effect"], c["day_scale"])
     stack = build_stack(panel, c["starts"], EVENT_WINDOW_PRE, EVENT_WINDOW_POST)
     if stack.empty:
         return None
-    fw = _fit_coefs(stack, c["outcome"], list(FIRST_WEEK))
+    m = fit_event_study(stack, c["outcome"])
+    if m is None:
+        return None
+    fw = _coef_block(m, list(FIRST_WEEK))
     if fw is None:
         return None
-    pre_days = [d for d in range(-EVENT_WINDOW_PRE, EVENT_REFERENCE_DAY)]
-    pre = _fit_coefs(stack, c["outcome"], pre_days)
+    pre = _coef_block(m, [d for d in range(-EVENT_WINDOW_PRE, EVENT_REFERENCE_DAY)])
     return dict(fw_b=fw[0], fw_V=fw[1],
                 pre_b=None if pre is None else pre[0],
                 pre_V=None if pre is None else pre[1])
@@ -673,8 +795,7 @@ def _scan_sim(job):
     the stack are built ONCE and the effect is planted on the stack, which
     `_check_plant_equivalence` has already shown to be exact.
     """
-    seed, cells = job
-    c = _CTX
+    c, seed, cells = job
     rng = np.random.default_rng(seed)
     panel = synthetic_panel(rng, c["dates"], c["cds"], c["rho"], c["sigma"], c["mu"],
                             c["cd_effect"], c["dow_effect"], c["day_scale"])
@@ -688,7 +809,7 @@ def _scan_sim(job):
         if got is None:
             out[(pname, delta)] = None
             continue
-        b, V, m, cols = got
+        _, _, m, cols = got
         out[(pname, delta)] = float(_joint_stat(m, cols))
     return out
 
@@ -703,8 +824,7 @@ def _ri_sim(job):
     p-value by about 1/n and so shift the RI MDE slightly upward. Recorded here
     because the number in the CSV is a property of today's code.
     """
-    seed, pname, delta, draws = job
-    c = _CTX
+    c, seed, pname, delta, draws = job
     rng = np.random.default_rng(seed)
     panel = synthetic_panel(rng, c["dates"], c["cds"], c["rho"], c["sigma"], c["mu"],
                             c["cd_effect"], c["dow_effect"], c["day_scale"])
@@ -716,10 +836,60 @@ def _ri_sim(job):
     return float(p)
 
 
-def _pmap(fn, jobs_iter, n):
-    """Parallel map that keeps failed replicates visible as None."""
-    with ProcessPoolExecutor(max_workers=JOBS) as ex:
-        return [r for r in ex.map(fn, jobs_iter, chunksize=1)]
+EXECUTOR = None
+
+
+def _start_workers():
+    """Fork the worker pool BEFORE this process fits anything. Not optional.
+
+    THIS IS A BUG FIX, NOT A STYLE CHOICE, and it is written down because the
+    failure it prevents is silent. `fit_event_study` leaves four native worker
+    threads behind in whatever process calls it (measured: 4 OS threads before
+    the first fit, 8 after). A pool forked AFTER that inherits a thread's
+    already-held lock, and the child then blocks in futex forever: observed here
+    as a run that printed "null leg: 2 sims on 1 workers", consumed zero CPU in
+    the child, produced no error and never returned. A hang that looks like a
+    slow run is the error-path-indistinguishable-from-success class this project
+    keeps finding, so it gets a named fix rather than a retry.
+
+    `ProcessPoolExecutor` spawns workers lazily on first submit, so creating it
+    early is not enough -- the fork would still happen at the first real job,
+    after the parent had fitted. The warm-up map forces every worker to exist
+    while the parent is still clean. Measured: with the pool warmed first the
+    same child job returns in 1.9s instead of never.
+
+    The consequence for everything else in this file is that workers CANNOT
+    inherit per-stratum state through a module global, because they are forked
+    before any stratum exists. Each job therefore carries its own context dict.
+    """
+    global EXECUTOR
+    EXECUTOR = ProcessPoolExecutor(max_workers=JOBS)
+    want = list(range(max(JOBS * 4, 4)))
+    got = list(EXECUTOR.map(int, [str(i) for i in want]))
+    if got != want:
+        # Raised, not asserted: `python -O` strips asserts, and this one is load
+        # bearing -- an unwarmed pool re-creates the deadlock silently.
+        raise RuntimeError(f"worker pool did not warm up: {got!r}")
+    return EXECUTOR
+
+
+def _pmap(fn, jobs_iter):
+    """Parallel map over the pre-forked pool, keeping failures visible as None."""
+    if EXECUTOR is None:
+        raise RuntimeError("_start_workers() must run before any fit or any _pmap")
+    return [r for r in EXECUTOR.map(fn, jobs_iter, chunksize=1)]
+
+
+def _seed(*parts):
+    """A reproducible integer seed from arbitrary labels.
+
+    NOT `hash()`. Python salts string hashing per process, so `hash(("null",
+    name))` gives a different seed on every invocation and the artifact would
+    not be reproducible from its own inputs -- the property this project spends
+    a register on keeping (PAPER_MASTER 7.6).
+    """
+    h = hashlib.sha256("|".join(str(x) for x in parts).encode()).digest()
+    return int.from_bytes(h[:8], "big")
 
 
 # ===========================================================================
@@ -735,12 +905,30 @@ def _mde_analytic(g, Sigma, k):
     """delta solving delta^2 * g' Sigma^-1 g = lambda_target.
 
     `g` is the day 0..7 coefficient vector the estimator returns for a UNIT
-    planted effect, so it already carries every attenuation the geometry imposes
-    -- truncation, and the dilution from one episode's effect landing on another
-    episode's relative day. That is what makes this an MDE on the effective
-    episode count rather than on the nominal one.
+    planted effect, so it carries whatever attenuation the geometry imposes --
+    window truncation, and the dilution from one episode's effect landing on a
+    day the stack has labelled with another episode's relative day. That is what
+    makes this an MDE on the effective episode count rather than on the nominal
+    one. On the current episode list that attenuation is zero on discovery and C1
+    and 0.0029 per unit on C2 (one 10-day gap costs days 6 and 7 of one episode),
+    so g is the planted profile or very nearly it;
+    `first_week_attenuation_max_abs_dev` is the per-run measurement, not an
+    assumption that it stays small.
     """
-    lam_unit = float(g @ np.linalg.solve(Sigma, g))
+    # Sigma can be singular or near-singular, and it is NOT a bug when it is:
+    # the empirical covariance of an 8-vector estimated from fewer than ~9 null
+    # draws has no inverse at all. A small diagnostic run must therefore report
+    # "not computable at this size" and let MIN_SIMS decide the verdict, not die
+    # with LinAlgError three quarters of the way through -- which is what it did
+    # the first time it was run at 2 sims.
+    if Sigma is None or not np.all(np.isfinite(Sigma)):
+        return np.nan, np.nan
+    try:
+        if np.linalg.cond(Sigma) > 1e12:
+            return np.nan, np.nan
+        lam_unit = float(g @ np.linalg.solve(Sigma, g))
+    except np.linalg.LinAlgError:
+        return np.nan, np.nan
     if not np.isfinite(lam_unit) or lam_unit <= 0:
         return np.nan, np.nan
     return float(np.sqrt(_lambda_target(k) / lam_unit)), lam_unit
@@ -819,8 +1007,11 @@ def _gate_headroom(n):
     lam = _lambda_target(k)
     crit = stats.chi2.isf(ALPHA, k)
     h = 0.02
-    slope = (stats.ncx2.sf(crit, k, lam * np.exp(2 * h))
-             - stats.ncx2.sf(crit, k, lam * np.exp(-2 * h))) / (2 * h)
+    # d(power)/d(log lambda), then to log delta: lambda scales with delta^2, so
+    # d(power)/d(log delta) = 2 * d(power)/d(log lambda).
+    d_dloglam = (stats.ncx2.sf(crit, k, lam * np.exp(h))
+                 - stats.ncx2.sf(crit, k, lam * np.exp(-h))) / (2 * h)
+    slope = 2.0 * d_dloglam
     se_p = np.sqrt(TARGET_POWER * (1 - TARGET_POWER) / max(n, 1))
     noise = float(se_p / abs(slope)) if slope else np.inf
     print(f"  gate: tolerance |log ratio| <= {GATE_TOL_LOG:.3f}; Monte Carlo noise "
@@ -856,8 +1047,16 @@ def _roth_diagnostic(Sigma_fw, Sigma_pre, pre_days, mdes):
     """
     k = len(FIRST_WEEK)
     u = np.array([d - EVENT_REFERENCE_DAY for d in FIRST_WEEK], dtype=float)
-    lam_trend_unit = float(u @ np.linalg.solve(Sigma_fw, u))
     lam_t = _lambda_target(k)
+    try:
+        lam_trend_unit = float(u @ np.linalg.solve(Sigma_fw, u))
+    except np.linalg.LinAlgError:
+        lam_trend_unit = np.nan
+    if not np.isfinite(lam_trend_unit) or lam_trend_unit <= 0:
+        return {"trend_lambda_per_unit": np.nan, "lambda_target": lam_t,
+                "bias_matched_slope_per_day": np.nan,
+                "retired_lever_rule_slope_per_day": np.nan,
+                "retired_lever_rule_optimism": np.nan}
     b_star = float(np.sqrt(lam_t / lam_trend_unit))
     out = {"trend_lambda_per_unit": lam_trend_unit,
            "lambda_target": lam_t,
@@ -875,10 +1074,13 @@ def _roth_diagnostic(Sigma_fw, Sigma_pre, pre_days, mdes):
     for name, mde in mdes.items():
         out[f"bias_matched_slope_over_mde_{name}"] = (
             b_star / mde if mde and np.isfinite(mde) else np.nan)
-    if Sigma_pre is not None and len(pre_days):
+    if Sigma_pre is not None and len(pre_days) and np.all(np.isfinite(Sigma_pre)):
         v = np.array([d - EVENT_REFERENCE_DAY for d in pre_days], dtype=float)
         kp = len(pre_days)
-        lam_pre_unit = float(v @ np.linalg.solve(Sigma_pre, v))
+        try:
+            lam_pre_unit = float(v @ np.linalg.solve(Sigma_pre, v))
+        except np.linalg.LinAlgError:
+            return out
         lam_pre = b_star ** 2 * lam_pre_unit
         out["pretest_k"] = kp
         out["pretest_lambda_at_bias_matched_slope"] = lam_pre
@@ -890,7 +1092,7 @@ def _roth_diagnostic(Sigma_fw, Sigma_pre, pre_days, mdes):
 # ===========================================================================
 # Geometry: the effective episode count, measured (not assumed)
 # ===========================================================================
-def _geometry(name, starts, dates, cds, outcome):
+def _geometry(name, starts, dates, cds, outcome, wins_for_loss):
     """Window collision and depth, measured by running build_stack on the real dates.
 
     The outcome values are irrelevant to `build_stack` -- it keys on dates and
@@ -913,7 +1115,32 @@ def _geometry(name, starts, dates, cds, outcome):
     o = np.array([pd.Timestamp(d).toordinal() for d in starts])
     crowded = int(sum(1 for i, x in enumerate(o)
                       if any(abs(x - y) <= 28 for j, y in enumerate(o) if j != i)))
+    gaps = np.diff(np.sort(o)) if len(o) > 1 else np.array([np.inf])
+
+    # EXACTLY WHEN A FIRST-WEEK DAY IS LOST, derived rather than feared.
+    # `build_stack` gives a contested district-day to the NEARER episode, ties to
+    # the earlier one. Day d of episode A (0 <= d <= 7) falls on date A+d, whose
+    # distance to a later episode B is |d - (B-A)|. That beats d exactly when
+    # 0 < B-A < 2d. So only a LATER neighbour can steal a first-week day -- an
+    # earlier one is always further away -- and only if it starts within 14 days.
+    # A 10-day gap therefore costs days 6 and 7 and nothing else.
+    # The other way to lose a day is the stratum boundary: a window running past
+    # the end of the sample has no rows there at all.
+    srt = sorted(pd.Timestamp(d) for d in starts)
+    predicted = 0
+    for i, a in enumerate(srt):
+        nxt = (srt[i + 1] - a).days if i + 1 < len(srt) else 10 ** 6
+        for d in FIRST_WEEK:
+            day = a + pd.Timedelta(days=d)
+            stolen = 0 < nxt < 2 * d
+            outside = not any(lo_ <= day <= hi_ for lo_, hi_ in wins_for_loss)
+            predicted += int(stolen or outside)
+
     return dict(n_nominal=n,
+                min_gap_between_starts=int(gaps.min()),
+                pairs_within_14d_steal_range=int((gaps < 2 * max(FIRST_WEEK)).sum()),
+                pairs_within_full_window=int((gaps <= EVENT_WINDOW_PRE + EVENT_WINDOW_POST).sum()),
+                first_week_days_lost_predicted=int(predicted),
                 n_identifying=int(st["episode"].nunique()),
                 first_week_depth=float(fw_depth),
                 pre_period_depth=float(pre_depth),
@@ -966,6 +1193,7 @@ def _placebo_diagnostics(name, starts, wins, seed=19_20260912):
 # ===========================================================================
 # Run
 # ===========================================================================
+_start_workers()
 fingerprint = _check_generator_fingerprint()
 print(f"generator fingerprint ok: {fingerprint[:16]}...")
 
@@ -1035,8 +1263,20 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
         stratum_verdicts[name] = "NOT_ESTIMABLE"
         continue
 
-    geo = _geometry(name, starts, dates, cds, args.outcome)
+    geo = _geometry(name, starts, dates, cds, args.outcome, wins)
     pre_days = geo.pop("pre_days")
+    # DEFEAT-TESTABLE: the analytic loss rule above is checked against what
+    # build_stack actually produced. If they disagree, the reasoning behind
+    # `first_week_attenuation_max_abs_dev` and the whole effective-N argument is
+    # wrong, and that must stop the run rather than be averaged into an MDE.
+    observed_lost = int(round(len(FIRST_WEEK) * (geo["n_identifying"] - geo["first_week_depth"])))
+    if observed_lost != geo["first_week_days_lost_predicted"]:
+        raise RuntimeError(
+            f"{name}: first-week days lost to window collision -- predicted "
+            f"{geo['first_week_days_lost_predicted']}, build_stack produced "
+            f"{observed_lost}. The nearest-episode assignment rule is not what "
+            "this file assumes, so every statement here about effective N is "
+            "unsupported until the rule is re-derived.")
     for k, v in geo.items():
         rows.append({"metric": P + "geometry." + k,
                      "value": round(float(v), 4) if isinstance(v, float) else v})
@@ -1044,6 +1284,27 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
           f"first-week depth {geo['first_week_depth']:.2f}, pre-period depth "
           f"{geo['pre_period_depth']:.2f}, rows kept {geo['window_rows_kept']:.3f}, "
           f"{geo['episodes_with_neighbour_28d']} crowded within 28d")
+
+    # An episode whose window straddles the B-HEARD launch has post-days in a
+    # regime its stratum says it is not in. C1 ends the day before the launch and
+    # its last episode starts 2021-05-24, so days 0..7 fit and days 8..14 do not.
+    # Measured rather than assumed, because if a rebuild moves an episode a week
+    # later the first week itself starts crossing and the stratification stops
+    # meaning what it says.
+    launch = pd.Timestamp(BHEARD_LAUNCH)
+    straddle_fw = int(sum(1 for st_ in starts
+                          if st_ < launch <= st_ + pd.Timedelta(days=max(FIRST_WEEK))))
+    straddle_win = int(sum(1 for st_ in starts
+                           if st_ - pd.Timedelta(days=EVENT_WINDOW_PRE) < launch
+                           <= st_ + pd.Timedelta(days=EVENT_WINDOW_POST)))
+    rows.append({"metric": P + "geometry.episodes_window_straddles_bheard",
+                 "value": straddle_win})
+    rows.append({"metric": P + "geometry.episodes_first_week_straddles_bheard",
+                 "value": straddle_fw})
+    if straddle_win:
+        print(f"  {straddle_win} episode window(s) straddle the B-HEARD launch "
+              f"({BHEARD_LAUNCH}); {straddle_fw} of them in the FIRST WEEK, which "
+              "is the part the test uses")
 
     pdiag = _placebo_diagnostics(name, starts, wins)
     for k, v in pdiag.items():
@@ -1055,11 +1316,16 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
           f"(p10 {pdiag['contaminated_p10']:.1%}, p90 {pdiag['contaminated_p90']:.1%}); "
           f"{pdiag['outside_windows']:.1%} fall outside this stratum's own windows")
 
-    _CTX.clear()
-    _CTX.update(dict(dates=dates, cds=cds, starts=starts, outcome=args.outcome,
-                     rho=vc["rho"], sigma=vc["sigma"], mu=vc["mu"],
-                     cd_effect=cd_effect, dow_effect=dow_effect,
-                     day_scale=vc["day_scale"]))
+    def _ctx(starts_override=None):
+        """The picklable bundle a worker needs. Passed with every job, because
+        the pool is forked before any stratum is known (see `_start_workers`)."""
+        return dict(dates=dates, cds=cds,
+                    starts=list(starts_override if starts_override is not None else starts),
+                    outcome=args.outcome, rho=vc["rho"], sigma=vc["sigma"],
+                    mu=vc["mu"], cd_effect=cd_effect, dow_effect=dow_effect,
+                    day_scale=vc["day_scale"])
+
+    CTX = _ctx()
 
     # ---- one panel, used for the equivalence check and the unit response ----
     base = synthetic_panel(np.random.default_rng(101), dates, cds, vc["rho"],
@@ -1072,19 +1338,23 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
     # draw. Measuring it on two different draws and asserting agreement is a
     # check that can fail -- it fails the moment the estimator stops being linear
     # in the outcome, which is exactly when this whole route stops being valid.
-    def _unit_response(panel, prof):
-        s0 = build_stack(panel, starts, EVENT_WINDOW_PRE, EVENT_WINDOW_POST)
+    def _unit_response(panel, prof, ep_starts=None, overlap="add"):
+        ep_starts = starts if ep_starts is None else ep_starts
+        s0 = build_stack(panel, ep_starts, EVENT_WINDOW_PRE, EVENT_WINDOW_POST)
         a = _fit_coefs(s0, args.outcome, list(FIRST_WEEK))
-        b = _fit_coefs(plant(s0, starts, prof, 1.0, args.outcome),
+        b = _fit_coefs(plant(s0, ep_starts, prof, 1.0, args.outcome, overlap=overlap),
                        args.outcome, list(FIRST_WEEK))
         return None if (a is None or b is None) else b[0] - a[0]
 
     alt = synthetic_panel(np.random.default_rng(202), dates, cds, vc["rho"],
                           vc["sigma"], vc["mu"], cd_effect, dow_effect, vc["day_scale"])
-    g = {}
+    g, g_sat = {}, {}
     for pname, prof in PROFILES.items():
         g1 = _unit_response(base, prof)
         g2 = _unit_response(alt, prof)
+        gs = _unit_response(base, prof, overlap="saturate")
+        if gs is not None:
+            g_sat[pname] = gs
         if g1 is None or g2 is None:
             raise RuntimeError(f"{name}/{pname}: unit response not estimable")
         d = float(np.max(np.abs(g1 - g2)))
@@ -1095,11 +1365,20 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
                 "analytic route and the stack-planting economy are both invalid.")
         g[pname] = g1
         rows.append({"metric": P + f"unit_response_draw_invariance.{pname}", "value": d})
+        # HOW MUCH THE GEOMETRY ATTENUATES THE FIRST WEEK, as a number rather
+        # than as a worry. g is the day 0..7 coefficient vector the estimator
+        # returns for a unit planted effect; if the geometry cost nothing, g is
+        # the planted profile exactly. Measured: 0 on discovery and C1, 0.002866
+        # on C2, where one 10-day gap hands days 6 and 7 of one episode to its
+        # neighbour. This metric is what makes that checkable per run rather than
+        # true only on today's episode list.
+        rows.append({"metric": P + f"first_week_attenuation_max_abs_dev.{pname}",
+                     "value": float(np.max(np.abs(g1 - np.asarray(prof, dtype=float))))})
 
     # ---- null sims: Sigma from the estimator's vcov, and empirically ----
-    seeds = np.random.SeedSequence(hash(("null", name)) % (2 ** 32)).spawn(args.null_sims)
+    seeds = np.random.SeedSequence(_seed("null", name, args.outcome)).spawn(args.null_sims)
     print(f"  null leg: {args.null_sims} sims on {JOBS} workers", flush=True)
-    res = [r for r in _pmap(_null_sim, seeds, args.null_sims) if r is not None]
+    res = [r for r in _pmap(_null_sim, [(CTX, sd) for sd in seeds]) if r is not None]
     n_null_done_min = min(n_null_done_min, len(res))
     rows.append({"metric": P + "n_null_sims_completed", "value": len(res)})
     if len(res) < 2:
@@ -1108,7 +1387,11 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
         continue
     Sigma_model = np.mean([r["fw_V"] for r in res], axis=0)
     B = np.vstack([r["fw_b"] for r in res])
-    Sigma_emp = np.cov(B, rowvar=False)
+    # The EMPIRICAL covariance needs more draws than the vector is long or it is
+    # rank-deficient by construction. Say so rather than inverting it.
+    Sigma_emp = np.cov(B, rowvar=False) if len(res) > len(FIRST_WEEK) + 1 else None
+    rows.append({"metric": P + "sigma_empirical_available",
+                 "value": int(Sigma_emp is not None)})
     pre_ok = [r for r in res if r["pre_V"] is not None]
     Sigma_pre = np.mean([r["pre_V"] for r in pre_ok], axis=0) if pre_ok else None
 
@@ -1121,10 +1404,16 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
 
     # ---- route AN, and the MC scan it seeds ----
     mdes_an, mdes_mc, lam_unit = {}, {}, {}
+    lam_unit_sat = {}
     for pname in PROFILES:
         m_an, lu = _mde_analytic(g[pname], Sigma_model, k)
         m_emp, _ = _mde_analytic(g[pname], Sigma_emp, k)
         mdes_an[pname], lam_unit[pname] = m_an, lu
+        if pname in g_sat:
+            m_sat, lu_sat = _mde_analytic(g_sat[pname], Sigma_model, k)
+            lam_unit_sat[pname] = lu_sat
+            rows.append({"metric": P + f"mde_analytic_saturating_overlap.{pname}",
+                         "value": m_sat})
         rows.append({"metric": P + f"mde_analytic_modelvcov.{pname}", "value": m_an})
         rows.append({"metric": P + f"mde_analytic_empiricalvcov.{pname}", "value": m_emp})
         rows.append({"metric": P + f"lambda_per_unit.{pname}", "value": lu})
@@ -1135,15 +1424,15 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
               f"{m_emp:.6f} (empirical vcov)")
 
     crit = stats.chi2.isf(ALPHA, k)
-    scan_seeds = np.random.SeedSequence(hash(("scan", name)) % (2 ** 32)).spawn(args.scan_sims)
+    scan_seeds = np.random.SeedSequence(_seed("scan", name, args.outcome)).spawn(args.scan_sims)
     _scan_cache = {}
 
     def mc_power(pname, delta):
         key = (pname, round(float(delta), 12))
         if key in _scan_cache:
             return _scan_cache[key]
-        jobs = [(s, [(pname, float(delta))]) for s in scan_seeds]
-        out = [r for r in _pmap(_scan_sim, jobs, len(jobs)) if r is not None]
+        jobs = [(CTX, sd, [(pname, float(delta))]) for sd in scan_seeds]
+        out = [r for r in _pmap(_scan_sim, jobs) if r is not None]
         vals = [v[(pname, float(delta))] for v in out if v[(pname, float(delta))] is not None]
         p = float(np.mean([x > crit for x in vals])) if vals else np.nan
         _scan_cache[key] = (p, len(vals))
@@ -1191,9 +1480,10 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
     for pname in PROFILES:
         rows.append({"metric": P + f"n_effective.{pname}", "value": "not_measurable"})
     if spaced is not None:
-        _CTX["starts"] = spaced
-        ref_seeds = np.random.SeedSequence(hash(("ref", name)) % (2 ** 32)).spawn(args.ref_sims)
-        ref = [r for r in _pmap(_null_sim, ref_seeds, args.ref_sims) if r is not None]
+        ctx_ref = _ctx(spaced)
+        ref_seeds = np.random.SeedSequence(_seed("ref", name, args.outcome)).spawn(args.ref_sims)
+        ref = [r for r in _pmap(_null_sim, [(ctx_ref, sd) for sd in ref_seeds])
+               if r is not None]
         if len(ref) >= 2:
             Sig_ref = np.mean([r["fw_V"] for r in ref], axis=0)
             base_ref = synthetic_panel(np.random.default_rng(303), dates, cds, vc["rho"],
@@ -1215,9 +1505,16 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
                              "value": round(float(neff), 3)})
                 rows.append({"metric": P + f"lambda_per_unit_spaced.{pname}",
                              "value": lam_ref})
+                neff_sat = np.nan
+                if pname in lam_unit_sat and lam_ref > 0:
+                    neff_sat = len(starts) * lam_unit_sat[pname] / lam_ref
+                    rows.append({"metric": P + f"n_effective_saturating.{pname}",
+                                 "value": round(float(neff_sat), 3)})
                 print(f"  n_effective [{pname}]: {neff:.2f} of {len(starts)} nominal "
-                      f"(information ratio against a spaced design)")
-        _CTX["starts"] = starts
+                      f"under additive overlap, {neff_sat:.2f} under saturating "
+                      f"overlap — a RATIO OF TWO ESTIMATED covariances "
+                      f"({len(res)} and {len(ref)} null sims), so it is only "
+                      "interpretable at full sim counts")
 
     # ---- Roth pre-trend diagnostic (E1.1) ----
     headline = {p: (mdes_mc.get(p) if np.isfinite(mdes_mc.get(p, np.nan))
@@ -1226,10 +1523,10 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
     for kk, vv in roth.items():
         rows.append({"metric": P + "roth." + kk,
                      "value": (round(float(vv), 8) if np.isfinite(vv) else "nan")})
-    print(f"  Roth: bias-matched trend {roth['bias_matched_slope_per_day']:.3e} "
+    print(f"  Roth: bias-matched trend {roth.get('bias_matched_slope_per_day', float('nan')):.3e} "
           f"per day; the retired LEVER rule would have reported "
-          f"{roth['retired_lever_rule_slope_per_day']:.3e} "
-          f"({roth['retired_lever_rule_optimism']:.2f}x optimistic)")
+          f"{roth.get('retired_lever_rule_slope_per_day', float('nan')):.3e} "
+          f"({roth.get('retired_lever_rule_optimism', float('nan')):.2f}x optimistic)")
     for pname in PROFILES:
         print(f"    b*/MDE[{pname}] = "
               f"{roth.get(f'bias_matched_slope_over_mde_{pname}', float('nan')):.4f}")
@@ -1240,6 +1537,7 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
 
     # ---- randomization-inference MDE: pilot, then step out (E1.2) ----
     ri_status, ri_point, ri_lo, ri_hi, ri_closed = "SKIPPED", np.nan, np.nan, np.nan, 0
+    rip = "none"
     if args.no_ri:
         ri_status = "SKIPPED_BY_FLAG"
     elif pdiag["outside_windows"] > 0.01 or pdiag["accept_rate"] < RI_MIN_ACCEPT:
@@ -1254,7 +1552,6 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
               "this stratum is not contiguous. The project's PRIMARY p-value "
               "cannot be computed here as the estimator currently draws placebos.")
     else:
-        seed_delta = (mdes_mc.get(REFERENCE_PRIMARY) if False else None)
         seed_delta = next((mdes_mc[p] for p in PROFILES
                            if np.isfinite(mdes_mc.get(p, np.nan))), None)
         if seed_delta is None:
@@ -1265,11 +1562,10 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
         n_ri = {"sims": args.ri_pilot_sims, "draws": args.ri_pilot_draws}
 
         def ri_power(delta):
-            jobs = [(int(np.random.SeedSequence(
-                        (hash((name, rip, round(float(delta), 10), i)) % (2 ** 32))).entropy),
+            jobs = [(CTX, _seed("ri", name, rip, round(float(delta), 10), i),
                      rip, float(delta), n_ri["draws"])
                     for i in range(n_ri["sims"])]
-            out = [r for r in _pmap(_ri_sim, jobs, len(jobs)) if r is not None]
+            out = [r for r in _pmap(_ri_sim, jobs) if r is not None]
             return float(np.mean([p < ALPHA for p in out])) if out else 0.0
 
         ri_point, ri_lo, ri_hi, ri_closed_b, _ = _bracket_power(
@@ -1279,11 +1575,23 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
             ri_point, ri_lo, ri_hi, ri_closed_b, _ = _bracket_power(
                 ri_power, float(np.sqrt(ri_lo * ri_hi)), log=lambda m: print(m, flush=True))
         ri_closed = int(ri_closed_b)
-        ri_status = "BRACKETED" if ri_closed else (
-            f"BOUND_ONLY_ABOVE_{RI_STEP ** RI_MAX_STEPOUTS:.1f}x_SCREEN_MDE")
+        if ri_closed:
+            ri_status = "BRACKETED"
+        elif np.isnan(ri_hi):
+            # Stepped out to the cap without reaching target power: the RI MDE is
+            # ABOVE everything tried. This is the outcome E1.2 predicts, and it is
+            # reported as a bound rather than as NaN.
+            ri_status = f"BOUND_ABOVE_{RI_STEP ** RI_MAX_STEPOUTS:.1f}x_SEED"
+        else:
+            # Target power held at every step IN: the RI MDE is below the smallest
+            # delta tried. Rarer, and the opposite claim, so it gets its own label.
+            ri_status = f"BOUND_BELOW_SEED_OVER_{RI_STEP ** RI_MAX_STEPINS:.1f}"
         print(f"  RI MDE [{rip}]: {ri_point:.6f} "
               f"({'bracketed' if ri_closed else 'one-sided bound'}), "
               f"bracket [{ri_lo:.6f}, {ri_hi:.6f}]")
+    rows.append({"metric": P + "ri_profile",
+                 "value": rip if ri_status == "BRACKETED" or ri_status.startswith("BOUND_")
+                          else "none"})
     rows.append({"metric": P + "ri_status", "value": ri_status})
     rows.append({"metric": P + "mde_ri", "value": ri_point})
     rows.append({"metric": P + "mde_ri_bracket_lo", "value": ri_lo})
@@ -1311,6 +1619,12 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
 # ===========================================================================
 # Verdict
 # ===========================================================================
+# A sentinel that no stratum ever lowered means no leg ran at all, which is the
+# opposite of "enough". Collapse it to zero before the floor is applied, or
+# `--strata` naming nothing would print COMPLETE on an empty run -- the same
+# shape as the defect E1.6 names.
+n_null_done_min = 0 if n_null_done_min == 10 ** 9 else n_null_done_min
+n_scan_done_min = 0 if n_scan_done_min == 10 ** 9 else n_scan_done_min
 enough = (n_null_done_min >= MIN_SIMS and n_scan_done_min >= MIN_SIMS)
 rows.append({"metric": "n_null_sims_completed_min", "value": int(n_null_done_min)})
 rows.append({"metric": "n_scan_sims_completed_min", "value": int(n_scan_done_min)})
