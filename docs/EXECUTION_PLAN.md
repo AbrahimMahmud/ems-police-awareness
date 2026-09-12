@@ -64,7 +64,63 @@ requires, 200 sims × 200 draws:
 `S.ri_scheme_certified` evaluates to PASS on these artifacts, so the suite is
 65/65 after a re-run and baseline refresh, and P1 and P5 can move to `fixed`.
 
-### ⚠ The one result that should change the schedule
+### ⚠⚠ SUPERSEDED — do NOT re-run C1 at 1000 sims yet (20:05Z)
+
+The section below said to recheck C1 at 1000 simulations. **That run was started,
+was killed by a container restart at ~45 minutes having written nothing, and
+should not simply be restarted** — because investigating the restart turned up
+the reason C1's null is non-uniform, and it is not sample size.
+
+**C1's circular-shift null does not reproduce C1's own design.** The real
+stratum has **10 episodes in the 2015–16 block and 5 in the 2021 block**. The
+circular scheme concatenates the admissible days of both blocks and shifts
+through them, so the split it produces is whatever a uniform shift implies:
+block 1 is 520 of 641 admissible days (81%), so the null puts a mean of **12.1**
+episodes there, its modal draw is 13 (42.7% of draws), and it reproduces the
+real 10/5 split **only 12.4% of the time**. The placebo designs differ
+structurally from the design being tested — different episodes per block,
+different effective sample, different fixed-effect structure — which is a
+textbook source of non-uniform p-values and explains D ≈ 0.09 without appealing
+to anything else.
+
+**The fix is a within-block circular shift**: draw one shift per block and wrap
+inside it. The 10/5 split is then preserved on every draw, clustering inside
+each block survives, and the seam disappears. Feasibility checked: 520 × 121 =
+**62,920 distinct placebo designs**, against 2,000 draws needed. This is a
+further deviation from the pre-registered null and gets disclosed as one — but
+the alternative is a null that is not a null of this design, which is not
+defensible.
+
+Two more defects were found in the same look, both of which the 1000-sim run
+would have inherited:
+
+**The randomization p-value uses the wrong formula.** `event_study.py:618` is
+`(stats_ >= obs).mean()` — that is `k/n`. CP2's own checklist requires
+`(1+k)/(1+n)`, and the artifacts show why: **p = 0 appears in all three strata**,
+and zero is not a valid p-value. The form is anti-conservative exactly where
+rejection decisions are made. Measured correction on the existing artifacts:
+C1's KS p moves 0.0736 → 0.0881, discovery 0.6803 → 0.7718, C2 0.4502 → 0.4747.
+Real, required, and **not enough to rescue C1** — its D only moves 0.0900 →
+0.0875.
+
+**The uniformity test ignores the lattice its own comment tells it to respect.**
+`18_null_calibration.py:269-272` says "the randomization p-values are discrete on
+a grid of 1/draws, so compare against that lattice rather than a continuous
+uniform, which would reject purely on granularity" — and the next line calls
+`stats.kstest(pvals, "uniform")`, the continuous uniform. A comment describing a
+fix that was never made. Measured: on a *perfectly* calibrated lattice null the
+false-failure rate of `ks_p > 0.05` is 5.3% at 200 sims and **6.7% at 1000**.
+Small, real, and it grows with exactly the sim count CP2 demands.
+
+Granularity is therefore **not** C1's problem: a perfect null on this lattice has
+median D 0.0276 at 1000 sims and a 95th percentile of 0.0448, while C1 sits at
+0.0875 — roughly three times the median and well past the tail.
+
+**Revised order: fix all three, then calibrate once.** Re-running 1000 sims under
+the current scheme would spend five hours confirming a null we already have a
+mechanistic reason to reject.
+
+### ⚠ The original finding (still true, now explained)
 
 **C1 passed uniformity by 0.006 and will probably fail at 1000 sims.** Its KS
 statistic is D = 0.0900 against a critical value of 0.0960 at n=200. CP2 requires
@@ -78,11 +134,23 @@ C1 is the clean stratum — the one the whole discovery/confirmation split exist
 to obtain — and `circular` is the new scheme written for it this session. If its
 D is near its point estimate, C1 fails CP2 and the scheme needs rework.
 
-**Decided: run C1 at 1000 sims now, in the background** (~5 h; it is the cheapest
-of the three and the only one at risk). Finding out early costs nothing; finding
-out at CP2 invalidates whatever Phase I built on top of it. Discovery and C2 at
-1000 sims are ~7 h each and can wait — but note this container is reclaimed after
-inactivity, so ~18 h unattended is not a schedule that survives.
+**Decided, and then overtaken by what the run revealed** — see the superseded
+block above. The instinct was right: it was cheap to test and expensive to
+discover late, and testing it early is exactly what surfaced the scheme defect.
+
+**The environment will not hold a long job.** This is now measured rather than
+feared: the run died at ~45 minutes to a container restart, having written
+nothing, because `18_null_calibration.py` only writes at the end. CP2 needs 1000
+sims on three strata, ~18 h of compute, in a container that restarts.
+
+So the calibration has to become **resumable**, and the existing seeding makes
+that nearly free: `SEEDS = np.random.SeedSequence(18_20260908).spawn(args.sims)`
+means sim *i* always gets the same seed regardless of how many sims a run asks
+for — **the first 200 seeds of a 1000-sim run are exactly the 200 already
+computed**. Persist each finished sim as `(index, obs, p)` to a sidecar, skip
+indices already present on startup, and a 1000-sim calibration becomes any number
+of short runs that survive restarts, with the 200 sims already spent on each
+stratum carried over rather than thrown away.
 
 **Phase A done.** The blockage was never rate limiting — Wikimedia runs a token
 bucket on the *client IP shared across hosts*, and `26` was the only client
@@ -143,7 +211,107 @@ and licenses a write to another:
   GDELT, and any drift since the strict fetch would have entered the comparison
   **as a basket effect**. Now declared in `config.BASKET_DEPENDENT_COMPONENTS`.
 
-### Immediate next steps, in order
+### ⚠⚠⚠ The environment restarts every 30–70 minutes, and that now governs everything (21:15Z)
+
+Three restarts observed this session, each confirmed by `uptime` reading `up 0
+min`. Two of them destroyed long jobs that had written nothing:
+
+| killed | job | elapsed | saved |
+|---|---|---|---|
+| ~20:02Z | C1 calibration, 1000 sims | ~45 min | nothing |
+| ~21:15Z | Phase G, `17_stacked_event_study.py` | ~33 min | nothing |
+
+`18_null_calibration.py` was made resumable in `89e1937` and survives this —
+its ledger carried 51 C1 sims through the 20:02Z restart untouched.
+**`17_stacked_event_study.py` was not, and Phase G cannot ever finish**: it needs
+~1.7 h at 1000 draws and the longest observed uptime is ~70 minutes.
+
+This is no longer an annoyance to work around. It is a hard constraint on what
+this project can compute at all, and every remaining compute-bound deliverable —
+Phase G, the 1000-sim calibrations CP2 demands, Phase H's power simulation —
+sits on the wrong side of it.
+
+**N6. Make `randomization_p` resumable, the same way and for the same reasons.**
+17 holds a single `rng` and draws in a sequential loop (`17:103`, `17:203`,
+`17:216`), so a resumed run cannot reproduce an interrupted one. The fix is the
+one already proven in 18: per-draw seeds from a `SeedSequence`, so draw *i*
+always gets the same seed however many draws a run requests, plus a ledger keyed
+by draw index that is flushed per draw. That buys two things at once — the run
+survives a restart, and the result stops depending on worker completion order,
+which is the property 18's seeding was introduced to give.
+
+Scope it to `event_study.randomization_p` so 17 and 30 both inherit it; 30 draws
+its own placebos on the sealed path and needs it just as much, since the
+confirmatory run is the longest job in the project.
+
+**Verify the same way 18 was verified**: run N draws, truncate the ledger to a
+third of them, restart, and require the completed ledger to be *exactly equal* to
+the uninterrupted one. That test is what proved 18's version and it is the only
+thing that distinguishes real resumability from a cache that quietly changes the
+answer.
+
+### Immediate next steps, in order (revised 20:05Z, superseded above)
+
+Items 1–6 below are **done and pushed** (commits `0957a3a` … `f1fa360`): all
+three strata calibrated at 200 sims, P1/P5 closed, the broad arm's six numbers
+and the per-stratum calibration numbers registered, `V.claims_cover_exhibits`
+added, and the estimators gated on their own null. Phase F then closed T13, E7
+and E8 by attacking them. **69 checks pass, 72 claims reproduce, every blocking
+finding is fixed, four unverified moderate findings remain.**
+
+The live queue is now:
+
+**N1. Fix the randomization p-value form.** `event_study.py:618` →
+`(1 + (stats_ >= obs).sum()) / (1 + len(stats_))`. It is on CP2's checklist, it
+is the difference between a valid permutation test and an invalid one, and p = 0
+currently appears in every stratum's artifact. Touches every RI p-value in the
+project, so it lands first and alone, with the three strata re-derived from the
+stored placebo counts to show exactly what moved.
+
+**N2. Make the KS uniformity test respect the lattice**, as its own comment has
+always said it should. Compare against the discrete `(1+k)/(1+draws)`
+distribution rather than a continuous uniform. Defeat attempt: a perfectly
+calibrated lattice null must fail at ≈5%, not 6.7%.
+
+**N3. Replace C1's scheme with a within-block circular shift** and make
+`draw_scheme_for` name it, so `S.ri_scheme_certified` requires a calibration that
+certifies *it* rather than the seam-crossing version. Verify the 10/5 split is
+preserved on every draw, and that the discovery and C2 schemes are untouched —
+they are single-block and must be numerically identical before and after.
+
+**N4. Make `18_null_calibration.py` resumable**, per the sidecar design above.
+Without it CP2's 1000-sim requirement is unreachable in this environment.
+
+**N5. Then calibrate, once**, at 1000 sims across all three strata, in restart-
+surviving chunks. Only after N1–N4, so the run measures the design rather than
+the defects.
+
+### Order of work from 21:15Z
+
+N1–N5 are **done and pushed** (`f970f4a`, `90b7abf`, `89e1937`), as are L7, T6
+and O3 (`9624544`, `e07f02c`, `21a4653`). **74 checks: 73 pass, 1 BLOCKED**
+(C1's recalibration, honestly pending), 77 claims reproduce, audit 42/2. Every
+finding is closed except **O2**, which is deliberately untouched: closing it
+means reading 2015–16 confirmation outcome data, and that is the user's decision,
+not mine.
+
+1. **N6, resumable randomization inference** — above. Nothing compute-bound can
+   finish until this exists, so it comes before the thing it unblocks.
+2. **Phase G, the discovery run**, at 1000 draws on both H1 outcomes, then 03–08.
+   Restart-surviving once N6 lands. This is the first analytic estimate the
+   project will have produced.
+3. **Write `PAPER_MASTER` §8**, which is empty by design, from the artifacts.
+   Both arms — OLS on shares *and* PPML on counts, because the 2020 signature is
+   known to reverse in counts — with placebo outcomes reported beside the
+   primary, every number registered as a claim, and the draw count stated.
+   **Discovery is exploratory**: nothing here confirms or refutes H1, and each
+   reading names the alternative it does not rule out.
+4. **Restart the C1 calibration** (resumable, 51 of 1000 banked).
+
+Left for the user, not attempted: **O2**'s freeze-policy decision, and lifting
+`FREEZE_ACTIVE`.
+
+### The original list, for the record
 
 1. **Start the C1 1000-sim calibration in the background** (decided above). It is
    the long pole and everything else runs alongside it.
@@ -603,12 +771,14 @@ precisely bounded null. A real ending, not a failure mode.
 All must hold **before** `FREEZE_ACTIVE = False`.
 
 - [ ] Every check PASS. No FAIL, no BLOCKED, no ERROR. Baseline refreshed.
-- [ ] Calibration passes KS uniformity at ≥1000 sims **on all three strata** on
-      the corrected null, and 17 refuses to run without it. **C1 is the one at
-      risk** (D = 0.0900 at n=200 against a 1000-sim critical value of 0.0429);
-      if it fails, the circular scheme is reworked and re-certified before
-      anything reports a C1 p-value. 17 does not read the calibration today.
-- [ ] Estimator recovers a planted effect; RI p uses the (1+k)/(1+n) form.
+- [ ] Calibration passes KS uniformity at ≥1000 sims **on all three strata**,
+      against the **lattice** rather than a continuous uniform, after C1's scheme
+      is replaced with the within-block shift. Requires the resumable
+      calibration (N4) to be reachable at all in this environment.
+- [ ] Estimator recovers a planted effect; **RI p uses the (1+k)/(1+n) form** —
+      currently it does not, and p = 0 appears in every stratum's artifact.
+- [x] 17 refuses to report an RI p-value on an uncalibrated null, per stratum,
+      and a cheap run cannot overwrite an expensive result *(done, `5fd53f3`)*.
 - [ ] `run_all.py` clean twice from cold; manifest committed; model stages
       declare their outputs so the empty-run guard is live.
 - [ ] Adding B-HEARD leaves discovery numerically unchanged.
@@ -709,7 +879,11 @@ non-human-subjects determination in writing; OSF deposit with timestamp.
 
 | step | proof |
 |---|---|
-| C1 at 1000 sims | `null_calibration_C1.csv` reads `n_sims_completed,1000` and a verdict. **Either outcome is a result**: CALIBRATED discharges CP2's hardest line; UNDETERMINED/FAIL is the scheme rework, found at the cheapest possible moment. Record the KS statistic either way. |
+| **N1** p-value form | Every stratum's stored placebo counts re-derived under both forms, printed side by side, and `p = 0` gone from all three. A check asserts no artifact contains a zero p-value, since zero is the signature of the biased form. |
+| **N2** lattice KS | Simulate a *perfectly* calibrated lattice null at 200 and 1000 sims; the corrected test must fail ≈5% of the time at both. The current test fails 5.3% and 6.7% — that gap is the defect, and closing it is the proof. |
+| **N3** within-block shift | The 10/5 split holds on **every** draw (currently 12.4%). Discovery and C2 are single-block, so their draws must come back **bit-identical** before and after — if they move, the change has leaked beyond C1. `draw_scheme_for` names the new scheme, so a calibration certifying the old one no longer satisfies `S.ri_scheme_certified`. |
+| **N4** resumable calibration | Kill a run mid-flight and restart it: the sidecar shows the completed indices, the restart skips them, and the pooled result equals an uninterrupted run of the same size **exactly** — which the fixed seed sequence guarantees and the test must confirm rather than assume. |
+| **N5** calibrate | `n_sims_completed,1000` on all three. **Either outcome is a result**: CALIBRATED discharges CP2's hardest line; a failure after N1–N4 is a finding about the design rather than about its defects. Record the KS statistic either way. |
 | P1, P5 → fixed | `23_regression_suite.py` reports 65/65 with no regressions, and `M.status_honest` passes without either finding claiming more than its check supports. |
 | broad-arm claims | `31_verify_sources.py --claims-only` recomputes all six from `cai_daily_broad.parquet` and `confirmation_episodes_rebuilt_broad.csv` and reports `verified`, not `template` or `skipped`. |
 | `V.claims_cover_exhibits` | Defeat attempt: add an unregistered numeric table cell to `PAPER_MASTER.md` and confirm FAIL; register it and confirm PASS. Then confirm it does **not** fire on prose numerals — a noisy version of this check is worse than none. |
@@ -719,12 +893,25 @@ non-human-subjects determination in writing; OSF deposit with timestamp.
 
 ## Honest risks
 
-- **C1's null may not survive 1000 sims.** Measured, not speculated: D = 0.0900
-  against a 1000-sim critical value of 0.0429, with the p-values tilted
-  anti-conservative (13.5% below a nominal 10%). This is now the most likely
-  single point of failure in the design, it lands on the *clean* stratum, and it
-  is being rechecked first for that reason. If it fails, the circular-shift
-  scheme is reworked — not the α, and not the stratum definition.
+- **C1's null is wrong, and the reason is now known.** No longer a risk — a
+  diagnosis. The circular scheme reproduces C1's real 10/5 block split on only
+  12.4% of draws, because it shifts through the two blocks' admissible days as
+  one sequence and block 1 is 81% of them. The placebo designs are structurally
+  unlike the design under test, which is why D ≈ 0.09 while a perfect null on the
+  same lattice sits at 0.028. The remaining risk is that the within-block fix
+  does not fully resolve it — in which case the next candidate is the statistic's
+  dependence on block composition itself, and the honest fallback is to report C1
+  by block rather than pooled.
+- **Two defects the calibration would have inherited**: the RI p-value uses
+  `k/n` rather than `(1+k)/(1+n)` (p = 0 appears in every artifact), and the
+  uniformity test compares lattice-valued p-values against a continuous uniform
+  despite a comment saying not to (6.7% false failures at 1000 sims). Both are
+  fixed before any further calibration runs.
+- **The environment cannot hold a long job.** Measured: a 5-hour run died at ~45
+  minutes to a container restart with nothing written, because the script only
+  writes at the end. CP2 needs ~18 h of calibration. Until the calibration is
+  resumable, CP2's 1000-sim line is not reachable at all — which makes N4 a
+  gating item, not an optimisation.
 - **Power may kill the confirmatory run.** Now measurable: the MEI is −0.005 and
   C1 carries 15 episodes. If the MDE exceeds it, the conclusion is the bounded
   null plus the measurement contribution.
@@ -743,26 +930,38 @@ non-human-subjects determination in writing; OSF deposit with timestamp.
 
 ## Session log — where execution stopped
 
-**2026-09-12 19:40Z, at `5fd53f3`.** Phases A–E done, F part-done, G/H open.
+**2026-09-12 22:00Z, at `ff6e70c`.**
 
-- **All three strata CALIBRATED** at 200×200, each on the scheme its geometry
-  requires. `S.ri_scheme_certified` passes; P1 and P5 closed. **Every blocking
-  finding in the register is now fixed.**
-- **Suite 67/67, 68 claims reproduce, audit 42 checks / 2 flagged.**
-- **In flight:** `18_null_calibration.py --stratum C1 --sims 1000 --draws 200`,
-  started 19:17Z, ~5 h. PID in the session scratchpad's `calib_c1.pid`, log
-  `calib_c1_1000.log` beside it. **Poll by PID file, never `pgrep -f`.** This is
-  the run that decides whether C1's circular-shift null survives CP2: D was
-  0.0900 at n=200 against a 1000-sim critical value of 0.0429.
-- **Four defects found and fixed since 03:56Z**, all of the same family — a
-  register or guard answering a question about one object and licensing a write
-  to another: P3 (basket arms shared source ids, so the broad run erased the
-  primary arm's provenance), P4 (the history that would have shown it was
-  unparseable), P5 (the calibration gate read a label instead of a verdict, and
-  a 2-sim run clobbered discovery's p-values), P6 (the "every number carries a
-  claim" rule was enforced by nothing and had already been broken), P7 (the
-  primary estimator never read a calibration; the confirmatory one read the
-  wrong stratum's; a 2-draw run could replace a full result).
-- **Next, in order:** the seven `unverified` moderate findings (see Phase F —
-  they are four different kinds of thing, not one queue), then Phase G's
-  discovery run, then Phase H power against the MEI of −0.005.
+**The environment restarts every 30–70 minutes.** Three restarts observed in one
+session, each confirmed by `uptime` reading `up 0 min`. Two destroyed long jobs
+that had written nothing: the 1000-sim C1 calibration at ~45 minutes, and the
+discovery run's primary estimator at ~33. This is the binding constraint on
+everything compute-bound that remains — Phase G, CP2's 1000-sim calibrations,
+Phase H's power simulation — and it is why both `18_null_calibration.py` and
+`event_study.randomization_p` are now checkpointed. Anything long added later
+must be too.
+
+**Resumability is verified, not assumed**, by the same test in both places: run
+N, truncate the ledger to a fraction, restart, and require the completed ledger
+to be *exactly equal* to the uninterrupted one. That test is the only thing
+separating real resumability from a cache that quietly changes the answer.
+
+- **In flight:** Phase G at 500 draws, under a retry loop that resumes from the
+  per-cell ledgers (`outputs/tables/ri_ledger_<outcome>_<window>_<arm>.csv`).
+  Progress = `cat outputs/tables/ri_ledger_*.csv | grep -vc draw_index`, target
+  6000 = 12 cells × 500. Relaunch
+  `scratchpad/phase_g.sh` after any restart; it resumes.
+- **Paused, resume after Phase G:** the 1000-sim recalibration,
+  `scratchpad/calib_all_1000.sh`, 51 of 1000 C1 sims banked. Do not run it
+  alongside Phase G — four cores, and they contend.
+- **Gate:** 74 checks, 73 pass, 1 BLOCKED (`S.ri_scheme_certified`, honestly
+  pending C1's recalibration under the new within-block scheme), 0 fail. 77
+  claims reproduce. Audit 42 checks, 2 flagged.
+- **Findings:** every one closed except **O2**, deliberately untouched. Closing
+  it means reading 2015–16 confirmation outcome data, which is a freeze decision
+  and the supervisor's to make.
+- **Next:** Phase G completes → write `PAPER_MASTER` §8 (empty by design) from
+  the artifacts, both arms, placebos beside the primary, draw count stated,
+  every number registered → append a dated checkpoint to
+  `GATE2_PRELIMINARY_RESULTS.md` rather than rewriting it, since that file is a
+  record of what was believed when → restart the calibration.
