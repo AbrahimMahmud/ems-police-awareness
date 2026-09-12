@@ -2715,6 +2715,96 @@ def v_no_duplicate_source_ids():
     return "PASS", f"{len(d)} rows, {d['source_id'].nunique()} ids, no collisions"
 
 
+# Table rows that carry a number but are NOT claims about this study's results,
+# each with the reason it is exempt. Matched as substrings of the row.
+EXHIBIT_EXEMPT = {}
+
+
+def v_claims_cover_exhibits():
+    """P6: a number cannot enter a PAPER_MASTER table without a claim behind it.
+
+    The standing rule is that no number reaches the paper without a claims
+    register entry that reproduces it. Nothing enforced it. V.claims_reproduce
+    verifies the claims that ARE registered and is silent about the ones that
+    were never written — coverage validated, content not — which is the same
+    inversion that hid the basket construct defect for the whole project,
+    running the other way.
+
+    It was broken the day after it was restated. Commit 0957a3a put the broad
+    arm's comparison table into 4.1 with six unregistered numbers in it, and
+    every check passed.
+
+    SCOPE IS THE WHOLE DESIGN HERE. Asserting that every numeral in 1,200 lines
+    of prose carries a claim would fire on dates, section numbers, line
+    references and counts stated in passing, and this project has twice learned
+    what happens to a check that cries wolf: people stop reading it, which is
+    how the defect it was guarding survived. So this covers MARKDOWN TABLE ROWS
+    only. Tables are where exhibit values live, they are few, they are where a
+    reader looks for the result, and they are exactly where the six escaped.
+
+    A row is covered when some claim's template — rendered through the same
+    matcher the verifier and the updater use, so the three cannot disagree about
+    what "the claim is in the document" means — matches it. Rows that are
+    genuinely not claims (units, labels, schematic illustrations) go in
+    EXHIBIT_EXEMPT with a reason, which is a decision on the record rather than
+    a silent gap.
+    """
+    import re as _re
+    doc = PROJECT_ROOT / "docs" / "PAPER_MASTER.md"
+    reg = PROJECT_ROOT / "docs" / "CLAIMS_REGISTER.csv"
+    if not doc.exists() or not reg.exists():
+        return "BLOCKED", "PAPER_MASTER.md or CLAIMS_REGISTER.csv absent"
+    sys.path.insert(0, str(SCRIPTS))
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "_verify31", SCRIPTS / "31_verify_sources.py")
+    v31 = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(v31)
+
+    claims = pd.read_csv(reg)
+    claims = claims[claims["doc"].astype(str).str.endswith("PAPER_MASTER.md")]
+    pats = []
+    for t in claims["template"].dropna():
+        try:
+            pats.append(_re.compile(v31._template_regex(t)))
+        except _re.error:
+            continue
+
+    NUM = _re.compile(v31.NUMBER_RE)
+    # NUMBER_RE admits hyphens, so "2016-07-08" matches it. A date is a LABEL —
+    # it identifies which day an exhibit is about, it is not a quantity the study
+    # estimated — and flagging every one of them is how this check would become
+    # noise and then be ignored. Excluded by shape, not by allowlist, because
+    # there will be more of them.
+    ISO_DATE = _re.compile(r"\d{4}-\d{2}-\d{2}")
+    uncovered = []
+    for i, line in enumerate(doc.read_text().splitlines(), 1):
+        t = line.strip()
+        if not (t.startswith("|") and t.endswith("|") and t.count("|") >= 3):
+            continue
+        cells = [c.strip() for c in t.strip("|").split("|")]
+        if all(set(c) <= set("-: ") for c in cells):      # separator row
+            continue
+        # A cell that IS a number, not one that merely contains a digit: "2016-07-08"
+        # and "day -1" are labels, and flagging them is how this check would die.
+        numeric = [c for c in cells
+                   if (v := c.replace("*", "").replace("~", "").strip())
+                   and NUM.fullmatch(v) and not ISO_DATE.fullmatch(v)]
+        if not numeric:
+            continue
+        if any(r.search(line) for r in pats):
+            continue
+        if any(k in line for k in EXHIBIT_EXEMPT):
+            continue
+        uncovered.append(f"{doc.name}:{i}: {t[:70]}")
+
+    if uncovered:
+        return "FAIL", (f"{len(uncovered)} table row(s) carry a number with no claim "
+                        f"reproducing it: " + "; ".join(uncovered[:3]))
+    return "PASS", (f"every numeric table row in PAPER_MASTER.md is reproduced by one of "
+                    f"{len(pats)} claims, or exempt with a reason ({len(EXHIBIT_EXEMPT)})")
+
+
 def v_claims_reproduce():
     """Every number claimed in PAPER_MASTER.md recomputes from its artifact.
 
@@ -2964,6 +3054,7 @@ CHECKS = [
     ("V.no_duplicate_source_ids", "X8,X13", "one row per source id, no collisions", v_no_duplicate_source_ids),
     ("V.source_id_per_artifact", "P3,P4", "a source id never gets repointed at a different artifact", v_source_id_per_artifact),
     ("V.claims_reproduce", "X14", "every claimed number recomputes from its artifact", v_claims_reproduce),
+    ("V.claims_cover_exhibits", "P6", "no number enters a paper table without a claim behind it", v_claims_cover_exhibits),
     ("V.links_resolve", "X14", "every endpoint has a dated result", v_links_resolve),
     ("X.run_all_stages_declared", "X10", "every pipeline stage exists and declares its outputs", x_run_all_stages_declared),
     ("M.status_honest", "O5", "no finding is recorded fixed without a passing check", m_status_honest),

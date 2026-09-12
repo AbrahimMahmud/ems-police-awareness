@@ -1072,7 +1072,7 @@ is a harder thing to notice and a worse thing to have.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **65 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **66 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
@@ -1155,13 +1155,16 @@ found; rebuild the data and the value no longer matches. A number that cannot be
 regenerated is a check failure, not a typo. Every claim in this document is
 registered and currently reproduces.
 
-Five checks hold the registers in place — `V.sources_verified` (which **BLOCKS, never
+Six checks hold the registers in place — `V.sources_verified` (which **BLOCKS, never
 passes, when no scan has run**), `V.no_duplicate_source_ids`,
-`V.source_id_per_artifact`, `V.claims_reproduce`, `V.links_resolve` — and each was defeated on purpose
+`V.source_id_per_artifact`, `V.claims_reproduce`, `V.claims_cover_exhibits`,
+`V.links_resolve` — and each was defeated on purpose
 before being accepted: a claim edited to a wrong value fails; truncating the
 underlying data fails; a deliberately dead URL fails; a returning id collision
 fails; a second script appending to the register fails; an artifact touched
-after its scan fails; and deleting the log **blocks** rather than passing.
+after its scan fails; an unregistered number added to a table fails **while the
+same number in prose does not**; and deleting the log **blocks** rather than
+passing.
 
 **What building it found.** The register was not bookkeeping — writing it
 surfaced six defects, none of which was visible in any artifact:
@@ -1186,6 +1189,24 @@ surfaced six defects, none of which was visible in any artifact:
   identical counts changed 72 lines and the SHA256, differing only in the 17th
   significant digit of a float. A hash that changes when nothing changed is how
   a reader learns to ignore hash mismatches.
+- **The rule that every number carries a claim was enforced by nothing.** It is
+  stated in three documents, and until now `V.claims_reproduce` was the whole of
+  its enforcement — a check that takes the register as its *input* and verifies
+  each entry against its artifact. It can only ever report on numbers somebody
+  already chose to register; a number added to the paper with no entry is
+  invisible to it. Coverage validated, content not, which is the same inversion
+  that let half the basket enter through a topic category while every check
+  reported it complete. The commit that most recently restated the rule is the
+  one that broke it: six numbers entered §4.1 with the broad arm and nothing
+  failed. `V.claims_cover_exhibits` now requires every **markdown table row**
+  carrying a numeric cell to be matched by a claim, through the same matcher the
+  verifier and the claims updater use, so the three cannot disagree about what
+  "the claim is in the document" means. Tables only, on purpose — asserting it
+  over 1,200 lines of prose would fire on dates, section numbers and counts
+  stated in passing, and a check that cries wolf is one people stop reading,
+  which is how the defect it guards survived in the first place. On its first
+  run it found two uncovered rows, one of them in the calibration table added by
+  the very commit that restated the rule.
 - **The register could lose an artifact silently, and did.** The rule was "one
   row per source id, describing the file on disk right now" — which says nothing
   about whether an id still describes the same file it did last week. The broad
