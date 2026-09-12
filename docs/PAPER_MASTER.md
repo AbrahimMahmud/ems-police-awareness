@@ -682,6 +682,38 @@ the z-scoring simulation, which plants a known effect and shows what within-wind
 standardisation does to it. A simulation anyone can re-run is a better exhibit
 than a comparison against a series nobody can obtain.
 
+**The z-scoring artifact, measured — and the headline turned out to be the other
+way round.** `scripts/25_zscore_simulation.py` plants a known effect and estimates
+it three ways: with the awareness measure on its fixed 2017–2019 scale, with it
+re-standardised inside the analysis window, and with it merely re-centred inside
+the window. Everything is labelled SIMULATED, every row of every file it writes.
+
+Re-centring turns out to be harmless — the episode × district fixed effect absorbs
+it exactly. **Only the division does damage**, and the damage is an exact identity
+rather than an asymptotic argument: the z-scored coefficient equals the true one
+multiplied by the within-window standard deviation of the regressor, verified to
+about 1e-16 on every fit.
+
+That identity is what makes the result uncomfortable. The multiplier is a property
+of *which rows are in the sample*, so it moves when the sample does — and it moves
+far more with **composition** than with window length:
+
+| | the multiplier runs | |
+|---|---|---|
+| window length (same episodes, 15 → 45 realised days) | 2.203 → 2.092 | **1.05×** |
+| sample composition (same window, different episodes) | 1.104 → 3.515 | **3.18×** |
+
+We had expected window length to be the story. It is the weak channel. The strong
+one is composition, and the numbers are blunt: **dropping a single episode — the
+one starting 2020-05-26 — moves the coefficient 25%**, and an ordinary robustness
+column labelled "exclude 2020" roughly halves it. The planted effect is
+byte-identical in every one of those runs. A reader would see a coefficient
+collapse under a routine sensitivity and conclude the finding was fragile, when
+what actually moved was the unit the coefficient is denominated in.
+
+This is why the measure is standardised once, on a fixed reference window that
+contains no George Floyd, and never re-standardised inside a sample.
+
 ### 5.3 The freeze incidents — **two**, both disclosed
 
 **F1 (2026-09-10).** During an automated audit, an agent computed the citywide

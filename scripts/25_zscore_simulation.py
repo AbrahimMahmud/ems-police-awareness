@@ -187,8 +187,10 @@ w < 8, against a default sweep whose shortest window was 7 — so the script
 aborted with BLOCKED and exit 2 on its own defaults, including both of the usage
 examples in its own docstring. It was also wrong on its own terms: `build_stack`
 uses an INCLUSIVE `between(lo, hi)`, so L = 7 spans rel_day -7..+7 and all eight
-of days 0..7 are identified (verified: ndays = 8, chi2 = 18.1, 0 undefined). The
-correct predicate would have been `w < max(FIRST_WEEK_DAYS)`.
+of days 0..7 are identified. Re-measured 2026-09-12 on the discovery stack at
+L = 7: rel_day runs -7..+7, all of 0..7 come back from `_rel_day_coefs`, and
+`first_week_effect` reports ndays = 8 with none dropped. The correct predicate
+would have been `w < max(FIRST_WEEK_DAYS)`.
 
 This exhibit needs no such guard at all, because it never forms a first-week
 contrast: the statistic is a single coefficient on a continuous regressor, which
@@ -208,10 +210,13 @@ pass. The inverse failure — a check that cannot fail — is §7.5's subject an
 most transferable lesson in the project. Running both directions on every
 invocation is the only way to know which kind you have written.
 
-Compute: deliberately small and single-process. ~2 fits per (sample definition x
-simulation) plus one per sample definition, each ~0.1s on the L = 14 stack;
-there is no ProcessPoolExecutor and no randomization inference here. 18 needs
-workers, this does not.
+Compute: deliberately small and single-process. Two fits per (sample definition
+x draw) plus one per sample definition — 459 fits at the defaults — and the full
+29-episode leave-one-out costs no fits at all. Measured 2026-09-12: the default
+run (four windows, five composition samples, 25 draws) takes about 80 seconds of
+one core. There is no ProcessPoolExecutor and no randomization inference here:
+18_null_calibration.py needs workers because its estimator is inside a 200 x 200
+loop, and this one is not.
 
 Outputs (every row of every file carries `data = SIMULATED`):
     outputs/tables/zscore_simulation.csv          one row per sample x arm
@@ -457,10 +462,10 @@ _comp = [
      f"first half ({_years[0]}-{_years[len(_years) // 2 - 1]})",
      [d for d in ALL_STARTS if d.year <= _years[len(_years) // 2 - 1]]),
 ]
-for sid, lab, st in _comp:
-    if len(st) >= 2:
+for sid, lab, sts in _comp:
+    if len(sts) >= 2:
         SAMPLES.append(dict(block="composition", sample_id=sid, label=lab,
-                            L=PRIMARY_L, starts=st))
+                            L=PRIMARY_L, starts=sts))
 
 
 def prepare(sample):
@@ -536,6 +541,19 @@ def fit(st, xcol):
 # ---------------------------------------------------------------------------
 # The simulation itself.
 # ---------------------------------------------------------------------------
+EXHIBIT_MIN_SIMS = 25
+if args.sims < EXHIBIT_MIN_SIMS:
+    # A warning, NOT a gate, and the distinction is load-bearing. Everything the
+    # exhibit actually claims — s_W, the identity, the ratio of the z arm to the
+    # fixed arm — is deterministic given the sample definition and does not
+    # depend on the number of draws at all. What the draws buy is precision on
+    # `coef_mean`, i.e. the demonstration that the distortion is large beside
+    # sampling error. So a 3-draw run is a legitimate diagnostic whose headline
+    # numbers are exact; it is only the standard errors that are thin.
+    print(f"\nNOTE: {args.sims} draws (< {EXHIBIT_MIN_SIMS}). The distortion figures "
+          "are exact regardless — they are deterministic in the sample definition "
+          "— but coef_mean is noisy. Use >= 25 draws for the published exhibit.")
+
 print(f"\nrunning {args.sims} simulated draws x {len(PREPARED)} sample definitions")
 draws = {p["sample_id"]: {a: [] for a in ARMS} for p in PREPARED}
 for k in range(args.sims):
@@ -650,7 +668,13 @@ if len(ALL_STARTS) >= 3:
 out = pd.DataFrame(rows + loo_rows)
 
 params = pd.DataFrame([
-    (LABEL_COL, SIM_LABEL, "constant; this file describes a simulation"),
+    # Deliberately NOT a row whose `parameter` is "data". A previous version of
+    # this exhibit put the SIMULATED label in a row of a `parameter` column and
+    # then wrote a check asking whether "data" was a COLUMN — two different
+    # things wearing one name, and the check could never pass. The label lives
+    # in a real column (inserted below, on every row of both files) and nothing
+    # in the `parameter` column shares its name.
+    ("artifact_kind", "simulation output", "this file describes a simulation"),
     ("script", "25_zscore_simulation.py", "provenance"),
     ("beta_true", BETA, "CHOSEN simulation parameter, not an estimate"),
     ("awareness_measure", PRIMARY_AWARENESS, "config.PRIMARY_AWARENESS"),
@@ -886,9 +910,14 @@ for name, fn, mut in CHECKS:
     m_main, m_par = mut(out, params)
     mut_ok, mut_detail = fn(m_main, m_par)
     verdict = "PASS" if ok else "FAIL"
-    mutant = "fails as required" if not mut_ok else "STILL PASSES — check is inert"
-    print(f"  {name:<26} {verdict:<5} mutant: {mutant}")
-    print(f"      {detail}")
+    print(f"  {name:<26} {verdict}")
+    print(f"      real output: {detail}")
+    # The mutant's REASON is printed, not just the fact that it failed. A check
+    # can fail a mutant for an unrelated reason and look healthy while being
+    # blind to the defect it was written for; printing the reason is what lets a
+    # reviewer see that the mutation and the complaint match.
+    print(f"      mutated copy: {'FAILS as required' if not mut_ok else 'STILL PASSES'}"
+          f" -- {mut_detail}")
     if not ok:
         failures.append(f"{name}: {detail}")
     if mut_ok:
@@ -909,8 +938,9 @@ if not args.no_figure and not failures:
         "axes.grid": True, "grid.alpha": 0.25, "grid.linewidth": 0.5,
         "axes.axisbelow": True, "font.family": "DejaVu Sans",
     })
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 4.0),
-                                   gridspec_kw={"width_ratios": [1, 1.15]})
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.5, 4.2),
+                                   gridspec_kw={"width_ratios": [1, 1.05],
+                                                "wspace": 0.55})
 
     w = plot[plot["block"] == "window_length"].sort_values("realised_days_per_episode_district")
     wf = w[w["arm"] == "fixed_scale"]
@@ -927,20 +957,36 @@ if not args.no_figure and not failures:
                      (row["realised_days_per_episode_district"], row["coef_mean"]),
                      xytext=(0, 6), textcoords="offset points", ha="center",
                      fontsize=7, color=RED)
+    ax1.margins(y=0.16)
     ax1.set_xlabel("REALISED days per episode-district\n(not the nominal window label)")
     ax1.set_ylabel("estimated coefficient")
+    # Both arms are fitted on the SAME simulated draws, so they move together
+    # with the luck of the draw. Only the vertical GAP between them is the
+    # artifact; a reader who takes the common slope for a window-length effect
+    # is reading Monte Carlo noise.
+    ax1.text(0.02, 0.02, "both arms share the same draws:\nonly the GAP is the artifact",
+             transform=ax1.transAxes, fontsize=7.5, color=GRAY, va="bottom")
     ax1.set_title("Window length: a weak channel", fontsize=10, loc="left")
-    ax1.legend(frameon=False, fontsize=7.5, loc="center right")
+    ax1.legend(frameon=False, fontsize=7.5, loc="center left")
 
+    # Bars are s_W, the EXACT distortion — deterministic in the sample
+    # definition, no draw involved. The dots are the fitted z-arm means, which
+    # are s_W times ordinary sampling noise. Plotting the fitted means alone
+    # would draw Monte Carlo error as though it were part of the artifact, and
+    # at small --sims the bars would not even be monotone in s_W.
     c = plot[(plot["block"] == "composition")].copy()
     cz = c[c["arm"] == "within_window_z"].sort_values("window_sd_x")
     ypos = np.arange(len(cz))
-    ax2.barh(ypos, cz["coef_over_beta_true"], color=RED, alpha=0.85, height=0.6)
+    ax2.barh(ypos, cz["window_sd_x"], color=RED, alpha=0.8, height=0.6,
+             label="scale factor $s_W$ (exact)")
+    ax2.plot(cz["coef_over_beta_true"], ypos, "o", color=VIOLET, ms=5, ls="none",
+             label=f"fitted coefficient, {args.sims} draws")
     ax2.axvline(1.0, color=GRAY, lw=1, ls="--")
-    ax2.annotate("no distortion", (1.0, len(cz) - 0.4), xytext=(4, 0),
+    ax2.annotate("no distortion", (1.0, len(cz) - 0.35), xytext=(4, 0),
                  textcoords="offset points", color=GRAY, fontsize=8)
     ax2.set_yticks(ypos)
     ax2.set_yticklabels(cz["sample_label"], fontsize=8)
+    ax2.legend(frameon=False, fontsize=7.5, loc="lower right")
     ax2.set_xlabel("coefficient as a multiple of the planted effect\n"
                    "(same data, same effect, only the sample definition changes)")
     ax2.set_title(f"Sample composition: the strong channel (+/-{PRIMARY_L}d)",
@@ -972,25 +1018,40 @@ if (out["block"] == "leave_one_episode_out").any():
     loo = out[out["block"] == "leave_one_episode_out"]
     lo_r, hi_r = loo["coef_over_beta_true"].min(), loo["coef_over_beta_true"].max()
     worst = loo.loc[loo["coef_over_beta_true"].idxmin()]
-    print(f"\nSIMULATED — leave one episode out ({len(loo)} episodes, analytic):")
+    print(f"\nSIMULATED — leave one episode out ({len(loo)} episodes, analytic, exact):")
     print(f"  the z-scored coefficient ranges {lo_r:.3f}x to {hi_r:.3f}x the planted "
-          f"effect ({hi_r / lo_r:.2f}x spread)")
+          f"effect ({hi_r / lo_r:.2f}x spread) from dropping ONE episode")
     print(f"  largest single-episode effect: {worst['sample_label']} -> {lo_r:.3f}x")
+
+
+# The headline is quoted as s_W, which IS the distortion and is exact: it is a
+# deterministic function of the sample definition, computed before any fitting.
+# coef_mean carries s_W multiplied by ordinary sampling noise in the fixed arm,
+# so quoting the fitted ratio as the headline would report the distortion plus
+# Monte Carlo error and would move between runs. The fitted spread is printed
+# beside it so the two can be compared, not instead of it.
+def _span(frame, col):
+    return frame[col].min(), frame[col].max(), frame[col].max() / frame[col].min()
+
 
 zc = out[(out["block"] == "composition") & (out["arm"] == "within_window_z")]
 if len(zc) > 1:
-    print(f"\nAcross the composition block the z-scored coefficient spans "
-          f"{zc['coef_over_beta_true'].min():.3f}x to "
-          f"{zc['coef_over_beta_true'].max():.3f}x the planted effect "
-          f"({zc['coef_over_beta_true'].max() / zc['coef_over_beta_true'].min():.2f}x), "
-          "with the effect held exactly fixed.")
+    lo_s, hi_s, r_s = _span(zc, "window_sd_x")
+    lo_c, hi_c, r_c = _span(zc, "coef_over_beta_true")
+    print(f"\nCOMPOSITION (same window, different episodes): the within-window scale "
+          f"factor s_W spans {lo_s:.3f} to {hi_s:.3f} ({r_s:.2f}x) — exact, and the "
+          f"whole of the distortion. The fitted z-arm coefficients span {lo_c:.3f}x "
+          f"to {hi_c:.3f}x the planted effect ({r_c:.2f}x), which is that scale "
+          f"factor times ordinary sampling noise in {args.sims} draws.")
 wz = out[(out["block"] == "window_length") & (out["arm"] == "within_window_z")]
 if len(wz) > 1:
-    print(f"Across the window-length block it spans "
-          f"{wz['coef_over_beta_true'].min():.3f}x to "
-          f"{wz['coef_over_beta_true'].max():.3f}x "
-          f"({wz['coef_over_beta_true'].max() / wz['coef_over_beta_true'].min():.2f}x). "
-          "Length is the weaker channel; composition is the one to report.")
+    lo_s, hi_s, r_s = _span(wz, "window_sd_x")
+    print(f"WINDOW LENGTH (same episodes, longer windows): s_W spans {lo_s:.3f} to "
+          f"{hi_s:.3f} ({r_s:.2f}x) across a realised length running "
+          f"{wz['realised_days_per_episode_district'].min():.2f} to "
+          f"{wz['realised_days_per_episode_district'].max():.2f} days per "
+          f"episode-district. Length is the weak channel; composition is the one "
+          f"to report.")
 print("=" * 78)
 print("Everything above is SIMULATED. Nothing here is an estimate of any effect.")
 
