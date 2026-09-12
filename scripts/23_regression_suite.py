@@ -1194,6 +1194,62 @@ def t_basket_is_police_violence():
         f"police-action category or the MPV registry; 0 anti-police")
 
 
+def t_trends_precision_stable():
+    """T6: the treatment's Trends component does not lose precision over the decade.
+
+    T6 argues that because Google rescales each request window to that window's
+    own maximum, a decade-long fall in search share collapses the number of
+    distinct values the daily series can take — so the treatment carries
+    year-varying attenuation and a 2021-2024 null cannot be read as an absence.
+    That would bear directly on the confirmatory result, since C2 is 2021-2024.
+
+    The second half does not follow from the first. Rescaling to the window
+    maximum is exactly what keeps every window spanning 0-100 whatever the
+    underlying level. Measured on the committed series, for the component that is
+    actually in CAI-D: the relative quantization step is 0.0020 across 2015-2019
+    and 0.0016 across 2021-2024 — a ratio of 0.82, slightly FINER late, against
+    the claimed fivefold coarsening — with 121 and 118 distinct values a year and
+    365 non-zero days in every year of the decade.
+
+    The degradation is real in trends_nyc, which is censored rather than coarse:
+    its non-zero days fall from 236 a year to 161, and 71% of 2024 is zero. But
+    trends_nyc was retired from CAI-D on independent grounds, so it attenuates
+    nothing in the treatment this paper uses.
+
+    The check is therefore on the LIVE components only. Guarding a retired series
+    would fail on a fact about a column nobody estimates from, and guarding
+    nothing would let a future component drift in unnoticed.
+    """
+    f = DATA_REFERENCE / "trends_precision_by_year.csv"
+    if not f.exists():
+        return "BLOCKED", "trends_precision_by_year.csv absent — run 34_trends_precision.py"
+    d = pd.read_csv(f)
+    live = d[d["in_cai_d"].astype(str).str.lower().isin(("true", "1"))]
+    if not len(live):
+        return "BLOCKED", "no Trends component is in CAI_D_COMPONENTS"
+    bad = []
+    for comp, g in live.groupby("component"):
+        early = g[(g["year"] >= 2015) & (g["year"] <= 2019)]["rel_step"].mean()
+        late = g[g["year"] >= 2021]["rel_step"].mean()
+        if early and late and late / early > 2.0:
+            bad.append(f"{comp}: quantization step {late / early:.1f}x coarser in "
+                       f"2021-24 than 2015-19")
+        thin = g[g["nonzero_days"] < 0.5 * g["n_days"]]
+        if len(thin):
+            bad.append(f"{comp}: {len(thin)} year(s) more than half zero "
+                       f"({sorted(thin['year'])[:3]}) — censored, not merely coarse")
+    if bad:
+        return "FAIL", ("a live Trends component has lost resolution, so attenuation "
+                        "is year-varying: " + "; ".join(bad))
+    names = sorted(live["component"].unique())
+    g = live[live["component"] == names[0]]
+    r = (g[g["year"] >= 2021]["rel_step"].mean()
+         / g[(g["year"] >= 2015) & (g["year"] <= 2019)]["rel_step"].mean())
+    return "PASS", (f"live Trends component(s) {names} keep their resolution: "
+                    f"quantization step ratio {r:.2f}x late-to-early, no year "
+                    "more than half zero")
+
+
 def t_agent_class_break_bounded():
     """L7: the April 2020 Wikipedia agent-class break is measured, not asserted.
 
@@ -3358,6 +3414,7 @@ CHECKS = [
     ("T.exclusion_reasons_true", "N1,N3", "no basket exclusion states a reason the scope file contradicts", t_exclusion_reasons_true),
     ("T.scope_covers_candidates", "N2", "every basket candidate was actually asked about", t_scope_covers_candidates),
     ("T.basket_is_police_violence", "B1", "every basket article has evidence police were the actor", t_basket_is_police_violence),
+    ("T.trends_precision_stable", "T6", "the live Trends component keeps its resolution over the decade", t_trends_precision_stable),
     ("T.agent_class_break_bounded", "L7", "the April 2020 agent-class break is measured and bounded", t_agent_class_break_bounded),
     ("T.basket_evidence_not_namesake", "T13,B3", "no basket article rests on an exact-name registry match alone", t_basket_evidence_not_namesake),
     ("T.basket_country_evidence", "B2", "no basket article admitted without US evidence", t_basket_country_evidence),

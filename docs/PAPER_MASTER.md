@@ -605,6 +605,28 @@ medical calls and divide by all calls.
 total calls per district-day **65.9**. Built by `scripts/01_build_panel.py`.
 Districts with fewer than 5 calls on a day are excluded from share calculations.
 
+### 5.1c Does the Trends component lose resolution over the decade?
+
+It was argued that it must. Google returns integers rescaled to each request
+window's own maximum, US search interest in police violence falls sharply across
+the decade, and the request windows are fixed — so the daily series should
+collapse toward a handful of distinct values by 2024, loading the confirmation
+window with measurement error the discovery window does not carry.
+
+The mechanism is right and the conclusion does not follow from it. Rescaling to
+the window maximum is precisely what keeps every window spanning 0–100 whatever
+the underlying level. Measured on `trends_us`, the only Trends series in the
+index: the quantization step relative to the series' own scale is **0.0020**
+across 2015–2019 and **0.0016** across 2021–2024 — a ratio of **0.82**, slightly
+*finer* late, against a claimed fivefold coarsening — with 121 and 118 distinct
+values a year and **365 non-zero days in every year of the decade**.
+
+Resolution does collapse in `trends_nyc`, and by a different mechanism than the
+one proposed: not coarseness but censoring, with non-zero days falling from 236 a
+year to 161 and 71% of 2024 at zero. That series was retired from the index on
+independent grounds, so it attenuates nothing estimated here — which is the only
+reason this is a paragraph rather than a problem.
+
 ### 5.1a A measurement break inside the treatment series
 
 `wiki_ext` counts Wikipedia pageviews filtered to `agent=user`. In late April
@@ -1258,7 +1280,7 @@ is a harder thing to notice and a worse thing to have.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **72 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **73 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
