@@ -58,8 +58,12 @@ panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
 panel["incident_date"] = pd.to_datetime(panel["incident_date"])
 # Figures are a way of examining outcomes, so they are inside the freeze too.
 panel = select_sample(panel, where="08_figures")
-city = (panel.groupby("incident_date")[["mh_narrow_calls", "total_calls"]].sum()
-        .assign(share=lambda d: d["mh_narrow_calls"] / d["total_calls"]))
+# The column is `mh_narrow`, not `mh_narrow_calls`. The latter exists only as a
+# METRIC LABEL string in 01_build_panel.py's QC output, and this line has been
+# raising KeyError on Figure 1 — the first figure — so 08 has never produced
+# anything. The suite never caught it because no check runs the figures.
+city = (panel.groupby("incident_date")[["mh_narrow", "total_calls"]].sum()
+        .assign(share=lambda d: d["mh_narrow"] / d["total_calls"]))
 # Plot exactly what select_sample permitted. The previous form widened to the
 # FULL panel range once the freeze lifted, which would have drawn discovery
 # and confirmation on one axis and called it the confirmation figure.
@@ -175,7 +179,26 @@ save(fig, "fig4_decomposition")
 # ---------------------------------------------------------------------------
 # Figure 5: bridge from legacy result to corrected specification
 # ---------------------------------------------------------------------------
-br = pd.read_csv(OUTPUTS_TABLES / "bridge_legacy_to_primary.csv")
+# FIGURE 5 IS RETIRED, and skipped rather than crashed.
+#
+# It compared the original specification to the corrected one, step by step. Its
+# input, bridge_legacy_to_primary.csv, comes from 03b_bridge_legacy.py, which
+# reads awareness_legacy_lags.parquet, which 02_build_awareness.py builds from
+# the raw Twitter exports named in config — and those files are NOT in the
+# repository. The chain is dead at the source, so this figure cannot be rebuilt
+# from a clean clone by anyone, including us.
+#
+# Its argument is carried instead by 25_zscore_simulation.py, which plants a
+# known effect and shows what within-window standardisation does to it. A
+# simulation that anyone can re-run is a better exhibit than a comparison
+# against a series nobody can obtain.
+_bridge = OUTPUTS_TABLES / "bridge_legacy_to_primary.csv"
+if not _bridge.exists():
+    print("figure 5 skipped: bridge_legacy_to_primary.csv is unbuildable "
+          "(the legacy Twitter raw files are not in the repository). The "
+          "z-scoring simulation exhibit replaces it.")
+    raise SystemExit(0)
+br = pd.read_csv(_bridge)
 br5 = br.iloc[:5].copy()
 steps = ["Original specification\n(z-score, broad MH, CD cluster)",
          "+ cluster SEs by date",

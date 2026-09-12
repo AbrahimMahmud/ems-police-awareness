@@ -204,5 +204,5 @@ for col in df_cd.columns:
         print(f"  - {col}: {non_null}/{len(df_cd)} CDs have data")
 
 print("\nNext: Run merge script")
-print("  python scripts/11_merge_demographics.py")
+print("  read by scripts/06_heterogeneity.py; it is a run_all.py build stage")
 

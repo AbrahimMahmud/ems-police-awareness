@@ -658,6 +658,30 @@ but never called" was satisfied by the documentation. It now parses each script
 and counts only an actual call, and the defeat test deliberately leaves the
 comment in place to prove the distinction holds.
 
+**The pipeline could not have produced the figures, and nothing said so.**
+`08_figures.py` read a column called `mh_narrow_calls`. The panel's column is
+`mh_narrow`; `mh_narrow_calls` exists only as a metric *label* in the QC output of
+another script. So the figure script raised on Figure 1 — the first figure — and
+had never produced anything at all. No check caught it because no check runs the
+figures.
+
+Underneath that sat a worse one. `run_all.py` verifies, after each stage, that a
+stage which exited 0 actually wrote something. That guard reads the stage's
+declared outputs — so a stage declaring *no* outputs is exempt from it, silently.
+**All seven model stages declared exactly that**, which is the half of the
+pipeline where a silent no-op matters most: a model that fits nothing, writes
+nothing and exits 0 was recorded as a pass. Two stages were missing from the
+pipeline entirely while other stages read their output, so a clean clone could
+run everything and still fail on a missing file.
+
+Figure 5 is retired rather than fixed. It compared the original specification to
+the corrected one, and its input traces back through two scripts to raw Twitter
+exports that are **not in the repository** — the chain is dead at the source, so
+nobody can rebuild that figure, including us. Its argument is carried instead by
+the z-scoring simulation, which plants a known effect and shows what within-window
+standardisation does to it. A simulation anyone can re-run is a better exhibit
+than a comparison against a series nobody can obtain.
+
 ### 5.3 The freeze incidents — **two**, both disclosed
 
 **F1 (2026-09-10).** During an automated audit, an agent computed the citywide
@@ -866,7 +890,7 @@ currently assumed rather than estimated. Under investigation.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **59 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **60 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no

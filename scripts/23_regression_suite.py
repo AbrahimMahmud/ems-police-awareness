@@ -578,6 +578,57 @@ def d_addendum_complete():
                     f"{promised}")
 
 
+def x_run_all_stages_declared():
+    """X10: every pipeline stage names a script that exists and outputs it writes.
+
+    run_all.py checks, after each stage, that a stage which exited 0 actually
+    produced something — "exited 0 but did not write". That guard reads the
+    stage's `writes` list, so a stage declaring `writes=[]` is exempt from it by
+    construction, silently. All seven MODEL stages declared exactly that, which
+    is the half of the pipeline where a silent no-op matters most: a model that
+    fits nothing, writes nothing and exits 0 was recorded as PASS.
+
+    Two stages were also missing entirely while other stages depended on their
+    output — 10d_parse_cd_demographics.py, which 06_heterogeneity.py reads, and
+    32_validate_basket_construct.py, which publishes the basket. A clean clone
+    could run the whole pipeline and still fail on a missing file.
+
+    And a stage's arguments belong in `args`, because run_all builds
+    `[python, script] + args`: a flag folded into the script name becomes part of
+    a filename that cannot exist.
+    """
+    f = SCRIPTS / "run_all.py"
+    if not f.exists():
+        return "BLOCKED", "run_all.py is absent"
+    src = f.read_text()
+    stages = re.findall(r"dict\(script=\"([^\"]+)\"(.*?)\n    \),", src, re.S)
+    if not stages:
+        stages = [(m.group(1), m.group(2)) for m in
+                  re.finditer(r"dict\(script=\"([^\"]+)\"((?:.|\n)*?)note=", src)]
+    if not stages:
+        return "BLOCKED", "could not parse the stage list out of run_all.py"
+
+    missing = [n for n, _ in stages if not (SCRIPTS / n).exists()]
+    spaced = [n for n, _ in stages if " " in n]
+    inert = [n for n, body in stages if re.search(r"writes=\[\s*\]", body)]
+    if missing or spaced or inert:
+        parts = []
+        if missing:
+            parts.append(f"{len(missing)} stage(s) name a script that does not "
+                         f"exist: {missing[:3]}")
+        if spaced:
+            parts.append(f"{len(spaced)} stage(s) fold an argument into the script "
+                         f"name, which run_all passes as a filename: {spaced[:2]}")
+        if inert:
+            parts.append(f"{len(inert)} stage(s) declare writes=[], so the "
+                         f"'exited 0 but wrote nothing' guard cannot fire for "
+                         f"them: {inert[:4]}")
+        return "FAIL", "; ".join(parts)
+    return "PASS", (f"{len(stages)} stages; every script exists and every one "
+                    f"declares at least one output, so the empty-run guard "
+                    f"covers the whole pipeline")
+
+
 def e_estimators_use_adopted_list():
     """No estimator reads the FROZEN episode list, which is a record, not an input.
 
@@ -2527,6 +2578,7 @@ CHECKS = [
     ("V.no_duplicate_source_ids", "X8,X13", "one row per source id, no collisions", v_no_duplicate_source_ids),
     ("V.claims_reproduce", "X14", "every claimed number recomputes from its artifact", v_claims_reproduce),
     ("V.links_resolve", "X14", "every endpoint has a dated result", v_links_resolve),
+    ("X.run_all_stages_declared", "X10", "every pipeline stage exists and declares its outputs", x_run_all_stages_declared),
     ("M.register_sync", "O5", "register and suite have not drifted apart", m_register_sync),
 ]
 

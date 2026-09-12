@@ -123,6 +123,12 @@ OUTCOME_ARTIFACTS = (
 NON_OUTCOME_ARTIFACTS = (
     "cai_daily.parquet",       # the CAI-D treatment index: attention, not demand
     "awareness_lags.parquet",  # lags and leads of the treatment index
+    # Census demographics per community district, from a committed spreadsheet.
+    # Time-invariant and nothing to do with EMS demand. It appeared on disk the
+    # first time 10d was run and D.outcome_list_complete failed at once, which is
+    # the whole point: a new artifact forces a decision instead of defaulting to
+    # unguarded.
+    "cd_demographics_clean.parquet",
 )
 
 # The raw paged download. It holds outcome rows for every year, so it is outcome

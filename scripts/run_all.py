@@ -61,6 +61,12 @@ STAGES = [
     dict(script="10_build_victim_registry.py", kind="fetch", needs=[],
          writes=["data/reference/victim_registry.csv"],
          note="Mapping Police Violence registry"),
+    # 10d was never a stage, yet 06_heterogeneity.py reads what it writes, so a
+    # clean clone could run the whole pipeline and still have 06 fail on a
+    # missing file. It needs no network — the raw spreadsheet is committed.
+    dict(script="10d_parse_cd_demographics.py", kind="build", needs=[],
+         writes=["data/processed/cd_demographics_clean.parquet"],
+         note="community-district demographics, read by 06_heterogeneity"),
     dict(script="24_build_wiki_basket.py", kind="fetch", needs=["data/reference/victim_registry.csv"],
          writes=["data/reference/wiki_basket.csv"],
          note="candidate articles from the category walk"),
@@ -70,6 +76,16 @@ STAGES = [
     dict(script="27_finalise_basket.py", kind="fetch", needs=["data/reference/basket_scope.csv"],
          writes=["data/reference/basket_decisions.csv"],
          note="include/exclude decision with a reason per article"),
+    # 32 publishes the basket now; 27 only decides scope. Without this stage a
+    # pipeline run would leave wikipedia_article_resolution.csv untouched while
+    # every upstream input to it had changed.
+    dict(script="32_validate_basket_construct.py", args=["--apply"], kind="fetch",
+         needs=["data/reference/basket_decisions.csv"],
+         writes=["data/reference/basket_construct_review.csv",
+                 "data/reference/basket_strict.csv",
+                 "data/reference/basket_broad.csv",
+                 "data/reference/wikipedia_article_resolution.csv"],
+         note="does each basket article describe POLICE violence? (B1, B2)"),
     dict(script="29_resolve_article_titles.py", kind="fetch",
          needs=["data/reference/wikipedia_article_resolution.csv"],
          writes=["data/reference/article_title_map.csv", "data/reference/rename_recovery.csv"],
@@ -122,14 +138,17 @@ STAGES = [
     # point is still the PREVIOUS run's file. It ran early once and reported the
     # last run's failures as this run's - a stale read that looked like a result.
     dict(script="22_pipeline_check.py", kind="check",
-         needs=["data/processed/panel_cd_day.parquet"], writes=[],
+         needs=["data/processed/panel_cd_day.parquet"],
+         writes=["outputs/tables/pipeline_check.csv"],
          args=["--stage", "panel", "--stage", "treatment",
                "--stage", "episodes", "--stage", "bheard"],
          note="structural invariants (artifacts)"),
     dict(script="20_data_audit.py", kind="check", needs=[],
          writes=["outputs/tables/data_audit.csv"],
          note="data integrity audit"),
-    dict(script="31_verify_sources.py", kind="check", needs=[], writes=[],
+    dict(script="31_verify_sources.py", kind="check", needs=[],
+         writes=["data/reference/source_verification_log.csv",
+                 "docs/SOURCE_REGISTER.md"],
          args=["--offline"],
          note="registers and claims (offline; --fetch makes it a full scan)"),
     dict(script="23_regression_suite.py", kind="check", needs=[],
@@ -137,7 +156,8 @@ STAGES = [
          note="every audit finding as an executable check"),
     # Now that the suite has written this run's results, check them.
     dict(script="22_pipeline_check.py", kind="check",
-         needs=["outputs/tables/regression_suite.csv"], writes=[],
+         needs=["outputs/tables/regression_suite.csv"],
+         writes=["outputs/tables/pipeline_check.csv"],
          args=["--stage", "outputs"],
          note="verdict on this run's suite output"),
 
@@ -145,21 +165,21 @@ STAGES = [
     dict(script="17_stacked_event_study.py", kind="model",
          needs=["data/processed/panel_cd_day.parquet",
                 "data/reference/confirmation_episodes_rebuilt.csv"],
-         writes=[], note="the primary estimator"),
+         writes=['outputs/tables/event_study_results.csv', 'outputs/tables/event_study_path.csv'], note="the primary estimator"),
     dict(script="03_main_model.py", kind="model",
-         needs=["data/processed/panel_cd_day.parquet"], writes=[],
+         needs=["data/processed/panel_cd_day.parquet"], writes=['outputs/tables/irf_main.csv', 'outputs/tables/joint_tests.csv'],
          note="distributed lag, secondary"),
     dict(script="04_robustness.py", kind="model",
-         needs=["data/processed/panel_cd_day.parquet"], writes=[], note=""),
+         needs=["data/processed/panel_cd_day.parquet"], writes=['outputs/tables/robustness_counts_permutation.csv'], note=""),
     dict(script="05_placebo_and_calls.py", kind="model",
-         needs=["data/processed/panel_cd_day.parquet"], writes=[],
+         needs=["data/processed/panel_cd_day.parquet"], writes=['outputs/tables/decomposition_windows.csv'],
          note="placebo outcomes reported beside the primary"),
     dict(script="06_heterogeneity.py", kind="model",
-         needs=["data/processed/panel_cd_day.parquet"], writes=[], note=""),
+         needs=["data/processed/panel_cd_day.parquet"], writes=['outputs/tables/heterogeneity_results.csv'], note=""),
     dict(script="07_did_exposure.py", kind="model",
-         needs=["data/processed/panel_cd_day.parquet"], writes=[], note=""),
+         needs=["data/processed/panel_cd_day.parquet"], writes=['outputs/tables/did_exposure_results.csv'], note=""),
     dict(script="08_figures.py", kind="model",
-         needs=["data/processed/panel_cd_day.parquet"], writes=[], note="figures"),
+         needs=["data/processed/panel_cd_day.parquet"], writes=['outputs/figures/fig1_raw_series.png'], note="figures"),
 ]
 
 KINDS = ("fetch", "build", "check", "model")
