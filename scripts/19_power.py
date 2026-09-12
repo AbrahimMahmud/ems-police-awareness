@@ -311,6 +311,7 @@ from config import (
     EVENT_WINDOW_PRE,
     FREEZE_ACTIVE,
     H1_OUTCOMES,
+    MINIMUM_EFFECT_OF_INTEREST,
     OUTPUTS_TABLES,
     VALID_CDS,
 )
@@ -357,8 +358,25 @@ PROFILES = {
 #              a continuous-awareness heterogeneity coefficient, NOT a stacked
 #              first-week level shift, so comparing an MDE to it is indicative of
 #              magnitude only. Said here so nobody reads the ratio as exact.
-REFERENCE_EFFECTS = {"planted_verification": 0.010, "discovery_gate2": 0.00108}
-REFERENCE_PRIMARY = "discovery_gate2"
+#
+# AND THE ONE THAT WAS MISSING. As of 2026-09-12 the project has an elicited
+# minimum effect of interest — config.MINIMUM_EFFECT_OF_INTEREST, half a
+# percentage point of mental-health call share — so the verdict is read against
+# that and the other two drop to secondary reference points.
+#
+# The primary used to be `discovery_gate2`, and that was circular in precisely
+# the way an MDE must not be: it set the bar at an effect ALREADY READ OFF THE
+# DISCOVERY DATA, which guarantees the design looks powered for exactly what was
+# already seen and says nothing about what would have mattered. The planted
+# effect is no better as a bar — it is a test fixture, chosen large enough to be
+# recoverable — though it stays useful as a sanity check that the machinery
+# responds.
+REFERENCE_EFFECTS = {
+    "minimum_of_interest": MINIMUM_EFFECT_OF_INTEREST,
+    "planted_verification": 0.010,
+    "discovery_gate2": 0.00108,
+}
+REFERENCE_PRIMARY = "minimum_of_interest"
 
 # Randomization-inference bracket search. RI_MAX_STEPOUTS x log(RI_STEP) is the
 # reach: 1.6^6 = 16.8x the screen MDE. Beyond it the answer is reported as a
@@ -1600,7 +1618,10 @@ for name in [s.strip() for s in args.strata.split(",") if s.strip()]:
     rows.append({"metric": P + "ri_sims", "value": 0 if args.no_ri else args.ri_sims})
     rows.append({"metric": P + "ri_draws", "value": 0 if args.no_ri else args.ri_draws})
 
-    # ---- the stratum's go / no-go, against both named reference effects ----
+    # ---- the stratum's go / no-go, against the MINIMUM EFFECT OF INTEREST ----
+    # The ratio to every reference is recorded, but only one of them is a bar:
+    # the elicited MEI. The other two are a test fixture and a number read off
+    # the discovery data.
     best = min([v for v in headline.values() if v and np.isfinite(v)], default=np.nan)
     worst_p = max([v for v in headline.values() if v and np.isfinite(v)], default=np.nan)
     rows.append({"metric": P + "mde_best_profile", "value": best})

@@ -497,6 +497,32 @@ EVENT_WINDOW_POST_SENSITIVITY = (28, 60)   # U2: Desmond et al. find year-long e
 EVENT_REFERENCE_DAY = -1               # omitted category in event-time dummies
 RANDOMIZATION_DRAWS = 2000             # episode-level RI; primary p-value
 
+# THE SMALLEST EFFECT THIS PAPER WOULD CARE ABOUT, in share points.
+#
+# Half a percentage point of mental-health call share. Against a discovery
+# baseline of 0.1083 with a district-day SD of 0.0467, that is a 4.6% relative
+# change and 0.11 SD.
+#
+# WHY IT HAS TO EXIST. "Underpowered" is meaningless without something to be
+# underpowered against, and this project went years without naming one. A null
+# is then uninterpretable in both directions: nobody can say whether the design
+# could have seen the effect it failed to find. Section 8's discovery null is
+# exactly that situation until an MDE is computed against this number.
+#
+# WHY THIS NUMBER AND NOT THE TWO ALREADY LYING AROUND. The project had named
+# -0.010, the effect PLANTED to verify the estimator recovers something, and
+# GATE2's -0.00108, an estimate READ OFF THE DISCOVERY DATA. The first is a test
+# fixture and the second is circular: setting the bar at the effect you already
+# observed guarantees you are powered for exactly what you saw and tells you
+# nothing about what would have mattered. 19_power.py read its verdict against
+# the second of these until 2026-09-12.
+#
+# So this is set independently of both, and deliberately round: it is a judgement
+# about the world, not a property of the data, and it is recorded here so the
+# paper states it once rather than implying different thresholds in different
+# sections.
+MINIMUM_EFFECT_OF_INTEREST = 0.005
+
 # ---------------------------------------------------------------------------
 # Gate C ratified decisions (GATE_C_MEMO.md §6, 2026-09-08)
 # ---------------------------------------------------------------------------
