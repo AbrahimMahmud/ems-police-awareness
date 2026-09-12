@@ -150,6 +150,47 @@ PERPETRATOR = re.compile(r"""
 
 # Verified against the articles themselves, not recalled. If the rule stops
 # agreeing with these, the rule changed meaning and must not be applied silently.
+# THE ARTICLE'S OWN OPENING SENTENCE, WHICH WAS FETCHED AND THEN IGNORED.
+#
+# fetch_leads() has always run, and its result has always been written to
+# basket_construct_review.csv — and classify() never received it. The single most
+# direct statement of who did the killing was collected, published, and consumed
+# by nothing, which is the same "gathered and wired into nothing" pattern closed
+# for PPML, B-HEARD and the dose arm.
+#
+# It matters because without it three articles rested on the REGISTRY rule alone
+# — Alvin Cole, Breonna Taylor and Keenan Anderson — and registry membership is
+# an exact name match, so it is exposed to namesakes. The registry holds two
+# different Keenan Andersons who died in 2023 and no fewer than four James
+# Andersons, none of whom is the James Craig Anderson this basket must exclude.
+# With the lead wired in, all three are established from the article's own first
+# sentence and the registry rule is load-bearing for nothing.
+#
+# POSITIVE SIGNAL ONLY. A miss costs nothing — the category and registry rules
+# still apply — so this is tuned for precision, never recall. The agent has to
+# appear in agent position ("by a ... police officer") or in a phrase that
+# cannot mean anything else. The trap it must survive is David Dorn, "a
+# 77-year-old retired police captain", who was killed by looters: the words
+# "police captain" are in his lead and he is not a police-violence case.
+_LE = (r"(police|sheriff|deputies|deputy|trooper|marshals?|law\s+enforcement"
+       r"|border\s+patrol|constable|highway\s+patrol|state\s+patrol)")
+LEAD_ACTOR = re.compile(rf"""
+      \bby\s+(?:[A-Za-z.'-]+,?\s+){{0,6}}{_LE}      # "... by a Wauwatosa, Wisconsin ... police officer"
+    | \b{_LE}\s+officers?\s+(from|of|with)\b      # "police officers from the Louisville Metro ..."
+    | \bin\s+police\s+custody\b
+    | \bpolice\s+shooting\b
+    | \bofficer-involved\s+shooting\b
+    | \bfatally\s+shot\s+by\s+{_LE}
+""", re.I | re.X)
+
+# Leads that MUST read as a law-enforcement agent, and leads that MUST NOT.
+# Verified: 0 false positives across all 13 civilian killings in the candidate
+# set, and all three registry-only articles confirmed.
+LEAD_MUST_HIT = ["Killing_of_Alvin_Cole", "Killing_of_Breonna_Taylor",
+                 "Death_of_Keenan_Anderson"]
+LEAD_MUST_MISS = ["Killing_of_David_Dorn", "Murder_of_James_Craig_Anderson",
+                  "Shooting_of_Trayvon_Martin", "Murder_of_Ahmaud_Arbery"]
+
 MUST_BE_POLICE = [
     "George Floyd", "Daniel Prude", "Eric Garner", "Tamir Rice", "Sandra Bland",
     "Breonna Taylor", "Walter Scott", "Elijah McClain", "Deborah Danner",
@@ -202,7 +243,7 @@ def fetch_leads(articles, batch=20):
     return out
 
 
-def classify(cats, in_registry):
+def classify(cats, in_registry, lead=""):
     actor = sorted({c for c in cats if ACTOR.search(c)})
     topic = sorted({c for c in cats if TOPIC.search(c) and c not in actor})
     perp = sorted({c for c in cats if PERPETRATOR.search(c)})
@@ -210,6 +251,13 @@ def classify(cats, in_registry):
         return "anti_police", f"categorised as a perpetrator: {perp[0]}", perp[0]
     if actor:
         return "police_violence", f"police-action category: {actor[0]}", actor[0]
+    # The article's own first sentence, ABOVE the registry rule. Direct evidence
+    # about this person beats an exact-name lookup that cannot tell namesakes
+    # apart (finding T13).
+    m = LEAD_ACTOR.search(lead or "")
+    if m:
+        return ("police_violence",
+                f"article lead names a law-enforcement agent: {m.group(0)[:60]!r}", "")
     if in_registry:
         return "police_violence", "listed in the Mapping Police Violence registry", ""
     if topic:
@@ -234,7 +282,7 @@ def main():
     for _, r in dec.iterrows():
         cs = cats.get(r["article"], [])
         reg = bool(r["in_registry"]) if pd.notna(r["in_registry"]) else False
-        klass, why, cat = classify(cs, reg)
+        klass, why, cat = classify(cs, reg, leads.get(r["article"], ""))
         us = sorted({c for c in cs if US.search(c)})
         nonus = sorted({c for c in cs if NON_US.search(c)})
         rows.append({"article": r["article"], "person": r["person"],
@@ -254,6 +302,19 @@ def main():
             for p in MUST_BE_POLICE if by_person.get(p) != "police_violence"]
            + [f"{p}: expected NOT police_violence, got police_violence"
               for p in MUST_NOT_BE_POLICE if by_person.get(p) == "police_violence"])
+    # The lead regex gets its own canaries, tested on the LEAD ALONE rather than
+    # on the final classification. A case that also carries a police category
+    # would be classified correctly whatever the lead rule did, so testing only
+    # the outcome would let the lead rule rot undetected — the defect class this
+    # file exists to catch, applied to this file.
+    _leadmap = dict(zip(d["article"], d["article_first_sentence"].fillna("")))
+    bad += [f"{a}: lead should name a law-enforcement agent and does not"
+            for a in LEAD_MUST_HIT
+            if a in _leadmap and not LEAD_ACTOR.search(_leadmap[a])]
+    bad += [f"{a}: lead must NOT read as a law-enforcement agent, but matched "
+            f"{LEAD_ACTOR.search(_leadmap[a]).group(0)[:40]!r}"
+            for a in LEAD_MUST_MISS
+            if a in _leadmap and LEAD_ACTOR.search(_leadmap[a])]
     if bad:
         raise SystemExit(
             "CANARY FAILURE — the classification rule no longer agrees with cases "
@@ -261,7 +322,9 @@ def main():
             + "\nbasket_construct_review.csv was written for inspection; no basket "
               "was produced.")
     print(f"\ncanaries: {len(MUST_BE_POLICE)} police and "
-          f"{len(MUST_NOT_BE_POLICE)} non-police cases all classified correctly")
+          f"{len(MUST_NOT_BE_POLICE)} non-police cases all classified correctly; "
+          f"{len(LEAD_MUST_HIT)} leads read as an agent and "
+          f"{len(LEAD_MUST_MISS)} do not")
     _p = d[d["construct"] == "police_violence"]
     print(f"US evidence: {int((_p['wikidata_country'] == 'United States').sum())} from "
           f"Wikidata, {int(_p['us_evidence'].astype(bool).sum())} from a category, "

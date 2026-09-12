@@ -1076,6 +1076,62 @@ def t_basket_is_police_violence():
         f"police-action category or the MPV registry; 0 anti-police")
 
 
+def t_basket_evidence_not_namesake():
+    """T13: no published basket article rests on an exact-name registry lookup alone.
+
+    Registry membership is decided by an exact name match, which cannot tell
+    namesakes apart. Measured: 25 person-shaped articles are marked absent from
+    a registry that does contain them (suffixes, accents, two-victim titles),
+    and the finding's prescribed remedy — match on normalised first+last with
+    middle names stripped — is WORSE THAN THE DEFECT. It collapses "James Craig
+    Anderson", a man murdered by civilians in a Mississippi hate crime, onto
+    four unrelated James Andersons in the registry, and would readmit him to a
+    police-violence treatment index the basket rebuild had correctly excluded.
+    The registry also holds two different Keenan Andersons who died in 2023.
+
+    So the exposure is not the false negatives, which cost nothing measurable:
+    of the 15 articles the classifier could not establish, exactly one would flip
+    under normalised matching, and that one must not flip. The exposure is the
+    articles that rested on the registry as their ONLY positive signal, where a
+    namesake collision decides basket membership. There were three, and one was
+    Breonna Taylor.
+
+    The fix was evidence the script already had. fetch_leads() runs on every
+    candidate, its result is written to basket_construct_review.csv, and
+    classify() never received it — the most direct statement of who did the
+    killing, gathered and consumed by nothing. Wired in above the registry rule,
+    all three are established from their own article's first sentence, the
+    registry is load-bearing for zero articles, and all three baskets rebuilt
+    BYTE-IDENTICAL.
+
+    This asserts the state, not the code path: no published article may cite the
+    registry as its reason. That way the invariant survives a future rewrite of
+    how the evidence is gathered.
+    """
+    f = DATA_REFERENCE / "basket_construct_review.csv"
+    if not f.exists():
+        return "BLOCKED", "basket_construct_review.csv absent — run 32"
+    d = pd.read_csv(f)
+    published = set()
+    for name in ("basket_strict.csv", "basket_broad.csv"):
+        g = DATA_REFERENCE / name
+        if g.exists():
+            published |= set(pd.read_csv(g)["article"])
+    if not published:
+        return "BLOCKED", "no basket on disk — run 32 --apply"
+    onreg = d[d["article"].isin(published)
+              & d["reason"].astype(str).str.contains("Mapping Police Violence registry")]
+    if len(onreg):
+        return "FAIL", (f"{len(onreg)} published basket article(s) rest on an exact-name "
+                        f"registry match as their only positive signal, so a namesake "
+                        f"decides membership: {sorted(onreg['person'])[:4]}")
+    lead = d[d["article"].isin(published)
+             & d["reason"].astype(str).str.contains("article lead names")]
+    return "PASS", (f"none of {len(published)} published basket articles rests on a "
+                    f"name lookup alone; {len(lead)} are established from the article's "
+                    "own lead sentence")
+
+
 def t_basket_country_evidence():
     """B4: no basket article was admitted without positive evidence it is a US case.
 
@@ -3066,6 +3122,7 @@ CHECKS = [
     ("T.exclusion_reasons_true", "N1,N3", "no basket exclusion states a reason the scope file contradicts", t_exclusion_reasons_true),
     ("T.scope_covers_candidates", "N2", "every basket candidate was actually asked about", t_scope_covers_candidates),
     ("T.basket_is_police_violence", "B1", "every basket article has evidence police were the actor", t_basket_is_police_violence),
+    ("T.basket_evidence_not_namesake", "T13,B3", "no basket article rests on an exact-name registry match alone", t_basket_evidence_not_namesake),
     ("T.basket_country_evidence", "B2", "no basket article admitted without US evidence", t_basket_country_evidence),
     ("T.no_duplicate_person", "T17", "no basket article duplicates another person", t_no_duplicate_person_articles),
     ("S.did_no_shared_days", "S7", "no district-day is treated and control at once", s_did_no_shared_days),

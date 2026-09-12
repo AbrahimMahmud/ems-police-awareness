@@ -359,6 +359,37 @@ have traffic on **3,105 of the index's 3,472 days**, so they were contributing
 throughout rather than only in July 2016 — the largest single-day effect is
 **1.03 standard deviations, on 2017-08-16**, inside the discovery window.
 
+**One signal was being gathered and ignored, and it mattered.** The classifier
+fetches each article's opening sentence — the most direct statement anywhere of
+who did the killing — writes it into the review file, and never consulted it. The
+decision rested on categories plus membership of the victim registry, and registry
+membership is an **exact name match**.
+
+That is a thin thread to hang a basket on. The registry holds four different
+James Andersons, none of whom is the James Craig Anderson this basket must
+exclude, and two different Keenan Andersons who died in 2023. Three published
+articles rested on that lookup as their only positive evidence, and one of them
+was **Breonna Taylor** — her membership decided by whether a name string matched,
+while her own article's first sentence says plainly that Louisville Metro police
+officers forced entry into her apartment.
+
+The lead sentence is now read first, and only as a *positive* signal: a miss
+costs nothing, because the category and registry rules still apply, so it is
+tuned for precision rather than coverage. Its canaries are tested on the sentence
+alone rather than on the final classification — an article that also carries a
+police category would come out right whatever the lead rule did, so testing the
+outcome would let the rule rot unnoticed. The case it has to survive is David
+Dorn, "a 77-year-old retired police captain", who was killed by looters: the
+words are in his lead and he is not a police-violence case. Measured at **zero
+false positives** across all thirteen civilian killings in the candidate set.
+
+**All three baskets rebuilt byte-identical.** Nothing about the treatment index
+changed; what changed is that no published article's membership now depends on a
+name lookup that cannot tell two people apart. Two further articles were
+corrected on construct along the way — Adama Traoré and Luana Barbosa dos Reis
+*are* police killings, in France and Brazil, and remain excluded on country
+rather than on a mistaken reading of what happened to them.
+
 **The broad arm now exists, and the two agree.** The sensitivity was
 pre-registered but not buildable — the episode list it needs had never been
 produced, so the confirmatory script recorded it as `NOT_RUN`. Both arms are now
@@ -1101,7 +1132,7 @@ is a harder thing to notice and a worse thing to have.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **67 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **68 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
