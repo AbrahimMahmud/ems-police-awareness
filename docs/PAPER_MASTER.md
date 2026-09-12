@@ -909,16 +909,16 @@ the thing it was written to detect.
 
 **Layer 1.** Before trusting our method on real data, we ran it two hundred times
 on fake data built to contain *no* effect. A trustworthy method should cry wolf
-about 5% of the time. Ours cries wolf **5.0%** of the time, and the full spread of
+about 5% of the time. Ours cries wolf **6.0%** of the time, and the full spread of
 its answers is the right shape.
 
 **Layer 3.** `scripts/18_null_calibration.py`, 200 sims × 200 draws:
 
 ```
 VERDICT                   CALIBRATED
-empirical rejection rate  0.05     nominal 0.05, band [0.0198, 0.0802]
+empirical rejection rate  0.06     nominal 0.05, band [0.0198, 0.0802]
 median p                  0.5
-KS uniformity             p = 0.5617
+KS uniformity             p = 0.6803
 AR(1) rho                 0.0482   estimated from the real panel
 ```
 
@@ -932,6 +932,14 @@ UNDETERMINED and exits 2). The artifact it replaced read CALIBRATED from 12 sims
 with no real panel. A run that completes fewer sims than the one already on disk
 now refuses to publish at all, because an 8-sim smoke test once overwrote the
 200-sim verdict and said nothing about it (§5.2).
+
+The verdict above is the one calibrated against the **adopted** episode list. An
+earlier 200-sim run used the frozen list's 30 discovery episodes rather than the
+adopted list's 29, and had to be redone once that was noticed — the null a
+calibration certifies is a statement about a specific episode geometry, not a
+general property of the estimator. Both runs came back CALIBRATED and inside the
+band (0.05 against 0.06), so nothing turned on it, but the second run is the one
+that describes the design being estimated.
 
 **This section was wrong until 2026-09-12, and the reason is worth keeping.** It
 quoted a rejection rate of 0.065 and an AR(1) rho of 0.185, and closed with an
