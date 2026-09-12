@@ -1194,6 +1194,58 @@ def t_basket_is_police_violence():
         f"police-action category or the MPV registry; 0 anti-police")
 
 
+def d_edp_family_justified():
+    """O3: the EDP grouping does not rest on a justification known to be false.
+
+    CALL_TYPE_GROUPS['edp'] bundles EDP with EDPC, EDPM, EDPW and T-EDP. Two
+    reasons were given in config and both were wrong:
+
+      "the codes come from the official dictionary sheet". The sheet holds 271
+      codes and exactly one of them is an EDP code — "EDP = PSYCHIATRIC
+      PATIENT". EDPC, EDPM, EDPW and T-EDP are undocumented, and edp is the only
+      group in CALL_TYPE_GROUPS with undocumented members.
+
+      "family total stable ~125k/yr while EDP alone falls". Annual family totals
+      run 108,384 to 141,910 — a 47% range that matches ~125k in two years of
+      ten.
+
+    The grouping itself survives: EDPC really is a progressive recode of EDP, and
+    omitting the recode codes creates a time-trending undercount. What does not
+    survive is the stated basis for it, and a false justification is worse than
+    a thin one because it stops anyone looking.
+
+    The measured totals come from the F2 freeze access and are CITED rather than
+    re-derived — re-deriving them would be a third confirmation-period read. So
+    this check verifies the correction is present and has not been quietly
+    reverted to the tidy version; it does not recompute anything, by design.
+    """
+    f = SCRIPTS / "config.py"
+    if not f.exists():
+        return "BLOCKED", "config.py absent"
+    src = f.read_text()
+    if "CALL_TYPE_GROUPS" not in src:
+        return "BLOCKED", "config.py has no CALL_TYPE_GROUPS"
+    missing = []
+    # The correction must still say both things it was written to say.
+    if "undocumented" not in src:
+        missing.append("that EDPC/EDPM/EDPW/T-EDP are undocumented in the official "
+                       "dictionary sheet")
+    if "141,910" not in src and "141910" not in src:
+        missing.append("the measured annual range that refutes 'stable ~125k/yr'")
+    # And it must not have drifted back to asserting the false claim as fact.
+    import re as _re
+    tidy = _re.search(r"family total stable ~125k/yr[^\n]*\n(?![^\n]*[Ff]alse)", src)
+    if tidy and "False." not in src:
+        missing.append("the phrase 'family total stable ~125k/yr' is present without "
+                       "being marked false")
+    if missing:
+        return "FAIL", ("the EDP grouping's justification has lost its correction: "
+                        + "; ".join(missing))
+    return "PASS", ("the EDP grouping records that its codes are undocumented and that "
+                    "the 'stable ~125k/yr' justification is false, with the measured "
+                    "range cited rather than re-derived")
+
+
 def t_trends_precision_stable():
     """T6: the treatment's Trends component does not lose precision over the decade.
 
@@ -3414,6 +3466,7 @@ CHECKS = [
     ("T.exclusion_reasons_true", "N1,N3", "no basket exclusion states a reason the scope file contradicts", t_exclusion_reasons_true),
     ("T.scope_covers_candidates", "N2", "every basket candidate was actually asked about", t_scope_covers_candidates),
     ("T.basket_is_police_violence", "B1", "every basket article has evidence police were the actor", t_basket_is_police_violence),
+    ("D.edp_family_justified", "O3", "the EDP grouping does not rest on a justification known to be false", d_edp_family_justified),
     ("T.trends_precision_stable", "T6", "the live Trends component keeps its resolution over the decade", t_trends_precision_stable),
     ("T.agent_class_break_bounded", "L7", "the April 2020 agent-class break is measured and bounded", t_agent_class_break_bounded),
     ("T.basket_evidence_not_namesake", "T13,B3", "no basket article rests on an exact-name registry match alone", t_basket_evidence_not_namesake),
