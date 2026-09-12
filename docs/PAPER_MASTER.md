@@ -983,7 +983,29 @@ null**. It keeps each episode's position relative to the others, so clustering
 survives; it does not keep calendar gaps across the seam between the two windows.
 So each stratum is now calibrated separately, each verdict records the scheme and
 geometry it certifies, and a check recomputes what each stratum requires and
-refuses a verdict that certifies something else.
+refuses a verdict that certifies something else. All three are now discharged, at
+200 simulations × 200 draws each:
+
+| stratum | scheme | geometry | episodes | rejection at α=.05 | KS p | verdict |
+|---|---|---|---|---|---|---|
+| discovery | anchor shift | contiguous | 29 | 0.06 | 0.6803 | CALIBRATED |
+| C2 | anchor shift | contiguous | 30 | 0.06 | 0.4502 | CALIBRATED |
+| C1 | circular | gapped | 15 | 0.05 | 0.0736 | CALIBRATED |
+
+**C1 passed by a margin worth stating rather than burying.** Its KS statistic is
+0.0900 against a critical value of 0.0960 at 200 simulations — a pass by 0.006 —
+and its p-values lean the wrong way: mean 0.457 against 0.5, and 13.5% of them
+below 0.10 against a nominal 10%. The rejection rate at α = 0.05 is exactly 0.05,
+which is reassuring only because 0.05 is the one α that test examines.
+
+This matters more than the numbers suggest. C1 is the *clean* stratum, the one
+the discovery/confirmation split exists to obtain, and the circular shift is the
+scheme written specifically for it. The pre-freeze gate requires uniformity at
+1,000 simulations, where the critical value falls to 0.0429 — **less than half
+the statistic observed here**. A 1,000-simulation C1 run is therefore the next
+thing this design has to survive, and it is being run before anything is built on
+top of it. If it fails, the scheme is reworked and re-certified; what does not
+happen is a p-value reported from a null that could not pass its own test.
 
 **And the check that enforces that could be cleared by a run measuring nothing.**
 It read the `draw_scheme` field and stopped there, so any run reaching the write
