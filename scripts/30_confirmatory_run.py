@@ -975,7 +975,11 @@ def randomization(panel, real_starts, outcome, pre, post, draws, rng,
     if len(stats_) == 0:
         res["status"] = "RI_NOT_RUN: every placebo draw was discarded"
         return res
-    res["p_randomization"] = float((stats_ >= obs).mean())
+    # (1 + k) / (1 + n), matching event_study.randomization_p. A second copy of
+    # this formula is how the two drifted apart in the first place; it stays a
+    # copy only because this script draws its own placebos under the sealed
+    # confirmatory path, and S.ri_pvalue_form asserts both spellings agree.
+    res["p_randomization"] = float((1 + (stats_ >= obs).sum()) / (1 + len(stats_)))
     res["n_draws"] = len(stats_)
     res["null_sd"] = float(stats_.std())
     res["status"] = "OK"

@@ -615,5 +615,22 @@ def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
         if b is not None:
             stats_.append(b)
     stats_ = np.array(stats_)
-    p = float((stats_ >= obs).mean()) if len(stats_) else np.nan
+    # (1 + k) / (1 + n), NOT k / n.
+    #
+    # The observed assignment is itself one of the assignments the null admits,
+    # so it belongs in both the numerator and the denominator. Leaving it out
+    # makes the test anti-conservative exactly where rejection decisions are
+    # taken, and it can return p = 0 — which is not a p-value, and which the
+    # calibration artifacts were carrying: every stratum had one. Phipson &
+    # Smyth (2010) is the standard reference; CP2's own checklist has required
+    # this form all along and it was never implemented.
+    #
+    # Measured on the three committed calibrations, correcting the stored
+    # placebo counts: KS uniformity p moves 0.6803 -> 0.7718 on discovery,
+    # 0.4502 -> 0.4747 on C2, 0.0736 -> 0.0881 on C1. The rejection rates at
+    # alpha = 0.05 do not move at 200 draws. So this is a correctness fix rather
+    # than a rescue: C1's non-uniformity is a property of its DRAW SCHEME, not
+    # of this formula.
+    p = (float((1 + (stats_ >= obs).sum()) / (1 + len(stats_)))
+         if len(stats_) else np.nan)
     return obs, p, stats_

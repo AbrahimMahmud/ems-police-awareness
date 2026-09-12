@@ -520,6 +520,61 @@ def s_estimators_gate_on_calibration():
                     "and 17 refuses to publish fewer draws than the result on disk")
 
 
+def s_ri_pvalue_form():
+    """N1: the randomization p-value is (1+k)/(1+n), in every spelling of it.
+
+    The observed assignment is itself one of the assignments the null admits, so
+    it belongs in both numerator and denominator. `k/n` leaves it out, which
+    makes the test anti-conservative precisely where rejection decisions are
+    taken, and lets it return p = 0 — not a small p-value, not a p-value at all.
+
+    This was on CP2's checklist as a requirement and was never implemented. It
+    went unseen because nothing looked at the artifacts for the one value the
+    biased form can produce and the correct form cannot: every committed
+    calibration carried a zero.
+
+    Two things are asserted, because either alone can pass while the defect is
+    live. The CODE, by AST, in both places that compute an RI p-value —
+    event_study.randomization_p and 30_confirmatory_run, which keep separate
+    copies because the confirmatory path draws its own placebos. And the
+    ARTIFACTS, which is the half that would have caught it: no stored p-value may
+    be zero, whatever the source happens to say today.
+    """
+    import ast as _ast
+    bad = []
+    for name, fn_name in (("event_study.py", "randomization_p"),
+                          ("30_confirmatory_run.py", None)):
+        f = SCRIPTS / name
+        if not f.exists():
+            bad.append(f"{name} absent")
+            continue
+        src = f.read_text()
+        # The corrected form divides (1 + <count>) by (1 + <total>).
+        if "(1 + (stats_ >= obs).sum()) / (1 + len(stats_))" not in src.replace("\n", " "):
+            tree = _ast.parse(src)
+            biased = [n for n in _ast.walk(tree)
+                      if isinstance(n, _ast.Call)
+                      and isinstance(n.func, _ast.Attribute)
+                      and n.func.attr == "mean"
+                      and "obs" in _ast.unparse(n.func.value)]
+            if biased:
+                bad.append(f"{name} computes an RI p-value as k/n: "
+                           f"{_ast.unparse(biased[0])[:60]}")
+    zeros = []
+    for art in sorted(OUTPUTS_TABLES.glob("null_calibration_pvalues*.csv")):
+        try:
+            v = pd.read_csv(art)["p"]
+        except Exception:
+            continue
+        if (v == 0).any():
+            zeros.append(f"{art.name} ({int((v == 0).sum())} zero p-value(s))")
+    if bad or zeros:
+        return "FAIL", ("randomization p-values are not (1+k)/(1+n): "
+                        + "; ".join(bad + zeros))
+    return "PASS", ("both RI p-value computations use (1+k)/(1+n) and no stored "
+                    "p-value is zero")
+
+
 def s_calibration_writes_stratified():
     """P5: every file a calibration run writes is named for the stratum it describes.
 
@@ -3212,6 +3267,7 @@ CHECKS = [
     ("S.no_stale_calibration", "R3", "no stale low-n calibration artifact", s_stale_calibration_artifact),
     ("S.calibration_on_residual", "S8", "synthetic null has this design's dependence, not a harder one", s_calibration_on_residual),
     ("S.ri_scheme_certified", "P1,P5", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
+    ("S.ri_pvalue_form", "N1", "randomization p-values use the (1+k)/(1+n) form", s_ri_pvalue_form),
     ("S.calibration_writes_stratified", "P5,D1", "every calibration output names the stratum it describes", s_calibration_writes_stratified),
     ("S.estimators_gate_on_calibration", "P7,D1", "estimators certify their own null and cannot be downgraded by a cheap run", s_estimators_gate_on_calibration),
     ("S.ppml_wired", "X5,R8", "counts/PPML arm actually called", s_ppml_wired),

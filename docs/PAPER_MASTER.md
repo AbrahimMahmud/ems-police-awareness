@@ -1022,7 +1022,7 @@ its answers is the right shape.
 VERDICT                   CALIBRATED
 empirical rejection rate  0.06     nominal 0.05, band [0.0198, 0.0802]
 median p                  0.5
-KS uniformity             p = 0.6803
+KS uniformity             p = 0.7718
 AR(1) rho                 0.0482   estimated from the real panel
 ```
 
@@ -1070,24 +1070,50 @@ refuses a verdict that certifies something else. All three are now discharged, a
 
 | stratum | scheme | geometry | episodes | rejection at α=.05 | KS p | verdict |
 |---|---|---|---|---|---|---|
-| discovery | anchor shift | contiguous | 29 | 0.06 | 0.6803 | CALIBRATED |
-| C2 | anchor shift | contiguous | 30 | 0.06 | 0.4502 | CALIBRATED |
-| C1 | circular | gapped | 15 | 0.05 | 0.0736 | CALIBRATED |
+| discovery | anchor shift | contiguous | 29 | 0.06 | 0.7718 | CALIBRATED |
+| C2 | anchor shift | contiguous | 30 | 0.06 | 0.4747 | CALIBRATED |
+| C1 | circular | gapped | 15 | 0.05 | 0.0881 | CALIBRATED |
 
-**C1 passed by a margin worth stating rather than burying.** Its KS statistic is
-0.0900 against a critical value of 0.0960 at 200 simulations — a pass by 0.006 —
-and its p-values lean the wrong way: mean 0.457 against 0.5, and 13.5% of them
-below 0.10 against a nominal 10%. The rejection rate at α = 0.05 is exactly 0.05,
-which is reassuring only because 0.05 is the one α that test examines.
+**C1 passed by a margin worth stating rather than burying, and then the margin
+turned out to be a symptom.** Its KS statistic is 0.0875 against a critical value
+of 0.0960 at 200 simulations, and its p-values lean the wrong way: mean 0.457
+against 0.5. The rejection rate at α = 0.05 is exactly 0.05, which is reassuring
+only because 0.05 is the one α that test examines.
 
-This matters more than the numbers suggest. C1 is the *clean* stratum, the one
-the discovery/confirmation split exists to obtain, and the circular shift is the
-scheme written specifically for it. The pre-freeze gate requires uniformity at
-1,000 simulations, where the critical value falls to 0.0429 — **less than half
-the statistic observed here**. A 1,000-simulation C1 run is therefore the next
-thing this design has to survive, and it is being run before anything is built on
-top of it. If it fails, the scheme is reworked and re-certified; what does not
-happen is a p-value reported from a null that could not pass its own test.
+The pre-freeze gate requires uniformity at 1,000 simulations, where the critical
+value falls to 0.0429 — less than half the statistic observed. So a 1,000-run was
+started, and killed by an unrelated container restart forty-five minutes in. That
+turned out to be the luckiest failure in the project, because looking into it
+found the reason C1 is non-uniform, and it is not sample size.
+
+**C1's null does not reproduce C1's design.** The stratum really has ten episodes
+in its 2015–16 block and five in its 2021 block. The circular shift treats the
+two blocks' admissible days as one sequence and slides through it, so the split
+it produces is whatever a uniform shift implies — and block 1 holds 520 of the
+641 admissible days. The null therefore places a mean of **12.1** episodes there
+rather than ten, its most common draw is thirteen, and it reproduces the real
+ten-five split on **12.4% of draws**. The placebo designs differ structurally
+from the design being tested: different episodes per block, different effective
+sample, different fixed-effect structure. Non-uniform p-values are the expected
+consequence, not a surprise.
+
+Two alternative explanations were checked and rejected. The p-values are discrete
+— they live on a lattice of 1/201 — and are compared against a *continuous*
+uniform, which does inflate the statistic; measured on a perfectly calibrated
+lattice null, that inflation produces a 6.7% false-failure rate at 1,000
+simulations against a nominal 5%. Real, and far too small to account for this: a
+perfect null on the same lattice has a median statistic of 0.028 at 1,000
+simulations and a 95th percentile of 0.045, while C1 sits at 0.0875. The
+p-value formula was also wrong (below), and correcting it moved C1 only from
+0.0900 to 0.0875.
+
+The fix is to shift **within each block** rather than across both: one shift per
+block, wrapping inside it. The ten-five split then holds on every draw,
+clustering inside each block survives, and the seam disappears entirely. There
+are 520 × 121 = 62,920 distinct placebo designs available that way, against the
+2,000 draws the design calls for. This is a further departure from the
+pre-registered null and is disclosed as one — but the alternative is a null that
+is not a null of this design.
 
 **And the check that enforces that could be cleared by a run measuring nothing.**
 It read the `draw_scheme` field and stopped there, so any run reaching the write
@@ -1183,7 +1209,7 @@ is a harder thing to notice and a worse thing to have.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **69 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **70 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
