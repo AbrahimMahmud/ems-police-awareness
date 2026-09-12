@@ -2680,7 +2680,20 @@ def m_status_honest():
         for f in str(fids).split(","):
             if f.strip():
                 tagged.setdefault(f.strip(), []).append(cid)
+    # THIS RUN'S STATES FIRST, the artifact only as a fallback.
+    #
+    # Reading the artifact alone made this check trail by one run: X14 was marked
+    # `fixed` while the artifact still held V.claims_reproduce=FAIL from BEFORE
+    # that claim was repaired, so the check reported a lie that no longer
+    # existed. The suite accumulates into `results` as it goes and this check
+    # runs 61st of 63, so every other check's state for THIS run is already
+    # available — except the one after it, which the artifact still covers.
+    #
+    # A check that reports yesterday's state is a check that can be right about
+    # the wrong day, which is the same class of error as reading a stale
+    # artifact anywhere else in this project.
     state = dict(zip(*[pd.read_csv(res)[c] for c in ("check", "state")]))
+    state.update({r["check"]: r["state"] for r in results})
 
     lying = []
     for _, r in d.iterrows():
