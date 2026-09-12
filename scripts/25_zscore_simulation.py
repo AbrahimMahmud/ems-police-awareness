@@ -561,12 +561,22 @@ for p in PREPARED:
         if d.size == 0:
             continue
         coefs, ses = d[:, 0], d[:, 1]
-        fixed_mean = float(np.mean(np.array(draws[p["sample_id"]]["fixed_scale"])[:, 0]))
-        # What the identity says this arm's coefficient must be. For the z arm
-        # that is beta * s_W; for the others it is beta. Written down so the
-        # check compares against a PREDICTION rather than re-deriving from the
-        # same numbers it is checking.
-        predicted = fixed_mean * (p["s_w"] if arm == "within_window_z" else 1.0)
+        # What the identity says this arm's coefficient must be: b_fixed * s_W
+        # for the z arm, b_fixed for the others. Written down as a PREDICTION so
+        # the check compares against it rather than re-deriving it from the same
+        # numbers it is checking.
+        #
+        # The comparison is against the fixed arm ON THE SAME DRAWS. The centred
+        # arm is fitted once and the others every draw, so comparing it against
+        # the fixed arm's mean over ALL draws compares two different things and
+        # fails by the size of the Monte Carlo noise. That is not hypothetical:
+        # the first version of this file did exactly that, and the check below
+        # failed on correct output with a 0.33 relative difference. Draws are
+        # appended in order, so the first n_fits fixed-arm draws are the matching
+        # ones.
+        fixed_all = np.array(draws[p["sample_id"]]["fixed_scale"], dtype=float)[:, 0]
+        fixed_matched = float(np.mean(fixed_all[:d.shape[0]]))
+        predicted = fixed_matched * (p["s_w"] if arm == "within_window_z" else 1.0)
         rows.append({
             LABEL_COL: SIM_LABEL,
             "block": p["block"],
@@ -715,17 +725,16 @@ def check_centre_arm_identical(main, par):
     """Centring is absorbed by the fixed effects: the centred arm MUST equal
     the fixed arm. This is the claim; if it stops holding, the decomposition
     into "centring is harmless, dividing is not" is wrong."""
-    f = main[main["arm"] == "fixed_scale"].set_index("sample_id")["coef_mean"]
-    c = main[main["arm"] == "within_window_centred"].set_index("sample_id")["coef_mean"]
-    common = f.index.intersection(c.index)
-    if len(common) == 0:
+    c = main[main["arm"] == "within_window_centred"]
+    if len(c) == 0:
         return False, "the centred arm was never fitted"
-    rel = (c[common] - f[common]).abs() / f[common].abs().clip(lower=1e-30)
+    rel = ((c["coef_mean"] - c["identity_predicted_coef"]).abs()
+           / c["identity_predicted_coef"].abs().clip(lower=1e-30))
     bad = rel[rel > CENTRE_RTOL]
     if len(bad):
         return False, (f"{len(bad)} sample(s) where centring changed the coefficient: "
                        f"max relative difference {rel.max():.3e}")
-    return True, f"{len(common)} samples, max relative difference {rel.max():.3e}"
+    return True, f"{len(c)} samples, max relative difference {rel.max():.3e}"
 
 
 def check_identity_holds(main, par):
@@ -786,8 +795,8 @@ def check_realised_days_reported(main, par):
     r = w["realised_days_per_episode_district"].to_numpy()
     if not np.all(np.diff(r) > 0):
         return False, f"realised length is not increasing in L: {list(r)}"
-    return True, (f"realised {list(np.round(r, 2))} against nominal "
-                  f"{list(w['nominal_days_per_episode_district'])}")
+    return True, (f"realised {[round(float(v), 2) for v in r]} against nominal "
+                  f"{[int(v) for v in w['nominal_days_per_episode_district']]}")
 
 
 def check_dates_inside_freeze(main, par):
