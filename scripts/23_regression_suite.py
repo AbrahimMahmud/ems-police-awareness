@@ -34,6 +34,7 @@ run, and the same error class the audit itself was hunting.
 
 import argparse
 import ast
+import hashlib
 import importlib.util
 import json
 import re
@@ -518,6 +519,63 @@ def s_dose_arm_wired():
             f"called by {callers}; recovers planted dose effect {got:+.5f} per SD "
             f"against a planted {PER_SD:+.5f}" if ok else
             f"called by {callers} but recovered {got:+.5f} against a planted {PER_SD:+.5f}")
+
+
+def d_addendum_complete():
+    """E5: the pre-registration text is untouched, and the addendum it points to exists.
+
+    Three places cited a `CONFIRMATION_PLAN.md` addendum before one was written —
+    PAPER_MASTER 4.2, PAPER_MASTER 5.2, and finding F2's fix. A pre-registration
+    record that points at a document nobody wrote is WORSE than no pointer,
+    because it reads as disclosure and nothing in the project contradicted it.
+
+    Three properties, each of which can fail independently:
+
+      1. The frozen text above the addendum marker is byte-identical to what was
+         pre-specified. Appending is disclosure; editing is rewriting history,
+         and a diff is not a reliable way to notice the difference months later.
+      2. The addendum exists and names its deviations.
+      3. Every finding whose remedy SAYS it is disclosed in the addendum is
+         actually discussed there. This is the part that decays: a finding's fix
+         column is written when the finding is filed, and nothing otherwise
+         checks that the promised disclosure was ever made.
+    """
+    f = PROJECT_ROOT / "docs" / "CONFIRMATION_PLAN.md"
+    if not f.exists():
+        return "BLOCKED", "docs/CONFIRMATION_PLAN.md is absent"
+    text = f.read_text()
+    marker = "\n---\n\n# Addendum — deviations from the plan above\n"
+    if marker not in text:
+        return "FAIL", ("CONFIRMATION_PLAN.md has no addendum section, but "
+                        "PAPER_MASTER and finding F2 both cite one")
+
+    # The pre-specified text, pinned by content hash rather than by a line count
+    # so that appending cannot shift it and editing cannot hide in a diff.
+    FROZEN_SHA = "3a411ddd57a2789d6f1866cad51c9bbf1a0136e75cc0f70c5a30e4b81eebee52"
+    original, addendum = text.split(marker, 1)
+    got = hashlib.sha256(original.encode()).hexdigest()
+    if got != FROZEN_SHA:
+        return "FAIL", (f"the pre-specified text has been EDITED: sha256 {got[:16]} "
+                        f"against the pinned {FROZEN_SHA[:16]}. The addendum exists so "
+                        "deviations are appended, never written over the original.")
+
+    reg = PROJECT_ROOT / "docs" / "AUDIT_FINDINGS.csv"
+    promised, undisclosed = [], []
+    if reg.exists():
+        d = pd.read_csv(reg)
+        for _, r in d.iterrows():
+            blob = f"{r.get('fix')} {r.get('corrected_claim')}".lower()
+            if "addendum" in blob:
+                promised.append(r["id"])
+                if r["id"] not in addendum:
+                    undisclosed.append(r["id"])
+    if undisclosed:
+        return "FAIL", (f"{len(undisclosed)} finding(s) say their remedy is disclosed in "
+                        f"the addendum and are not named in it: {undisclosed}")
+    return "PASS", (f"pre-specified text byte-identical ({len(original)} bytes); "
+                    f"addendum present ({len(addendum.splitlines())} lines); "
+                    f"{len(promised)} finding(s) promising disclosure all named in it "
+                    f"{promised}")
 
 
 def e_estimators_use_adopted_list():
@@ -2453,6 +2511,7 @@ CHECKS = [
     ("D.soda_guarded", "F2", "the source API is guarded, not only the artifacts", d_soda_source_guarded),
     ("D.outcome_list_complete", "O1,X11", "every processed artifact is classified as outcome or not", d_outcome_list_complete),
     ("D.incident_disclosed", "F1", "freeze incident stays in the record", d_incident_disclosed),
+    ("D.addendum_complete", "E5,E6,F2", "pre-registration text untouched and its addendum exists", d_addendum_complete),
     ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),
     ("E.threshold_stringency", "D5,L5,E6", "episode threshold is constant stringency", e_threshold_constant_stringency),
     ("E.no_mega_episode", "E3,D7,E6", "no episode exceeds its analysis window", e_no_mega_episode),
