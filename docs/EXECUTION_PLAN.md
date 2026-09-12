@@ -930,38 +930,40 @@ non-human-subjects determination in writing; OSF deposit with timestamp.
 
 ## Session log — where execution stopped
 
-**2026-09-12 22:00Z, at `ff6e70c`.**
+**2026-09-12 23:30Z, at `1731c92`.**
 
-**The environment restarts every 30–70 minutes.** Three restarts observed in one
-session, each confirmed by `uptime` reading `up 0 min`. Two destroyed long jobs
-that had written nothing: the 1000-sim C1 calibration at ~45 minutes, and the
-discovery run's primary estimator at ~33. This is the binding constraint on
-everything compute-bound that remains — Phase G, CP2's 1000-sim calibrations,
-Phase H's power simulation — and it is why both `18_null_calibration.py` and
-`event_study.randomization_p` are now checkpointed. Anything long added later
-must be too.
+**PHASE G IS DONE.** The first analytic estimate this project has produced. See
+`PAPER_MASTER` §8 and §9 of `GATE2_PRELIMINARY_RESULTS.md`. Headline: the
+mental-health share does not move in either arm at any window, both arms agree
+(no reversal in counts, which this project has been caught by before), and the
+only thing surviving Bonferroni across 65 decomposition tests is the **injury
+channel** — days 0–2, in share and in count, with both placebos quiet. That
+reverses the GATE2 memo's emphasis: it proposed a protest channel *alongside* a
+help-seeking story, and on the rebuilt pipeline the protest channel is what
+survives.
 
-**Resumability is verified, not assumed**, by the same test in both places: run
-N, truncate the ledger to a fraction, restart, and require the completed ledger
-to be *exactly equal* to the uninterrupted one. That test is the only thing
-separating real resumability from a cache that quietly changes the answer.
+**It is a null of unknown resolution.** Power against the −0.005 MEI has not
+been computed. Phase H is the next thing that makes §8 interpretable as an
+absence rather than a silence.
 
-- **In flight:** Phase G at 500 draws, under a retry loop that resumes from the
-  per-cell ledgers (`outputs/tables/ri_ledger_<outcome>_<window>_<arm>.csv`).
-  Progress = `cat outputs/tables/ri_ledger_*.csv | grep -vc draw_index`, target
-  6000 = 12 cells × 500. Relaunch
-  `scratchpad/phase_g.sh` after any restart; it resumes.
-- **Paused, resume after Phase G:** the 1000-sim recalibration,
-  `scratchpad/calib_all_1000.sh`, 51 of 1000 C1 sims banked. Do not run it
-  alongside Phase G — four cores, and they contend.
+**The environment restarts every 30–70 minutes.** Four restarts observed. Both
+long paths — `18_null_calibration.py` and `event_study.randomization_p` — are
+checkpointed and verified by the same test: truncate the ledger, restart, require
+the completed ledger to be *exactly equal* to the uninterrupted one. Phase G only
+finished because of this; it had died twice before. **Anything long added later
+must be checkpointed too**, and the retry wrapper pattern in
+`scratchpad/phase_g.sh` is the template.
+
+- **In flight:** the 1000-sim recalibration of all three strata under the new
+  within-block scheme, C1 first. Resumable — relaunch
+  `scratchpad/calib_all_1000.sh` after any restart. ~4.5 sims/min, so C1 alone is
+  ~3.5 h. Progress: `wc -l outputs/tables/null_calibration_ledger_d200_C1.csv`.
 - **Gate:** 74 checks, 73 pass, 1 BLOCKED (`S.ri_scheme_certified`, honestly
-  pending C1's recalibration under the new within-block scheme), 0 fail. 77
-  claims reproduce. Audit 42 checks, 2 flagged.
-- **Findings:** every one closed except **O2**, deliberately untouched. Closing
-  it means reading 2015–16 confirmation outcome data, which is a freeze decision
-  and the supervisor's to make.
-- **Next:** Phase G completes → write `PAPER_MASTER` §8 (empty by design) from
-  the artifacts, both arms, placebos beside the primary, draw count stated,
-  every number registered → append a dated checkpoint to
-  `GATE2_PRELIMINARY_RESULTS.md` rather than rewriting it, since that file is a
-  record of what was believed when → restart the calibration.
+  pending that recalibration), 0 fail. 91 claims reproduce. Audit 42/2.
+- **Held at `unverified` on purpose:** P1, P5, N3 — their check is BLOCKED, and a
+  BLOCKED check is not evidence. They clear when C1 certifies.
+- **Untouched, and the supervisor's call:** **O2**. Closing it means reading
+  2015–16 confirmation outcome data. `FREEZE_ACTIVE` stays on.
+- **Next:** C1 certifies → close P1/P5/N3, restore §7.4's C1 row → **Phase H**,
+  the MDE against −0.005 per stratum, which is what tells us whether the
+  confirmatory run can say anything at all.

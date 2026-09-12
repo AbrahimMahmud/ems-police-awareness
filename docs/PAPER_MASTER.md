@@ -1549,8 +1549,19 @@ district-day standard deviation is 0.047.
    from national attention**, and no claim in the paper should imply otherwise.
 2. **Registry coverage gaps correlate with the hypothesis** (§5.6).
 3. **Wikipedia pageviews do not exist before 2015-07-01.** Hard floor.
-4. **Google Trends is a sample, not a census**, and its precision degrades over the
-   decade — so a null in 2021–2024 is harder to interpret than a null in 2017–2020.
+4. **Google Trends is a sample, not a census.** This limitation used to add "and
+   its precision degrades over the decade", which measurement does not support:
+   on `trends_us`, the only Trends series in the index, the quantization step
+   relative to the series' own scale is *finer* late than early (ratio 0.82) with
+   365 non-zero days in every year (§5.1c). The degradation is real in
+   `trends_nyc`, which is retired. The sampling limitation stands; the decay does
+   not.
+4b. **A null in 2021–2024 is nonetheless harder to read than one in 2017–2020**,
+   for a different reason than was assumed: Wikipedia's `agent=user` filter
+   changed meaning in April 2020 and was not applied retroactively, and the size
+   of that break grows every year afterwards — 0.0009 SD across the discovery
+   window against 0.0856 SD across 2021–2024 (§5.1a). The conclusion survives;
+   the mechanism behind it was wrong.
 5. **B-HEARD contaminates the 2021–2024 arm** in the same direction as H1, on
    adoption dates that are 17-of-31 low-confidence.
 6. **The EDPC recode (mid-2018)** sits inside the discovery window.
@@ -1560,6 +1571,21 @@ district-day standard deviation is 0.047.
 9. **We do not use armed/unarmed status**, which is our protection against the Nix
    & Lozada critique of MPV coding — stated explicitly because a reader who knows
    that literature will ask.
+10. **The one channel that moves is a dispatch code, not an adjudicated cause.**
+   Injury calls rise in days 0–2 after attention episodes (§8.2), and "injury" is
+   what a dispatcher entered under time pressure. A change in *coding* during
+   periods of heightened street activity would produce the identical number, and
+   nothing in this design separates the two.
+11. **The injury result's timing does not fit the story it suggests.** The days
+   12–14 coefficient is nearly as large as days 0–2. A protest-activity account
+   predicts a sharp, short-lived rise; two separated bumps are at least as
+   consistent with episode windows coinciding with something seasonal. This is
+   stated before anyone becomes attached to the mechanism, not after.
+12. **Every discovery number is a null of unknown resolution.** §8 reports no
+   detectable movement in the mental-health share, but the power of the discovery
+   sample against the −0.005 minimum effect of interest has not been computed.
+   Until Phase H runs, "we did not detect it" cannot be upgraded to "it is not
+   there", and the paper must not do so.
 
 ---
 
