@@ -703,6 +703,60 @@ def x_run_all_stages_declared():
                     f"covers the whole pipeline")
 
 
+def e_stratum_windows_fit():
+    """P2: every episode a stratum tests has its reported statistic inside that stratum.
+
+    A stratum is a set of calendar windows, and an episode near an edge does not
+    fit. Two of C1's fifteen do not, each failing differently: 2021-01-05's
+    pre-period reaches into the DISCOVERY window, so its baseline would come from
+    already-explored data while its post-period is unexamined; and 2021-05-24's
+    post-period crosses the B-HEARD launch, putting exposed days inside the
+    stratum defined as unexposed.
+
+    Nothing in the pipeline noticed, because `build_stack` keeps whatever days
+    the sample happens to contain — a truncated window produces a smaller but
+    perfectly well-formed estimate.
+
+    The rule checked here is first-week containment, not full-window: day -1
+    through day +7 is what the reported statistic uses, and requiring the whole
+    +/-14 window would drop both episodes — 13% of the smallest stratum, one of
+    them Daunte Wright — when measurement shows it is not necessary. Tails beyond
+    the first week may truncate, and this check requires the truncation to be
+    COUNTED rather than absorbed.
+
+    Episode dates are treatment-side, so this reads no outcome data.
+    """
+    import sys as _sys
+    _sys.path.insert(0, str(SCRIPTS))
+    from event_study import stratum_episodes
+    from config import CONFIRMATION_ANALYSIS_WINDOWS
+
+    f = DATA_REFERENCE / EPISODE_LIST_PRIMARY
+    if not f.exists():
+        return "BLOCKED", f"{EPISODE_LIST_PRIMARY} absent — run 13_extension_episodes.py"
+    ep = pd.read_csv(f, parse_dates=["start"])
+    strata = {"discovery": [(DISCOVERY_START, DISCOVERY_END)],
+              "C1": [CONFIRMATION_ANALYSIS_WINDOWS[0], CONFIRMATION_ANALYSIS_WINDOWS[1]],
+              "C2": [CONFIRMATION_ANALYSIS_WINDOWS[2]]}
+    bad, trunc, total = [], [], 0
+    for name, wins in strata.items():
+        kept, dropped = stratum_episodes(ep["start"], wins, EVENT_WINDOW_PRE,
+                                         EVENT_WINDOW_POST)
+        total += len(kept)
+        for d in dropped:
+            bad.append(f"{name} {d['start'].date()}: {d['reason'][:70]}")
+        for k in kept:
+            if k["days_outside_full_window"]:
+                trunc.append(f"{name} {k['start'].date()} loses "
+                             f"{k['days_outside_full_window']}/{k['full_window_days']}")
+    if bad:
+        return "FAIL", (f"{len(bad)} episode(s) cannot have their reported statistic "
+                        f"inside their own stratum: {bad[:2]}")
+    return "PASS", (f"{total} episode(s) across 3 strata, every first week inside its "
+                    f"own stratum; {len(trunc)} carry a truncated tail, counted: "
+                    f"{trunc if trunc else 'none'}")
+
+
 def e_estimators_use_adopted_list():
     """No estimator reads the FROZEN episode list, which is a record, not an input.
 
@@ -2721,6 +2775,7 @@ CHECKS = [
     ("E.threshold_stringency", "D5,L5,E6", "episode threshold is constant stringency", e_threshold_constant_stringency),
     ("E.no_mega_episode", "E3,D7,E6", "no episode exceeds its analysis window", e_no_mega_episode),
     ("E.frozen_list_untouched", "D3", "frozen episode list unmodified", e_frozen_list_untouched),
+    ("E.stratum_windows_fit", "P2", "every episode's reported statistic fits inside its stratum", e_stratum_windows_fit),
     ("E.estimators_use_adopted_list", "D3,E6", "estimators read the adopted episode list, not the frozen record", e_estimators_use_adopted_list),
     ("E.labels_live_source", "E5,L6,R2", "episode labels not from retired Twitter", e_labels_not_from_twitter),
     ("E.attribution_lookback", "E2", "attribution lookback >= 60 days", e_attribution_lookback),

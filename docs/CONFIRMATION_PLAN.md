@@ -331,6 +331,38 @@ freeze lifts, the calibration is re-run against C1's gapped geometry under this
 scheme — which is treatment-side and blind-safe — and until it is, any C1
 p-value rests on an uncertified null and is labelled as such.
 
+## 17. Two C1 episodes have windows that leave the stratum (finding P2)
+
+Found while implementing the scheme for deviation 16.
+
+A stratum is a set of calendar windows, and an episode near an edge does not fit
+inside it. Two of C1's fifteen do not, each failing differently:
+
+- **2021-01-05 (Dolal Idd)** — its pre-period reaches back to 2020-12-22, which
+  is **inside the discovery window**. Its baseline would come from data already
+  explored while its post-period is unexamined, mixing the two samples inside one
+  event window.
+- **2021-05-24 (Daunte Wright; Adam Toledo)** — its post-period runs to
+  2021-06-07, **crossing the B-HEARD launch** on 2021-06-01, so 7 of its post
+  days are exposed inside the stratum defined as unexposed.
+
+Nothing noticed, because the stack builder keeps whatever days the sample
+contains: a truncated window produces a smaller but perfectly well-formed
+estimate.
+
+**The rule pre-specified here is first-week containment.** An episode is kept
+when day −1 through day +7 — the span the reported statistic uses — lies inside
+the stratum; days beyond that truncate and the truncation is counted per episode.
+
+Requiring the *full* ±14 window instead would drop both, costing **2 of C1's 15
+episodes**, 13% of the smallest and most valuable stratum, one of them Daunte
+Wright. Measurement says that is unnecessary: for both episodes the first-week
+span lies entirely inside C1, and only the tails fall outside — 10 days and 7
+days of 29. So the primary test is exact for both, and the loss is confined to
+the longer sensitivity windows where it is reported rather than absorbed.
+
+Nothing is dropped: all 15 C1, 29 discovery and 30 C2 episodes are kept.
+
 ---
 
 ## What has NOT changed

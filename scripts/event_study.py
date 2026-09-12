@@ -353,6 +353,158 @@ def placebo_starts(rng, real_starts, lo, hi, pre, post):
     return out
 
 
+def admissible_days(windows, pre, post):
+    """Every day a placebo episode may start on, across one or more windows.
+
+    A start needs `pre` days before it and `post` after, so each window
+    contributes only its interior. Returned sorted, as a DatetimeIndex, so a
+    position in it is a well-defined index.
+    """
+    days = pd.DatetimeIndex([])
+    for lo, hi in windows:
+        lo, hi = pd.Timestamp(lo), pd.Timestamp(hi)
+        a = lo + pd.Timedelta(days=pre + 1)
+        b = hi - pd.Timedelta(days=post + 1)
+        if b >= a:
+            days = days.union(pd.date_range(a, b, freq="D"))
+    return days.sort_values()
+
+
+def placebo_starts_circular(rng, real_starts, windows, pre, post):
+    """Placebo dates by circular shift over admissible days (finding P1).
+
+    WHY A SECOND SCHEME EXISTS. `placebo_starts` draws one anchor and slides the
+    whole real sequence inside a single contiguous window, rejecting the draw if
+    the sequence does not fit. On the clean confirmation stratum that is not
+    merely tight, it is UNDEFINED: C1 is two windows sitting either side of the
+    entire discovery period, so there is no single span to slide within, and
+    40.9% of anchor draws land outside C1's own windows. Its 2021 block alone
+    holds 5 episodes spanning 139 days in a 151-day window — 120 usable days
+    against 139 required, slack of minus 19. Every draw is rejected and the
+    p-value returns NaN after the whole budget is spent.
+
+    HOW THIS ONE WORKS. Take the admissible days across ALL windows, in order,
+    as one sequence. Each real start occupies a position in that sequence. A
+    single shift is drawn uniformly and every position moves by it, wrapping at
+    the end. Every draw is admissible by construction, so nothing is rejected and
+    the null has the full episode count on every draw.
+
+    WHAT IT PRESERVES, AND WHAT IT DOES NOT. It preserves each episode's position
+    RELATIVE TO THE OTHERS measured in admissible days — clustering survives,
+    which is the property that matters, because a null of uniformly scattered
+    dates would understate how often clustered draws produce a large statistic by
+    chance. It does NOT preserve calendar gaps across a window boundary: two
+    episodes either side of the seam are adjacent in index space while being
+    years apart in calendar time. That is a real difference from the anchor-shift
+    null and it is why this is a DIFFERENT NULL, not a patch to the same one. A
+    verdict calibrated under one does not transfer to the other, which is what
+    S.ri_scheme_certified exists to enforce.
+
+    A real start that is not itself admissible — too close to a window edge — is
+    snapped to the nearest admissible day and the count of snaps is returned, so
+    a caller can refuse rather than quietly estimate on a shifted design.
+    """
+    days = admissible_days(windows, pre, post)
+    real = sorted(pd.to_datetime(pd.Series(list(real_starts))).tolist())
+    if len(days) == 0 or len(real) < 2:
+        return [], 0
+    pos, snapped = [], 0
+    for d in real:
+        i = days.searchsorted(d)
+        if i >= len(days) or days[i] != d:
+            # nearest admissible day, ties to the earlier one
+            cands = [j for j in (i - 1, i) if 0 <= j < len(days)]
+            i = min(cands, key=lambda j: (abs((days[j] - d).days), j))
+            snapped += 1
+        pos.append(int(i))
+    shift = int(rng.integers(0, len(days)))
+    out = [days[(i + shift) % len(days)] for i in pos]
+    return sorted(out), snapped
+
+
+def stratum_episodes(episode_starts, windows, pre, post, first_week=7):
+    """Which episodes a stratum can actually test, and what each one loses.
+
+    FINDING P2. A stratum is a set of calendar windows, and an episode near a
+    window's edge does not fit inside it. Two of C1's fifteen do not, and each
+    fails differently:
+
+      2021-01-05 (Dolal Idd) — its pre-period reaches back to 2020-12-22, which
+        is INSIDE THE DISCOVERY WINDOW. Its baseline would come from data already
+        explored while its post-period is unexamined, mixing the two samples
+        inside one event window.
+
+      2021-05-24 (Daunte Wright; Adam Toledo) — its post-period runs to
+        2021-06-07, CROSSING THE B-HEARD LAUNCH on 2021-06-01, so 7 of its post
+        days are exposed inside the stratum defined as unexposed.
+
+    THE RULE, and why it is not the obvious one. Requiring the full +/-14 window
+    to fit would drop both, costing 2 of C1's 15 episodes — 13% of the smallest
+    and most valuable stratum — and one of them is Daunte Wright. Measured, that
+    is not necessary: the statistic this design reports is the joint test over day
+    -1 through day +7, and for BOTH episodes that span lies entirely inside C1.
+    Only the tails fall outside, 10 days and 7 days of 29.
+
+    So an episode is kept when its FIRST-WEEK span fits, and the days beyond it
+    are truncated and counted. That keeps the primary test exact and confines the
+    loss to the longer sensitivity windows, where it is reported rather than
+    absorbed. An episode whose first week does not fit is dropped with its reason.
+
+    Returns (kept, dropped) where each is a list of dicts, so the decision is an
+    artifact rather than a filter nobody can inspect.
+    """
+    wins = [(pd.Timestamp(a), pd.Timestamp(b)) for a, b in windows]
+
+    def inside(d):
+        return any(a <= d <= b for a, b in wins)
+
+    kept, dropped = [], []
+    for s0 in sorted(pd.to_datetime(pd.Series(list(episode_starts))).tolist()):
+        if not any(a <= s0 <= b for a, b in wins):
+            continue
+        ref = s0 - pd.Timedelta(days=1)
+        fw_end = s0 + pd.Timedelta(days=first_week)
+        fw = pd.date_range(ref, fw_end, freq="D")
+        full = pd.date_range(s0 - pd.Timedelta(days=pre),
+                             s0 + pd.Timedelta(days=post), freq="D")
+        lost = int(sum(1 for d in full if not inside(d)))
+        if all(inside(d) for d in fw):
+            kept.append({"start": s0, "days_outside_full_window": lost,
+                         "full_window_days": len(full)})
+        else:
+            missing = [d for d in fw if not inside(d)]
+            dropped.append({"start": s0, "days_outside_full_window": lost,
+                            "reason": (f"day -1..+{first_week} is not inside the stratum: "
+                                       f"{len(missing)} of {len(fw)} first-week days fall "
+                                       f"outside, first {missing[0].date()}")})
+    return kept, dropped
+
+
+def draw_scheme_for(windows, real_starts, pre, post):
+    """Which draw scheme a stratum requires, and why. Never guessed at runtime.
+
+    Returns (scheme, reason). `anchor_shift` only when there is ONE window and
+    the real sequence actually fits inside it; `circular` otherwise. The reason
+    is carried into the artifact so a reader can see what was used and a check
+    can compare it against what the calibration certified.
+    """
+    windows = list(windows)
+    real = sorted(pd.to_datetime(pd.Series(list(real_starts))).tolist())
+    if len(real) < 2:
+        return "none", f"{len(real)} episode(s): no permutation null is defined"
+    if len(windows) > 1:
+        return "circular", (f"{len(windows)} disjoint windows: an anchor shift has no "
+                            "single span to slide within")
+    lo, hi = (pd.Timestamp(x) for x in windows[0])
+    span = (real[-1] - real[0]).days
+    room = ((hi - pd.Timedelta(days=post + 1))
+            - (lo + pd.Timedelta(days=pre + 1))).days - span
+    if room < 0:
+        return "circular", (f"one window, but the sequence spans {span}d against "
+                            f"{span + room}d usable: slack {room}")
+    return "anchor_shift", f"one window with {room}d of slack for a {span}d sequence"
+
+
 def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
                     fe="ep_cd + dow", counts=False, date_col="incident_date",
                     cluster=CLUSTER_VAR):
