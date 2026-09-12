@@ -69,6 +69,76 @@ def load_attention():
     return pv.dropna(subset=["person_key"])
 
 
+def label_drivers(attention, lo, hi, top=3, min_share=0.02):
+    """Name the ARTICLES that actually drove attention in a window.
+
+    label_window() answers "which recently-killed person in the registry drew the
+    most attention here", and it gates on the registry FIRST: if nobody in the
+    registry died within the lookback, it returns an empty label no matter how
+    much attention the window contains. That is the right shape for a question
+    about victims and the wrong shape for describing an episode, and the cost is
+    measurable — 33 of 74 episodes (45%), and 16 of 29 in discovery, carry no
+    label at all.
+
+    Among them is the second-largest discovery episode in the study,
+    2020-08-24..09-07, peak index 9.01. Nothing in the registry explains it,
+    because the two things that drove it are invisible to a registry of
+    KILLINGS keyed on DATE OF DEATH: Jacob Blake was shot on 2020-08-23 and
+    survived, and Daniel Prude's death became public when the video was released
+    on 2020-09-02, five months after he died — and Prude is absent from Mapping
+    Police Violence entirely (finding T9). Widening the lookback does not fix
+    this and makes labelling worse (finding E7): it lets long-past deaths capture
+    episodes driven by something else.
+
+    This labels the window by what the TREATMENT SERIES itself says drove it —
+    the basket articles people actually read — which needs no registry, no death
+    date, and no assumption that the trigger was a death at all. On the episode
+    above it returns Jacob Blake at 62% of basket views, eight times the next
+    article. It is reported BESIDE the registry label rather than replacing it:
+    the two answer different questions, and where they disagree that is a fact
+    about the episode worth seeing.
+
+    Shares are of total basket views in the window, so they say how concentrated
+    an episode is — which is the measurable form of "this period cannot separate
+    individual killings" (finding E8).
+    """
+    w = attention[(attention["date"] >= lo) & (attention["date"] <= hi)]
+    if w.empty:
+        return "", 0.0
+    tot = float(w["views"].sum())
+    if tot <= 0:
+        return "", 0.0
+    # BY PERSON, NOT BY ARTICLE. English Wikipedia carries both
+    # "Murder_of_George_Floyd" and "George_Floyd", so ranking articles splits one
+    # person's attention across two rows and prints "George Floyd (20%); George
+    # Floyd (11%)" — which reads as a data error and understates the
+    # concentration it is meant to measure. This is the same duplicate-person
+    # collapse already fixed for the wiki_ext sum itself (T.no_duplicate_person);
+    # it had to be applied here too, because the label is a second consumer of
+    # the same per-article series.
+    key = "person_key" if "person_key" in w.columns else "article"
+    share = w.groupby(key)["views"].sum().sort_values(ascending=False) / tot
+    keep = share[share >= min_share].head(top)
+    label = "; ".join(f"{_name(k)} ({v:.0%})" for k, v in keep.items())
+    return label, float(share.iloc[0])
+
+
+_PREFIXES = ("Killing_of_", "Shooting_of_", "Death_of_", "Murder_of_",
+             "Police_shooting_of_")
+
+
+def _name(key):
+    """Grouping key -> a human-readable name.
+
+    person_key is already a lowercased person name; an article title needs its
+    "Killing_of_" style prefix stripped.
+    """
+    for p in _PREFIXES:
+        if key.startswith(p):
+            return key[len(p):].replace("_", " ")
+    return key.replace("_", " ").title() if key.islower() else key.replace("_", " ")
+
+
 def label_window(reg, attention, lo, hi, lookback_days, top=2):
     """Name the victims who actually drew attention between lo and hi.
 

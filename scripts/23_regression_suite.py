@@ -2399,6 +2399,71 @@ def d_guard_can_fire():
 # ===========================================================================
 # EPISODES
 # ===========================================================================
+def e_episodes_labelled():
+    """E7, E8: every episode says what drove it, from the treatment series itself.
+
+    The registry labeller answers "which recently-killed person in Mapping Police
+    Violence drew the most attention in this window". That is a legitimate
+    question and it is not the question Table 1 asks, which is "what is this
+    episode". The gap is not cosmetic:
+
+      45% OF EPISODES HAD NO LABEL — 33 of 74, and 16 of 29 in discovery. Among
+      them the second-largest discovery episode in the study, 2020-08-24..09-07,
+      peak 9.01. Nothing in a registry of KILLINGS keyed on DATE OF DEATH can
+      explain it: Jacob Blake was shot on 2020-08-23 and survived, and Daniel
+      Prude's death became public with the video on 2020-09-02, five months
+      after he died — and Prude is absent from the registry entirely (T9).
+
+      WHERE IT DID LABEL, IT OFTEN NAMED THE WRONG PERSON. 2020-09-22..09-27
+      was labelled "Dijon Kizzee" while 87% of basket attention was Breonna
+      Taylor, the week the grand jury declined to indict. 2015-07-23 was
+      labelled "Samuel DuBose; Jonathan Sanders" while 83% was Sandra Bland.
+      2017-06-16 was "Michael Brown; Jordan Edwards" while 76% was Philando
+      Castile. The pattern is consistent and is exactly E7's thesis: episodes
+      driven by a video release, an indictment or a verdict cannot be attributed
+      from death dates, and widening the lookback makes it worse rather than
+      better by letting long-past deaths capture them.
+
+    So each episode now carries a SECOND label built from the basket pageviews
+    themselves, which needs no death date and no assumption that a death was the
+    trigger. Both are kept: they answer different questions and the disagreement
+    is informative.
+
+    This asserts the property that matters — no episode is unexplained — plus
+    the concentration measure E8 needs, so that "this period cannot separate
+    individual killings" is a number rather than an assertion.
+    """
+    out = []
+    for basket in ("strict", "broad"):
+        f = DATA_REFERENCE / ("confirmation_episodes_rebuilt.csv" if basket == "strict"
+                              else f"confirmation_episodes_rebuilt_{basket}.csv")
+        if not f.exists():
+            continue
+        d = pd.read_csv(f)
+        if "drivers" not in d.columns or "top_driver_share" not in d.columns:
+            return "FAIL", (f"{f.name} predates the driver label; re-run "
+                            "13_extension_episodes.py so every episode says what drove it")
+        blank = d["drivers"].fillna("").str.strip() == ""
+        if blank.any():
+            return "FAIL", (f"{int(blank.sum())} episode(s) in {f.name} have no driver "
+                            f"label, so the treatment series cannot say what they were: "
+                            f"{d.loc[blank, 'start'].head(3).tolist()}")
+        bad = d[(d["top_driver_share"] <= 0) | (d["top_driver_share"] > 1)]
+        if len(bad):
+            return "FAIL", (f"{len(bad)} episode(s) carry a top_driver_share outside "
+                            "(0, 1], so the share is not a share")
+        out.append(f"{basket}={len(d)}")
+    if not out:
+        return "BLOCKED", "no episode list on disk — run 13_extension_episodes.py"
+    d = pd.read_csv(DATA_REFERENCE / "confirmation_episodes_rebuilt.csv")
+    disc = d[d["period"] == "discovery"]
+    return "PASS", (f"every episode carries a driver label ({', '.join(out)}); "
+                    f"median top-driver share on discovery "
+                    f"{disc['top_driver_share'].median():.0%}, "
+                    f"{int((disc['top_driver_share'] >= 0.5).sum())} of {len(disc)} "
+                    "above half")
+
+
 def e_threshold_constant_stringency():
     """D5/L5/E6: the episode rule must apply the same stringency in every year.
 
@@ -3160,6 +3225,7 @@ CHECKS = [
     ("D.incident_disclosed", "F1", "freeze incident stays in the record", d_incident_disclosed),
     ("D.addendum_complete", "E5,E6,F2", "pre-registration text untouched and its addendum exists", d_addendum_complete),
     ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),
+    ("E.episodes_labelled", "E7,E8", "every episode says what drove it, from the treatment series", e_episodes_labelled),
     ("E.threshold_stringency", "D5,L5,E6", "episode threshold is constant stringency", e_threshold_constant_stringency),
     ("E.no_mega_episode", "E3,D7,E6", "no episode exceeds its analysis window", e_no_mega_episode),
     ("E.frozen_list_untouched", "D3", "frozen episode list unmodified", e_frozen_list_untouched),

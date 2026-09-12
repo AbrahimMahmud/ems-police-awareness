@@ -15,7 +15,7 @@ Output: data/reference/confirmation_episodes_rebuilt.csv
 
 import pandas as pd
 
-from attribution import label_window, load_attention
+from attribution import label_drivers, label_window, load_attention
 
 from config import (
     basket_artifact,
@@ -109,12 +109,23 @@ for i, ep in enumerate(episodes, 1):
     peak = cai.loc[ep["peak_i"]]
     label = label_window(reg, attention, ep["start"], ep["end"],
                          ATTRIBUTION_LOOKBACK_DAYS)
+    # A SECOND, INDEPENDENT LABEL, from the treatment series rather than the
+    # registry. candidate_events answers "who was recently killed and drew
+    # attention here" and returns nothing when the registry holds no recent
+    # death — which is 45% of episodes, including the second-largest in
+    # discovery. drivers answers "which basket articles did people actually
+    # read", which needs no death date and no assumption that a death was the
+    # trigger. Both are reported; where they disagree, that is the episode
+    # telling you something (findings E7, E8).
+    drivers, top_share = label_drivers(attention, ep["start"], ep["end"])
     rows.append({
         "episode": i,
         "start": ep["start"].date(), "end": ep["end"].date(),
         "n_high_days": ep["n_high_days"],
         "peak_date": peak["date"].date(), "peak_cai_d": round(peak["cai_d"], 2),
         "candidate_events": label,
+        "drivers": drivers,
+        "top_driver_share": round(top_share, 4),
         "period": "discovery" if pd.Timestamp("2017-01-01") <= ep["start"] <= pd.Timestamp("2020-12-31")
                   else "extension",
     })

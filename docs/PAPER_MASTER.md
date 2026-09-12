@@ -605,6 +605,57 @@ medical calls and divide by all calls.
 total calls per district-day **65.9**. Built by `scripts/01_build_panel.py`.
 Districts with fewer than 5 calls on a day are excluded from share calculations.
 
+### 5.1b What each episode actually is
+
+Episodes were named by asking which recently-killed person in Mapping Police
+Violence drew the most attention in the window. That is a reasonable question,
+and it is not the question the episode table asks, which is *what is this
+episode about*. The difference cost more than it looks.
+
+**Forty-five per cent of episodes had no name at all** — 33 of 74, and 16 of 29
+in discovery. The largest of them is the second-biggest attention episode in the
+entire discovery window, 2020-08-24 to 09-07. No registry of *killings* keyed on
+*date of death* can explain it: Jacob Blake was shot on 2020-08-23 and survived,
+and Daniel Prude's death became public when the video was released on
+2020-09-02, five months after he died — and Prude is not in Mapping Police
+Violence at all.
+
+**Where it did produce a name, it was usually the wrong one.** The week of
+2020-09-22 was labelled "Dijon Kizzee" while 87% of basket attention was Breonna
+Taylor — that was the week a grand jury declined to indict the officers in her
+case. 2015-07-23 was labelled "Samuel DuBose; Jonathan Sanders" while 83% was
+Sandra Bland, two days after her dashcam video was released. 2017-06-16 was
+"Michael Brown; Jordan Edwards" while 76% was Philando Castile, the day Officer
+Yanez was acquitted. 2017-12-07 was blank while 78% was Daniel Shaver, the day
+Philip Brailsford was acquitted.
+
+The pattern is the same every time, and it is the hypothesis of a finding filed
+months ago: **attention is driven by events that are not deaths** — a video
+release, an indictment, a verdict — and a death-date registry cannot see them.
+Widening the lookback window does not fix this and actively makes it worse,
+because it lets long-past deaths capture episodes they had nothing to do with.
+
+So each episode now carries a second name, built from the treatment series
+itself: the basket articles people actually read during the window, ranked by
+share and aggregated by person. It needs no death date and makes no assumption
+that a death was the trigger. **Every episode is now accounted for**, and the
+2020-08-24 episode reads as what it plainly was: Jacob Blake, 47% of basket
+attention.
+
+Both names are kept. They answer different questions, and where they disagree
+the disagreement is the finding.
+
+This also turns "densely clustered periods cannot separate individual killings"
+from an assertion into a number. The leading person's share of attention is
+55% for the George Floyd episode, 47% for Jacob Blake's, 87% for the Breonna
+Taylor grand-jury week — and a median of **37% across discovery**, with only 11
+of 29 episodes having anyone above half. That is the measurable form of the
+claim, reported per episode rather than asserted once.
+
+*(The identification of the specific triggering events above — which verdict,
+which video — is read off the articles themselves and should be cited as such in
+the final text. What the data establishes on its own is who was being read.)*
+
 ### 5.2 What went wrong — this section is the methods contribution
 
 Write this up as an asset, not a confession. Most of it is generalisable to anyone
@@ -1132,7 +1183,7 @@ is a harder thing to notice and a worse thing to have.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **68 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **69 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
