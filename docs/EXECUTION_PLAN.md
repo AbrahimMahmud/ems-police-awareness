@@ -8,27 +8,177 @@ outcome data is whole, the estimator's defects are fixed and verified against a
 planted effect, the freeze guard can reject things, the episode construct is a
 bounded shock rule.
 
-**But no analytic estimate exists yet, not even on discovery.** Of the 17 tables
-an estimation run produces, 2 exist, and both predate the last change to the
-estimator module they came from. `outputs/figures/` has never held a figure.
+When this plan was written no analytic estimate existed, and three things blocked
+one — each of which turned out to be different from what the code and documents
+said it was:
 
-Three things block that run, and this session's investigation found all three to
-be different from what the code and documents say they are:
+1. **A misdiagnosed network failure.** Not rate limiting on Wikidata but a token
+   bucket on the shared client IP, with one client ignoring `Retry-After`.
+2. **A treatment index that had never been tested for its construct.** 61 of 120
+   articles admitted through a topic category; nothing asked who did the killing.
+3. **A destroyed calibration**, overwritten by a smoke test, in a gitignored file.
 
-1. **The basket rebuild is blocked by a misdiagnosed network failure.** All five
-   non-passing checks descend from one stalled chain, and the reason it stalled
-   is not the reason recorded in the code.
-2. **Roughly half the treatment basket has no evidence of measuring police
-   violence.** 61 of 120 articles were admitted through a topic category, and
-   nothing downstream ever tests who did the killing.
-3. **The calibration that gates the primary estimator has been destroyed** by a
-   smoke-test run, and the artifact is gitignored, so it is not recoverable from
-   git.
+All three are resolved. The estimates now run, the basket measures police
+violence and says so per article, both basket arms exist side by side, and Gate C
+is discharged on **all three strata**, each on the scheme its own geometry
+requires.
+
+**What this plan is now for.** The blockers are gone, so the remaining work is no
+longer repair — it is (a) producing the discovery estimate, (b) establishing
+whether the design has the power to say anything on confirmation, and (c) one
+measured risk that could still undo the confirmatory path: C1's null may not
+survive the sim count CP2 requires. That risk is now the schedule's first item,
+because it is cheap to test and expensive to discover late.
 
 This plan runs from here to a finished paper, continuously, with no sign-off
 gates. Barriers get resolved, not deferred. **The endpoint is a conclusion**: a
 confirmatory result on data never examined, or an explicit, evidenced finding
 that the design cannot deliver one. Both are publishable; neither is a failure.
+
+---
+
+## Status (2026-09-12 16:15Z) — Phases A–E done, F part-done, all three strata calibrated
+
+*Phases A–E below are the record of work already completed, kept for the
+reasoning rather than as a to-do list. The live work is Phase F's seven
+unverified findings, then G, H and CP2.*
+
+**Tree clean at `0957a3a`, pushed to `analysis-rework`.**
+
+| | |
+|---|---|
+| Checks | **65: 65 pass** once re-baselined (the last BLOCKED check now passes — verified directly) |
+| Claims | 55 reproducing, **but 6 numbers in §4.1 are unregistered** (see below) |
+| Findings | 82: **73 fixed, 1 open, 8 unverified** |
+| Background jobs | none — the 3-stratum calibration finished 08:19Z |
+
+**Gate C is discharged on all three strata**, each on the scheme its geometry
+requires, 200 sims × 200 draws:
+
+| stratum | scheme | geometry | episodes | rejection | KS p | verdict |
+|---|---|---|---|---|---|---|
+| discovery | anchor_shift | contiguous | 29 | 0.06 | 0.680 | CALIBRATED |
+| C2 | anchor_shift | contiguous | 30 | 0.06 | 0.450 | CALIBRATED |
+| **C1** | **circular** | **gapped** | 15 | 0.05 | **0.074** | CALIBRATED |
+
+`S.ri_scheme_certified` evaluates to PASS on these artifacts, so the suite is
+65/65 after a re-run and baseline refresh, and P1 and P5 can move to `fixed`.
+
+### ⚠ The one result that should change the schedule
+
+**C1 passed uniformity by 0.006 and will probably fail at 1000 sims.** Its KS
+statistic is D = 0.0900 against a critical value of 0.0960 at n=200. CP2 requires
+≥1000 sims, where the critical value is **0.0429 — less than half the observed
+D**. The p-values also tilt the wrong way: mean 0.457, median 0.4275, and 13.5%
+below 0.10 against a nominal 10%. So the circular-shift null is mildly
+**anti-conservative**, and the α=0.05 rate test passes only because 0.05 is the
+one α it checks.
+
+C1 is the clean stratum — the one the whole discovery/confirmation split exists
+to obtain — and `circular` is the new scheme written for it this session. If its
+D is near its point estimate, C1 fails CP2 and the scheme needs rework.
+
+**Decided: run C1 at 1000 sims now, in the background** (~5 h; it is the cheapest
+of the three and the only one at risk). Finding out early costs nothing; finding
+out at CP2 invalidates whatever Phase I built on top of it. Discovery and C2 at
+1000 sims are ~7 h each and can wait — but note this container is reclaimed after
+inactivity, so ~18 h unattended is not a schedule that survives.
+
+**Phase A done.** The blockage was never rate limiting — Wikimedia runs a token
+bucket on the *client IP shared across hosts*, and `26` was the only client
+ignoring `Retry-After`, with a cache key that embedded the batch size. The action
+API resolved all 174 candidates in one request and exposed three defects (N1–N3)
+that had been changing basket membership; twelve articles had carried a false
+exclusion reason.
+
+**Phase B done.** The treatment index had never been tested for its construct:
+half the basket entered via the topic category "Black Lives Matter", and nothing
+asked who did the killing. Nine civilian killings and the Dallas gunman were in
+it. Strict basket **109**, broad **118**, anti-police in neither — and removing
+the anti-police articles leaves 2016-07-08 the top day either way (12.5693 vs
+13.1356, rank 1 both).
+
+**Phase C done.** Walter Scott recovered at rank 15 of 107, 0 duplicate people, 0
+failed title fetches, 74 episodes. The whole basket build reproduces
+**byte-identically** on a second run against live APIs.
+
+**Phase D done.** Gate C discharged on the adopted 29-episode geometry:
+CALIBRATED, rejection 0.06, KS p 0.680.
+
+**Phase E done.** All four deliverables written, reviewed and gated —
+`19_power.py`, `25_zscore_simulation.py`, `30_confirmatory_run.py`,
+`docs/PRE_ANALYSIS_NOTE.md`, plus the `CONFIRMATION_PLAN.md` addendum (16
+deviations). The freeze seal was tested adversarially and holds.
+
+**Phase F mostly done.** `config`'s promise made real, three lying docstrings
+corrected, the dose arm wired, `run_all` stages declared, the findings register
+given a falsifiable status column.
+
+### What the last commit found (`0957a3a`) — three defects, one self-inflicted
+
+The broad arm built cleanly (correlation 0.9975 with strict, 71 shared episode
+starts, both ranking 2016-07-08 first). Committing it surfaced three defects in
+the same family — a register or guard that answers a question about one object
+and licenses a write to another:
+
+- **P3.** `basket_artifact()` gave the broad arm its own files; nothing gave it
+  its own source ids. So `log_source` read the broad series and episode list as
+  new versions of the strict ones and superseded them, leaving the **primary
+  arm with no provenance row at all**. `V.artifacts_current` passed throughout —
+  it verifies the script behind every row present and cannot ask about a row
+  that stopped existing. Fixed with `config.basket_source_id()` and
+  `V.source_id_per_artifact`.
+- **P4.** The append-only history that would have shown P3 immediately **could
+  not be parsed**: written with `header=not exists()`, its header froze at 7
+  columns while later rows carried 9. Nothing in the repo read it. Repaired in
+  place; 41 rows across 11 ids now parse.
+- **P5.** `S.ri_scheme_certified` read the `draw_scheme` label and never the
+  verdict, so a 2-sim `UNDETERMINED` C1 diagnostic **would have flipped the gate
+  on the confirmatory path to PASS**. That same 2-sim run had already overwritten
+  discovery's 200-sim p-value list (5,450 → 61 bytes), because the "don't
+  publish a smaller run" rule covered the verdict file and nothing beside it.
+- **Self-inflicted, caught by launching it:** `12_build_cai.py` inferred which
+  components the basket determines from whatever the arm's file happened to
+  contain. Re-running `11` for the broad arm without `--only wiki_ext` refetches
+  GDELT, and any drift since the strict fetch would have entered the comparison
+  **as a basket effect**. Now declared in `config.BASKET_DEPENDENT_COMPONENTS`.
+
+### Immediate next steps, in order
+
+1. **Start the C1 1000-sim calibration in the background** (decided above). It is
+   the long pole and everything else runs alongside it.
+2. **Re-run the suite, refresh the baseline, close P1 and P5.** Both are tagged
+   to `S.ri_scheme_certified`, which now passes on real 200-sim artifacts. P5 is
+   currently recorded `unverified` precisely because a BLOCKED check is not
+   evidence of a fix; that condition is now met.
+3. **Register the broad arm's six numbers.** §4.1 states 118 articles, 75
+   episodes, correlation 0.9975, mean |diff| 0.051 SD, 71 shared starts and a
+   2.79 SD maximum gap — **none of them in `CLAIMS_REGISTER.csv`**, against this
+   project's own standing rule that no number reaches the paper unregistered. I
+   introduced this in the last commit.
+4. **Write the per-stratum calibration into `PAPER_MASTER` §7.4** with claims for
+   C1 and C2 (only discovery's four numbers are registered today), and state
+   C1's marginal uniformity in the text rather than leaving it in an artifact.
+5. **Close the "unregistered number" gap structurally.** Nothing asserts that
+   every number in the paper *is* registered — `V.claims_reproduce` only checks
+   the ones that are, which is how item 3 happened silently. Add
+   `V.claims_cover_exhibits` over a bounded, low-noise region: **numeric cells in
+   markdown tables**, which is where exhibit values live, plus an explicit
+   allowlist carrying a reason per exemption. Scope it tightly — a check that
+   flags every numeral in prose is one people stop reading, and this project has
+   already learned that lesson twice.
+6. **Gate `17_stacked_event_study.py` on the calibration.** It is the estimator
+   Phase G runs and it **does not read `null_calibration.csv` at all** (only 18,
+   19, 23, 25 and 30 do). Discovery is calibrated, so the numbers would be sound
+   today — but the gate is documented and wired into nothing, which is the exact
+   pattern already closed for PPML, B-HEARD and the dose arm.
+
+### Two process failures, recorded
+
+`git add -A` swept three unreviewed subagent files into `dc79a21` under an
+unrelated message, and `git add docs/` did it again with the pre-analysis note.
+Both are corrected in the history and all four files have since been reviewed.
+**Stage named paths, never directories, while anything else is writing.**
 
 ---
 
@@ -56,10 +206,24 @@ as the fix**, never separately.
 A `pgrep -f` pattern matches the shell whose command line contains it, so a
 waiter waits on itself. This has cost four incidents.
 
-**Constraints:** all work on `analysis-rework` (no other branch;
-this is the standing instruction). No AI-assistant attribution in any commit,
-document, or artifact.
-`data/reference/confirmation_episodes.csv` stays byte-identical to HEAD.
+**Constraints:** all work on `analysis-rework` (the session's designated
+`claude/...` branch is not used — the standing instruction is this branch and no
+other). No Claude attribution in any commit, document, or artifact — including
+commit trailers. `data/reference/confirmation_episodes.csv` stays byte-identical
+to HEAD.
+
+**This plan has a durable copy in the repo at `docs/EXECUTION_PLAN.md`**, last
+written 03:56Z and now stale. The scratch plan file does not survive the
+container, so every update here must be mirrored there, in the same commit as
+the work it describes. Its "Session log — where execution stopped" section is
+the handoff record.
+
+**The 10-minute update chain has lapsed.** A check-in queued at 05:00Z was
+delivered ~11 h late and `list_triggers` shows nothing enabled, so the
+self-re-arming chain broke when the session was interrupted. Re-arm it on
+resuming, and re-arm it again on *every* firing — recurring routines are capped
+at hourly here, so the 10-minute cadence exists only as a one-shot that
+rebuilds itself.
 
 ---
 
@@ -69,7 +233,9 @@ document, or artifact.
 |---|---|---|
 | **Basket construct** | **Strict primary** (verified law-enforcement killings) **+ broad basket as a pre-registered sensitivity** | Confirmed with the user. Lets the paper say the result does not depend on where the line was drawn, instead of asserting it. |
 | **Attention to violence *against* police** (Micah Xavier Johnson, Gonzalo Lopez) | **Exclude from every basket, and disclose**, including what removing them does to the 2016-07-08 index peak | Confirmed with the user. It is the opposite construct, and it currently sits on the index's headline validation day. |
-| **Episode list the estimators consume** | The **rebuilt** list (`confirmation_episodes_rebuilt.csv`); frozen file stays untouched as an artifact; the diff is a disclosed deviation | Already decided; never implemented. 17, 07, 08 and 18 all still read the frozen file. |
+| **Minimum effect of interest** | **−0.005 — half a percentage point of mental-health call share** | Confirmed with the user. Against a discovery baseline of 0.1083 (SD 0.0467) that is **4.6% relative, 0.11 SD**. Chosen deliberately as neither of the two numbers the project had named: not the −0.010 planted to test the estimator, and not GATE2's −0.00108, because setting the bar from a result already seen is circular. Power is now judged against a standard set independently of the results, and Phase H is unblocked. |
+| **C1 uniformity recheck** | **Run C1 at 1000 sims immediately, in the background** | Confirmed with the user. It passed at 200 sims by 0.006 in D and the 1000-sim critical value is less than half the observed D, so this is the most likely single point of failure at CP2 — and it is the cheapest stratum to recheck. |
+| **Episode list the estimators consume** | The **rebuilt** list (`confirmation_episodes_rebuilt.csv`); frozen file stays untouched as an artifact; the diff is a disclosed deviation | **Implemented and verified 16:20Z.** `config.EPISODE_LIST_PRIMARY` names the rebuilt file and 17, 07, 08 and 18 all read it through that constant. Earlier plan text saying this was "never implemented" was stale. |
 | **CAI-D composition** | `wiki_ext` + `trends_us` (national) | `trends_nyc` retired on three independent grounds; `wiki_nyc` rejected. |
 | **Freeze posture** | Hold the line; no third confirmation-window access | Conservative default taken when the question was dismissed; reversible, and recorded as such. |
 | **Freeze incidents F1, F2** | Disclose in full; proceed | Neither touched an H1 test. The gaps that allowed them are closed. |
@@ -242,7 +408,7 @@ days of a real episode**, so the RI bracket will not close and the run ends
 UNDETERMINED after spending its whole budget; the refactor recipe "delete lines
 82-142" of 18 **deletes the lines defining `starts`** (109-111) and 18 dies with
 `NameError`; a cross-route gate whose threshold is arithmetically unreachable.
-MDE must be on the **effective** episode count — 36 of 74 rebuilt episodes have a
+MDE must be on the **effective** episode count — 38 of 75 rebuilt episodes have a
 neighbour within ±28 days, which truncates windows and reduces informative N.
 
 **E2. `25_zscore_simulation.py` — rewrite, not revise.** §5.2 of PAPER_MASTER
@@ -269,11 +435,63 @@ made after seeing discovery results.
 
 # Phase F — Finish the audit that was cut off
 
-**Workflow 1 completed 12 of 12 diagnoses but only 4 of ~36 refuters.** O2 was
-refuted 3/3 and O1 1/1 — both on grounds that the *fix* was defective, not the
-observation. **O3, S7, D6, X6, X10, T6, L7, E7, E8 and T13 were never attacked at
-all**; their diagnoses stand unrefuted only because nobody tried. Re-run the
-refutation phase for those ten with three diverse lenses each.
+Seven findings are still `unverified` — **L7, O2, O3, T6, E7, E8, T13** — which
+in this register means nothing checks them, not that they are fine. All are
+`moderate`, so `M.register_sync` (which only requires checks on `blocking`) does
+not force the issue; the plan does.
+
+Read in full, they are **not one kind of thing**, and treating them as one queue
+is how they have stayed open. Three are limitations, two are runnable
+treatment-side robustness fetches, one needs an external document, and one needs
+a freeze-policy decision:
+
+| | kind | side | what closing it takes |
+|---|---|---|---|
+| **E7** | limitation | episodes | Confirm `ATTRIBUTION_LOOKBACK_DAYS = 60` and write the limitation: episodes triggered by a video release, indictment or verdict rather than by a death cannot be attributed from the registry at all. The fix text already concludes "keep 60 — it is a guard". Cheap. |
+| **E8** | limitation | episodes | Report the 2020 episodes as Floyd and Blake, note Prude falls inside the Blake window rather than carrying his own, and optionally add a p85 sensitivity arm where Prude clears the bar alone. Do **not** tune the separation parameter around it. |
+| **T13** | probably stale | treatment | Exact-name matching marked 25 basket articles absent from a registry containing them. The basket has been rebuilt since this was filed, and registry membership is corroboration only, never a gate (T9) — so **first measure whether it is still live** before writing normalised name matching. If the impact is confined to audit coverage stats, say so and close it. |
+| **L7** | real defect | treatment | **The most consequential of the seven.** Wikipedia's `agent=user` filter changed meaning in April 2020, non-retroactively — so `wiki_ext`'s measurement regime changes **five weeks before 2020-05-26**, the single most influential episode in the study (dropping it alone moves the coefficient 25%). Refetch the decade under `agent=all-agents` as a robustness series, report the correlation and the by-period ratio, and state the break in Methods with the WMF citation. Treatment-side, blind-safe, runnable now. |
+| **T6** | real defect | treatment | Trends quantization precision degrades ~5× over the decade, so attenuation is year-specific and a 2021–2024 null is not interpretable as an absence. Needs a refetch on a payload that stays off the floor (11 uses four phrases, 11b uses one literal string — they disagree), plus a per-year signal-to-quantization diagnostic. Treatment-side but the slowest and most fragile item here, since pytrends is rate-limited and non-deterministic. |
+| **O3** | needs a document | outcome | EDPM is born on the exact day B-HEARD launches and T-EDP inside the largest discovery episode. Requires FDNY documentation on what EDPM denotes. The cheap half is independent: replace `config.py:57-59`'s comment with the actual annual family totals, and report T-EDP separately (≈0.2% of the family, so exclusion is cheap). |
+| **O2** | **needs a freeze decision** | outcome | Two hard breaks sit **inside the 2015–2016 confirmation window**: geocoding completeness triples on 2016-01-01 and INJALS is retired. The fix is a QC break table — per call code first/last date and month-over-month step, per year the missing-district rate — and that table reads confirmation-window outcome data. See below. |
+
+### The O2 question, which must be settled before CP2
+
+CP2 cannot be discharged without knowing whether the confirmation sample has
+structural breaks in it, and finding out means running a coverage diagnostic over
+2015–2016 outcome data that the freeze protects. **These are not the same kind of
+access** — a per-code first/last-date and missingness table reports nothing about
+the outcome's relationship to treatment, and it is exactly the check that would
+stop the confirmatory run from being estimated across a discontinuity nobody
+knew about. But "it's only metadata" is precisely the reasoning that produced
+freeze incidents F1 and F2, so it does not get to be an assumption.
+
+**Proposal:** permit it, narrowly and on the record — routed through
+`select_sample` with an explicit named exemption, emitting only counts, dates and
+missingness rates and never an outcome mean by period or treatment, committed as
+a disclosed deviation in the `CONFIRMATION_PLAN.md` addendum before it is run.
+If that is not acceptable, the alternative is to exclude every episode whose
+window crosses 2016-01-01 unconditionally and lose the pre-2016 half of C1 — a
+real cost to the clean stratum, chosen blind.
+
+**This is a decision to take before CP2, not now.** Nothing else in the plan
+depends on it.
+
+### The rest of Phase F
+
+Re-run the refutation phase for the findings never attacked — three diverse
+lenses each, plus the two missing lenses on O3. Their diagnoses stand unrefuted
+only because nobody tried, and **every diagnosis that *was* attacked fell**.
+
+**Close the two defects the refuters found** (detailed under *Status at resume*):
+register `ems_cd_day_calltype_excluded.parquet` in `config.OUTCOME_ARTIFACTS`,
+`run_all.py:90`'s `writes`, and `DATA_PROVENANCE.md`; then make the guard
+enumerate `data/processed/*.parquet` against that list so `config.py:71-82`'s
+promise is one a check actually keeps — with a defeat attempt that drops a new
+outcome file in and confirms the suite fails. Add a `drop_reason` column (or
+correct the misleading comment at `00b:138`), lift the disposition list into a
+single `config.EXCLUDED_DISPOSITIONS`, and bring `00_local_ems_extract.py` back
+into step with `00b`.
 
 Also outstanding from the register:
 
@@ -291,11 +509,11 @@ Also outstanding from the register:
   `07_did_exposure.py:12-13`, `GATE_C_MEMO.md:136`, `REBUILD_PLAN.md:376-381`,
   `13_extension_episodes.py:5-9`.
 - **`PAPER_MASTER.md:816`** says "One freeze incident" while §5.3 documents two.
-- **`run_all.py` wiring**: all seven model stages declare `writes=[]`, so the
-  "exited 0 but wrote nothing" guard at `:239-241` is inert for every model;
-  stage 17's declared dependency (`confirmation_episodes_rebuilt.csv`) is not the
-  file it reads; `10d_parse_cd_demographics.py` and `03b_bridge_legacy.py` are
-  not stages although stages depend on their outputs.
+- **`run_all.py` wiring — DONE, verified 16:20Z.** All seven model stages now
+  declare non-empty `writes`, so the "exited 0 but wrote nothing" guard is live
+  for every model, and stage 17 `needs` the rebuilt episode list it actually
+  reads. Remaining: `10d_parse_cd_demographics.py` and `03b_bridge_legacy.py`
+  are still not stages although stages depend on their outputs.
 
 ---
 
@@ -314,12 +532,35 @@ non-increasing, `31_verify_sources.py` re-run and its log committed.
 
 # Phase G — Run discovery (2017–2020)
 
-Freeze stays ON. Fix the mechanical blockers first: `06_heterogeneity.py` needs
-`cd_demographics_clean.parquet` (run `10d_parse_cd_demographics.py`, offline, raw
-xlsx present); `08_figures.py:60-61` references `mh_narrow_calls`, which does not
-exist — the column is `mh_narrow`; Figure 5 depends on a bridge artifact whose
-chain is dead at missing legacy Twitter raw files, so it is replaced by the
-simulation exhibit (E2) or dropped.
+Freeze stays ON. Two prerequisites, the first newly found and the more important:
+
+**G0. `17_stacked_event_study.py` must gate on the calibration.** It does not
+read `outputs/tables/null_calibration.csv` at all — only 18, 19, 23, 25 and 30
+do. So the primary estimator will report randomization-inference p-values
+without ever checking that the null producing them is certified. Discovery *is*
+CALIBRATED, so today's numbers would be sound; the defect is that nothing
+enforces it, which is the same "documented and wired into nothing" pattern
+already closed for PPML (X5), B-HEARD (X6) and the dose arm (D6). 17 must read
+the artifact for the stratum it is estimating and refuse to emit an RI p-value
+unless that stratum's verdict is CALIBRATED. Needs a defeat attempt: point it at
+an UNDETERMINED artifact and confirm it refuses.
+
+**G1. Mechanical blockers — checked, all clear.** `cd_demographics_clean.parquet`
+exists (10.8 KB), so `06_heterogeneity.py` is unblocked. `08_figures.py:61`'s bad
+`mh_narrow_calls` reference is corrected (the surviving mention is the comment
+explaining it), and Figure 5 now skips cleanly when
+`bridge_legacy_to_primary.csv` is absent — which it is, since the legacy Twitter
+raw files are genuinely not on disk. 08 also calls `select_sample`, so the
+figures are inside the freeze.
+
+**G2. Nothing runs the figures.** `08_figures.py:63-64` records that its Figure 1
+had been raising `KeyError` on its first statement, so **08 had never produced
+anything**, "and the suite never caught it because no check runs the figures."
+That is the same class as the `20_data_audit.py` incident — a gate command that
+was itself broken while being recorded as satisfied. Phase G running 08 is the
+proof it works once; a check that asserts each declared figure file exists and
+post-dates its script is what keeps it working. Cheap, and it closes a hole the
+code itself has already documented.
 
 Then 17, 03, 04, 05, 06, 07 — on the **rebuilt** episode list, both arms for
 every outcome (OLS on shares *and* PPML on counts with the offset; the 2020
@@ -329,10 +570,31 @@ currently empty by design.
 
 # Phase H — Power, and an honest go/no-go
 
-MDE on the effective episode count, per stratum. Roth pre-trend diagnostic with
-the corrected conversion. **If power says confirmation cannot deliver, that is
-the conclusion**, and the paper becomes a measurement-and-design contribution
-with a precisely bounded null. A real ending, not a failure mode.
+**Unblocked.** The minimum effect of interest is **−0.005** (half a percentage
+point of mental-health call share; 4.6% relative, 0.11 SD against a discovery
+baseline of 0.1083, SD 0.0467). Write it into `config`, `PAPER_MASTER` §7.5b and
+`PRE_ANALYSIS_NOTE.md` as a pre-specified constant, and delete the "reports
+against both numbers the project has ever named" fallback from §7.5b — that
+paragraph exists only because no MEI had been chosen, and it now overstates the
+ambiguity.
+
+Then: MDE on the **effective** episode count, per stratum, against −0.005. Roth
+pre-trend diagnostic with the corrected λ-matched conversion (the mean-based one
+is optimistic by a measured 1.66×). Report the MDE-to-MEI ratio per stratum as
+the go/no-go statistic, and record it in the claims register.
+
+Two things already measured that constrain what this can conclude:
+- The first-week statistic loses almost nothing to episode clustering — **2
+  episode-days of 592** across all three strata. The loss lands in the
+  pre-period, 9–15% of it, so clustering costs *credibility* (the pre-trend
+  test) rather than precision.
+- C1 carries 15 episodes against C2's 30 and discovery's 29, so the clean
+  stratum is the least powered one — and, per the status section, also the one
+  whose null is least certain.
+
+**If power says confirmation cannot deliver against −0.005, that is the
+conclusion**, and the paper becomes a measurement-and-design contribution with a
+precisely bounded null. A real ending, not a failure mode.
 
 ---
 
@@ -341,13 +603,17 @@ with a precisely bounded null. A real ending, not a failure mode.
 All must hold **before** `FREEZE_ACTIVE = False`.
 
 - [ ] Every check PASS. No FAIL, no BLOCKED, no ERROR. Baseline refreshed.
-- [ ] Calibration passes KS uniformity at ≥1000 sims on the corrected null, and
-      17 refuses to run without it.
+- [ ] Calibration passes KS uniformity at ≥1000 sims **on all three strata** on
+      the corrected null, and 17 refuses to run without it. **C1 is the one at
+      risk** (D = 0.0900 at n=200 against a 1000-sim critical value of 0.0429);
+      if it fails, the circular scheme is reworked and re-certified before
+      anything reports a C1 p-value. 17 does not read the calibration today.
 - [ ] Estimator recovers a planted effect; RI p uses the (1+k)/(1+n) form.
 - [ ] `run_all.py` clean twice from cold; manifest committed; model stages
       declare their outputs so the empty-run guard is live.
 - [ ] Adding B-HEARD leaves discovery numerically unchanged.
-- [ ] Power reports an MDE per stratum; go/no-go recorded.
+- [ ] Power reports an MDE per stratum against the MEI of **−0.005**; the
+      MDE-to-MEI ratio and the go/no-go are recorded as claims.
 - [ ] `CONFIRMATION_PLAN.md` addendum committed **first**.
 - [ ] `30_confirmatory_run.py` committed and dry-run on synthetic outcomes.
 - [ ] Interpretation rules and the multiple-testing correction pre-committed.
@@ -421,6 +687,12 @@ non-human-subjects determination in writing; OSF deposit with timestamp.
   **including failures** — is itself part of the record.
 - **No number reaches the paper without a `CLAIMS_REGISTER` entry that
   reproduces it.** A number that cannot be regenerated is a check failure.
+  **This rule was enforced by nothing until now**, and it was broken in
+  `0957a3a`: six numbers entered §4.1 unregistered. `V.claims_reproduce` only
+  verifies claims that *are* registered, so the coverage side was invisible —
+  the same "validated on coverage, never on content" inversion that hid the
+  basket construct defect, running the other way. Closing it is item 5 of the
+  immediate steps.
 - **Interpretation is held to the same standard as data.** Every claim about what
   a result *means* names the artifact it rests on and states the alternative it
   does not rule out. Every reversal in this project was an interpretation that
@@ -429,11 +701,32 @@ non-human-subjects determination in writing; OSF deposit with timestamp.
   conclusion that the NYC censoring was unresolvable.
 - Gate after every change; defeat attempt on every new check; deep adversarial
   audit at CP1, CP2, CP3; audit flag count monotonically non-increasing.
-- Nothing touches confirmation outcomes before CP2 clears.
+- Nothing touches confirmation outcomes before CP2 clears — with the O2 coverage
+  diagnostic as the one candidate exception, to be decided explicitly rather
+  than assumed (see Phase F).
+
+### How each immediate step is proved
+
+| step | proof |
+|---|---|
+| C1 at 1000 sims | `null_calibration_C1.csv` reads `n_sims_completed,1000` and a verdict. **Either outcome is a result**: CALIBRATED discharges CP2's hardest line; UNDETERMINED/FAIL is the scheme rework, found at the cheapest possible moment. Record the KS statistic either way. |
+| P1, P5 → fixed | `23_regression_suite.py` reports 65/65 with no regressions, and `M.status_honest` passes without either finding claiming more than its check supports. |
+| broad-arm claims | `31_verify_sources.py --claims-only` recomputes all six from `cai_daily_broad.parquet` and `confirmation_episodes_rebuilt_broad.csv` and reports `verified`, not `template` or `skipped`. |
+| `V.claims_cover_exhibits` | Defeat attempt: add an unregistered numeric table cell to `PAPER_MASTER.md` and confirm FAIL; register it and confirm PASS. Then confirm it does **not** fire on prose numerals — a noisy version of this check is worse than none. |
+| 17's calibration gate | Defeat attempt: point 17 at an UNDETERMINED artifact and confirm it refuses to emit an RI p-value; restore and confirm it runs. |
+| figures produce output | `08_figures.py` exits 0 **and** its declared `writes` exist and post-date it — `run_all.py`'s empty-run guard is now live for model stages, so this is already half-enforced. |
+| Phase H go/no-go | An MDE per stratum against the MEI of **−0.005**, with the ratio registered as a claim. |
 
 ## Honest risks
 
-- **Power may kill the confirmatory run.** Then the conclusion is the bounded
+- **C1's null may not survive 1000 sims.** Measured, not speculated: D = 0.0900
+  against a 1000-sim critical value of 0.0429, with the p-values tilted
+  anti-conservative (13.5% below a nominal 10%). This is now the most likely
+  single point of failure in the design, it lands on the *clean* stratum, and it
+  is being rechecked first for that reason. If it fails, the circular-shift
+  scheme is reworked — not the α, and not the stratum definition.
+- **Power may kill the confirmatory run.** Now measurable: the MEI is −0.005 and
+  C1 carries 15 episodes. If the MDE exceeds it, the conclusion is the bounded
   null plus the measurement contribution.
 - **The strict basket may be materially smaller than 120**, which reduces the
   treatment index's signal in exchange for measuring the right construct. The
@@ -450,23 +743,26 @@ non-human-subjects determination in writing; OSF deposit with timestamp.
 
 ## Session log — where execution stopped
 
-**2026-09-11 20:51Z.** Phase A part-done:
+**2026-09-12 19:40Z, at `5fd53f3`.** Phases A–E done, F part-done, G/H open.
 
-- **A1 DONE.** Two background retry loops were deadlocked and have been killed
-  (PIDs 7082, 8430). Both spun on `pgrep -f "python 26_resolve_basket_scope"`,
-  which matches the parent shell whose own command line contains that string, so
-  each waited on itself forever. 26 was not running at all. This is the fourth
-  incident of this kind; the rule is now in Standing rules above.
-- **A2 DONE (module written, callers not yet migrated).** `scripts/wikimedia.py`
-  — one paced, cross-process-locked, `Retry-After`-honouring, request-keyed
-  client. Callers 11, 24, 26, 28, 29 still hold their own retry blocks and must
-  be migrated next.
-- **A3/A4/A5 NOT STARTED.**
-- **In flight:** `18_null_calibration.py --sims 200 --draws 200` (restoring the
-  clobbered Gate C artifact). If it is not running when work resumes, re-run it —
-  the current `outputs/tables/null_calibration.csv` reads `n_sims_completed,8`,
-  `VERDICT,UNDETERMINED`, and that file is gitignored so it cannot be recovered.
-
-**Wikidata scope state:** `basket_scope.csv` holds 164 rows against 174
-candidates; **29 articles have no scope row**, so `27_finalise_basket.py`
-correctly refuses to finalise. Those 29 are the immediate work of Phase C.
+- **All three strata CALIBRATED** at 200×200, each on the scheme its geometry
+  requires. `S.ri_scheme_certified` passes; P1 and P5 closed. **Every blocking
+  finding in the register is now fixed.**
+- **Suite 67/67, 68 claims reproduce, audit 42 checks / 2 flagged.**
+- **In flight:** `18_null_calibration.py --stratum C1 --sims 1000 --draws 200`,
+  started 19:17Z, ~5 h. PID in the session scratchpad's `calib_c1.pid`, log
+  `calib_c1_1000.log` beside it. **Poll by PID file, never `pgrep -f`.** This is
+  the run that decides whether C1's circular-shift null survives CP2: D was
+  0.0900 at n=200 against a 1000-sim critical value of 0.0429.
+- **Four defects found and fixed since 03:56Z**, all of the same family — a
+  register or guard answering a question about one object and licensing a write
+  to another: P3 (basket arms shared source ids, so the broad run erased the
+  primary arm's provenance), P4 (the history that would have shown it was
+  unparseable), P5 (the calibration gate read a label instead of a verdict, and
+  a 2-sim run clobbered discovery's p-values), P6 (the "every number carries a
+  claim" rule was enforced by nothing and had already been broken), P7 (the
+  primary estimator never read a calibration; the confirmatory one read the
+  wrong stratum's; a 2-draw run could replace a full result).
+- **Next, in order:** the seven `unverified` moderate findings (see Phase F —
+  they are four different kinds of thing, not one queue), then Phase G's
+  discovery run, then Phase H power against the MEI of −0.005.
