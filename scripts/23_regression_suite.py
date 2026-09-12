@@ -426,11 +426,26 @@ def s_ri_scheme_certified():
         if "draw_scheme" not in a.index:
             missing.append(f"{name} ({fname} predates the draw_scheme field)")
             continue
+        # A RECORDED SCHEME IS NOT A CERTIFIED ONE. The first version of this
+        # check read draw_scheme and nothing else, so any run that reached the
+        # write step satisfied it — including a 2-sim smoke test that issued
+        # VERDICT=UNDETERMINED and said so. One such file was on disk while
+        # this check was BLOCKED, and it would have flipped it to PASS: C1
+        # "certified on circular" from an artifact whose own verdict is that it
+        # certifies nothing. The field this check gates on has to be the one
+        # that carries the finding, not the one that merely labels the run.
+        verdict = str(a.get("VERDICT", "")).strip()
+        n_done = int(float(a.get("n_sims_completed", 0)))
+        n_need = int(float(a.get("min_sims_required", 0)))
+        if verdict != "CALIBRATED" or n_done < n_need:
+            missing.append(f"{name} ({fname}: {n_done}/{n_need} sims, "
+                           f"VERDICT={verdict or 'absent'})")
+            continue
         got = str(a["draw_scheme"])
         if got != need:
             wrong.append(f"{name}: requires '{need}', calibration certifies '{got}'")
         else:
-            ok.append(f"{name}={got}")
+            ok.append(f"{name}={got}@{n_done}")
     if wrong:
         return "FAIL", (f"{len(wrong)} stratum/strata would use a null their calibration "
                         f"does not certify: {wrong}")
@@ -440,6 +455,72 @@ def s_ri_scheme_certified():
                            "--stratum for each (finding P1)")
     return "PASS", (f"all {len(ok)} strata certified on the scheme they require: "
                     + ", ".join(ok))
+
+
+def s_calibration_writes_stratified():
+    """P5: every file a calibration run writes is named for the stratum it describes.
+
+    A calibration verdict is a statement about ONE sample geometry and ONE way of
+    drawing placebo dates. 18_null_calibration.py says so, and gave the verdict
+    file a per-stratum name for exactly that reason — then wrote three more files
+    beside it under names with no stratum in them.
+
+    That was not cosmetic. The rule protecting the gate is "a run may publish only
+    if it completed at least as many sims as the run already on disk", and the
+    comparison is made against the per-stratum VERDICT. A 2-sim C1 diagnostic
+    passed it — no C1 verdict existed, so the bar was zero — and the write it was
+    thereby licensed to make landed on null_calibration_pvalues.csv, which is
+    DISCOVERY's. 200 sims of p-values, 5,450 bytes, replaced by 61. The guard
+    written after the 8-sim incident answered a question about one stratum and
+    licensed a write to another.
+
+    So this walks the AST and requires every to_csv target in the script to be
+    built by the one helper that appends the stratum. A name assembled inline is
+    a failure even if it happens to be correct today, because the next file added
+    beside it will not be.
+
+    Defeat attempt: restoring the literal "null_calibration_pvalues.csv" argument
+    fails this check, and the mention of that filename in the comment above the
+    helper does not satisfy it — the test is on call arguments, not on text.
+    """
+    import ast as _ast
+    f = SCRIPTS / "18_null_calibration.py"
+    if not f.exists():
+        return "BLOCKED", "18_null_calibration.py absent"
+    tree = _ast.parse(f.read_text())
+
+    def _writes_to_tables(node):
+        """True when this to_csv() targets OUTPUTS_TABLES without going via _strat."""
+        if not (isinstance(node, _ast.Call)
+                and isinstance(node.func, _ast.Attribute)
+                and node.func.attr == "to_csv" and node.args):
+            return None
+        arg = node.args[0]
+        if isinstance(arg, _ast.Call) and isinstance(arg.func, _ast.Name) \
+                and arg.func.id == "_strat":
+            return None                      # routed through the helper
+        src = _ast.unparse(arg)
+        if "OUTPUTS_TABLES" in src:
+            return src
+        return None
+
+    bare = [w for n in _ast.walk(tree) if (w := _writes_to_tables(n))]
+    # The helper must also actually append the stratum, or routing through it
+    # proves nothing.
+    helper = [n for n in _ast.walk(tree)
+              if isinstance(n, _ast.FunctionDef) and n.name == "_strat"]
+    if not helper:
+        return "FAIL", ("18_null_calibration.py has no _strat helper, so no file it "
+                        "writes is guaranteed to name its stratum")
+    hsrc = _ast.unparse(helper[0])
+    if "args.stratum" not in hsrc:
+        return "FAIL", "_strat does not consult args.stratum, so it cannot stratify anything"
+    if bare:
+        return "FAIL", (f"{len(bare)} calibration output(s) are named without the "
+                        f"stratum, so another stratum's run can overwrite them: "
+                        + "; ".join(bare[:3]))
+    return "PASS", ("every calibration output is named through _strat, which "
+                    "appends the stratum")
 
 
 def s_calibration_on_residual():
@@ -829,7 +910,25 @@ def d_outcome_list_complete():
     from config import NON_OUTCOME_ARTIFACTS, OUTCOME_ARTIFACTS
     if not DATA_PROCESSED.exists():
         return "BLOCKED", "data/processed does not exist"
-    on_disk = {p.name for p in DATA_PROCESSED.glob("*.parquet")}
+    # A BASKET ARM IS THE SAME KIND OF THING AS ITS BASE. cai_daily_broad.parquet
+    # is the treatment index built over a different article list; the basket does
+    # not change whether a file holds outcome data. So a suffixed arm is
+    # classified by the artifact it derives from, rather than each arm being
+    # listed by hand — which would make adding the pre-registered sensitivity a
+    # config edit, and would eventually be done by rote instead of by decision.
+    #
+    # The suffix is the one config.basket_artifact() produces, so this cannot
+    # drift from the naming rule it mirrors: a file only collapses to a base name
+    # if that base name is itself classified.
+    from config import basket_artifact
+
+    def base_of(name):
+        for b in ("broad",):
+            if name == basket_artifact(name.replace(f"_{b}.", "."), b):
+                return name.replace(f"_{b}.", ".")
+        return name
+
+    on_disk = {base_of(p.name) for p in DATA_PROCESSED.glob("*.parquet")}
     outcome, other = set(OUTCOME_ARTIFACTS), set(NON_OUTCOME_ARTIFACTS)
 
     both = sorted(outcome & other)
@@ -846,7 +945,9 @@ def d_outcome_list_complete():
             parts.append(f"{len(both)} artifact(s) are in both lists: {both}")
         return "FAIL", "; ".join(parts)
     missing = sorted((outcome | other) - on_disk)
-    return "PASS", (f"{len(on_disk)} parquet(s) on disk, all classified "
+    n_files = len(list(DATA_PROCESSED.glob("*.parquet")))
+    return "PASS", (f"{n_files} parquet(s) on disk ({len(on_disk)} distinct base "
+                    f"artifacts), all classified "
                     f"({len(on_disk & outcome)} outcome, {len(on_disk & other)} not); "
                     f"{len(missing)} listed artifact(s) not built yet")
 
@@ -2506,6 +2607,68 @@ def v_sources_verified():
     return "PASS", f"{len(art['target'].unique())} artifacts, all verified after their last write"
 
 
+def v_source_id_per_artifact():
+    """P3: a source_id names ONE artifact, for the whole life of the register.
+
+    data_sources.csv is defined as current state — exactly one row per
+    source_id — and V.no_duplicate_source_ids enforces that. But "one row per
+    id" says nothing about whether the id still describes the same FILE it did
+    last week, and the difference is where an artifact can vanish.
+
+    The broad-basket sensitivity arm writes its own components file and its own
+    episode list, correctly suffixed by config.basket_artifact. Its provenance
+    was not suffixed. So running it rewrote S11 and D1 in place, repointing them
+    at the broad artifacts, and the STRICT arm — the primary one, the one the
+    paper reports — was left with no provenance row at all.
+
+    Nothing failed. V.artifacts_current checks the generator behind every row
+    that exists; it has no way to ask about a row that stopped existing, so it
+    happily verified the broad files and reported all artifacts current. The
+    register lost the primary arm's provenance silently, which is the single
+    thing it exists to make impossible.
+
+    The invariant that catches it is cheap: across the current register AND its
+    history, the set of output_files a given source_id has ever claimed must
+    have exactly one member. Repointing an id is then a check failure instead of
+    an unobservable overwrite, and the remedy is a new id — which is what
+    config.basket_source_id now mints.
+
+    This is also the first check that READS data_sources_history.csv, and doing
+    so found the history unparseable: written with `header=not exists()`, its
+    header was frozen at the 7-column schema of its first append while later
+    rows carried 9 fields, so pandas raised ParserError on line 22. An
+    append-only history nobody can read is not a record of anything.
+    """
+    cur_f = DATA_REFERENCE / "data_sources.csv"
+    hist_f = DATA_REFERENCE / "data_sources_history.csv"
+    if not cur_f.exists():
+        return "BLOCKED", "no provenance register"
+    frames = [pd.read_csv(cur_f)]
+    if hist_f.exists():
+        try:
+            frames.append(pd.read_csv(hist_f))
+        except Exception as e:
+            return "FAIL", (f"data_sources_history.csv does not parse ({type(e).__name__}: "
+                            f"{str(e)[:90]}) — the only record of what an artifact's "
+                            "hash used to be is unreadable")
+    both = pd.concat(frames, ignore_index=True)
+    if "output_file" not in both.columns:
+        return "BLOCKED", "register has no output_file column"
+    seen = {}
+    for _, r in both.iterrows():
+        f = str(r.get("output_file") or "").strip()
+        if f and f.lower() != "nan":
+            seen.setdefault(str(r["source_id"]), set()).add(f)
+    repointed = {k: sorted(v) for k, v in seen.items() if len(v) > 1}
+    if repointed:
+        return "FAIL", (f"{len(repointed)} source_id(s) have described more than one "
+                        f"artifact, so an earlier artifact's provenance was overwritten "
+                        f"rather than superseded: "
+                        + "; ".join(f"{k} -> {v}" for k, v in list(repointed.items())[:3]))
+    return "PASS", (f"{len(seen)} source_id(s) each name exactly one artifact across "
+                    f"{len(both)} current and historical rows")
+
+
 def v_no_duplicate_source_ids():
     """X8/X13: one row per source, and no two scripts claiming the same id.
 
@@ -2773,7 +2936,8 @@ CHECKS = [
     ("S.calibration_can_fail", "S4,X3,R3", "calibration verdict can fail", s_calibration_can_fail),
     ("S.no_stale_calibration", "R3", "no stale low-n calibration artifact", s_stale_calibration_artifact),
     ("S.calibration_on_residual", "S8", "synthetic null has this design's dependence, not a harder one", s_calibration_on_residual),
-    ("S.ri_scheme_certified", "P1", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
+    ("S.ri_scheme_certified", "P1,P5", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
+    ("S.calibration_writes_stratified", "P5,D1", "every calibration output names the stratum it describes", s_calibration_writes_stratified),
     ("S.ppml_wired", "X5,R8", "counts/PPML arm actually called", s_ppml_wired),
     ("S.dose_arm_wired", "D6", "dose-response arm has a caller and recovers a planted effect", s_dose_arm_wired),
     ("D.freeze_not_tautological", "D3", "freeze guard is not a tautology", d_freeze_not_tautological),
@@ -2798,6 +2962,7 @@ CHECKS = [
     ("V.artifacts_current", "T14", "no artifact predates the script that writes it", v_artifacts_current),
     ("V.sources_verified", "X8,X14", "every source verified after its last write", v_sources_verified),
     ("V.no_duplicate_source_ids", "X8,X13", "one row per source id, no collisions", v_no_duplicate_source_ids),
+    ("V.source_id_per_artifact", "P3,P4", "a source id never gets repointed at a different artifact", v_source_id_per_artifact),
     ("V.claims_reproduce", "X14", "every claimed number recomputes from its artifact", v_claims_reproduce),
     ("V.links_resolve", "X14", "every endpoint has a dated result", v_links_resolve),
     ("X.run_all_stages_declared", "X10", "every pipeline stage exists and declares its outputs", x_run_all_stages_declared),

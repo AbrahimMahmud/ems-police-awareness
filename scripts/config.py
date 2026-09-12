@@ -305,6 +305,75 @@ CAI_D_COMPONENTS = ("wiki_ext", "trends_us")
 # whether the result depends on where the line was drawn instead of asserting
 # that it does not. Attention to violence AGAINST police is in neither.
 CAI_D_BASKET = "strict"
+
+
+def basket_articles_file(basket=None):
+    """The article list wiki_ext is summed over, for a given basket."""
+    basket = basket or CAI_D_BASKET
+    # The strict basket is the PUBLISHED one, written by 32 under the historical
+    # filename so every existing reader still finds it.
+    return ("wikipedia_article_resolution.csv" if basket == "strict"
+            else f"basket_{basket}.csv")
+
+
+def basket_artifact(name, basket=None):
+    """Suffix a derived artifact with its basket, so arms cannot overwrite each other.
+
+    The broad basket is a PRE-REGISTERED SENSITIVITY, which means it has to be
+    estimable — and it is not, if building it overwrites the primary arm's index
+    and episode list on the way. One naming rule applied at every step (11 -> 12
+    -> 13) keeps both arms on disk at once and keeps a single implementation of
+    each step, rather than a second copy of the pipeline that drifts.
+
+    strict keeps the historical names; anything else gets `_<basket>` before the
+    extension.
+    """
+    basket = basket or CAI_D_BASKET
+    if basket == "strict":
+        return name
+    stem, _, ext = name.rpartition(".")
+    return f"{stem}_{basket}.{ext}"
+
+
+def basket_source_id(source_id, basket=None):
+    """Suffix a PROVENANCE id with its basket, for the same reason as the file.
+
+    basket_artifact kept the two arms' artifacts apart on disk but nothing kept
+    their provenance rows apart, and data_sources.csv is defined as current
+    state: exactly one row per source_id. So running the broad arm rewrote D1
+    and S11 in place, repointing them at the broad files. The strict episode
+    list and the strict component series — the PRIMARY arm, the one the paper
+    reports — then had no provenance row at all, and no check noticed, because
+    V.artifacts_current verifies the generator behind each row that exists and
+    never asks whether a row that should exist is missing.
+
+    That is the register losing an artifact silently, which is the one failure
+    it is supposed to make impossible. An id belongs to an artifact, so it gets
+    the artifact's suffix.
+    """
+    basket = basket or CAI_D_BASKET
+    return source_id if basket == "strict" else f"{source_id}_{basket}"
+
+
+# WHICH COMPONENTS A BASKET ARM IS ALLOWED TO CHANGE. Exactly one.
+#
+# The basket is a list of Wikipedia articles, so it moves wiki_ext and nothing
+# else: GDELT and Trends are properties of a fixed query. The broad arm exists to
+# answer "does the result depend on where the basket line was drawn", and that
+# question is only answerable if the basket is the ONLY thing that differs
+# between the arms.
+#
+# 12_build_cai.py used to infer this set from whatever components the arm's
+# components file happened to contain, and override the shared series with them.
+# That is the same fact stored in two places, one of which is a side effect of
+# how a fetch was invoked: running 11 for the broad arm WITHOUT --only wiki_ext
+# refetches GDELT, and every day GDELT's API had drifted since the strict fetch
+# would then appear in the comparison as a basket effect. Nothing would have
+# reported it; the arms would simply have differed by more than the basket.
+# Declared here, the override set is a decision, and a components file carrying
+# anything outside it is an error rather than a silent substitution.
+BASKET_DEPENDENT_COMPONENTS = ("wiki_ext",)
+
 CAI_S_COMPONENTS = ("gdelt_news", "gdelt_tv")
 CAI_D_COMPONENTS_RETIRED = ("trends_victims",)
 

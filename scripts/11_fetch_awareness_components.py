@@ -20,7 +20,8 @@ import urllib.request
 import pandas as pd
 
 import wikimedia as wm
-from config import DATA_PROCESSED, DATA_REFERENCE
+from config import (basket_artifact, basket_articles_file, basket_source_id,
+                    DATA_PROCESSED, DATA_REFERENCE)
 from provenance import log_source
 from wiki_titles import collapse_duplicates, load_title_map
 
@@ -34,6 +35,9 @@ START, END = "2015-01-01", "2024-12-31"
 # from this egress IP. Components not selected are carried over from the
 # existing file rather than being dropped.
 _ap = argparse.ArgumentParser()
+_ap.add_argument("--basket", default=None,
+                 help="which basket to sum wiki_ext over; default config.CAI_D_BASKET. "
+                      "Outputs are suffixed so the arms cannot overwrite each other.")
 _ap.add_argument("--only", default=None,
                  choices=["wiki_ext", "gdelt_tv", "gdelt_news"],
                  help="refetch just this component, preserving the others")
@@ -89,7 +93,7 @@ rows = []
 
 # --- Wikipedia pageviews, extended window, all resolved articles ---
 if ARGS.only in (None, "wiki_ext"):
- res = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv")
+ res = pd.read_csv(DATA_REFERENCE / basket_articles_file(ARGS.basket))
  articles = res.dropna(subset=["article"]).drop_duplicates("article")["article"].tolist()
 
  # COLLAPSE DUPLICATE PEOPLE before fetching anything. Each article is summed
@@ -207,7 +211,9 @@ if ARGS.only in (None, "wiki_ext"):
                   "n_titles": n_ok, "n_titles_offered": len(titles),
                   "n_titles_no_data": n_404, "n_titles_failed": n_fail})
 
- pd.DataFrame(used).to_csv(DATA_REFERENCE / "wiki_ext_basket_used.csv", index=False)
+ pd.DataFrame(used).to_csv(
+     DATA_REFERENCE / basket_artifact("wiki_ext_basket_used.csv", ARGS.basket),
+     index=False)
 
  # A RECORDED FAILURE THAT STILL SHIPS IS NOT A FIX (finding T15, extended).
  #
@@ -230,7 +236,8 @@ if ARGS.only in (None, "wiki_ext"):
          "cache means only the failures are retried.")
  pa = pd.DataFrame(per_article)
  pa["date"] = pd.to_datetime(pa["date"])
- pa.to_csv(DATA_REFERENCE / "wiki_pageviews_by_article.csv", index=False)
+ pa.to_csv(DATA_REFERENCE / basket_artifact("wiki_pageviews_by_article.csv",
+                                            ARGS.basket), index=False)
  print(f"  per-article daily series: {len(pa):,} rows over "
        f"{pa['article'].nunique()} articles", flush=True)
  print(f"  wiki_ext: summed {sum(u['ok'] for u in used)} of {len(used)} basket articles")
@@ -246,7 +253,8 @@ if ARGS.only in (None, "wiki_ext"):
      "max": [wiki_daily_max[d] for d in wiki_daily],
      "n_articles": [n_titles_day[d] for d in wiki_daily],
  }).sort_values("date")
- agg.to_csv(DATA_REFERENCE / "wiki_ext_aggregation_diagnostic.csv", index=False)
+ agg.to_csv(DATA_REFERENCE / basket_artifact("wiki_ext_aggregation_diagnostic.csv",
+                                             ARGS.basket), index=False)
  r = (agg["sum"] / agg["max"].replace(0, pd.NA)).dropna()
  by_year = r.groupby(agg.loc[r.index, "date"].dt.year).median()
  print("  sum/max ratio by year (a trend here means SUM is biased):")
@@ -298,7 +306,7 @@ if gdelt_failed:
 
 out = pd.DataFrame(rows)
 out["date"] = pd.to_datetime(out["date"])
-path = DATA_REFERENCE / "cai_components_daily.csv"
+path = DATA_REFERENCE / basket_artifact("cai_components_daily.csv", ARGS.basket)
 if ARGS.only and path.exists():
     prev = pd.read_csv(path, parse_dates=["date"])
     kept = prev[prev["component"] != ARGS.only]
@@ -315,7 +323,9 @@ print("  component row counts: "
 # answering it.
 _realised = out.groupby("component")["date"].agg(["min", "max", "count"])
 log_source(
-    "S11",
+    # Suffixed with the basket: the broad arm writes a DIFFERENT components file
+    # and must not overwrite the primary arm's row (see config.basket_source_id).
+    basket_source_id("S11", ARGS.basket),
     ("CAI components from GDELT DOC/TV and Wikimedia pageviews; "
      f"query={FROZEN_QUERY}; realised "
      + "; ".join(f"{c}={r['min'].date()}..{r['max'].date()} n={r['count']}"

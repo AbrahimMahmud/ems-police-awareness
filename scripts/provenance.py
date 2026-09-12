@@ -80,6 +80,43 @@ def _rel(path):
         return str(p)
 
 
+
+def _append_history(rows):
+    """Append superseded rows to the append-only history, in the FULL schema.
+
+    The history is written with `header=not exists()`, so its header was fixed
+    the first time a row was superseded — when the register had seven columns.
+    payload_sha256, generator and generator_code_sha256 were added later and the
+    header was never rewritten, so the file carried a 7-column header above 25
+    nine-field rows and pandas refused to parse it at all:
+
+        ParserError: Expected 7 fields in line 22, saw 9
+
+    The history is the ONLY record of what an artifact's hash used to be, which
+    makes it the only way to notice that a source_id was quietly repointed at a
+    different artifact — exactly what happened when the broad basket arm reused
+    D1 and S11 and overwrote the strict arm's rows. A history nobody can read is
+    the same defect class as a check nobody can fail: it looks like evidence and
+    holds none.
+
+    So every append normalises to COLUMNS, and a file whose header is narrower
+    than COLUMNS is rewritten once, in place, widening the old rows with empty
+    strings rather than inventing values for them.
+    """
+    rows = rows.reindex(columns=COLUMNS)
+    if SOURCES_HISTORY.exists():
+        head = SOURCES_HISTORY.read_text().split("\n", 1)[0].split(",")
+        if head != COLUMNS:
+            old = pd.read_csv(SOURCES_HISTORY, names=COLUMNS, header=None,
+                              skiprows=1, engine="python")
+            old = old.reindex(columns=COLUMNS)
+            pd.concat([old, rows], ignore_index=True).to_csv(
+                SOURCES_HISTORY, index=False)
+            return
+    rows.to_csv(SOURCES_HISTORY, mode="a",
+                header=not SOURCES_HISTORY.exists(), index=False)
+
+
 def log_source(source_id, description, url, payload_bytes=None, out_file=None,
                generator=None):
     """Record (or replace) the provenance row for one source.
@@ -118,8 +155,7 @@ def log_source(source_id, description, url, payload_bytes=None, out_file=None,
     cur = pd.read_csv(SOURCES_LOG) if SOURCES_LOG.exists() else pd.DataFrame(columns=COLUMNS)
     superseded = cur[cur["source_id"] == source_id]
     if len(superseded):
-        superseded.to_csv(SOURCES_HISTORY, mode="a",
-                          header=not SOURCES_HISTORY.exists(), index=False)
+        _append_history(superseded)
     keep = cur[cur["source_id"] != source_id]
     out = pd.concat([keep, pd.DataFrame([row])], ignore_index=True)
     out = out.sort_values("source_id", kind="stable")
@@ -152,8 +188,7 @@ def relabel_source(source_id, description):
     hit = cur["source_id"] == source_id
     if not hit.any():
         raise SystemExit(f"{source_id} is not in the register")
-    cur[hit].to_csv(SOURCES_HISTORY, mode="a",
-                    header=not SOURCES_HISTORY.exists(), index=False)
+    _append_history(cur[hit])
     before = cur.loc[hit, "description"].iloc[0]
     cur.loc[hit, "description"] = description
     cur.to_csv(SOURCES_LOG, index=False)

@@ -359,6 +359,28 @@ have traffic on **3,105 of the index's 3,472 days**, so they were contributing
 throughout rather than only in July 2016 — the largest single-day effect is
 **1.03 standard deviations, on 2017-08-16**, inside the discovery window.
 
+**The broad arm now exists, and the two agree.** The sensitivity was
+pre-registered but not buildable — the episode list it needs had never been
+produced, so the confirmatory script recorded it as `NOT_RUN`. Both arms are now
+built, side by side, neither overwriting the other:
+
+| | strict (primary) | broad (sensitivity) |
+|---|---|---|
+| articles | 109 | 118 |
+| episodes | 74 | 75 |
+| top attention day | 2016-07-08 | 2016-07-08 |
+
+The two indices correlate **0.9975** across all 3,472 scored days, differ by
+0.051 standard deviations on average, and share **71** episode start dates —
+three appear only in the strict arm, four only in the broad. The largest
+single-day gap is 2.79 SD, on 2022-01-08.
+
+That is worth saying plainly: **the nine disputed articles barely move the
+index.** It does not make the strict/broad decision unimportant — it makes the
+paper's claim about what the index *measures* defensible without resting on a
+result that happens to survive. The line was drawn on evidence about who did the
+killing, and the arm on the other side of it is published rather than described.
+
 **Where, as well as who** (finding B2). The old country test excluded an article
 only when Wikidata *named* a country outside the US, so an article with no
 country listed passed by default — 58 of 120 did, and only 2 were ever excluded
@@ -963,6 +985,26 @@ So each stratum is now calibrated separately, each verdict records the scheme an
 geometry it certifies, and a check recomputes what each stratum requires and
 refuses a verdict that certifies something else.
 
+**And the check that enforces that could be cleared by a run measuring nothing.**
+It read the `draw_scheme` field and stopped there, so any run reaching the write
+step satisfied it. One such file was on disk: a 2-sim diagnostic for C1 recording
+`draw_scheme=circular` beside its own `VERDICT=UNDETERMINED`. It would have
+flipped the gate on the confirmatory path from BLOCKED to PASS — C1 "certified"
+from an artifact whose verdict is that it certifies nothing. A check must gate on
+the field that carries the finding, not the one that labels the run, so the
+verdict and the completed-sim count are now read first and `draw_scheme` is only
+consulted once they hold.
+
+The same run did real damage on the way. The rule that a smaller run must not
+overwrite a larger one was applied to the verdict file and to nothing beside it:
+the p-value list was published unconditionally and carried **no stratum in its
+name**, while the size comparison was made against the *per-stratum* verdict. A
+2-sim C1 run therefore passed the test — no C1 verdict existed, so the bar was
+zero — and overwrote discovery's 200-sim p-value list, 5,450 bytes down to 61.
+The protection written after the 8-sim incident re-created the 8-sim incident,
+one file to the left. Every file a calibration run writes now carries its
+stratum, sidecars included.
+
 **This section was wrong until 2026-09-12, and the reason is worth keeping.** It
 quoted a rejection rate of 0.065 and an AR(1) rho of 0.185, and closed with an
 open item saying the day shock was "assumed rather than estimated". Finding S8
@@ -1008,7 +1050,7 @@ is a harder thing to notice and a worse thing to have.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **63 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **65 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
@@ -1091,9 +1133,9 @@ found; rebuild the data and the value no longer matches. A number that cannot be
 regenerated is a check failure, not a typo. Every claim in this document is
 registered and currently reproduces.
 
-Four checks hold the registers in place — `V.sources_verified` (which **BLOCKS, never
+Five checks hold the registers in place — `V.sources_verified` (which **BLOCKS, never
 passes, when no scan has run**), `V.no_duplicate_source_ids`,
-`V.claims_reproduce`, `V.links_resolve` — and each was defeated on purpose
+`V.source_id_per_artifact`, `V.claims_reproduce`, `V.links_resolve` — and each was defeated on purpose
 before being accepted: a claim edited to a wrong value fails; truncating the
 underlying data fails; a deliberately dead URL fails; a returning id collision
 fails; a second script appending to the register fails; an artifact touched
@@ -1122,6 +1164,26 @@ surfaced six defects, none of which was visible in any artifact:
   identical counts changed 72 lines and the SHA256, differing only in the 17th
   significant digit of a float. A hash that changes when nothing changed is how
   a reader learns to ignore hash mismatches.
+- **The register could lose an artifact silently, and did.** The rule was "one
+  row per source id, describing the file on disk right now" — which says nothing
+  about whether an id still describes the same file it did last week. The broad
+  basket arm writes its own components series and its own episode list, correctly
+  suffixed; its *provenance* was not suffixed, so `log_source` read the broad
+  files as new versions of the strict ones and superseded them. After that run,
+  `data_sources.csv` described the broad artifacts under D1 and S11, and the
+  **strict arm — the primary one, the one this paper reports — had no provenance
+  row at all**. Nothing failed: `V.artifacts_current` checks the generating
+  script behind every row that exists and cannot ask about a row that stopped
+  existing. An id now belongs to an artifact (`config.basket_source_id`), and
+  `V.source_id_per_artifact` fails if any id has ever named two files.
+- **The history that would have caught it could not be read.** Superseded rows go
+  to an append-only `data_sources_history.csv`, which is what makes "when did
+  this hash change, and to what" answerable. It was written with
+  `header=not exists()`, so its header froze at the seven columns the register
+  had on the first supersede while later rows carried nine — a file that raises
+  `ParserError` on line 22 for any reader. Nothing in the repository read it,
+  which is exactly why the defect survived the whole rebuild. Repaired in place:
+  **41 historical rows across 11 ids now parse**, and the new check reads them.
 - `20_data_audit.py` — one of the two commands this project runs as its gate —
   **had been raising `FileNotFoundError` on its first statement** ever since
   anchoring was retired, and then `KeyError` twice more. It produced no audit at

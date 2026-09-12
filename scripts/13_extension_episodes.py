@@ -18,6 +18,8 @@ import pandas as pd
 from attribution import label_window, load_attention
 
 from config import (
+    basket_artifact,
+    basket_source_id,
     ATTRIBUTION_LOOKBACK_DAYS,
     DATA_PROCESSED,
     DATA_REFERENCE,
@@ -30,7 +32,14 @@ from config import (
 )
 from provenance import log_source
 
-cai = pd.read_parquet(DATA_PROCESSED / "cai_daily.parquet")
+import argparse as _ap_mod
+_ap = _ap_mod.ArgumentParser()
+_ap.add_argument("--basket", default=None,
+                 help="which basket's index to detect episodes in; default "
+                      "config.CAI_D_BASKET. The output is suffixed so the broad "
+                      "sensitivity arm cannot overwrite the primary episode list.")
+BASKET = _ap.parse_args().basket
+cai = pd.read_parquet(DATA_PROCESSED / basket_artifact("cai_daily.parquet", BASKET))
 cai = cai.dropna(subset=["cai_d"]).sort_values("date").reset_index(drop=True)
 cai["year"] = cai["date"].dt.year
 
@@ -122,17 +131,20 @@ out = pd.DataFrame(rows)
 # it was restored from git and verified byte-identical, and the guard below
 # plus check E.frozen_list_untouched exist so it cannot happen silently again.
 FROZEN = DATA_REFERENCE / "confirmation_episodes.csv"
-REBUILT = DATA_REFERENCE / "confirmation_episodes_rebuilt.csv"
+REBUILT = DATA_REFERENCE / basket_artifact("confirmation_episodes_rebuilt.csv",
+                                           BASKET)
 out.to_csv(REBUILT, index=False)
 # Derived, not fetched - but it is a committed artifact, so it carries the same
 # provenance record as any source, including the fingerprint of the code that
 # produced it. That is what V.artifacts_current compares against (finding T14).
-log_source("D1", f"Episode list under the shock rule: {len(out)} episodes "
-                 f"({(out['period'] == 'discovery').sum()} discovery, "
-                 f"{(out['period'] == 'extension').sum()} extension), "
-                 f"within-year quantile threshold, span capped at "
-                 f"{EPISODE_MAX_DAYS} days",
-           "derived from data/processed/cai_daily.parquet",
+log_source(basket_source_id("D1", BASKET),
+           f"Episode list under the shock rule: {len(out)} episodes "
+           f"({(out['period'] == 'discovery').sum()} discovery, "
+           f"{(out['period'] == 'extension').sum()} extension), "
+           f"within-year quantile threshold, span capped at "
+           f"{EPISODE_MAX_DAYS} days",
+           f"derived from data/processed/"
+           f"{basket_artifact('cai_daily.parquet', BASKET)}",
            out_file=REBUILT)
 print(f"wrote {REBUILT.name} — the frozen {FROZEN.name} is untouched")
 

@@ -80,3 +80,10 @@ data/processed/wikidata_entity_cache/
 # Cross-process pacing state for the shared Wikimedia rate-limit bucket
 # (scripts/wikimedia.py). Runtime state, never input.
 data/processed/wikimedia_state/
+
+# Wikipedia pageviews cache, one file per title-series (regenerable;
+# 11_fetch_awareness_components.py). Fetched from the REST pageviews API, which
+# is replayable, so the bytes are not evidence of anything the code cannot
+# re-derive; caching exists only so a rate-limit interruption does not cost the
+# whole basket.
+data/processed/wiki_pageviews_cache/

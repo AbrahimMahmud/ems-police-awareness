@@ -331,9 +331,32 @@ out = pd.DataFrame([
 # writing them all to the same file would let a C1 run overwrite discovery's
 # verdict with a statement about a different null. The discovery artifact keeps
 # the historical name so every existing reader still finds it.
-main_csv = OUTPUTS_TABLES / ("null_calibration.csv" if args.stratum == "discovery"
-                             else f"null_calibration_{args.stratum}.csv")
 pv = pd.DataFrame({"sim": np.arange(1, len(pvals) + 1), "p": pvals, "effect": effects})
+
+# EVERY file this run writes carries the stratum, not just the verdict file.
+# The rule above was applied to main_csv and to nothing else, and the two files
+# it missed re-created the incident it was written to prevent:
+#
+#   null_calibration_pvalues.csv  was published unconditionally alongside
+#       main_csv, with no stratum in its name. A 2-sim C1 run passed the
+#       `len(pvals) >= prior_n` test — prior_n was 0, because no C1 VERDICT
+#       existed yet — and overwrote discovery's 200-sim p-value list, 5,450
+#       bytes down to 61. The guard compared against the wrong file, so it
+#       answered a question about C1 and licensed a write to discovery.
+#
+#   null_calibration_n{n}.csv     is the "reviewable evidence" sidecar, and two
+#       strata that complete the same number of sims write the same name. The
+#       evidence a refusing run leaves behind was overwritable by any other
+#       stratum at the same n.
+#
+# A file that describes one stratum's null is named for that stratum. No
+# exceptions, including for the sidecars nothing currently reads.
+def _strat(stem, ext="csv"):
+    tag = "" if args.stratum == "discovery" else f"_{args.stratum}"
+    return OUTPUTS_TABLES / f"{stem}{tag}.{ext}"
+
+
+main_csv = _strat("null_calibration")
 
 prior_n = 0
 if main_csv.exists():
@@ -345,12 +368,12 @@ if main_csv.exists():
 
 # The sidecar is written unconditionally, before any decision about the gate,
 # so a run that declines to publish still leaves reviewable evidence.
-out.to_csv(OUTPUTS_TABLES / f"null_calibration_n{len(pvals)}.csv", index=False)
-pv.to_csv(OUTPUTS_TABLES / f"null_calibration_pvalues_n{len(pvals)}.csv", index=False)
+out.to_csv(_strat(f"null_calibration_n{len(pvals)}"), index=False)
+pv.to_csv(_strat(f"null_calibration_pvalues_n{len(pvals)}"), index=False)
 
 if len(pvals) >= prior_n:
     out.to_csv(main_csv, index=False)
-    pv.to_csv(OUTPUTS_TABLES / "null_calibration_pvalues.csv", index=False)
+    pv.to_csv(_strat("null_calibration_pvalues"), index=False)
     if prior_n:
         print(f"published: {len(pvals)} sims replaces the {prior_n}-sim verdict on disk")
 else:

@@ -32,6 +32,8 @@ import pandas as pd
 from attribution import label_window, load_attention
 
 from config import (
+    basket_artifact,
+    BASKET_DEPENDENT_COMPONENTS,
     ATTRIBUTION_LOOKBACK_DAYS,
     CAI_D_COMPONENTS,
     CAI_S_COMPONENTS,
@@ -48,7 +50,44 @@ RACE_COMPONENTS = {"cai_d_black": "wiki_black", "cai_d_nonblack": "wiki_nonblack
 STD_WINDOW = ("2017-01-01", "2019-12-31")   # never a window containing Floyd
 FLOYD = ("2020-05-26", "2020-07-10")
 
-parts = [pd.read_csv(DATA_REFERENCE / "cai_components_daily.csv", parse_dates=["date"])]
+import argparse as _ap_mod
+_ap = _ap_mod.ArgumentParser()
+_ap.add_argument("--basket", default=None,
+                 help="which basket's components to build the index from; default "
+                      "config.CAI_D_BASKET. Outputs are suffixed so the primary and "
+                      "sensitivity arms cannot overwrite each other.")
+_args = _ap.parse_args()
+BASKET = _args.basket
+# ONLY wiki_ext DEPENDS ON THE BASKET. gdelt_tv, gdelt_news and the Trends
+# series are properties of a query, not of which victims' articles are summed,
+# so a basket arm re-fetching them would be wasted network and a second copy of
+# the same numbers. The shared file supplies every component; the basket's own
+# file supplies wiki_ext and replaces it.
+#
+# The first version read only the basket's file, which for a `--basket broad
+# --only wiki_ext` run contains wiki_ext and nothing else — so cai_s had no
+# complete-component day in the reference window and the run died. The error was
+# loud, which is why this is a one-line composition rather than a silent partial
+# index.
+_shared = pd.read_csv(DATA_REFERENCE / "cai_components_daily.csv", parse_dates=["date"])
+if BASKET and BASKET != "strict":
+    _own = pd.read_csv(DATA_REFERENCE / basket_artifact("cai_components_daily.csv",
+                                                        BASKET), parse_dates=["date"])
+    _have = sorted(_own["component"].unique())
+    _stray = [c for c in _have if c not in BASKET_DEPENDENT_COMPONENTS]
+    if _stray:
+        raise SystemExit(
+            f"{basket_artifact('cai_components_daily.csv', BASKET)} carries "
+            f"{_stray}, which the basket does not determine. Only "
+            f"{list(BASKET_DEPENDENT_COMPONENTS)} may differ between arms — "
+            "otherwise a re-fetch of a shared component enters the comparison "
+            "as if it were a basket effect. Re-run 11 with --only wiki_ext.")
+    _basket_specific = [c for c in BASKET_DEPENDENT_COMPONENTS if c in _have]
+    print(f"basket '{BASKET}': {_basket_specific} taken from its own file, "
+          f"every other component shared")
+    _shared = pd.concat([_shared[~_shared["component"].isin(_basket_specific)], _own],
+                        ignore_index=True)
+parts = [_shared]
 
 # The Trends source is named EXPLICITLY. It used to be chosen by file existence:
 # if cai_trends_anchored.csv was present it won, otherwise the stitched daily
@@ -165,7 +204,8 @@ for out_name, src in RACE_COMPONENTS.items():
     std[out_name] = std[src] if src in std.columns else np.nan
 
 out = std.reset_index()
-out.to_parquet(DATA_PROCESSED / "cai_daily.parquet", index=False)
+out.to_parquet(DATA_PROCESSED / basket_artifact("cai_daily.parquet", BASKET),
+               index=False)
 
 # ---------------- validation battery ----------------
 val = []
@@ -204,7 +244,8 @@ for k in (-2, -1, 0, 1, 2):
     val.append({"check": f"xcorr_caiS(t)_caiD(t+{k})",
                 "value": round(std["cai_s"].corr(std["cai_d"].shift(-k)), 3)})
 
-pd.DataFrame(val).to_csv(OUTPUTS_TABLES / "cai_validation.csv", index=False)
+pd.DataFrame(val).to_csv(
+    OUTPUTS_TABLES / basket_artifact("cai_validation.csv", BASKET), index=False)
 
 # top-20 CAI-D days with registry attribution
 reg = pd.read_csv(DATA_REFERENCE / "victim_registry.csv", parse_dates=["date"])
@@ -227,12 +268,13 @@ attention = load_attention()
 attr = [label_window(reg, attention, d, d, ATTRIBUTION_LOOKBACK_DAYS)
         for d in top["date"]]
 top["candidate_events"] = attr
-top.to_csv(OUTPUTS_TABLES / "cai_top_days.csv", index=False)
+top.to_csv(OUTPUTS_TABLES / basket_artifact("cai_top_days.csv", BASKET), index=False)
 
 # divergence days: supply-heavy, demand-light (the falsification-test sample)
 z = std.dropna(subset=["cai_d", "cai_s"])
 div = z[(z["cai_s"] > z["cai_s"].quantile(0.95)) & (z["cai_d"] < z["cai_d"].median())]
-div.reset_index()[["date", "cai_d", "cai_s"]].to_csv(OUTPUTS_TABLES / "cai_divergence_days.csv", index=False)
+div.reset_index()[["date", "cai_d", "cai_s"]].to_csv(
+    OUTPUTS_TABLES / basket_artifact("cai_divergence_days.csv", BASKET), index=False)
 
 print(f"CAI built: {std['cai_d'].notna().sum():,} days with CAI-D "
       f"({avail_d}), {std['cai_s'].notna().sum():,} with CAI-S ({avail_s})")
