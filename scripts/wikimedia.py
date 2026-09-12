@@ -222,19 +222,32 @@ def api(host, params, *, cache_dir=None, key=None, **kw):
     return d
 
 
-def pageviews_items(title, start, end, *, cache_dir=None, **kw):
+def pageviews_items(title, start, end, *, agent="user", cache_dir=None, **kw):
     """Daily pageview records for one EXACT title. NotFound only on a real 404.
 
     The distinction is load-bearing. A probe that treated every exception as 404
     reported Alton Sterling's pre-rename title as having no data when it held
     1,861,004 views and the request had merely been rate-limited — which is how
     93.5% of his attention came to be missing from the treatment index.
+
+    `agent` was hard-coded to "user" and is now a parameter, because the classes
+    are not stable over time and the difference between them is a measurement
+    break the treatment index sits on top of. Wikimedia introduced the
+    "automated" class in late April 2020 and did NOT apply it retroactively, so
+    "user" means one thing before that date and a narrower thing after it
+    (finding L7). Measuring the size of that break needs the automated series,
+    and one client with a parameter is how the two series stay otherwise
+    identical — same pacing, same cache discipline, same 404 handling.
+
+    The cache key already covers the whole URL, so the two agents cache
+    separately without anything else changing.
     """
     u = ("https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/"
-         "en.wikipedia/all-access/user/"
+         f"en.wikipedia/all-access/{agent}/"
          f"{urllib.parse.quote(str(title).replace(' ', '_'), safe='')}"
          f"/daily/{start}/{end}")
-    return get_json(u, cache_dir=cache_dir, label=f"pageviews {title}", **kw)["items"]
+    return get_json(u, cache_dir=cache_dir,
+                    label=f"pageviews[{agent}] {title}", **kw)["items"]
 
 
 def sparql(query, *, cache_dir=None, **kw):

@@ -10,7 +10,7 @@ Sources: 19 (13 live, 4 retired, 2 unverifiable).
 Every verification result ever recorded, including failures, is in
 `data/reference/source_verification_log.csv`, which is append-only.
 
-Last scan: **2026-09-12T19:44:10+00:00** — 1 mismatch, 18 skipped, 2 template, 6 unverifiable, 90 verified
+Last scan: **2026-09-12T20:43:58+00:00** — 1 mismatch, 18 skipped, 2 template, 6 unverifiable, 96 verified
 
 ## S1 — NYC EMS Incident Dispatch Data
 

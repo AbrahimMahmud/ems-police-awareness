@@ -1194,6 +1194,59 @@ def t_basket_is_police_violence():
         f"police-action category or the MPV registry; 0 anti-police")
 
 
+def t_agent_class_break_bounded():
+    """L7: the April 2020 Wikipedia agent-class break is measured, not asserted.
+
+    wiki_ext is built from pageviews requested with agent=user. Wikimedia added
+    an "automated" class in late April 2020 and did NOT apply it retroactively,
+    so `user` means "not obviously a spider" before that date and "not a spider
+    and not automated" after it. The treatment index therefore has a measurement
+    break in it.
+
+    THE FINDING PUT THE BREAK IN THE WRONG PLACE. It argued the break splits the
+    sample at the largest episode, Floyd, five weeks after the change, and cited
+    WMF's 5-8% figure for 2019 English-Wikipedia desktop bot spam. Measured on
+    the titles this index is actually built from, the automated share across
+    2017-2020 is 0.10% and the mean shift it implies is 0.0009 SD — three orders
+    of magnitude below the episode it was said to threaten.
+
+    It is real where nobody looked. The share grows every year after the change:
+    0.8% in 2021, 3.4% in 2022, 6.2% in 2023, and the mean shift across
+    2021-2024 is 0.0856 SD — NINETY TIMES the discovery-window figure, with a
+    single-day maximum of 1.58 SD in 2024. That window is half the confirmation
+    sample, and all of stratum C2.
+
+    So this asserts the two things a reader needs to trust the bound: that the
+    class really is absent before the documented change date, which is the whole
+    basis for treating pre-break `user` as comparable to post-break
+    `user + automated`; and that the discovery-window shift stays small, so a
+    refetch that moves it says so instead of quietly widening the footnote.
+    """
+    f = DATA_REFERENCE / "wiki_agent_class_break.csv"
+    if not f.exists():
+        return "BLOCKED", ("wiki_agent_class_break.csv absent — run "
+                           "33_agent_class_break.py")
+    d = pd.read_csv(f)
+    pre = d[d["year"] <= 2019]
+    if not len(pre):
+        return "BLOCKED", "artifact covers no pre-break year"
+    if float(pre["automated"].sum()) != 0.0:
+        return "FAIL", (f"agent=automated is nonzero before 2020 "
+                        f"({int(pre['automated'].sum())} views), so the class was "
+                        "applied retroactively after all and pre-break `user` is "
+                        "NOT comparable to post-break `user + automated`")
+    disc = d[(d["year"] >= 2017) & (d["year"] <= 2020)]
+    shift = float(disc["mean_z_shift"].mean())
+    if shift > 0.01:
+        return "FAIL", (f"the agent-class break now shifts the discovery-window index "
+                        f"by {shift:.4f} SD on average, above the 0.01 SD the paper "
+                        "reports it as bounded by")
+    ext = d[d["year"] >= 2021]
+    return "PASS", (f"agent=automated is exactly 0 before 2020; the break shifts the "
+                    f"discovery index by {shift:.4f} SD and the 2021-2024 index by "
+                    f"{float(ext['mean_z_shift'].mean()):.4f} SD")
+
+
 def t_basket_evidence_not_namesake():
     """T13: no published basket article rests on an exact-name registry lookup alone.
 
@@ -3305,6 +3358,7 @@ CHECKS = [
     ("T.exclusion_reasons_true", "N1,N3", "no basket exclusion states a reason the scope file contradicts", t_exclusion_reasons_true),
     ("T.scope_covers_candidates", "N2", "every basket candidate was actually asked about", t_scope_covers_candidates),
     ("T.basket_is_police_violence", "B1", "every basket article has evidence police were the actor", t_basket_is_police_violence),
+    ("T.agent_class_break_bounded", "L7", "the April 2020 agent-class break is measured and bounded", t_agent_class_break_bounded),
     ("T.basket_evidence_not_namesake", "T13,B3", "no basket article rests on an exact-name registry match alone", t_basket_evidence_not_namesake),
     ("T.basket_country_evidence", "B2", "no basket article admitted without US evidence", t_basket_country_evidence),
     ("T.no_duplicate_person", "T17", "no basket article duplicates another person", t_no_duplicate_person_articles),

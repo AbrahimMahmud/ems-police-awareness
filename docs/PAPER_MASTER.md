@@ -605,6 +605,39 @@ medical calls and divide by all calls.
 total calls per district-day **65.9**. Built by `scripts/01_build_panel.py`.
 Districts with fewer than 5 calls on a day are excluded from share calculations.
 
+### 5.1a A measurement break inside the treatment series
+
+`wiki_ext` counts Wikipedia pageviews filtered to `agent=user`. In late April
+2020 Wikimedia added a third agent class, `automated`, and **did not apply it
+retroactively** — so `user` means "not obviously a spider" before that date and
+"not a spider and not automated" after it. The treatment index has a measurement
+break in it, five weeks before the largest episode in the study.
+
+That is where this was expected to bite, and it does not. Measured on the
+articles this index is actually built from — not on Wikipedia as a whole, which
+is where the often-quoted 5–8% bot-spam figure comes from — the automated share
+across 2017–2020 is **0.10%**, and the shift it implies in the standardised
+index averages **0.0009 SD**. Against a Floyd episode whose index sits several
+standard deviations up, that is not a correction anyone would notice.
+
+**It is large where nobody had looked.** The automated class grows every year
+after it is introduced: 0.8% of views in 2021, 3.4% in 2022, 6.2% in 2023. Across
+2021–2024 the mean shift is **0.0856 SD — ninety times the discovery-window
+figure** — with a single-day maximum of 1.58 SD in 2024. That window is half the
+confirmation sample and the whole of stratum C2.
+
+So the break is a footnote for the discovery result and a live measurement
+problem for the confirmatory one, which is the reverse of how it was filed. The
+comparable series across the decade is `user` before the break and
+`user + automated` after it — which is what pre-break `user` already was. The
+frequently proposed alternative, refetching everything under `all-agents`, is
+wrong in direction: it adds spider traffic, a larger contamination than the one
+being removed.
+
+The class really is absent beforehand, which is what licenses that splice:
+`automated` is **exactly zero** on every day through 2019 and first appears on
+**2020-04-29**. That is checked rather than cited.
+
 ### 5.1b What each episode actually is
 
 Episodes were named by asking which recently-killed person in Mapping Police
@@ -1225,7 +1258,7 @@ is a harder thing to notice and a worse thing to have.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **71 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **72 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
