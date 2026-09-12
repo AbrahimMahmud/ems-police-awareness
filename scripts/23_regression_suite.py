@@ -457,6 +457,69 @@ def s_ri_scheme_certified():
                     + ", ".join(ok))
 
 
+def s_estimators_gate_on_calibration():
+    """P7: every script that reports an RI p-value certifies its own null first,
+    and no cheap run can replace an expensive result.
+
+    Two halves, both re-findings of defects this project had already closed
+    somewhere else.
+
+    GATE. 17_stacked_event_study.py computes randomization-inference p-values —
+    the ratified primary inference — and read no calibration at all. Gate C
+    ratified "calibrate, then report"; the gate lived only in this suite, so the
+    estimator itself would run and print regardless. Invisible because discovery
+    IS calibrated, so every number would have been sound: the same "documented
+    and wired into nothing" pattern as X5, X6 and D6. 30_confirmatory_run.py did
+    gate, but on null_calibration.csv — DISCOVERY's artifact — while writing C1
+    and C2 p-values, so it answered a question about a sample it never
+    estimates. Both now call event_study.require_calibrated(stratum).
+
+    NO DOWNGRADE. 17 had no equivalent of 18's "a smaller run may not replace a
+    larger one". Found by running it: a 2-draw invocation launched to prove the
+    new gate fires overwrote the full result with p_randomization = 1.0. The
+    artifact records n_draws, so it was honest about itself, and nothing said
+    what it had destroyed.
+
+    Checked by AST, not by grep: a call node, so the words appearing in a
+    comment — including the comments above — do not satisfy it. That is the
+    S.dose_arm_wired lesson, where a caller scan matched prose and passed with
+    the call deleted.
+    """
+    import ast as _ast
+    need = {"17_stacked_event_study.py", "30_confirmatory_run.py"}
+    missing = []
+    for name in sorted(need):
+        f = SCRIPTS / name
+        if not f.exists():
+            missing.append(f"{name} absent")
+            continue
+        tree = _ast.parse(f.read_text())
+        called = {n.func.id for n in _ast.walk(tree)
+                  if isinstance(n, _ast.Call) and isinstance(n.func, _ast.Name)}
+        if "require_calibrated" not in called:
+            missing.append(f"{name} reports RI p-values without calling "
+                           "require_calibrated()")
+    # The no-downgrade rule in 17: the published write must be guarded by a
+    # comparison against the draws already on disk.
+    f17 = SCRIPTS / "17_stacked_event_study.py"
+    if f17.exists():
+        src = f17.read_text()
+        tree = _ast.parse(src)
+        guarded = any(
+            isinstance(n, _ast.If)
+            and "_draws_here" in _ast.unparse(n.test)
+            and "_prior" in _ast.unparse(n.test)
+            and "event_study_results.csv" in _ast.unparse(n)
+            for n in _ast.walk(tree))
+        if not guarded:
+            missing.append("17 publishes event_study_results.csv without comparing "
+                           "this run's draw count to the one on disk")
+    if missing:
+        return "FAIL", f"{len(missing)} estimator gap(s): " + "; ".join(missing)
+    return "PASS", ("17 and 30 both certify their stratum's null before reporting, "
+                    "and 17 refuses to publish fewer draws than the result on disk")
+
+
 def s_calibration_writes_stratified():
     """P5: every file a calibration run writes is named for the stratum it describes.
 
@@ -3028,6 +3091,7 @@ CHECKS = [
     ("S.calibration_on_residual", "S8", "synthetic null has this design's dependence, not a harder one", s_calibration_on_residual),
     ("S.ri_scheme_certified", "P1,P5", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
     ("S.calibration_writes_stratified", "P5,D1", "every calibration output names the stratum it describes", s_calibration_writes_stratified),
+    ("S.estimators_gate_on_calibration", "P7,D1", "estimators certify their own null and cannot be downgraded by a cheap run", s_estimators_gate_on_calibration),
     ("S.ppml_wired", "X5,R8", "counts/PPML arm actually called", s_ppml_wired),
     ("S.dose_arm_wired", "D6", "dose-response arm has a caller and recovers a planted effect", s_dose_arm_wired),
     ("D.freeze_not_tautological", "D3", "freeze guard is not a tautology", d_freeze_not_tautological),

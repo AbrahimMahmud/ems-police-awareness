@@ -332,6 +332,8 @@ from event_study import (
     build_stack,
     count_outcome,
     placebo_starts,
+    require_calibrated,
+    Uncalibrated,
 )
 from freeze_guard import freeze_banner, select_sample
 
@@ -437,7 +439,7 @@ def check_strata_partition():
 
 
 def check_calibration():
-    """Refuse to run unless the estimator's null calibration says CALIBRATED.
+    """Refuse to run unless EVERY stratum this script estimates is CALIBRATED.
 
     This is a precondition, not a robustness column (Gate C §6.3). If the
     estimator over-rejects on data built to contain no effect then the number
@@ -447,29 +449,21 @@ def check_calibration():
     produced by a 12-sim smoke test and a gate that cannot fail is not a gate
     (findings S4, X3, R3).
     """
-    f = OUTPUTS_TABLES / "null_calibration.csv"
-    if not f.exists():
-        raise SealBroken(
-            f"{f} is absent. It is gitignored, so a fresh clone has none — run "
-            "18_null_calibration.py --sims 200 --draws 200 before this script.")
-    cal = pd.read_csv(f).set_index("metric")["value"]
-    verdict = str(cal.get("VERDICT", "MISSING"))
-    if verdict != "CALIBRATED":
-        raise SealBroken(
-            f"null calibration reads VERDICT={verdict!r}. An uncalibrated "
-            "randomization p-value is not interpretable, so the confirmatory "
-            "run does not happen (GATE_C_MEMO.md §6.3).")
-    n_sims = int(float(cal.get("n_sims_completed", 0)))
-    min_sims = int(float(cal.get("min_sims_required", 200)))
-    if n_sims < min_sims:
-        raise SealBroken(
-            f"null calibration says CALIBRATED on {n_sims} sims against its own "
-            f"minimum of {min_sims}. That combination is how the 12-sim artifact "
-            "passed; treat it as a broken artifact and re-run 18.")
-    rej = float(cal.get("empirical_rejection_rate", float("nan")))
-    ks = float(cal.get("ks_p_uniform", float("nan")))
-    print(f"[seal] calibration gate PASSED: {n_sims} sims, rejection rate "
-          f"{rej:.4f}, KS uniformity p = {ks:.4f}")
+    # PER STRATUM. This gate used to read null_calibration.csv — DISCOVERY's
+    # artifact — while this script writes p-values for C1 and C2. A calibration
+    # certifies one geometry and one draw scheme, and these strata share
+    # neither: discovery and C2 shift an anchor within a contiguous span, C1
+    # shifts circularly over a gapped one. So the old gate passed on a verdict
+    # about a sample this script never estimates, and C1 — the stratum whose
+    # scheme is new and whose uniformity is marginal — was the one it could
+    # never have protected.
+    out = {}
+    for stratum in ("C1", "C2"):
+        try:
+            out[stratum] = require_calibrated(stratum)
+        except Uncalibrated as e:
+            raise SealBroken(str(e)) from e
+    return out
     return {"n_sims": n_sims, "rejection_rate": rej, "ks_p": ks}
 
 

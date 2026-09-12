@@ -32,7 +32,7 @@ import pandas as pd
 import pyfixest as pf
 from scipy import stats
 
-from config import EVENT_REFERENCE_DAY
+from config import EVENT_REFERENCE_DAY, OUTPUTS_TABLES
 
 # A district-day claimed by two episode windows is assigned to the NEARER
 # episode rather than deleted. Deleting both copies (the old rule) removed the
@@ -478,6 +478,77 @@ def stratum_episodes(episode_starts, windows, pre, post, first_week=7):
                                        f"{len(missing)} of {len(fw)} first-week days fall "
                                        f"outside, first {missing[0].date()}")})
     return kept, dropped
+
+
+class Uncalibrated(Exception):
+    """The null behind a p-value about to be reported is not certified."""
+
+
+def calibration_file(stratum):
+    """Artifact holding the calibration for one stratum.
+
+    Discovery keeps the historical name so every existing reader still finds it.
+    """
+    return OUTPUTS_TABLES / ("null_calibration.csv" if stratum == "discovery"
+                             else f"null_calibration_{stratum}.csv")
+
+
+def require_calibrated(stratum):
+    """Return the calibration for `stratum`, or refuse.
+
+    ONE implementation, because there were nearly three. A calibration certifies
+    one sample geometry and one draw scheme, so "is the null certified" is a
+    question about a STRATUM and cannot be answered by a filename fixed at
+    import time — and both existing answers got that wrong in different ways:
+
+      17_stacked_event_study.py, the primary estimator, never read a calibration
+      at all. It would have reported randomization p-values with nothing
+      checking that the null producing them had passed its own test. Discovery
+      happens to be CALIBRATED, so the numbers would have been sound and the
+      absence invisible — which is precisely the pattern already closed for
+      PPML (X5), B-HEARD (X6) and the dose arm (D6).
+
+      30_confirmatory_run.py did gate, but on `null_calibration.csv` — DISCOVERY's
+      artifact — while writing p-values for C1 and C2. A gate that reads the
+      wrong stratum's verdict is not a weaker gate; it is a gate that answers a
+      question nobody asked. C1 is the stratum whose scheme is new and whose
+      uniformity is marginal, so it is the one a discovery-keyed check could
+      never have protected.
+
+    The sim-count re-check is kept from 30: a CALIBRATED verdict below the
+    artifact's own `min_sims_required` is how the 12-sim artifact once passed,
+    and a gate that cannot fail is not a gate.
+    """
+    f = calibration_file(stratum)
+    if not f.exists():
+        raise Uncalibrated(
+            f"{f.name} is absent, so the null for stratum {stratum!r} is not "
+            f"certified. outputs/tables/ is gitignored, so a fresh clone has "
+            f"none — run 18_null_calibration.py --stratum {stratum} "
+            "--sims 200 --draws 200 first.")
+    cal = pd.read_csv(f).set_index("metric")["value"]
+    verdict = str(cal.get("VERDICT", "MISSING"))
+    if verdict != "CALIBRATED":
+        raise Uncalibrated(
+            f"{f.name} reads VERDICT={verdict!r} for stratum {stratum!r}. An "
+            "uncalibrated randomization p-value is not a weak p-value — it has "
+            "no interpretation at all (GATE_C_MEMO.md 6.3).")
+    n = int(float(cal.get("n_sims_completed", 0)))
+    need = int(float(cal.get("min_sims_required", 200)))
+    if n < need:
+        raise Uncalibrated(
+            f"{f.name} says CALIBRATED on {n} sims against its own minimum of "
+            f"{need}. That combination is how the 12-sim artifact passed; treat "
+            "it as broken and re-run 18.")
+    # The scheme the artifact certifies must be the scheme that will be drawn.
+    # Recorded here so the caller's log carries it and a reader can see which
+    # null the p-values below rest on.
+    print(f"[calibration] {stratum}: CALIBRATED on {n} sims, scheme "
+          f"{cal.get('draw_scheme', 'unrecorded')}, geometry "
+          f"{cal.get('sample_geometry', 'unrecorded')}, rejection "
+          f"{cal.get('empirical_rejection_rate', '?')}, KS p "
+          f"{cal.get('ks_p_uniform', '?')}")
+    return cal
 
 
 def draw_scheme_for(windows, real_starts, pre, post):

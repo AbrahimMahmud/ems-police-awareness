@@ -1027,6 +1027,35 @@ The protection written after the 8-sim incident re-created the 8-sim incident,
 one file to the left. Every file a calibration run writes now carries its
 stratum, sidecars included.
 
+**And for all of that, nothing made the estimator look.** `17_stacked_event_study.py`
+— the ratified primary estimator, the one that computes the randomization
+p-values — read no calibration artifact at all. Gate C ratified the ordering
+"calibrate, then report", and the gate lived only inside the regression suite, so
+the estimator itself would run and print regardless of what any verdict said.
+
+It stayed invisible because discovery *is* calibrated, so every number it would
+have produced was sound. That is the failure mode rather than a defence of it: a
+guarantee nothing enforces is one that holds until the day it doesn't, and this
+project has closed the identical "documented and wired into nothing" pattern
+three times already — for PPML, for the B-HEARD control, and for the dose-response
+arm.
+
+The confirmatory script did gate, and gated on the wrong thing: it read
+`null_calibration.csv`, which is *discovery's*, while writing p-values for C1 and
+C2. A calibration certifies one geometry and one draw scheme, and those strata
+share neither — so the gate answered a question about a sample that script never
+estimates, and C1, whose scheme is new and whose uniformity is marginal, is
+exactly the stratum it could never have protected. Both now call one
+stratum-aware `require_calibrated()`, and each run prints which null its p-values
+rest on.
+
+One more thing fell out of testing that gate. Running the estimator with two
+draws to prove it refuses an uncalibrated null **overwrote the full result**,
+reporting a randomization p of 1.000 from two draws. The no-downgrade rule
+written after the 8-simulation incident had been applied to the calibration
+script and to nothing else. It now applies here too, and a small run leaves its
+own sidecar instead of the main artifact.
+
 **This section was wrong until 2026-09-12, and the reason is worth keeping.** It
 quoted a rejection rate of 0.065 and an AR(1) rho of 0.185, and closed with an
 open item saying the day shock was "assumed rather than estimated". Finding S8
@@ -1072,7 +1101,7 @@ is a harder thing to notice and a worse thing to have.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **66 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **67 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no

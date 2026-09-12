@@ -87,6 +87,7 @@ from event_study import (
     fit_event_study,
     joint_p,
     randomization_p,
+    require_calibrated,
 )
 from bheard import attach as attach_bheard
 from freeze_guard import freeze_banner, select_sample
@@ -131,6 +132,36 @@ panel = attach_bheard(panel, bound=BHEARD_BOUND_PRIMARY)
 ep = pd.read_csv(DATA_REFERENCE / EPISODE_LIST_PRIMARY, parse_dates=["start", "end"])
 if FREEZE_ACTIVE:
     ep = ep[ep["period"] == "discovery"]
+
+# THE NULL BEHIND THIS SCRIPT'S p-VALUES MUST BE CERTIFIED BEFORE IT REPORTS ANY.
+#
+# This script computes randomization-inference p-values — the ratified primary
+# inference — and until now read no calibration at all. Gate C ratified the
+# ordering "calibrate, then report"; the gate existed only inside the regression
+# suite, so the estimator itself would have run and printed p-values regardless.
+#
+# It was invisible because discovery IS calibrated, so every number it produced
+# would have been sound. That is the failure mode, not an excuse for it: a
+# guarantee nothing enforces is a guarantee that holds until the day it doesn't,
+# and this project has closed the identical pattern three times already (X5
+# PPML, X6 B-HEARD, D6 dose response).
+#
+# The stratum is DERIVED from the episodes actually selected, not asserted. While
+# the freeze holds those are discovery's and the answer is "discovery". After it
+# lifts, the filter above stops applying and this script would silently pool
+# discovery with both confirmation strata — a set no calibration certifies,
+# because the three do not even share a draw scheme (discovery and C2 shift an
+# anchor, C1 shifts circularly over a gapped window). So a pooled run is refused
+# and pointed at the confirmatory path, which certifies each stratum separately.
+_periods = sorted(ep["period"].unique())
+if _periods != ["discovery"]:
+    raise SystemExit(
+        f"17_stacked_event_study estimates the discovery stratum; the selected "
+        f"episode list spans {_periods}. No calibration certifies a pooled null "
+        "over strata that do not share a draw scheme. The confirmatory path is "
+        "30_confirmatory_run.py, which certifies C1 and C2 separately.")
+require_calibrated("discovery")
+
 ep = ep.sort_values("start").reset_index(drop=True)
 real_starts = ep["start"].tolist()
 print(f"episodes in scope: {len(ep)}  ({'discovery only' if FREEZE_ACTIVE else 'all'})")
@@ -248,6 +279,45 @@ for outcome in outcomes:
                 observed=obs, outcome=outcome).to_csv(
                 OUTPUTS_TABLES / f"event_study_ri_draws_{outcome}.csv", index=False)
 
-pd.DataFrame(rows).to_csv(OUTPUTS_TABLES / "event_study_results.csv", index=False)
-pd.DataFrame(path_rows).to_csv(OUTPUTS_TABLES / "event_study_path.csv", index=False)
+# A SMALLER RUN MUST NOT REPLACE A LARGER ONE (finding D1, re-found in 17).
+#
+# 18_null_calibration.py was given this rule after an 8-sim smoke test destroyed
+# the 200-sim verdict it was gating on. The rule was never applied here, and
+# this script has exactly the same shape: --draws exists so the estimator can be
+# exercised cheaply, outputs/tables/ is gitignored so nothing is recoverable
+# from git, and the artifact is the one carrying the primary inference.
+#
+# Found the same way as the original: a 2-draw run launched to prove the new
+# calibration gate fires replaced a full result, reporting p_randomization = 1.0
+# from two draws. The file is honest about itself — it records n_draws — but
+# nothing stopped it and nothing said what it had overwritten, which is the
+# error path indistinguishable from success.
+_res = pd.DataFrame(rows)
+_main = OUTPUTS_TABLES / "event_study_results.csv"
+_draws_here = int(_res["n_draws"].max()) if len(_res) else 0
+_prior = 0
+if _main.exists():
+    try:
+        _prior = int(pd.read_csv(_main)["n_draws"].max())
+    except Exception as e:
+        print(f"could not read the existing result ({e}); treating it as absent")
+
+# The sidecar is written unconditionally, before any decision about the main
+# artifact, so a run that declines to publish still leaves its evidence.
+_res.to_csv(OUTPUTS_TABLES / f"event_study_results_d{_draws_here}.csv", index=False)
+pd.DataFrame(path_rows).to_csv(
+    OUTPUTS_TABLES / f"event_study_path_d{_draws_here}.csv", index=False)
+
+if _draws_here >= _prior:
+    _res.to_csv(_main, index=False)
+    pd.DataFrame(path_rows).to_csv(OUTPUTS_TABLES / "event_study_path.csv", index=False)
+    if _prior:
+        print(f"published: {_draws_here} draws replaces the {_prior}-draw result on disk")
+else:
+    print("=" * 70)
+    print(f"REFUSING TO PUBLISH. This run used {_draws_here} draws; the result on "
+          f"disk rests on {_prior}.")
+    print(f"Its record is in event_study_results_d{_draws_here}.csv. "
+          "event_study_results.csv is unchanged.")
+    print("=" * 70)
 print(f"\nwrote event_study_results.csv ({len(rows)} rows) and event_study_path.csv")
