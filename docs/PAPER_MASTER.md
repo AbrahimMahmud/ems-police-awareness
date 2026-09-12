@@ -1450,11 +1450,88 @@ surfaced six defects, none of which was visible in any artifact:
 
 ## 8. Results
 
-*Empty by design.* No confirmatory estimate exists. `17_stacked_event_study.py`
-has never been run on real outcomes.
+**These are discovery-period results, 2017–2020, and they are exploratory.** The
+confirmation sample has never been examined. Nothing below tests H1 in the sense
+the design reserves that word for; it describes what the explorable half of the
+data looks like once the pipeline is repaired. The randomization p-values use
+**500 draws**, not the 2,000 pre-specified for the confirmatory run.
 
-Discovery-period results under CAI-D will be filled in here as they arrive, with
-the plain-language reading beside each number.
+### 8.1 The mental-health share does not move
+
+Twenty-nine discovery episodes, stacked, with day −1 as the reference and the
+joint test taken over days 0–7.
+
+| outcome | arm | first-week coefficient | randomization p |
+|---|---|---|---|
+| EDP share | OLS on shares | −0.00123 | 0.695 |
+| EDP count | PPML with offset | −0.01084 | 0.519 |
+| Narrow MH share | OLS on shares | −0.00103 | 0.880 |
+| Narrow MH count | PPML with offset | −0.00615 | 0.826 |
+
+Both arms point the same way — down — and neither comes close to conventional
+significance. **That the two arms agree is worth stating**, because this project
+has been caught by the opposite: the 2020 "signature" that looked like a shift
+in composition existed only in the denominator and reversed when counts were
+modelled. Here it does not reverse. The estimates are stable across the 14-, 28-
+and 60-day post windows as well, moving in the fourth decimal.
+
+**Read against the minimum effect of interest, −0.005**, the EDP share estimate
+is about a quarter of it and the narrow-MH estimate about a fifth. So the data
+are consistent with no effect, and equally consistent with an effect several
+times smaller than the one the paper has declared it would care about.
+
+**What this does not establish.** It does not show there is no effect. The
+discovery sample's power against −0.005 has not been computed — that is Phase H,
+and it is the next thing that has to happen for any of this to be interpretable
+as an absence rather than a silence. A null with unknown power is not evidence
+of nothing; it is evidence of nothing *detected*.
+
+### 8.2 The placebos are quiet, and one channel is not
+
+The decomposition runs 65 outcome-by-window tests. Under a Bonferroni threshold
+across all of them — α = 0.000769 — exactly **three** survive, and all three are
+the same thing:
+
+| outcome | window | coefficient | p |
+|---|---|---|---|
+| injury share | days 0–2 | +0.00144 | 0.00019 |
+| injury share | days 12–14 | +0.00110 | 0.00071 |
+| log injury count | days 0–2 | +0.00962 | 0.00050 |
+
+Nothing in the mental-health family survives — its smallest p anywhere is 0.066,
+which across thirty tests is what noise looks like. Neither placebo survives:
+cardiac share and asthma share reach 0.222 and 0.097 at their strongest, which is
+the behaviour a placebo is included to demonstrate and the reason the injury
+result can be read as something rather than as one more draw from a wide net.
+
+**The plain reading is a street-activity channel, not a help-seeking one.**
+Injury calls rise in the first three days after attention rises, in both share
+and count, while every mental-health measure stays flat. That is what a protest
+mechanism looks like and it is not what this paper set out to measure.
+
+**The alternatives it does not rule out** are real and should be stated before
+anyone gets attached to the story. The days 12–14 coefficient is nearly as large
+as the days 0–2 one, which no simple protest account predicts and which is more
+consistent with episode windows overlapping something seasonal. "Injury" is a
+dispatch call type, not an adjudicated cause, so a change in how incidents are
+coded during a period of heightened activity would produce the same number. And
+the decomposition is estimated on shares within a total that is itself moving:
+`log1p_injury` rising tells us the count rose, but a compositional finding that
+lives only in the denominator is exactly the error this project already made
+once.
+
+### 8.3 What the figures show
+
+`08_figures.py` produced output for the first time in this project's history —
+until 2026-09-12 its first figure raised `KeyError` on a column name and no check
+ran it, so it had never generated anything. Four figures now exist: the raw
+series with episodes marked, the primary impulse response, the window
+decomposition, and the outcome decomposition with placebos blocked visually.
+
+The event-study path for both primary outcomes sits close to zero throughout,
+with no pre-trend and no post-episode step: the largest first-week daily
+coefficient is −0.0024 for narrow MH on day 0, against a series whose
+district-day standard deviation is 0.047.
 
 ---
 

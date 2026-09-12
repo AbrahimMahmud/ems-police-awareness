@@ -193,3 +193,59 @@ Reading (honest):
    of awareness on EDP/narrow-MH composition -- rather than a directional
    days-3-5 decline. TO BE RATIFIED WITH JUSTIN AT GATE C before the
    confirmatory run.
+
+---
+
+## 9. Checkpoint (2026-09-12): the discovery run, on the rebuilt pipeline
+
+The first analytic estimate this project has produced since the rebuild. Every
+number here is in the claims register and recomputes from a committed artifact;
+none of the earlier sections of this memo could say that.
+
+**Setup.** 29 discovery episodes from the adopted (rebuilt) list, stacked, day −1
+reference, joint test over days 0–7, randomization inference at **500 draws** —
+not the 2,000 pre-specified for confirmation, because discovery is exploratory
+and the draw count is a cost decision rather than a design one.
+
+**The mental-health share does not move, and both arms agree.**
+
+| outcome | arm | first week | RI p |
+|---|---|---|---|
+| EDP share | OLS | −0.00123 | 0.695 |
+| EDP count | PPML + offset | −0.01084 | 0.519 |
+| narrow MH share | OLS | −0.00103 | 0.880 |
+| narrow MH count | PPML + offset | −0.00615 | 0.826 |
+
+Section 2 of this memo reported a **-0.86 pp days-3-5 decline** on the Twitter
+measure and section 8 already recorded that the composite index did not
+reproduce it at that window. This run settles the question at the window the
+reframing proposed instead: the two-sided first-week joint test also finds
+nothing, in either arm, at any of the 14-, 28- and 60-day post windows.
+
+The estimates are all negative and all small: against the minimum effect of
+interest now fixed at **−0.005**, the EDP estimate is about a quarter of it. The
+honest statement is that the discovery data are consistent with no effect and
+equally consistent with an effect several times below the threshold the paper has
+said it cares about. **Power against −0.005 has not been computed** — that is
+Phase H — so this is a null of unknown resolution, not an established absence.
+
+**One channel does move, and it is not the one the paper is about.** Across the
+65 outcome-by-window tests in the decomposition, three survive a Bonferroni
+threshold of 0.000769, and all three are injury: share on days 0–2 (+0.00144,
+p = 0.00019), share on days 12–14 (+0.00110, p = 0.00071), and log count on days
+0–2 (+0.00962, p = 0.00050). Both placebos stay quiet — cardiac 0.222, asthma
+0.097 at their strongest — which is what makes the injury result readable as
+signal rather than as the largest of many draws.
+
+Section 3 of this memo proposed a "protest-injury channel" alongside the
+help-seeking story. On the rebuilt pipeline the protest channel is what survives
+and the help-seeking story is what does not. That is a reversal of the memo's
+emphasis and it should be carried into the reframing discussion rather than
+smoothed over.
+
+**What this does not settle.** The days 12–14 coefficient is nearly as large as
+days 0–2, which no simple protest account predicts. "Injury" is a dispatch code,
+not an adjudicated cause. And the share result lives inside a moving total, which
+is the exact error already made once in this project.
+
+Nothing here touches the confirmation sample, which remains unexamined.
