@@ -2571,6 +2571,85 @@ def v_links_resolve():
 # ===========================================================================
 # META — the register and the suite must not drift apart
 # ===========================================================================
+def m_status_honest():
+    """No finding claims to be fixed while a check tagged to it is FAILING.
+
+    AUDIT_FINDINGS.csv had no status column: whether a finding was closed was
+    inferable only by reading this suite and matching tags by eye. Worse, every
+    entry's `fix` column is written when the finding is FILED — it describes what
+    should be done, not what was — so a register full of prescriptions read like
+    a register full of completions.
+
+    The column records intent:
+
+      fixed        the remedy is believed implemented
+      open         known outstanding
+      unverified   nothing checks it. A statement of work remaining, and NOT a
+                   synonym for fine.
+
+    This asserts one direction only: nothing may say `fixed` while a check
+    tagged to it is currently FAILING. Two things are deliberately not asserted,
+    and both are lessons from writing it:
+
+      A check ABSENT from the artifact is not a failing check. The first version
+      treated missing as non-passing, so adding any new check instantly made its
+      finding look unfixed — a check failing for the wrong reason, inside the
+      check whose whole job is to stop the register claiming what it cannot show.
+
+      A two-way comparison OSCILLATES. Deriving the column and then testing the
+      file against the derivation means every change flips it: the stored value
+      is always one run behind, so it fails, and fixing it makes the next run
+      fail the other way. This check also excludes ITSELF from the evidence, for
+      the same reason a witness cannot corroborate their own testimony: tagged to
+      O5, its own failure would make O5 look open, which would keep it failing.
+    """
+    reg = PROJECT_ROOT / "docs" / "AUDIT_FINDINGS.csv"
+    res = OUTPUTS_TABLES / "regression_suite.csv"
+    if not reg.exists():
+        return "BLOCKED", "AUDIT_FINDINGS.csv is absent"
+    d = pd.read_csv(reg)
+    if "status" not in d.columns:
+        return "FAIL", ("AUDIT_FINDINGS.csv has no status column, so whether a "
+                        "finding is closed is recorded nowhere")
+    allowed = {"fixed", "open", "unverified"}
+    bad_vals = sorted(set(d["status"].astype(str)) - allowed)
+    if bad_vals:
+        return "FAIL", f"status values outside {sorted(allowed)}: {bad_vals}"
+    if not res.exists():
+        return "BLOCKED", "regression_suite.csv absent — the suite has not run"
+
+    SELF = "M.status_honest"
+    tagged = {}
+    for cid, fids, _desc, _fn in CHECKS:
+        if cid == SELF:
+            continue
+        for f in str(fids).split(","):
+            if f.strip():
+                tagged.setdefault(f.strip(), []).append(cid)
+    state = dict(zip(*[pd.read_csv(res)[c] for c in ("check", "state")]))
+
+    lying = []
+    for _, r in d.iterrows():
+        if str(r["status"]) != "fixed":
+            continue
+        # BLOCKED counts against a "fixed" claim as much as FAIL does. BLOCKED
+        # means "could not evaluate", and this suite treats it as deliberately
+        # not a pass everywhere else; a finding whose only evidence could not be
+        # evaluated has no evidence.
+        failing = [c for c in tagged.get(r["id"], [])
+                   if state.get(c) in ("FAIL", "BLOCKED", "ERROR")]
+        if failing:
+            lying.append(f"{r['id']} ({failing[0]}={state.get(failing[0])})")
+    counts = d["status"].value_counts().to_dict()
+    detail = (f"{len(d)} findings: "
+              + ", ".join(f"{k}={v}" for k, v in sorted(counts.items()))
+              + f"; {len(d) - int(counts.get('unverified', 0))} carry a check")
+    if lying:
+        return "FAIL", (f"{len(lying)} finding(s) say 'fixed' while a check tagged "
+                        f"to them is not passing: {lying[:4]}")
+    return "PASS", detail
+
+
 def m_register_sync():
     """Every tag resolves to a finding, and every blocking finding has a check.
 
@@ -2654,6 +2733,7 @@ CHECKS = [
     ("V.claims_reproduce", "X14", "every claimed number recomputes from its artifact", v_claims_reproduce),
     ("V.links_resolve", "X14", "every endpoint has a dated result", v_links_resolve),
     ("X.run_all_stages_declared", "X10", "every pipeline stage exists and declares its outputs", x_run_all_stages_declared),
+    ("M.status_honest", "O5", "no finding is recorded fixed without a passing check", m_status_honest),
     ("M.register_sync", "O5", "register and suite have not drifted apart", m_register_sync),
 ]
 

@@ -938,7 +938,7 @@ instead of sitting in prose.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **61 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **62 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
@@ -967,6 +967,32 @@ found that could pass for the wrong reason —
 proves the code *says* the right thing, not that the output *has* the right
 property. And a new check is not done until someone has actively tried to defeat
 it.
+
+**The findings register now says whether each finding is actually closed.** It
+did not before, and the gap was subtle: every entry has a `fix` column, but that
+column is written when the finding is *filed*. It describes what should be done,
+not what was. A register full of prescriptions reads like a register full of
+completions, and whether anything had actually been fixed was recoverable only by
+reading the check suite and matching tags by eye.
+
+Each of the 78 findings now carries a status — `fixed`, `open`, or `unverified` —
+and the check that guards it asserts one direction only: **nothing may say
+`fixed` while a check tagged to it is not passing.** `unverified` means nothing
+checks it, which is a statement of work remaining and not a synonym for fine.
+Current state: **70 fixed, 1 open, 7 unverified**.
+
+Writing that check taught two things worth keeping, both of which are the same
+defect it exists to prevent, committed inside it:
+
+- **Absent is not failing.** The first version treated a check missing from the
+  last run's results as non-passing, so *adding* any new check instantly made its
+  finding look unfixed.
+- **A two-way comparison oscillates, and a witness cannot corroborate their own
+  testimony.** Deriving the column and then testing the file against the
+  derivation means the stored value is always one run behind: it fails, and
+  fixing it makes the next run fail the other way. And this check is itself
+  tagged to a finding, so its own failure would have made that finding look open,
+  which would have kept it failing. It excludes itself from its own evidence.
 
 ### 7.6 The source and claims registers
 
