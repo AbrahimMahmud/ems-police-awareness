@@ -33,6 +33,7 @@ run, and the same error class the audit itself was hunting.
 """
 
 import argparse
+import ast
 import importlib.util
 import json
 import re
@@ -437,6 +438,86 @@ def s_calibration_on_residual():
         f"ar1_rho={rho_art:.4f} matches the residual {rho_resid:.4f} "
         f"(gap {near_resid:.4f}) and not the level {rho_level:.4f}, which is the "
         f"S8 defect the null used to carry")
+
+
+def s_dose_arm_wired():
+    """D6: the dose-response arm has a caller AND recovers a planted dose effect.
+
+    `fit_dose_response` was written, documented in 17's header, committed — and
+    called by nothing. A repo-wide grep for its name returned exactly one hit,
+    its own `def`. That is the THIRD documented arm in this rebuild found wired
+    into nothing, after the PPML counts arm (X5/R8) and the B-HEARD control (X6).
+    A function nobody calls is a claim nobody tested, and it reads in the header
+    exactly like one that works.
+
+    So this check does both halves, because either alone passes for the wrong
+    reason. A source scan proves a caller exists but not that the arm fits — the
+    PPML arm HAD a caller and still raised TypeError into a broad `except` that
+    reported "not estimable". A behavioural test proves the function works but
+    not that the pipeline uses it.
+
+    The planted effect is proportional to episode intensity: episodes carry
+    intensities spanning the real range and the outcome is shifted by a fixed
+    amount per standard deviation of intensity, so the interaction coefficient
+    has a known target.
+    """
+    sys.path.insert(0, str(SCRIPTS))
+    import event_study as es
+
+    # A CALL, not a mention. The first version of this scan looked for the name
+    # anywhere in the file, and PASSED with the caller deleted — because the
+    # comment above the call site explains that this function used to be dead
+    # code, and names it. A check written to catch "documented but never called"
+    # was itself satisfied by the documentation. Parse instead: only a Call node
+    # counts.
+    def calls_it(path):
+        try:
+            tree = ast.parse(path.read_text())
+        except SyntaxError:
+            return False
+        return any(isinstance(n, ast.Call)
+                   and (getattr(n.func, "id", None) or getattr(n.func, "attr", None))
+                   == "fit_dose_response"
+                   for n in ast.walk(tree))
+
+    callers = [f.name for f in sorted(SCRIPTS.glob("*.py"))
+               if f.name not in ("event_study.py", "23_regression_suite.py")
+               and calls_it(f)]
+    if not callers:
+        return "FAIL", ("fit_dose_response has no caller anywhere — the dose arm is "
+                        "documented in 17's header and wired into nothing")
+
+    rng = np.random.default_rng(11)
+    dates = pd.date_range("2017-01-01", "2020-12-31", freq="D")
+    cds = list(range(1, 60))
+    N, T = len(cds), len(dates)
+    panel = pd.DataFrame({"communitydistrict": np.repeat(cds, T),
+                          "incident_date": np.tile(dates, N),
+                          "total_calls": rng.poisson(60, N * T)})
+    panel["dow"] = panel["incident_date"].dt.dayofweek
+    starts = [d for d in pd.date_range("2017-02-01", periods=28, freq="48D")
+              if d <= dates[-1] - pd.Timedelta(days=20)]
+    # Intensities spanning the real discovery range (peak CAI-D 1.40 to 12.67).
+    peaks = np.linspace(1.40, 12.67, len(starts))
+    intensity = dict(zip(starts, peaks))
+    z = (peaks - peaks.mean()) / peaks.std(ddof=0)
+
+    PER_SD = 0.01
+    panel["edp_share"] = 0.10 + rng.normal(0, 0.002, N * T)
+    for st0, zi in zip(starts, z):
+        m = panel["incident_date"].between(st0, st0 + pd.Timedelta(days=7))
+        panel.loc[m, "edp_share"] += PER_SD * zi
+
+    stack = es.build_stack(panel, starts, 14, 14)
+    fit = es.fit_dose_response(stack, "edp_share", intensity)
+    if fit is None:
+        return "FAIL", f"dose arm has caller(s) {callers} but does not fit"
+    got = float(fit.coef()["_post_dose"])
+    ok = abs(got - PER_SD) < 0.002
+    return ("PASS" if ok else "FAIL",
+            f"called by {callers}; recovers planted dose effect {got:+.5f} per SD "
+            f"against a planted {PER_SD:+.5f}" if ok else
+            f"called by {callers} but recovered {got:+.5f} against a planted {PER_SD:+.5f}")
 
 
 def e_estimators_use_adopted_list():
@@ -2364,6 +2445,7 @@ CHECKS = [
     ("S.no_stale_calibration", "R3", "no stale low-n calibration artifact", s_stale_calibration_artifact),
     ("S.calibration_on_residual", "S8", "synthetic null has this design's dependence, not a harder one", s_calibration_on_residual),
     ("S.ppml_wired", "X5,R8", "counts/PPML arm actually called", s_ppml_wired),
+    ("S.dose_arm_wired", "D6", "dose-response arm has a caller and recovers a planted effect", s_dose_arm_wired),
     ("D.freeze_not_tautological", "D3", "freeze guard is not a tautology", d_freeze_not_tautological),
     ("D.freeze_disjoint", "D3", "confirmation sample disjoint from discovery", d_freeze_enforces_disjoint),
     ("D.guard_coverage", "D3,X11,X9", "every outcome-artifact reader calls the guard", d_guard_coverage),

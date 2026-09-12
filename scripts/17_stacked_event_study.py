@@ -80,6 +80,7 @@ from event_study import (
     _rel_day_coefs,
     build_stack,
     count_outcome,
+    fit_dose_response,
     episode_day_counts,
     first_week_effect,
     first_week_mean,
@@ -195,6 +196,44 @@ for outcome in outcomes:
                       f"p_RI={c_p:.3f}  [PPML counts]")
             else:
                 print(f"  {cnt} post={post}: counts arm not estimable")
+
+        # -- dose-response arm: the effect per SD of episode intensity (D6) --
+        #
+        # SECONDARY and pre-specified as such; the binary arm stays primary
+        # because it is what was pre-registered. It is here because the binary
+        # design treats a 12.67-peak episode and a 1.40-peak one identically, and
+        # peak CAI-D spans 9x across the discovery episodes.
+        #
+        # It is here at all because it was DEAD CODE: fit_dose_response was
+        # written, documented, committed, and called by nothing — a repo-wide
+        # grep returned only its own def. That is the third time in this rebuild
+        # a documented arm turned out to be wired into nothing, after the PPML
+        # counts arm (X5/R8) and the B-HEARD control (X6). A function nobody
+        # calls is a claim nobody tested.
+        if post == args.post:
+            dose = fit_dose_response(stack, outcome,
+                                     dict(zip(ep["start"], ep["peak_cai_d"])))
+            if dose is None:
+                print(f"  {outcome} post={post}: dose arm not estimable")
+            else:
+                k = "_post_dose"
+                rows.append({"outcome": outcome, "post_window": post,
+                             "estimator": "OLS_share_dose_per_sd",
+                             "first_week_chi2": np.nan,
+                             "first_week_mean_coef": float(dose.coef()[k]),
+                             # No RI here: the permutation would have to redraw
+                             # intensities as well as dates, which is a different
+                             # null from the one the primary arm tests. The
+                             # asymptotic p is reported and labelled as such
+                             # rather than a randomization p left blank.
+                             "p_randomization": np.nan,
+                             "p_asymptotic": float(dose.pvalue()[k]),
+                             "se": float(dose.se()[k]),
+                             "n_draws": 0, "null_sd": np.nan,
+                             "n_episodes": len(real_starts), "n_obs": len(stack)})
+                print(f"  {outcome:18s} post={post:>3}  "
+                      f"coef/SD-intensity={dose.coef()[k]:+.5f}  "
+                      f"p_asy={dose.pvalue()[k]:.3f}  [dose, secondary]")
 
         rows.append({"outcome": outcome, "post_window": post, "estimator": "OLS_share",
                      "first_week_chi2": obs,

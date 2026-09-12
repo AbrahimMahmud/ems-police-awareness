@@ -615,6 +615,22 @@ methodological claim this paper can make is not that we avoided these — we did
 them repeatedly *after* the point where a careful project would normally have
 stopped looking.
 
+**A fourth arm found wired into nothing, and a check that passed for the wrong
+reason about it.** `fit_dose_response` — the specification that scales the effect
+by how big each episode actually was, rather than treating a peak of 12.67 and
+one of 1.40 identically — was written, documented in the estimator's own header,
+committed, and called by nothing. A search for its name across the repository
+returned exactly one hit: its own definition. That is the third such arm in this
+rebuild, after the count-model arm and the B-HEARD control.
+
+The check written to catch that then did the same thing in miniature. Its first
+version looked for the function's name anywhere in a file — and it passed with
+the call deleted, because the comment *above* the call site explains that this
+function used to be dead code and names it. A check meant to catch "documented
+but never called" was satisfied by the documentation. It now parses each script
+and counts only an actual call, and the defeat test deliberately leaves the
+comment in place to prove the distinction holds.
+
 ### 5.3 The freeze incidents — **two**, both disclosed
 
 **F1 (2026-09-10).** During an automated audit, an agent computed the citywide
@@ -823,7 +839,7 @@ currently assumed rather than estimated. Under investigation.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **57 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **58 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They do **not** all pass right now, and this document says so rather than
