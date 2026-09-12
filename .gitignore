@@ -49,6 +49,11 @@ outputs/figures/*.png
 outputs/figures/*.pdf
 outputs/tables/*.csv
 outputs/tables/*.txt
+# Subdirectories too: the glob above stops at one level, so outputs/tables/
+# superseded/ (calibrations moved aside when the null they certify is replaced)
+# showed up as untracked. Everything under outputs/tables is regenerable by
+# re-running the stage that wrote it; none of it is an input.
+outputs/tables/**/*.csv
 outputs/*.pptx
 
 # OS
