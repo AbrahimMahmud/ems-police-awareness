@@ -45,6 +45,12 @@ import numpy as np
 import pandas as pd
 
 from config import (
+    EPISODE_LIST_PRIMARY,
+    EVENT_WINDOW_POST,
+    EVENT_WINDOW_PRE,
+    DISCOVERY_END,
+    DISCOVERY_START,
+    CONFIRMATION_WINDOWS,
     CAI_D_BASKET,
     DATA_PROCESSED,
     DATA_REFERENCE,
@@ -366,6 +372,74 @@ def t_no_redirect_candidates():
     return "PASS", (f"{len(basket)} candidates, none a redirect; "
                     f"{len(res)} resolved, {len(recovered)} target(s) the walk had "
                     "not collected directly")
+
+
+def s_ri_scheme_certified():
+    """P1: the randomization null actually used must be the one the calibration certifies.
+
+    `event_study.placebo_starts` shifts the whole real sequence by one anchor and
+    REJECTS the draw if the sequence does not fit. That is correct — an earlier
+    version walked forward and stopped early, so the null carried about half the
+    real episode count — but it means the scheme needs slack, and one stratum has
+    none.
+
+    Measured on the confirmation strata: C1's 2021 block holds 5 episodes spanning
+    139 days inside a 151-day window. Reserving the +/-14-day event window leaves
+    120 usable days against 139 required — slack of MINUS 19. Every draw is
+    rejected, so C1's randomization p-value returns NaN after the whole budget is
+    spent. C1 is the CLEAN stratum, the one the discovery/confirmation split
+    exists to obtain, so this is not a corner case.
+
+    A circular-shift scheme works there, and is pre-specified. But a CALIBRATED
+    verdict is a statement about a specific scheme on a specific sample geometry,
+    and the calibration artifact did not record either. This check makes the
+    artifact answer for itself: compute the slack each stratum needs, and require
+    the calibration to name the scheme it certified.
+
+    Episode dates are treatment-side, so this reads no outcome data.
+    """
+    art = OUTPUTS_TABLES / "null_calibration.csv"
+    ep_f = DATA_REFERENCE / EPISODE_LIST_PRIMARY
+    if not ep_f.exists():
+        return "BLOCKED", f"{EPISODE_LIST_PRIMARY} absent — run 13_extension_episodes.py"
+    if not art.exists():
+        return "BLOCKED", "null_calibration.csv absent — run 18_null_calibration.py"
+    a = pd.read_csv(art).set_index("metric")["value"]
+    if "draw_scheme" not in a.index:
+        return "BLOCKED", ("null_calibration.csv predates the draw_scheme field, so "
+                           "which null it certified is unrecorded — re-run "
+                           "18_null_calibration.py (finding P1)")
+
+    ep = pd.read_csv(ep_f, parse_dates=["start"])
+    pre, post = EVENT_WINDOW_PRE, EVENT_WINDOW_POST
+    blocks = {"discovery": [(pd.Timestamp(DISCOVERY_START), pd.Timestamp(DISCOVERY_END))]}
+    for i, (lo, hi) in enumerate(CONFIRMATION_WINDOWS, 1):
+        blocks[f"confirmation_{i}"] = [(pd.Timestamp(lo), pd.Timestamp(hi))]
+
+    tight = []
+    for name, spans in blocks.items():
+        for lo, hi in spans:
+            starts = sorted(ep.loc[ep["start"].between(lo, hi), "start"])
+            if len(starts) < 2:
+                continue
+            span = (starts[-1] - starts[0]).days
+            room = ((hi - pd.Timedelta(days=post + 1))
+                    - (lo + pd.Timedelta(days=pre + 1))).days - span
+            if room < 0:
+                tight.append(f"{name} {lo.date()}..{hi.date()}: {len(starts)} episodes "
+                             f"span {span}d, slack {room}d")
+
+    scheme = str(a["draw_scheme"])
+    if tight and scheme == "anchor_shift":
+        return "FAIL", (
+            f"{len(tight)} window(s) cannot produce a single admissible anchor-shift "
+            f"draw ({tight[0]}), but the calibration certifies scheme "
+            f"'{scheme}' on a '{a.get('sample_geometry')}' sample. The null used "
+            "would not be the null certified (finding P1).")
+    return "PASS", (f"calibration certifies scheme '{scheme}' on a "
+                    f"'{a.get('sample_geometry')}' sample; "
+                    f"{len(tight)} window(s) need a different scheme"
+                    + (f" — {tight[0]}" if tight else ""))
 
 
 def s_calibration_on_residual():
@@ -2553,6 +2627,7 @@ CHECKS = [
     ("S.calibration_can_fail", "S4,X3,R3", "calibration verdict can fail", s_calibration_can_fail),
     ("S.no_stale_calibration", "R3", "no stale low-n calibration artifact", s_stale_calibration_artifact),
     ("S.calibration_on_residual", "S8", "synthetic null has this design's dependence, not a harder one", s_calibration_on_residual),
+    ("S.ri_scheme_certified", "P1", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
     ("S.ppml_wired", "X5,R8", "counts/PPML arm actually called", s_ppml_wired),
     ("S.dose_arm_wired", "D6", "dose-response arm has a caller and recovers a planted effect", s_dose_arm_wired),
     ("D.freeze_not_tautological", "D3", "freeze guard is not a tautology", d_freeze_not_tautological),

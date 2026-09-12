@@ -299,6 +299,30 @@ numbers were read as evidence rather than as an access.**
 The structural gap is closed: the guard now covers the source dataset and not
 only the files derived from it.
 
+## 16. The randomization scheme on C1 (finding P1)
+
+Found on 2026-09-12 while writing the confirmatory script, not by running
+anything — no code path had ever constructed C1's draw geometry.
+
+The plan above specifies episode-level randomization inference as H1's test. On
+C1 the calibrated draw scheme **cannot produce a single admissible draw**. C1 is
+two blocks, and its 2021 block holds 5 episodes spanning 139 days inside a
+151-day window; reserving the ±14-day event window around each leaves 120 usable
+days against 139 required — slack of **minus 19**. Every draw is rejected and the
+p-value returns NaN after the entire budget is spent.
+
+C1 is the *clean* stratum. Its uncontaminated evidence is the reason the design
+splits the sample at all, so this is not a corner case.
+
+A circular-shift-over-admissible-days scheme is exact at 2,000 draws for both C1
+and pooled, and is pre-specified here as the scheme for those strata. **It is a
+different null from the one the calibration certifies.** The 200-sim CALIBRATED
+verdict was obtained on a contiguous discovery sample under the original scheme,
+and that does not transfer to a two-block window with negative slack. Before the
+freeze lifts, the calibration is re-run against C1's gapped geometry under this
+scheme — which is treatment-side and blind-safe — and until it is, any C1
+p-value rests on an uncertified null and is labelled as such.
+
 ---
 
 ## What has NOT changed

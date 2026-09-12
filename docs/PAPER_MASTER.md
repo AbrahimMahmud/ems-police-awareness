@@ -860,19 +860,19 @@ the thing it was written to detect.
 
 ### 7.4 What the null calibration proves
 
-**Layer 1.** Before trusting our method on real data, we ran it hundreds of times on
-fake data built to contain *no* effect. A trustworthy method should cry wolf about
-5% of the time. Ours cries wolf 6.5% of the time — close enough, and the full
-spread of its answers is the right shape.
+**Layer 1.** Before trusting our method on real data, we ran it two hundred times
+on fake data built to contain *no* effect. A trustworthy method should cry wolf
+about 5% of the time. Ours cries wolf **5.0%** of the time, and the full spread of
+its answers is the right shape.
 
 **Layer 3.** `scripts/18_null_calibration.py`, 200 sims × 200 draws:
 
 ```
 VERDICT                   CALIBRATED
-empirical rejection rate  0.065    nominal 0.05, band [0.0198, 0.0802]
-median p                  0.5025
-KS uniformity             p = 0.562
-AR(1) rho                 0.185    estimated from the real panel
+empirical rejection rate  0.05     nominal 0.05, band [0.0198, 0.0802]
+median p                  0.5
+KS uniformity             p = 0.5617
+AR(1) rho                 0.0482   estimated from the real panel
 ```
 
 Uniformity is the property that matters — a correct rejection rate with a
@@ -882,15 +882,31 @@ would certify an estimator whose error bars are ~3× too narrow.
 
 The gate refuses a verdict below 200 sims (verified: a 4-sim run prints
 UNDETERMINED and exits 2). The artifact it replaced read CALIBRATED from 12 sims
-with no real panel.
+with no real panel. A run that completes fewer sims than the one already on disk
+now refuses to publish at all, because an 8-sim smoke test once overwrote the
+200-sim verdict and said nothing about it (§5.2).
 
-*Open:* 0.065 is inside the band but above nominal, and the 0.35σ day shock is
-currently assumed rather than estimated. Under investigation.
+**This section was wrong until 2026-09-12, and the reason is worth keeping.** It
+quoted a rejection rate of 0.065 and an AR(1) rho of 0.185, and closed with an
+open item saying the day shock was "assumed rather than estimated". Finding S8
+established that those numbers described a null more dependent than this design
+actually has: rho was estimated from the outcome's *level* series, which already
+contains the district, day-of-week and day-shock components the synthetic panel
+then added back on top — so the AR(1) was nearly four times too persistent and the
+variance 1.40× too wide. Each component is now estimated after the previous one is
+removed, and the implied total SD is 0.0429 against the panel's 0.0428.
+
+The error ran in the **conservative** direction: a more dependent null is a harder
+test, so the CALIBRATED verdict survived it. That is exactly why it lasted. A
+defect whose sign happens to be safe is the kind nobody goes looking for, and it
+was found by reviewing a *power* design rather than the calibration itself. The
+numbers above are now in the claims register, so a future drift fails a check
+instead of sitting in prose.
 
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **60 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **61 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
@@ -1022,7 +1038,7 @@ the plain-language reading beside each number.
 6. **The EDPC recode (mid-2018)** sits inside the discovery window.
 7. **The episode construct changed** after the original freeze, while blind to
    outcomes (§4.2) — disclosed, dated, with original wording preserved.
-8. **One freeze incident** (§5.3).
+8. **Two freeze incidents** (§5.3), one of which carried a specification decision.
 9. **We do not use armed/unarmed status**, which is our protection against the Nix
    & Lozada critique of MPV coding — stated explicitly because a reader who knows
    that literature will ask.

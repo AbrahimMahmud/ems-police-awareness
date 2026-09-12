@@ -243,6 +243,19 @@ calibrated = enough and rate_ok and uniform_ok
 out = pd.DataFrame([
     {"metric": "n_sims_completed", "value": len(pvals)},
     {"metric": "ri_draws_per_sim", "value": args.draws},
+    # WHICH NULL THIS VERDICT CERTIFIES (finding P1).
+    #
+    # A CALIBRATED verdict is a statement about a specific draw scheme on a
+    # specific sample geometry, and the artifact never said which. It was
+    # obtained on a CONTIGUOUS sample under the anchor-shift scheme in
+    # event_study.placebo_starts. That does not transfer to the C1 confirmation
+    # stratum, which is two blocks with NEGATIVE slack — every anchor-shift draw
+    # there is rejected, so C1's p-value would come back NaN — and the
+    # circular-shift fallback that does work is a different null. Recording the
+    # scheme is what lets a check notice the mismatch instead of a reader having
+    # to remember it.
+    {"metric": "draw_scheme", "value": "anchor_shift"},
+    {"metric": "sample_geometry", "value": "contiguous"},
     {"metric": "ar1_rho", "value": round(rho, 4)},
     {"metric": "nominal_alpha", "value": args.alpha},
     {"metric": "empirical_rejection_rate", "value": round(rej, 4)},
