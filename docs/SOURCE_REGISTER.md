@@ -10,7 +10,7 @@ Sources: 19 (13 live, 4 retired, 2 unverifiable).
 Every verification result ever recorded, including failures, is in
 `data/reference/source_verification_log.csv`, which is append-only.
 
-Last scan: **2026-09-12T01:17:19+00:00** — 18 skipped, 2 template, 6 unverifiable, 66 verified
+Last scan: **2026-09-12T01:32:41+00:00** — 18 skipped, 2 template, 6 unverifiable, 66 verified
 
 ## S1 — NYC EMS Incident Dispatch Data
 
@@ -147,7 +147,7 @@ Last scan: **2026-09-12T01:17:19+00:00** — 18 skipped, 2 template, 6 unverifia
 - **Access**: scripts/09_fetch_public_data.py, scripts/26_resolve_basket_scope.py
 - **What we take**: article extracts, used to confirm a candidate article is about a police killing
 - **Role**: article resolution and basket screening
-- **Artifact**: `data/reference/wikipedia_article_resolution.csv` — _verified_ (sha256 8c587914076bb844, 121 rows; not registered in data_sources.csv)
+- **Artifact**: `data/reference/wikipedia_article_resolution.csv` — _verified_ (sha256 8e488fc8819956be, 109 rows; not registered in data_sources.csv)
 - **Known flaws**:
   - A summary mentioning police is necessary but not sufficient; the basket rules in 26/27 do the real screening.
 

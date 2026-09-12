@@ -268,6 +268,83 @@ reason rather than trusting the sentence.
 The basket is deliberately **not ranked by attention** — that would let the index
 select its own inputs, which is the defect that retired `trends_victims`.
 
+**Does the basket actually contain police violence?** (findings B1, B2.) Nobody
+had ever checked, and the answer was no.
+
+The basket is built by walking Wikipedia's category tree, and the walk records
+only the **first** category it reaches an article through. For **61 of the 120
+articles — just over half — that first category was a topic**: "Black Lives
+Matter" (57 articles) or "2020/2021 United States racial unrest" (4). A topic
+category says what conversation an article belongs to. It says nothing about who
+killed anyone. And nothing downstream asked: the scope rule tests *when* and
+*where* a death happened, never *who did it*. Wikidata's "manner of death" field,
+the obvious place to look, is filled in for 6 of 174 candidates — and where it is
+filled in it is not reliable, since Wikidata records Eric Garner's manner of
+death as "natural causes".
+
+So the treatment index — the thing this whole paper measures attention *with* —
+contained nine killings in which the police were not involved at all. Each one is
+confirmed by the first sentence of its own Wikipedia article: Ahmaud Arbery
+(murdered while jogging), Renisha McBride, Markeis McGlockton (shot by Michael
+Drejka), James Craig Anderson (killed by Deryl Dedmon), Tamla Horsford (found
+dead after a slumber party), Nina Pop (stabbed in her apartment), James Scurlock
+(shot by a bar owner), Carlos Carson (killed by a private security guard), and
+Deona Marie Knajdek (killed by a man who drove into a crowd).
+
+It also contained **Micah Xavier Johnson, who shot five Dallas police officers**
+— attention to violence *against* police, which is the opposite of what we are
+trying to measure. His date, 2016-07-08, is the single highest day in the entire
+index.
+
+`scripts/32_validate_basket_construct.py` now decides this per article, from
+public evidence anyone can re-check. The distinction that does the work is
+between a category that names **who acted** and one that names **a subject**:
+
+| Names an actor — counts | Names a topic — does not |
+|---|---|
+| "African Americans shot dead by law enforcement officers in Ohio" | "Law enforcement controversies in the United States" |
+| "Deaths in police custody in the United States" | "Police brutality in the United States" |
+| "Cleveland Division of Police", "Law enforcement in Wisconsin" | "Protests against police brutality" |
+
+Both kinds appear on real police shootings. Only the topic kind also appears on
+deaths the police had nothing to do with — Tamla Horsford died at a party and
+carries the controversy category; Carlos Carson carries two police-brutality
+categories and his article says a private security guard killed him. Jacob Blake
+carries the controversy category too, *and* "Law enforcement in Wisconsin",
+because an officer shot him. Only the second kind survives that test.
+
+Being in the Mapping Police Violence registry counts **for** an article and never
+against one. MPV lists only police killings, so appearing in it settles the
+question; not appearing settles nothing, because MPV omits Daniel Prude, Sandra
+Bland, Marvin Scott, Javier Ambler and Leneal Frazier (§5.6).
+
+The script carries **25 test cases whose answers were verified against the
+articles themselves** — sixteen police killings and shootings that must be kept,
+nine civilian killings that must not — and it refuses to write a basket at all if
+the rule stops agreeing with any of them. Every rule in it was added or demoted
+because one of those cases caught it.
+
+**Two baskets result**, and the paper reports both:
+
+- **Strict (109 articles) — primary.** Evidence names law enforcement as the
+  actor. This is what CAI-D is built from.
+- **Broad (118) — pre-registered sensitivity.** Adds the nine articles where
+  nothing establishes who acted, so the paper can *show* whether the result
+  depends on where the line was drawn instead of asserting that it does not.
+- Attention to violence against police is in **neither**, and what removing it
+  does to the 2016-07-08 peak is reported rather than quietly absorbed.
+
+**Where, as well as who** (finding B2). The old country test excluded an article
+only when Wikidata *named* a country outside the US, so an article with no
+country listed passed by default — 58 of 120 did, and only 2 were ever excluded
+this way. That is admission on absence, and the same reasoning would have
+admitted a killing anywhere. Simply demanding a Wikidata country is not the fix:
+it is missing for 44 of the 109 strict-basket articles, George Floyd and Deborah
+Danner among them, which is a gap in Wikidata rather than a fact about the
+country. The categories do carry it — all 109 sit under a US state, a US agency,
+or an explicit United States category, and none under a non-US one — and that is
+now recorded per article and checked.
+
 ### 4.2 What an "episode" is
 
 **Layer 1.** An episode is a burst of unusual attention. We find the days when the
@@ -722,7 +799,7 @@ currently assumed rather than estimated. Under investigation.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **53 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **55 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They do **not** all pass right now, and this document says so rather than

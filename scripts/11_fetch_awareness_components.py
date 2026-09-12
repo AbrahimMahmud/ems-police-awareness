@@ -19,7 +19,8 @@ import urllib.request
 
 import pandas as pd
 
-from config import DATA_REFERENCE
+import wikimedia as wm
+from config import DATA_PROCESSED, DATA_REFERENCE
 from provenance import log_source
 from wiki_titles import collapse_duplicates, load_title_map
 
@@ -80,6 +81,9 @@ def get_json(url, tries=6):
             time.sleep(5 * (a + 1))
     raise RuntimeError(f"failed after {tries} tries: {url[:120]}")
 
+
+# One file per title, keyed on the request (scripts/wikimedia.py).
+PV_CACHE = DATA_PROCESSED / "wiki_pageviews_cache"
 
 rows = []
 
@@ -154,15 +158,20 @@ if ARGS.only in (None, "wiki_ext"):
      # T.title_agg_no_trend decides between them on the data.
      by_day, by_day_max, n_ok, n_fail, n_404 = {}, {}, 0, 0, 0
      for t in titles:
-         u = (f"https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/"
-              f"en.wikipedia/all-access/user/{urllib.parse.quote(t)}"
-              f"/daily/20150701/20241231")
+         # Cached per title, on disk. This block asks for ~500 ten-year daily
+         # series and had no cache at all, so every run refetched all of them and
+         # a rate-limited interruption threw the whole thing away. The limit is a
+         # token bucket on the CLIENT IP, shared with every other Wikimedia
+         # caller in this project, so a run that has to start over is not merely
+         # slow — it spends budget the basket rebuild also needs. wikimedia.py
+         # honours Retry-After and paces across processes, and it does NOT cache
+         # failures, so a 429 can never harden into "this title has no data".
          try:
-             items = get_json(u)["items"]
-         except NotFound:
+             items = wm.pageviews_items(t, "20150701", "20241231", cache_dir=PV_CACHE)
+         except wm.NotFound:
              n_404 += 1
              continue
-         except RuntimeError as e:
+         except wm.FetchFailed as e:
              # Counted into the ARTIFACT, not only printed. A failure that
              # exists solely in a three-hour stdout log is a failure nobody
              # sees: the last run of this script lost one of Daunte Wright's
@@ -171,8 +180,6 @@ if ARGS.only in (None, "wiki_ext"):
              n_fail += 1
              print(f"  wiki skip (fetch failed): {t} — {e}", flush=True)
              continue
-         finally:
-             time.sleep(0.4)
          n_ok += 1
          for it in items:
              d = it["timestamp"][:8]
@@ -201,6 +208,26 @@ if ARGS.only in (None, "wiki_ext"):
                   "n_titles_no_data": n_404, "n_titles_failed": n_fail})
 
  pd.DataFrame(used).to_csv(DATA_REFERENCE / "wiki_ext_basket_used.csv", index=False)
+
+ # A RECORDED FAILURE THAT STILL SHIPS IS NOT A FIX (finding T15, extended).
+ #
+ # A title whose fetch failed was counted into n_titles_failed and the summed
+ # series was written anyway. wiki_ext IS the treatment index's main input, so a
+ # rate-limited run published a quietly smaller measure of public attention, with
+ # the evidence of it sitting in a column nobody reads until the suite next runs
+ # — by which time 12_build_cai.py and 13_extension_episodes.py have rebuilt the
+ # index and the episode list on top of it.
+ #
+ # Refuse instead. The per-title cache above makes a re-run cheap: everything
+ # already fetched is on disk, so resuming costs only the titles that failed.
+ _failed = [u for u in used if u["n_titles_failed"]]
+ if _failed:
+     raise SystemExit(
+         f"{len(_failed)} article(s) lost at least one title to a failed fetch "
+         f"({sum(u['n_titles_failed'] for u in _failed)} titles in total, e.g. "
+         f"{[u['article'] for u in _failed[:3]]}). REFUSING to write a wiki_ext "
+         "built from an incomplete fetch. Re-run this script — the per-title "
+         "cache means only the failures are retried.")
  pa = pd.DataFrame(per_article)
  pa["date"] = pd.to_datetime(pa["date"])
  pa.to_csv(DATA_REFERENCE / "wiki_pageviews_by_article.csv", index=False)

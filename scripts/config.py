@@ -217,6 +217,21 @@ AWARENESS_VARIANTS = ("cai_d", "cai_d_black", "cai_d_nonblack", "cai_s")
 # contains an NYC killing is an EPISODE ATTRIBUTE for heterogeneity, not a
 # component of the treatment index.
 CAI_D_COMPONENTS = ("wiki_ext", "trends_us")
+
+# WHICH ARTICLE BASKET wiki_ext IS SUMMED OVER.
+#
+# "strict" keeps only articles where the evidence names law enforcement as the
+# actor; "broad" also keeps the articles where nothing establishes who acted.
+# 32_validate_basket_construct.py writes both and the difference is 9 articles —
+# Ahmaud Arbery, Renisha McBride, Markeis McGlockton, James Craig Anderson,
+# Tamla Horsford, Nina Pop, James Scurlock, Carlos Carson, Deona Marie Knajdek,
+# each killed by a civilian according to their own article's first sentence.
+#
+# Strict is primary because the hypothesis is about attention to POLICE
+# violence. Broad is the pre-registered sensitivity, so the paper can show
+# whether the result depends on where the line was drawn instead of asserting
+# that it does not. Attention to violence AGAINST police is in neither.
+CAI_D_BASKET = "strict"
 CAI_S_COMPONENTS = ("gdelt_news", "gdelt_tv")
 CAI_D_COMPONENTS_RETIRED = ("trends_victims",)
 

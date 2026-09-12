@@ -43,6 +43,7 @@ import numpy as np
 import pandas as pd
 
 from config import (
+    CAI_D_BASKET,
     DATA_PROCESSED,
     DATA_REFERENCE,
     OUTPUTS_TABLES,
@@ -436,6 +437,120 @@ def s_calibration_on_residual():
         f"ar1_rho={rho_art:.4f} matches the residual {rho_resid:.4f} "
         f"(gap {near_resid:.4f}) and not the level {rho_level:.4f}, which is the "
         f"S8 defect the null used to carry")
+
+
+def t_basket_is_police_violence():
+    """B4: every article in the published basket has evidence police were the actor.
+
+    CAI-D claims to measure attention to POLICE violence, and until 2026-09-12
+    nothing tested that claim. 27_finalise_basket.py decides scope on country and
+    date and never asks who killed anyone; Wikidata's manner-of-death property is
+    present on 6 of 174 candidates. What actually admitted an article was the
+    category the crawl reached it through, and for 61 of 120 — 51% — that was a
+    TOPIC category ("Black Lives Matter", "2020 United States racial unrest"),
+    which asserts nothing about an actor.
+
+    The basket therefore contained killings by civilians, each confirmed from the
+    article's own opening sentence: Ahmaud Arbery (a hate crime while jogging),
+    Renisha McBride, Markeis McGlockton (shot by Michael Drejka), James Craig
+    Anderson (killed by Deryl Dedmon), Tamla Horsford (found dead at a slumber
+    party), Nina Pop (stabbed in her apartment), James Scurlock (shot by a bar
+    owner), Carlos Carson (killed by a private security guard), Deona Marie
+    Knajdek (a car driven into demonstrators). It also contained Micah Xavier
+    Johnson, who shot five Dallas police officers, on 2016-07-08 — the single
+    highest day in the entire index.
+
+    Checked against basket_construct_review.csv, which 32 writes with the
+    evidence for each call, so this runs offline on every commit.
+    """
+    rev = DATA_REFERENCE / "basket_construct_review.csv"
+    res = DATA_REFERENCE / "wikipedia_article_resolution.csv"
+    if not rev.exists():
+        return "BLOCKED", ("no basket_construct_review.csv — run "
+                           "32_validate_basket_construct.py; without it, whether the "
+                           "basket measures police violence is untested")
+    if not res.exists():
+        return "BLOCKED", "wikipedia_article_resolution.csv absent — run 32 --apply"
+    r = pd.read_csv(rev)
+    published = set(pd.read_csv(res)["article"])
+    klass = r.set_index("article")["construct"].to_dict()
+
+    unreviewed = sorted(published - set(klass))
+    anti = sorted(a for a in published if klass.get(a) == "anti_police")
+    allowed = {"strict": {"police_violence"},
+               "broad": {"police_violence", "unestablished"}}[CAI_D_BASKET]
+    off = sorted(a for a in published
+                 if a in klass and klass[a] not in allowed and a not in anti)
+    if unreviewed or anti or off:
+        parts = []
+        if unreviewed:
+            parts.append(f"{len(unreviewed)} published article(s) carry no construct "
+                         f"review at all: {unreviewed[:3]}")
+        if anti:
+            parts.append(f"{len(anti)} article(s) measure attention to violence AGAINST "
+                         f"police: {anti[:3]}")
+        if off:
+            parts.append(f"{len(off)} article(s) are outside the '{CAI_D_BASKET}' "
+                         f"basket's classes: {off[:3]}")
+        return "FAIL", "; ".join(parts)
+    return "PASS", (
+        f"all {len(published)} published articles classified for the "
+        f"'{CAI_D_BASKET}' basket; "
+        f"{sum(1 for a in published if klass[a] == 'police_violence')} rest on a "
+        f"police-action category or the MPV registry; 0 anti-police")
+
+
+def t_basket_country_evidence():
+    """B4: no basket article was admitted without positive evidence it is a US case.
+
+    The country test in 27_finalise_basket.py excludes an article only when
+    Wikidata NAMES a country outside the US, so an article with no country
+    property passed by default — 58 of 120 did. That is admission on absence,
+    and the same reasoning would have admitted a killing anywhere.
+
+    Failing closed on Wikidata alone is not the fix either: P17 is missing for 44
+    of the 109 strict-basket articles, George Floyd, Deborah Danner and Manuel
+    Ellis included. Requiring it would delete the most central cases in the study
+    over a gap in Wikidata's coverage rather than any fact about the country.
+
+    So the evidence is Wikidata's country OR a category naming a US state, a US
+    agency, or the United States explicitly — recorded per article by 32, and
+    read here rather than recomputed, so the rule has one home.
+    """
+    rev = DATA_REFERENCE / "basket_construct_review.csv"
+    res = DATA_REFERENCE / "wikipedia_article_resolution.csv"
+    if not rev.exists() or not res.exists():
+        return "BLOCKED", "basket_construct_review.csv or the resolution file is absent — run 32"
+    r = pd.read_csv(rev).set_index("article")
+    if "us_evidence" not in r.columns:
+        return "BLOCKED", "basket_construct_review.csv predates the us_evidence column — re-run 32"
+    published = [a for a in pd.read_csv(res)["article"] if a in r.index]
+    sub = r.loc[published]
+    def present(col):
+        # fillna BEFORE astype. astype(str) renders NaN as the string "nan",
+        # which is non-empty, so the obvious spelling reports every missing value
+        # as evidence present — this check's first version claimed all 109
+        # articles carried non-US evidence. A check that fails for the wrong
+        # reason is the defect class this suite exists to catch, including in
+        # itself.
+        return sub[col].fillna("").astype(str).str.strip().ne("")
+
+    wd = sub["wikidata_country"].fillna("").astype(str).eq("United States")
+    cat = present("us_evidence")
+    nonus = present("non_us_evidence")
+    none_at_all = sorted(sub.index[~(wd | cat)])
+    outside = sorted(sub.index[nonus])
+    if none_at_all or outside:
+        parts = []
+        if none_at_all:
+            parts.append(f"{len(none_at_all)} article(s) admitted with no US evidence "
+                         f"of any kind: {none_at_all[:3]}")
+        if outside:
+            parts.append(f"{len(outside)} article(s) carry non-US evidence: {outside[:3]}")
+        return "FAIL", "; ".join(parts)
+    return "PASS", (f"all {len(sub)} published articles carry US evidence "
+                    f"({int(wd.sum())} from Wikidata, {int(cat.sum())} from a category); "
+                    f"0 carry non-US evidence")
 
 
 def t_exclusion_reasons_true():
@@ -2130,6 +2245,8 @@ CHECKS = [
     ("T.no_redirect_candidates", "T18", "no basket candidate is a redirect", t_no_redirect_candidates),
     ("T.exclusion_reasons_true", "N1,N3", "no basket exclusion states a reason the scope file contradicts", t_exclusion_reasons_true),
     ("T.scope_covers_candidates", "N2", "every basket candidate was actually asked about", t_scope_covers_candidates),
+    ("T.basket_is_police_violence", "B1", "every basket article has evidence police were the actor", t_basket_is_police_violence),
+    ("T.basket_country_evidence", "B2", "no basket article admitted without US evidence", t_basket_country_evidence),
     ("T.no_duplicate_person", "T17", "no basket article duplicates another person", t_no_duplicate_person_articles),
     ("S.did_no_shared_days", "S7", "no district-day is treated and control at once", s_did_no_shared_days),
     ("T.no_lost_history", "T12", "no article series starts after the article existed", t_no_lost_history),

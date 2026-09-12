@@ -221,11 +221,24 @@ def main():
         if out.exists() and not legacy.exists():
             shutil.copy(out, legacy)
             print(f"\nkept the Twitter-selected basket at {legacy.name}")
-        keep[["person", "article"]].rename(columns={"person": "name"}).to_csv(
-            out, index=False)
-        print(f"wrote {out.name}: {len(keep)} articles")
+        # THIS SCRIPT NO LONGER PUBLISHES THE BASKET.
+        #
+        # It answers WHEN and WHERE a killing happened. It has never answered
+        # WHO acted, and for half these articles the crawl reached them through
+        # a topic category ("Black Lives Matter") that does not answer it either.
+        # Publishing from here shipped a police-violence attention index
+        # containing killings by civilians and, on the index's single highest
+        # day, the man who shot five Dallas police officers.
+        #
+        # 32_validate_basket_construct.py classifies every candidate from its
+        # full category set and its own opening sentence, and writes
+        # wikipedia_article_resolution.csv from the basket config.CAI_D_BASKET
+        # selects. The scope decisions this script makes are still its input.
+        print(f"\nwrote basket_decisions.csv ({len(keep)} in scope).")
+        print("Run 32_validate_basket_construct.py --apply to publish the basket: "
+              "scope alone cannot tell a police killing from a civilian one.")
     else:
-        print("\ndry run — pass --apply to overwrite wikipedia_article_resolution.csv")
+        print("\ndry run — pass --apply to write basket_decisions.csv")
 
 
 if __name__ == "__main__":
