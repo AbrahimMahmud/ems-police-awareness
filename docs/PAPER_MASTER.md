@@ -376,7 +376,7 @@ now recorded per article and checked.
 index is far above normal, and treat the start of each burst as an event.
 
 **An episode is not a killing, and the paper must not imply that it is.** Measured
-across the 75 rebuilt episodes, the article drawing the most attention in the
+across the 74 rebuilt episodes, the article drawing the most attention in the
 window belongs to someone who died **more than a year earlier in 52 of them
 (69%)**, and within the 60-day attribution lookback in only **9 (12%)**. Episode 33
 (2019-07-16) is Eric Garner, 1,825 days after his death — the week the DOJ
@@ -425,7 +425,7 @@ is published as a disclosed deviation.
 rule. It is the **pre-registration record** — evidence of what was specified
 before any of this was rebuilt — and it is kept byte-identical to its committed
 version, with a check that fails if a single byte moves.
-`confirmation_episodes_rebuilt.csv` holds 75 episodes under the shock rule with a
+`confirmation_episodes_rebuilt.csv` holds 74 episodes under the shock rule with a
 within-year threshold, and is the list this project adopted.
 
 The decision to estimate on the rebuilt list was taken, written down, and never
@@ -441,6 +441,21 @@ One consequence, stated rather than absorbed: the null calibration that was
 running when this was found is calibrated to the **frozen** list's geometry — 30
 discovery episodes rather than the rebuilt list's 28 — so it has to be re-run
 against the adopted list before it can gate anything.
+
+**Episodes cluster, and that costs information.** 36 of the 74 rebuilt episodes
+have another episode starting within 28 days, and the closest pair start 10 days
+apart. The definition matters and is part of the claim: measured start-to-start
+at 28 days inclusive it is 36; measured from one episode's end to the next one's
+start it is 51. A bare count is not checkable, so the register carries the rule
+as well as the number.
+
+What this costs is smaller than expected, and in a different place. Because
+contested district-days go to the *nearer* episode, a first-week day is lost only
+to a *later* start within 14 days — and the minimum gaps are large enough that
+the total first-week loss is **2 episode-days out of 592** across all three
+strata. The loss lands in the **pre-period** instead, 9–15% of it, which is
+exactly what the pre-trend test spends. So clustering does not thin the estimate;
+it thins the evidence that the estimate is credible.
 
 ### 4.3 What the index can and cannot claim
 

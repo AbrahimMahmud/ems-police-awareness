@@ -49,10 +49,33 @@ DISCOVERY_END = "2020-12-31"
 # Never examined. Kept as explicit intervals so "the confirmation sample" is a
 # value in the code rather than a claim in a document.
 CONFIRM_START = "2015-01-01"
+# WHAT THE GUARD PROTECTS. Wider than what the analysis can use, deliberately.
 CONFIRMATION_WINDOWS = (
     ("2015-01-01", "2016-12-31"),   # pre-discovery: no COVID, no B-HEARD
     ("2021-01-01", "2024-12-31"),   # post-discovery: B-HEARD control required
 )
+
+# WHAT THE ANALYSIS CAN ACTUALLY USE. Narrower, and for a reason that has nothing
+# to do with the freeze: wiki_ext — and therefore CAI-D — begins 2015-07-01,
+# because that is where the Wikipedia pageviews API's daily series starts. There
+# is no treatment measure before then, so there is nothing to estimate, and the
+# earliest episode on the current list is 2015-07-23.
+#
+# These two constants disagreed for months and nothing said why. config named
+# 2015-01-01 and PAPER_MASTER 6 named 2015-07-01, so a reader comparing them
+# found a contradiction with no explanation, and a script could pick either.
+# They are different objects: the guard should protect every day it possibly can,
+# and the analysis should claim only the days it can measure. Naming both, and
+# asserting the second sits inside the first, is the whole fix.
+CONFIRMATION_ANALYSIS_WINDOWS = (
+    ("2015-07-01", "2016-12-31"),   # C1a — CAI-D exists from 2015-07-01
+    ("2021-01-01", "2021-05-31"),   # C1b — B-HEARD launches 2021-06-01
+    ("2021-06-01", "2024-12-31"),   # C2  — B-HEARD exposed
+)
+assert all(
+    any(g0 <= a and b <= g1 for g0, g1 in CONFIRMATION_WINDOWS)
+    for a, b in CONFIRMATION_ANALYSIS_WINDOWS
+), "an analysis window falls outside what the freeze guard protects"
 
 # Back-compatible aliases. While the freeze holds these ARE the discovery window;
 # they are what existing scripts filter on.

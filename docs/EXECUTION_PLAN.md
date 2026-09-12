@@ -242,7 +242,7 @@ days of a real episode**, so the RI bracket will not close and the run ends
 UNDETERMINED after spending its whole budget; the refactor recipe "delete lines
 82-142" of 18 **deletes the lines defining `starts`** (109-111) and 18 dies with
 `NameError`; a cross-route gate whose threshold is arithmetically unreachable.
-MDE must be on the **effective** episode count — 38 of 75 rebuilt episodes have a
+MDE must be on the **effective** episode count — 36 of 74 rebuilt episodes have a
 neighbour within ±28 days, which truncates windows and reduces informative N.
 
 **E2. `25_zscore_simulation.py` — rewrite, not revise.** §5.2 of PAPER_MASTER

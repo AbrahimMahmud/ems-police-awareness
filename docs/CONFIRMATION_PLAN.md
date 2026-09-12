@@ -301,15 +301,23 @@ only the files derived from it.
 
 ## 16. The randomization scheme on C1 (finding P1)
 
-Found on 2026-09-12 while writing the confirmatory script, not by running
-anything — no code path had ever constructed C1's draw geometry.
+Found on 2026-09-12, twice and independently — while writing the confirmatory
+script and again while writing the power analysis. Never by running anything: no
+code path had ever constructed C1's draw geometry.
 
 The plan above specifies episode-level randomization inference as H1's test. On
-C1 the calibrated draw scheme **cannot produce a single admissible draw**. C1 is
-two blocks, and its 2021 block holds 5 episodes spanning 139 days inside a
-151-day window; reserving the ±14-day event window around each leaves 120 usable
-days against 139 required — slack of **minus 19**. Every draw is rejected and the
-p-value returns NaN after the entire budget is spent.
+C1 that scheme is **undefined**, not merely tight. It draws an anchor inside
+**one contiguous span**, and C1 is two windows sitting either side of the entire
+discovery period — so there is no single span to draw in, and **40.9% of placebo
+starts land outside C1's own windows**. Taken alone, its 2021 block holds 5
+episodes spanning 139 days inside a 151-day window: 120 usable days against 139
+required, slack of **minus 19**. Every draw is rejected and the p-value returns
+NaN after the entire budget is spent.
+
+The problem is one of degree everywhere and of definition on C1. Measured at
+2,000 draws per stratum, placebo episodes land within 7 days of a real one
+**32.3%** of the time on discovery — which has only 190 free days for a 1,240-day
+sequence — and **35.1%** on C2, which has 53.
 
 C1 is the *clean* stratum. Its uncontaminated evidence is the reason the design
 splits the sample at all, so this is not a corner case.
