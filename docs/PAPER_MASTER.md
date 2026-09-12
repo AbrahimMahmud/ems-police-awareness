@@ -393,6 +393,30 @@ frozen file stays byte-identical on disk; the rebuilt list is written separately
 to `data/reference/confirmation_episodes_rebuilt.csv`, and the diff between them
 is published as a disclosed deviation.
 
+**Which episode list the models actually use.** There are two, and until
+2026-09-12 the code used the wrong one.
+
+`confirmation_episodes.csv` holds 70 episodes built under the old fixed-threshold
+rule. It is the **pre-registration record** — evidence of what was specified
+before any of this was rebuilt — and it is kept byte-identical to its committed
+version, with a check that fails if a single byte moves.
+`confirmation_episodes_rebuilt.csv` holds 75 episodes under the shock rule with a
+within-year threshold, and is the list this project adopted.
+
+The decision to estimate on the rebuilt list was taken, written down, and never
+carried into the code. All four estimators — the stacked event study, the
+difference-in-differences, the figures, and the null calibration — opened the
+frozen file by name. Nothing caught it, because both files exist, both parse, and
+both have identical columns: the wrong one produces a perfectly well-formed
+answer to a different question. The filename now lives in one place
+(`config.EPISODE_LIST_PRIMARY`) and a check reads the estimator sources and fails
+if any of them names the frozen file in code.
+
+One consequence, stated rather than absorbed: the null calibration that was
+running when this was found is calibrated to the **frozen** list's geometry — 30
+discovery episodes rather than the rebuilt list's 28 — so it has to be re-run
+against the adopted list before it can gate anything.
+
 ### 4.3 What the index can and cannot claim
 
 `trends_nyc` was the only nominally NYC-local component. It is **retired from
@@ -799,7 +823,7 @@ currently assumed rather than estimated. Under investigation.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **56 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **57 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They do **not** all pass right now, and this document says so rather than

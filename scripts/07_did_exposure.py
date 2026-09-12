@@ -24,6 +24,7 @@ import pandas as pd
 import pyfixest as pf
 
 from config import (
+    EPISODE_LIST_PRIMARY,
     ANALYSIS_END,
     ANALYSIS_START,
     DATA_PROCESSED,
@@ -63,7 +64,7 @@ assert DID_CONTROL_PRIMARY in controls and DID_CONTROL_SENSITIVITY in controls
 
 # The frozen CAI-D episode list is the single source of episode timing. While the
 # confirmation freeze holds, only discovery-period episodes are in scope.
-ep = pd.read_csv(DATA_REFERENCE / "confirmation_episodes.csv", parse_dates=["start", "end"])
+ep = pd.read_csv(DATA_REFERENCE / EPISODE_LIST_PRIMARY, parse_dates=["start", "end"])
 if FREEZE_ACTIVE:
     ep = ep[ep["period"] == "discovery"]
 ep = ep.sort_values("start").reset_index(drop=True)

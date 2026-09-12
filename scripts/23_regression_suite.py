@@ -439,6 +439,52 @@ def s_calibration_on_residual():
         f"S8 defect the null used to carry")
 
 
+def e_estimators_use_adopted_list():
+    """No estimator reads the FROZEN episode list, which is a record, not an input.
+
+    Two lists exist. confirmation_episodes.csv (70 episodes) was built under the
+    retired fixed-threshold rule and is kept byte-identical to HEAD as the
+    pre-registration record. confirmation_episodes_rebuilt.csv (75) is built under
+    the shock rule with a within-year quantile threshold, and is the list the
+    project adopted.
+
+    The decision to estimate on the rebuilt list was taken and recorded — and
+    never implemented. 17, 07, 08 and 18 all opened the frozen file BY NAME, so
+    every estimate this project was about to produce would have been computed on
+    the superseded rule while the documentation said otherwise. Nothing caught it
+    because both files exist, both parse, and both have the same columns: the
+    wrong one produces a perfectly well-formed answer to a different question.
+
+    This checks the source rather than an artifact because the defect IS in the
+    source, and because the estimators have never been run, so there is no output
+    to inspect. 13_extension_episodes.py and this suite may name the frozen file
+    — 13 to refuse to overwrite it, the suite to verify it is untouched.
+    """
+    ESTIMATORS = ("17_stacked_event_study.py", "07_did_exposure.py",
+                  "08_figures.py", "18_null_calibration.py", "event_study.py",
+                  "03_main_model.py", "04_robustness.py", "05_placebo_and_calls.py",
+                  "06_heterogeneity.py")
+    from config import EPISODE_LIST_FROZEN, EPISODE_LIST_PRIMARY
+    offenders, checked = [], []
+    for name in ESTIMATORS:
+        f = SCRIPTS / name
+        if not f.exists():
+            continue
+        checked.append(name)
+        for i, line in enumerate(f.read_text().splitlines(), 1):
+            code = line.split("#")[0]
+            if f'"{EPISODE_LIST_FROZEN}"' in code or f"'{EPISODE_LIST_FROZEN}'" in code:
+                offenders.append(f"{name}:{i}")
+    if not checked:
+        return "BLOCKED", "no estimator scripts found"
+    if offenders:
+        return "FAIL", (f"{len(offenders)} estimator line(s) read the frozen list by "
+                        f"name instead of EPISODE_LIST_PRIMARY: {offenders[:4]}")
+    return "PASS", (f"{len(checked)} estimator script(s) checked; none names "
+                    f"{EPISODE_LIST_FROZEN} in code — all route through "
+                    f"EPISODE_LIST_PRIMARY ({EPISODE_LIST_PRIMARY})")
+
+
 def d_outcome_list_complete():
     """O1 residual: every parquet in data/processed is classified, so none can be neither.
 
@@ -2329,6 +2375,7 @@ CHECKS = [
     ("E.threshold_stringency", "D5,L5,E6", "episode threshold is constant stringency", e_threshold_constant_stringency),
     ("E.no_mega_episode", "E3,D7,E6", "no episode exceeds its analysis window", e_no_mega_episode),
     ("E.frozen_list_untouched", "D3", "frozen episode list unmodified", e_frozen_list_untouched),
+    ("E.estimators_use_adopted_list", "D3,E6", "estimators read the adopted episode list, not the frozen record", e_estimators_use_adopted_list),
     ("E.labels_live_source", "E5,L6,R2", "episode labels not from retired Twitter", e_labels_not_from_twitter),
     ("E.attribution_lookback", "E2", "attribution lookback >= 60 days", e_attribution_lookback),
     ("O.ems_complete", "O5", "EMS extract covers the full source", o_ems_download_complete),

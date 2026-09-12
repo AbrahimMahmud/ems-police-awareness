@@ -370,6 +370,29 @@ BHEARD_PRIMARY_BOUND = "early"
 # ---------------------------------------------------------------------------
 # Stacked episode event study (ROADMAP U1; GATE_C_MEMO.md §3)
 # ---------------------------------------------------------------------------
+# WHICH EPISODE LIST THE ESTIMATORS CONSUME.
+#
+# Two lists exist and they are not interchangeable:
+#
+#   confirmation_episodes.csv          70 episodes, the FROZEN artifact. Built
+#       under the retired fixed-threshold rule (z > 1.0, merge gap < 7 days).
+#       Kept byte-identical to HEAD as the pre-registration record and checked by
+#       E.frozen_list_untouched. It is evidence of what was pre-specified, not an
+#       input to anything.
+#
+#   confirmation_episodes_rebuilt.csv  75 episodes, the ADOPTED list. Built under
+#       the shock rule with a within-year quantile threshold, so stringency is
+#       constant across years instead of drifting with the index's own scale. The
+#       construct change is a disclosed deviation.
+#
+# The decision to estimate on the rebuilt list was taken and recorded, and then
+# never implemented: 17, 07, 08 and 18 all still opened the frozen file by name,
+# so every estimate would have been computed on the superseded rule while the
+# documentation said otherwise. Naming the file here means there is one place to
+# change it and one place to read it from.
+EPISODE_LIST_PRIMARY = "confirmation_episodes_rebuilt.csv"
+EPISODE_LIST_FROZEN = "confirmation_episodes.csv"
+
 EVENT_WINDOW_PRE = 14                  # days before the episode start
 EVENT_WINDOW_POST = 14                 # primary post-window
 EVENT_WINDOW_POST_SENSITIVITY = (28, 60)   # U2: Desmond et al. find year-long effects

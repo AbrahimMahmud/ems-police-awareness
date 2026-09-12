@@ -55,6 +55,7 @@ import pandas as pd
 from scipy import stats
 
 from config import (
+    EPISODE_LIST_PRIMARY,
     ANALYSIS_END,
     ANALYSIS_START,
     DATA_PROCESSED,
@@ -147,7 +148,7 @@ if panel_path.exists():
 else:
     print(f"real panel not built yet — using assumed rho={rho}, sigma={sigma}")
 
-ep = pd.read_csv(DATA_REFERENCE / "confirmation_episodes.csv", parse_dates=["start"])
+ep = pd.read_csv(DATA_REFERENCE / EPISODE_LIST_PRIMARY, parse_dates=["start"])
 starts = ep.loc[ep["period"] == "discovery", "start"].sort_values().tolist()
 print(f"episode dates applied to synthetic outcomes: {len(starts)}")
 

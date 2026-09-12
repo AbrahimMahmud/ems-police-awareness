@@ -12,6 +12,7 @@ import pandas as pd
 
 from freeze_guard import select_sample
 from config import (
+    EPISODE_LIST_PRIMARY,
     ANALYSIS_END,
     ANALYSIS_START,
     DATA_PROCESSED,
@@ -48,7 +49,7 @@ def save(fig, name):
 aw = pd.read_parquet(DATA_PROCESSED / "cai_daily.parquet")
 aw["date"] = pd.to_datetime(aw["date"])
 
-ep = pd.read_csv(DATA_REFERENCE / "confirmation_episodes.csv",
+ep = pd.read_csv(DATA_REFERENCE / EPISODE_LIST_PRIMARY,
                  parse_dates=["start", "end", "peak_date"])
 if FREEZE_ACTIVE:
     ep = ep[ep["period"] == "discovery"]

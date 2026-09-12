@@ -61,6 +61,7 @@ import numpy as np
 import pandas as pd
 
 from config import (
+    EPISODE_LIST_PRIMARY,
     ANALYSIS_END,
     ANALYSIS_START,
     DATA_PROCESSED,
@@ -126,7 +127,7 @@ panel["dow"] = panel["incident_date"].dt.dayofweek
 # is wrong.
 panel = attach_bheard(panel, bound=BHEARD_BOUND_PRIMARY)
 
-ep = pd.read_csv(DATA_REFERENCE / "confirmation_episodes.csv", parse_dates=["start", "end"])
+ep = pd.read_csv(DATA_REFERENCE / EPISODE_LIST_PRIMARY, parse_dates=["start", "end"])
 if FREEZE_ACTIVE:
     ep = ep[ep["period"] == "discovery"]
 ep = ep.sort_values("start").reset_index(drop=True)
