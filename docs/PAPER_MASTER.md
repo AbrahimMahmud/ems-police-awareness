@@ -869,12 +869,12 @@ currently assumed rather than estimated. Under investigation.
 check — **59 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
-They do **not** all pass right now, and this document says so rather than
-rounding up. Six fail and two are blocked, and all eight are the same piece of
-unfinished work: the article basket is mid-rebuild, so the counts derived from it
-have moved, two artifacts still predate the script that writes them, and the null
-calibration is being regenerated after a smoke-test run overwrote it. Each is
-named with its remedy in `outputs/tables/regression_suite.csv`.
+They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
+BLOCKED, no ERROR — and the live state is always in
+`outputs/tables/regression_suite.csv` rather than in this sentence. When they do
+not all pass, this document says which and why instead of rounding up: the
+version of this paragraph written a few hours earlier named six failures and two
+blocked checks, all of them the same unfinished rebuild.
 
 The pass count is deliberately not quoted here. It changes with every run, so a
 number in prose would either be wrong or would have to be edited constantly —

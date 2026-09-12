@@ -10,7 +10,7 @@ Sources: 19 (13 live, 4 retired, 2 unverifiable).
 Every verification result ever recorded, including failures, is in
 `data/reference/source_verification_log.csv`, which is append-only.
 
-Last scan: **2026-09-12T02:35:04+00:00** — 18 skipped, 2 template, 6 unverifiable, 72 verified
+Last scan: **2026-09-12T02:52:42+00:00** — 18 skipped, 2 template, 6 unverifiable, 72 verified
 
 ## S1 — NYC EMS Incident Dispatch Data
 
@@ -279,9 +279,9 @@ Last scan: **2026-09-12T02:35:04+00:00** — 18 skipped, 2 template, 6 unverifia
 - **Access**: scripts/28_build_nyc_attention.py (cached under data/processed/wiki_cat_cache/)
 - **What we take**: articles in the NYC police-incident categories, screened to require a police marker AND an incident form AND a New York marker; then their summed daily pageviews
 - **Role**: wiki_nyc - the uncensored city-local attention component that replaces trends_nyc
-- **Artifact**: `data/reference/wiki_nyc_articles.csv` — _verified_ (sha256 abb0d075af0e382f, 501 rows; not registered in data_sources.csv)
-- **Artifact**: `data/reference/wiki_nyc_daily.csv` — _verified_ (sha256 1ebfe7c1bcd158d2, 6,944 rows, 2015-07-01..2024-12-31; matches the provenance register)
-- **Artifact**: `data/reference/wiki_nyc_per_article.csv` — _verified_ (sha256 a82130d42a41569e, 52,080 rows, 2015-07-01..2024-12-31; not registered in data_sources.csv)
+- **Artifact**: `data/reference/wiki_nyc_articles.csv` — _verified_ (sha256 a50359145a74a954, 543 rows; not registered in data_sources.csv)
+- **Artifact**: `data/reference/wiki_nyc_daily.csv` — _verified_ (sha256 66321420e2ed9675, 6,944 rows, 2015-07-01..2024-12-31; matches the provenance register)
+- **Artifact**: `data/reference/wiki_nyc_per_article.csv` — _verified_ (sha256 5b8fffc41defa7b1, 55,552 rows, 2015-07-01..2024-12-31; not registered in data_sources.csv)
 - **Known flaws**:
   - The basket is thin - roughly ten NYC articles, mostly historical cases - so much of the series is anniversary and spillover traffic rather than contemporaneous local attention. This bounds how strongly the locality claim can be made.
   - An early version measured notable NYC deaths generally (Babe Ruth, John Lennon, the UnitedHealthcare CEO shooting) because the filter required NYC and death but never police involvement.

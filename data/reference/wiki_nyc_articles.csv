@@ -1,36 +1,41 @@
 article,keep,reason,locality,n_categories
 16th_Street_NW,False,not a specific person's death or assault,,6
+1980_Miami_riots,False,not an incident (riots),,23
 1988_Tompkins_Square_Park_riot,False,not an incident (riots),nyc,10
+2002_Los_Angeles_International_Airport_shooting,False,not a specific person's death or assault,,22
+2009_Lakewood_shooting,False,not a specific person's death or assault,,17
+"2012_Anaheim,_California_police_shooting_and_protests",False,not an incident (riots),,12
+2012_Empire_State_Building_shooting,False,not a specific person's death or assault,nyc,12
 2015_Baltimore_protests,False,not an incident (riots),,16
+2015_Boston_beheading_plot,False,not a specific person's death or assault,,9
 2015_Chicago_White_Sox–Baltimore_Orioles_crowdless_game,False,not a specific person's death or assault,,11
+2016_Ohio_State_University_attack,False,not a specific person's death or assault,,18
+2016_Ohio_restaurant_machete_attack,False,not a specific person's death or assault,,13
+"2016_St._Cloud,_Minnesota_knife_attack",False,not a specific person's death or assault,,15
+2017_Marathon_County_shootings,False,not a specific person's death or assault,,11
 2020_American_athlete_strikes,False,not a specific person's death or assault,,14
 2020_Minneapolis_false_rumors_riot,False,not an incident (riots),,24
 2020_Minneapolis_park_encampments,False,not an incident (riots),,8
-2020_Riots:_How_Many_Times,False,not an incident (Songs),,4
 2020_deployment_of_federal_forces_in_the_United_States,False,not an incident (riots),,13
 2020–2023_Minneapolis–Saint_Paul_racial_unrest,False,not an incident (riots),,24
 2021_Minneapolis_Question_2,False,not an incident (Organizations),,19
 2021_Uptown_Minneapolis_unrest,False,not an incident (riots),,12
 2022_Normandale_Park_shooting,False,not a specific person's death or assault,,13
+"2023_Allen,_Texas_mall_shooting",False,not a specific person's death or assault,,19
 8_minutes_46_seconds,False,not a specific person's death or assault,,3
 8:46_(special),False,not an incident (documentary),,13
 A_Surge_of_Power_(Jen_Reid)_2020,False,not a specific person's death or assault,,13
 Aalayah_Eastmond,False,not a specific person's death or assault,,14
-Abdul_Razak_Ali_Artan,False,not a specific person's death or assault,,17
-Aiyana_Jones,False,not a specific person's death or assault,,8
 Alex_Mengel,False,not a specific person's death or assault,nys,14
 Alicia_Garza,False,not a specific person's death or assault,,25
 All_American_Boys,False,not a specific person's death or assault,,13
 All_Lives_Matter,False,not a specific person's death or assault,,14
 Alright_(Kendrick_Lamar_song),False,not an incident (Songs),,21
-Alvin_Cole,False,not a specific person's death or assault,,8
 American_Trial:_The_Eric_Garner_Story,False,not an incident (films),nyc,4
 Andrew_Goodman_(activist),False,not a specific person's death or assault,nyc,23
 Angel_Down_(song),False,not an incident (Songs),,13
 Angela_Atwood,False,no New York marker in its categories,,10
-Anthony_Weber_(shooting_victim),False,not a specific person's death or assault,,8
 Antonia_Martínez,False,not a specific person's death or assault,,9
-Arrest_of_Omar_Jimenez,False,not a specific person's death or assault,,8
 Arthur_McDuffie,False,no New York marker in its categories,,8
 "Asbury_United_Methodist_Church_(Washington,_D.C.)",False,not a specific person's death or assault,,7
 Assa_Traoré,False,not a specific person's death or assault,,8
@@ -41,7 +46,6 @@ BAMN,False,not an incident (Organizations),,6
 BREATHE_Act,False,not a specific person's death or assault,,9
 BYP100,False,not an incident (Organizations),,3
 Bad_News:_How_Woke_Media_Is_Undermining_Democracy,False,not a specific person's death or assault,,7
-Baltimore_(Prince_song),False,not an incident (Songs),,8
 Baltimore_Rising,False,not an incident (documentary),,7
 Bars4Justice,False,not an incident (documentary),,15
 "Bear_Witness,_Take_Action",False,not an incident (films),,3
@@ -57,9 +61,21 @@ Black_In_Neuro,False,not an incident (Organizations),,7
 Black_Justice_League,False,not an incident (Organizations),,4
 Black_Lives_Matter,False,not an incident (Organizations),,24
 Black_Lives_Matter_Global_Network_Foundation,False,not an incident (Organizations),,8
+Black_Lives_Matter_Memorial_Fence,False,not a specific person's death or assault,,9
+Black_Lives_Matter_Plaza,False,not a specific person's death or assault,,9
 Black_Lives_Matter_art,False,not a specific person's death or assault,,1
+Black_Lives_Matter_art_in_New_York_City,False,not a specific person's death or assault,nyc,2
+"Black_Lives_Matter_art_in_Portland,_Oregon",False,not a specific person's death or assault,,4
 Black_Lives_Matter_movement_in_popular_culture,False,not a specific person's death or assault,,8
 Black_Lives_Matter_protests_in_New_York_City,False,not a specific person's death or assault,nyc,9
+"Black_Lives_Matter_street_mural_(Capitol_Hill,_Seattle)",False,not a specific person's death or assault,,8
+Black_Lives_Matter_street_mural_(Cincinnati),False,not a specific person's death or assault,,7
+Black_Lives_Matter_street_mural_(Indianapolis),False,not a specific person's death or assault,,7
+"Black_Lives_Matter_street_mural_(Portland,_Oregon)",False,not a specific person's death or assault,,9
+Black_Lives_Matter_street_mural_(Salt_Lake_City),False,not a specific person's death or assault,,6
+"Black_Lives_Matter_street_mural_(Santa_Cruz,_California)",False,not a specific person's death or assault,,8
+Black_Lives_Matter_street_mural_(Seattle_City_Hall),False,not a specific person's death or assault,,8
+"Black_Lives_Matter_street_mural_(Springfield,_Massachusetts)",False,not a specific person's death or assault,,7
 Black_Parade_(song),False,not an incident (Songs),,13
 Black_Reconstruction_Collective,False,not an incident (Organizations),,7
 Black_Software,False,not a specific person's death or assault,,7
@@ -80,17 +96,14 @@ Campaign_Zero,False,not a specific person's death or assault,,3
 Can't_Put_It_in_the_Hands_of_Fate,False,not an incident (Songs),,12
 Cancel_culture,False,not a specific person's death or assault,,11
 Capitol_Hill_Occupied_Protest,False,not an incident (riots),,22
-Cara_Knott,False,not a specific person's death or assault,,6
 Carol_Gotbaum,False,no New York marker in its categories,,9
 Cat_Brooks,False,not a specific person's death or assault,,19
 Censorship_by_TikTok,False,not a specific person's death or assault,,5
 Chi_Ossé,False,not a specific person's death or assault,nyc,24
 Christian_Cooper,False,not a specific person's death or assault,nyc,20
-Christopher_Penley,False,not a specific person's death or assault,,5
 Cicely_Belle_Blain,False,not a specific person's death or assault,,16
 Cicley_Gay,False,not a specific person's death or assault,,3
 Cincinnati_riots_of_2001,False,not an incident (riots),,13
-Clifford_Glover,False,not a specific person's death or assault,nyc,9
 Colin_Kaepernick,False,not a specific person's death or assault,,33
 Colin_in_Black_&_White,False,not a specific person's death or assault,,12
 Commitment_March:_Get_Your_Knee_Off_Our_Necks,False,not a specific person's death or assault,,5
@@ -98,12 +111,10 @@ Cori_Bush,False,not a specific person's death or assault,,39
 Cornel_Young_Jr.,False,not an incident (Police officers),,9
 Crandon_shooting,False,not a specific person's death or assault,,20
 Criminal_stereotype_of_African_Americans,False,not a specific person's death or assault,,5
-Dahir_A._Adan,False,not a specific person's death or assault,,18
 Daniel_Pantaleo,False,not a specific person's death or assault,nyc,8
 Daniel_Prude,False,duplicate: historical title of Killing_of_Daniel_Prude,nys,9
 Danielle_Walker_(politician),False,not a specific person's death or assault,,17
 Darnella_Frazier,False,not a specific person's death or assault,,10
-Darren_Wilson_(police_officer),False,not a specific person's death or assault,,1
 Daunte_Wright_protests,False,not an incident (riots),,8
 DeRay_Mckesson,False,not a specific person's death or assault,,20
 Deadly_Exchange,False,not a specific person's death or assault,,18
@@ -135,12 +146,11 @@ Don't_Shoot_Portland,False,not an incident (Organizations),,4
 Elijah_McClain,False,no New York marker in its categories,,9
 Elle_Moxley,False,not a specific person's death or assault,,21
 Emil_Wilbekin,False,not a specific person's death or assault,,33
-Emogene_Thompson,False,not a specific person's death or assault,,9
 "Equestrian_statue_of_Leopold_II,_Ostend",False,not a specific person's death or assault,,14
-Eric_Garner,False,no New York marker in its categories,,12
 Erica_Garner,False,not a specific person's death or assault,,12
 Eugene_Puryear,False,not a specific person's death or assault,,14
 Eva_Lewis,False,not a specific person's death or assault,,9
+Felipe_Espinosa,False,not a specific person's death or assault,,9
 Ferguson_Action,False,not an incident (Organizations),,7
 Ferguson_Municipal_Public_Library,False,not a specific person's death or assault,,6
 Ferguson_Police_Department,False,not a specific person's death or assault,,5
@@ -165,13 +175,16 @@ George_Floyd_protests_in_Minneapolis–Saint_Paul,False,not an incident (riots),
 George_Robinson_(police_brutality_victim),False,no New York marker in its categories,,5
 George_Zimmerman,False,not a specific person's death or assault,,18
 Giishkitawag,False,not a specific person's death or assault,,12
+Gonzalo_Lopez,False,not a specific person's death or assault,,22
+Griselio_Torresola,False,not a specific person's death or assault,,14
+Groveland_Four,False,not an incident (riots),,18
 Gwen_Carr,False,not a specific person's death or assault,,13
 Hands_Up_United,False,not an incident (Organizations),,9
 "Hands_up,_don't_shoot",False,not a specific person's death or assault,,7
 Harry_Simms_(labor_leader),False,not a specific person's death or assault,,15
 Hedy_Epstein,False,not a specific person's death or assault,,16
-Hesham_Mohamed_Hadayet,False,not a specific person's death or assault,,10
 His_Name_Is_George_Floyd,False,not a specific person's death or assault,,8
+Hit_n_Run_Phase_Two,False,not an incident (Albums),,5
 Holding_a_Black_Lives_Matter_Sign_in_America's_Most_Racist_Town,False,not an incident (documentary),,14
 How_to_Sleep_When_You're_on_Fire,False,not an incident (Albums),,5
 I_Can't_Breathe_(H.E.R._song),False,not an incident (Songs),,12
@@ -190,23 +203,22 @@ Jari_Jones,False,not a specific person's death or assault,nys,18
 Javier_Ambler_II,False,no New York marker in its categories,,9
 Jeffrey_T._Johnson,False,not a specific person's death or assault,nys,12
 Jen_Reid,False,not a specific person's death or assault,,7
-Jessie_Davis,False,not a specific person's death or assault,,8
 John_Africa,False,no New York marker in its categories,,18
 John_Glenn_(1870s_outfielder),False,not a specific person's death or assault,nys,24
 John_Thompson_(Minnesota_politician),False,not a specific person's death or assault,,8
 John_Tunstall,False,not a specific person's death or assault,,16
 Johnetta_Elzie,False,not a specific person's death or assault,,9
 Jonathan_Sanders,False,no New York marker in its categories,,7
-Jonny_Gammage,False,no New York marker in its categories,,6
-Jordan_Edwards_(shooting_victim),False,not a specific person's death or assault,,9
 Jotham_Horton,False,not a specific person's death or assault,,11
 Kenosha_unrest,False,not an incident (riots),,16
 Kenosha_unrest_shooting,False,not a specific person's death or assault,,15
 Kenyon_Farrow,False,not a specific person's death or assault,,17
-Kevin_Mullins,False,not a specific person's death or assault,,6
+Killing_of_Adam_Toledo,False,no New York marker in its categories,,11
 Killing_of_Aiyana_Jones,False,no New York marker in its categories,,18
 Killing_of_Akai_Gurley,True,New York City police-violence incident,nyc,13
+Killing_of_Alex_Nieto,False,no New York marker in its categories,,8
 Killing_of_Alfred_Olango,False,no New York marker in its categories,,10
+Killing_of_Alfred_Redwine,False,no New York marker in its categories,,8
 Killing_of_Alton_Sterling,False,no New York marker in its categories,,11
 Killing_of_Alvin_Cole,False,no New York marker in its categories,,12
 Killing_of_Amadou_Diallo,True,New York City police-violence incident,nyc,12
@@ -214,24 +226,33 @@ Killing_of_Amir_Locke,False,no New York marker in its categories,,12
 Killing_of_Anastasio_Hernández-Rojas,False,no New York marker in its categories,,9
 Killing_of_Andres_Guardado,False,no New York marker in its categories,,11
 Killing_of_Andrew_Brown_Jr.,False,no New York marker in its categories,,6
+Killing_of_Andy_Lopez,False,no New York marker in its categories,,7
 Killing_of_Angelo_Quinto,False,no New York marker in its categories,,10
+Killing_of_Anthony_Alvarez,False,no New York marker in its categories,,8
 Killing_of_Anthony_Hill,False,no New York marker in its categories,,10
 Killing_of_Anthony_Weber,False,no New York marker in its categories,,11
 Killing_of_Antonio_Martin,False,no New York marker in its categories,,15
 Killing_of_Antonio_Zambrano-Montes,False,no New York marker in its categories,,10
 Killing_of_Antwon_Rose_Jr.,False,no New York marker in its categories,,12
+Killing_of_Archie_Elliott_III,False,no New York marker in its categories,,4
 Killing_of_Atatiana_Jefferson,False,no New York marker in its categories,,13
+Killing_of_Bernardo_Palacios-Carbajal,False,no New York marker in its categories,,10
 Killing_of_Bich_Cau_Thi_Tran,False,no New York marker in its categories,,11
 Killing_of_Breonna_Taylor,False,no New York marker in its categories,,13
 Killing_of_Carlos_Carson,False,no New York marker in its categories,,17
+Killing_of_Carnell_Russ,False,no New York marker in its categories,,8
 Killing_of_Casey_Goodson,False,no New York marker in its categories,,14
 Killing_of_Charley_Leundeu_Keunang,False,no New York marker in its categories,,12
 Killing_of_Christian_Hall,False,no New York marker in its categories,,11
+Killing_of_Christopher_Penley,False,no New York marker in its categories,,7
+Killing_of_Claudia_Gómez_González,False,no New York marker in its categories,,14
+Killing_of_Clifford_Glover,True,New York City police-violence incident,nyc,14
 Killing_of_Corey_Jackson,False,"below the traffic floor (1,401 views)",nys,6
 Killing_of_Corey_Jones,False,no New York marker in its categories,,11
 Killing_of_Corey_Ruiz,False,no New York marker in its categories,,10
 Killing_of_Daniel_Hambrick,False,no New York marker in its categories,,10
 Killing_of_Daniel_Prude,True,New York State (not NYC) police-violence incident,nys,11
+Killing_of_Daniel_Rocha,False,no New York marker in its categories,,7
 Killing_of_Daunte_Wright,False,no New York marker in its categories,,11
 Killing_of_David_McAtee,False,no New York marker in its categories,,17
 Killing_of_Deborah_Danner,True,New York City police-violence incident,nyc,9
@@ -244,6 +265,7 @@ Killing_of_Donovan_Lewis,False,no New York marker in its categories,,11
 Killing_of_Dontre_Hamilton,False,no New York marker in its categories,,13
 Killing_of_Duncan_Lemp,False,no New York marker in its categories,,8
 Killing_of_Dylan_Noble,False,no New York marker in its categories,,10
+Killing_of_Eddie_Irizarry,False,no New York marker in its categories,,6
 Killing_of_Elijah_McClain,False,no New York marker in its categories,,26
 Killing_of_Emantic_Fitzgerald_Bradford_Jr.,False,no New York marker in its categories,,9
 Killing_of_Eric_Garner,True,New York City police-violence incident,nyc,25
@@ -255,6 +277,8 @@ Killing_of_Fouad_Kaady,False,no New York marker in its categories,,7
 Killing_of_Freddie_Gray,False,no New York marker in its categories,,17
 Killing_of_George_Robinson,False,no New York marker in its categories,,10
 Killing_of_Gidone_Busch,True,New York City police-violence incident,nyc,10
+Killing_of_Guillermo_Sanchez_and_Guillardo_Sanchez,False,no New York marker in its categories,,7
+Killing_of_Irvo_Otieno,False,no New York marker in its categories,,10
 Killing_of_Jamar_Clark,False,no New York marker in its categories,,14
 Killing_of_James_Boyd,False,no New York marker in its categories,,12
 Killing_of_James_Brazier,False,no New York marker in its categories,,8
@@ -267,17 +291,21 @@ Killing_of_John_Crawford_III,False,no New York marker in its categories,,14
 Killing_of_Johnny_Robinson,False,no New York marker in its categories,,15
 Killing_of_Jonathan_Ferrell,False,no New York marker in its categories,,7
 Killing_of_Jonny_Gammage,False,no New York marker in its categories,,10
+Killing_of_Jose_Guerena,False,no New York marker in its categories,,10
 Killing_of_Joseph_Mann,False,no New York marker in its categories,,8
 Killing_of_José_Campos_Torres,False,no New York marker in its categories,,29
 Killing_of_Julian_Lewis,False,no New York marker in its categories,,11
 Killing_of_Keith_Lamont_Scott,False,no New York marker in its categories,,16
 Killing_of_Kelly_Thomas,False,no New York marker in its categories,,20
+Killing_of_Kendra_James,False,no New York marker in its categories,,11
 Killing_of_Kenneth_Chamberlain_Sr.,True,New York State (not NYC) police-violence incident,nys,8
+Killing_of_Kevin_Mullins,False,no New York marker in its categories,,6
 Killing_of_Korryn_Gaines,False,no New York marker in its categories,,11
 Killing_of_Kuanchung_Kao,False,no New York marker in its categories,,8
 Killing_of_Larry_Jackson_Jr.,False,no New York marker in its categories,,7
 Killing_of_Leneal_Frazier,False,no New York marker in its categories,,8
 Killing_of_Lindani_Myeni,False,no New York marker in its categories,,8
+Killing_of_Lorenzo_Salgado_Araujo,False,no New York marker in its categories,,8
 Killing_of_Luana_Barbosa_dos_Reis,False,no New York marker in its categories,,14
 Killing_of_Ma'Khia_Bryant,False,no New York marker in its categories,,9
 Killing_of_Malice_Green,False,no New York marker in its categories,,10
@@ -305,6 +333,7 @@ Killing_of_Ricky_Cobb_II,False,no New York marker in its categories,,9
 Killing_of_Rigoberto_Alpizar,False,no New York marker in its categories,,11
 Killing_of_Ronald_Greene,False,no New York marker in its categories,,12
 Killing_of_Samuel_DuBose,False,no New York marker in its categories,,19
+Killing_of_Savannah_Graziano,False,no New York marker in its categories,,9
 Killing_of_Sayed_Faisal,False,no New York marker in its categories,,5
 Killing_of_Sean_Bell,True,New York City police-violence incident,nyc,14
 Killing_of_Sean_Monterrosa,False,no New York marker in its categories,,18
@@ -315,6 +344,9 @@ Killing_of_Tony_McDade,False,no New York marker in its categories,,12
 Killing_of_Tony_Robinson,False,no New York marker in its categories,,12
 Killing_of_Tony_Timpa,False,no New York marker in its categories,,13
 Killing_of_Trayvon_Martin,False,no law-enforcement involvement in its categories,,19
+Killing_of_Tyre_Nichols,False,no New York marker in its categories,,12
+Killing_of_Vivian_Strong,False,no New York marker in its categories,,14
+Killing_of_Walter_Scott,False,no New York marker in its categories,,12
 Killing_of_Walter_Wallace,False,no New York marker in its categories,,16
 Killing_of_Willie_McCoy,False,no New York marker in its categories,,10
 Killing_of_Winston_Boogie_Smith,False,no New York marker in its categories,,10
@@ -323,26 +355,29 @@ Kissy_Duerré,False,not a specific person's death or assault,,11
 Kurt_Myers,False,not a specific person's death or assault,nys,4
 Kyle_Rittenhouse,False,not a specific person's death or assault,,11
 Kyng_Rhodes,False,not a specific person's death or assault,,6
-Laquan_McDonald,False,not a specific person's death or assault,,10
+Las_Vegas_courthouse_shooting,False,not a specific person's death or assault,,12
 Lee_Harvey_Oswald,False,no New York marker in its categories,,48
 Lewis_Hamilton,False,not a specific person's death or assault,,46
 Linda_Sarsour,False,not a specific person's death or assault,nys,17
 List_of_Black_Lives_Matter_street_murals,False,not a specific person's death or assault,,5
 List_of_Daunte_Wright_protests,False,not an incident (riots),,6
+List_of_Internet_phenomena,False,not a specific person's death or assault,,4
 List_of_incidents_and_protests_of_the_United_States_racial_unrest,False,not a specific person's death or assault,,4
+"List_of_killings_by_law_enforcement_officers_in_the_United_States,_September_2013",False,not a specific person's death or assault,,2
 List_of_people_killed_during_the_2020–23_United_States_racial_unrest,False,no New York marker in its categories,,7
 List_of_statues_of_Leopold_II_of_Belgium,False,not a specific person's death or assault,,11
+List_of_unarmed_African_Americans_killed_by_law_enforcement_officers_in_the_United_States,False,not a specific person's death or assault,,9
+List_of_unarmed_African_Americans_killed_by_law_enforcement_officers_in_the_United_States_in_the_20th_century,False,not a specific person's death or assault,,9
 Louis_F._Edwards,False,not a specific person's death or assault,nys,12
 Loyal_Like_Sid_&_Nancy,False,not an incident (Songs),,9
 Lungi_Ngidi,False,not a specific person's death or assault,,22
-Ma'Khia_Bryant,False,not a specific person's death or assault,,8
 Mack_Coleman,False,no New York marker in its categories,,11
 Maghfoor_Mansoor,False,not a specific person's death or assault,nys,9
 Makhaya_Ntini,False,not a specific person's death or assault,,27
+Manuel_Benitez,False,not a specific person's death or assault,,15
 Manuel_Ellis,False,no New York marker in its categories,,18
 Maria_Chappelle-Nadal,False,not a specific person's death or assault,,14
 Marilyn_Mosby,False,not a specific person's death or assault,,20
-Mario_Gonzalez_(construction_worker),False,no New York marker in its categories,,7
 Marissa_Johnson,False,not a specific person's death or assault,,15
 Mckesson_v._Doe,False,not a specific person's death or assault,,11
 Melina_Abdullah,False,not a specific person's death or assault,,23
@@ -350,12 +385,11 @@ Memorials_to_George_Floyd,False,not a specific person's death or assault,,2
 Micah_Xavier_Johnson,False,no New York marker in its categories,,19
 Michael_Baden,False,not a specific person's death or assault,nyc,12
 Michael_Hardy_(attorney),False,not a specific person's death or assault,,8
+Michael_Harold_Chapel,False,not an incident (Police officers),,10
 Michael_Schwerner,False,not a specific person's death or assault,,23
 Millennial_Activists_United,False,not an incident (Organizations),,5
 Missourians_Organizing_for_Reform_and_Empowerment,False,not an incident (Organizations),,10
-Mohamed_Barry,False,not a specific person's death or assault,,11
 Moms_United_for_Black_Lives,False,not an incident (Organizations),,7
-Monroe_Isadore,False,not a specific person's death or assault,,7
 Moo_Moo_(Brooklyn_Nine-Nine),False,not a specific person's death or assault,,5
 Mothers_of_Gynecology_Movement,False,not an incident (Organizations),,12
 Mothers_of_the_Movement,False,not an incident (Organizations),,10
@@ -363,17 +397,22 @@ Movement_for_Black_Lives,False,not an incident (Organizations),,6
 Muhiyidin_Moye,False,not a specific person's death or assault,,19
 Murder_of_Ahmaud_Arbery,False,no law-enforcement involvement in its categories,,18
 Murder_of_Andre_Hill,False,no New York marker in its categories,,18
+Murder_of_Cara_Knott,False,no New York marker in its categories,,15
 Murder_of_David_Dorn,False,no law-enforcement involvement in its categories,,11
 Murder_of_Garrett_Foster,False,no law-enforcement involvement in its categories,,18
 Murder_of_George_Floyd,False,no New York marker in its categories,,27
 Murder_of_James_Craig_Anderson,False,no law-enforcement involvement in its categories,,10
 Murder_of_Jared_Lakey,False,no New York marker in its categories,,11
+Murder_of_Jessie_Davis,False,no New York marker in its categories,,14
 Murder_of_Jordan_Davis,False,no law-enforcement involvement in its categories,,21
+Murder_of_Jordan_Edwards,False,no New York marker in its categories,,15
 Murder_of_Laquan_McDonald,False,no New York marker in its categories,,16
 Murder_of_Michelle_Busha,False,no New York marker in its categories,,17
 Murder_of_Nathaniel_Levi_Gaines,False,"below the traffic floor (1,759 views)",nyc,15
 Murder_of_Renisha_McBride,False,no law-enforcement involvement in its categories,,10
 Murder_of_Santos_Rodriguez,False,no New York marker in its categories,,25
+Murder_of_Sherri_Rasmussen,False,no New York marker in its categories,,15
+Murders_of_Oluwatoyin_Salau_and_Victoria_Sims,False,not a specific person's death or assault,,15
 Museum_of_Broken_Windows,False,not an incident (Museum),nyc,7
 Mwende_Katwiwa,False,not a specific person's death or assault,,13
 Nana_Kwabena_Tuffuor,False,not a specific person's death or assault,,14
@@ -381,26 +420,26 @@ Naomi_Osaka,False,not a specific person's death or assault,,32
 Natalie_Aleta_Jackson,False,not a specific person's death or assault,,13
 Neil_Superior,False,no New York marker in its categories,,10
 Nekima_Levy_Armstrong,False,not a specific person's death or assault,,32
-Nengmy_Vang,False,not a specific person's death or assault,,7
 Night_Call_(film),False,not an incident (films),,15
+Nightmare_Elk,False,not a specific person's death or assault,,12
 Nikkita_Oliver,False,not a specific person's death or assault,,43
 Nova_Stevens,False,not a specific person's death or assault,,17
 Nupol_Kiazolu,False,not a specific person's death or assault,,7
 Occupy_Wall_Street,False,not an incident (riots),nyc,21
-Oluwatoyin_Salau,False,not a specific person's death or assault,,8
+Omar_Jimenez,False,not a specific person's death or assault,,13
 Operation_Legend,False,not a specific person's death or assault,,5
 Organization_for_Black_Struggle,False,not an incident (Organizations),,7
 Orisha_Land,False,not a specific person's death or assault,,7
 Otherside_of_America,False,not an incident (Songs),,12
 Our_Lady_of_Ferguson,False,not a specific person's death or assault,,15
 Patrick_Henry_Cronin,False,not a specific person's death or assault,,16
-Patrick_Lyoya,False,not a specific person's death or assault,,6
 Patrisse_Cullors,False,not a specific person's death or assault,,24
 Peoples_Power_Assemblies,False,not a specific person's death or assault,,5
 Philip_McHarris,False,not a specific person's death or assault,,15
 Police_abolition,False,not a specific person's death or assault,,10
 Police_accountability,False,not a specific person's death or assault,,5
-Police_harassment,False,not a specific person's death or assault,,1
+Police_misconduct,False,not a specific person's death or assault,,3
+Porvenir_massacre_(1918),False,not a specific person's death or assault,,26
 Preserve_the_Baltimore_Uprising,False,not a specific person's death or assault,,6
 Project_South_(organization),False,not an incident (Organizations),,2
 Protests_in_Minneapolis_regarding_the_trial_of_Derek_Chauvin,False,not an incident (riots),,19
@@ -408,6 +447,7 @@ Qween_Jean,False,not a specific person's death or assault,nys,24
 Rankin_County_torture_incident,False,not a specific person's death or assault,,16
 Reactions_to_the_murder_of_George_Floyd,False,not a specific person's death or assault,,4
 Red_House_eviction_defense,False,not an incident (riots),,15
+Red_Lopez,False,not a specific person's death or assault,,14
 Reno_Gang,False,no New York marker in its categories,,19
 Rest_in_Power:_The_Enduring_Life_of_Trayvon_Martin,False,not a specific person's death or assault,,9
 Rest_in_Power:_The_Trayvon_Martin_Story,False,not an incident (documentary),,12
@@ -420,6 +460,7 @@ Robert_Jay_Mathews,False,no New York marker in its categories,,21
 Roman_Ducksworth_Jr.,False,not an incident (Police officers),,14
 Ron_Settles,False,no New York marker in its categories,,8
 Ronald_Greene,False,no New York marker in its categories,,8
+Ruben_Salazar,False,not a specific person's death or assault,,21
 Rui_Hachimura,False,not a specific person's death or assault,,22
 Russia_and_Black_Lives_Matter,False,not a specific person's death or assault,,12
 Sam_Melville,False,not a specific person's death or assault,nys,11
@@ -428,19 +469,19 @@ Samuel_Sinyangwe,False,not a specific person's death or assault,,11
 Sandra_Bland,False,no New York marker in its categories,,10
 Sandy_Hudson,False,not a specific person's death or assault,,7
 Sasha_Johnson,False,not a specific person's death or assault,,8
-Savannah_Graziano,False,not a specific person's death or assault,,5
 Save_the_Boards,False,not an incident (Organizations),,3
+Say_Their_Names,False,not a specific person's death or assault,,13
 SayHerName,False,not an incident (Organizations),,15
 Scary_Movie_(2026_film),False,not an incident (films),,26
 Sermon_on_the_'Mount_(South_Park),False,not a specific person's death or assault,,6
 Shatzi_Weisberger,False,not a specific person's death or assault,nyc,18
 Shaun_King,False,not a specific person's death or assault,,27
-Sherri_Rasmussen,False,not a specific person's death or assault,,15
 Shooting_of_Charles_Kinsey,False,no New York marker in its categories,,12
 Shooting_of_Daniel_Shaver,False,no New York marker in its categories,,14
 Shooting_of_Jacob_Blake,False,no New York marker in its categories,,11
 Sitting_Bull,False,not a specific person's death or assault,,28
 Snow_on_tha_Bluff_(song),False,not an incident (Songs),,12
+Speeches_of_Barack_Obama,False,not a specific person's death or assault,,3
 St._Louis_gun-toting_incident,False,not a specific person's death or assault,,7
 Statue_of_Calvin_Griffith,False,not a specific person's death or assault,,14
 "Statue_of_Christopher_Columbus_(Saint_Paul,_Minnesota)",False,not a specific person's death or assault,,15
@@ -451,13 +492,12 @@ Stop_WOKE_Act,False,not a specific person's death or assault,,11
 Stranger_Fruit_(film),False,not an incident (documentary),,10
 Street_Riders_NYC,False,not an incident (Organizations),nyc,5
 Syrus_Marcus_Ware,False,not a specific person's death or assault,,21
+Taking_a_Stand_in_Baton_Rouge,False,not a specific person's death or assault,,10
 Taking_the_Initiative_Party,False,not an incident (Organizations),,13
 Tameka_Bradley_Hobbs,False,not a specific person's death or assault,,19
 Tamika_Mallory,False,not a specific person's death or assault,nys,17
-Tamir_Rice,False,not a specific person's death or assault,,7
 Tay_Anderson,False,not a specific person's death or assault,,13
 Thandiwe_Abdullah,False,not a specific person's death or assault,,10
-That_one_friend_that's_too_woke,False,not a specific person's death or assault,,5
 The_Bigger_Picture_(song),False,not an incident (Songs),,11
 The_Cops_Don't_Know,False,not an incident (Songs),,4
 The_Courage_to_Be_Free,False,not a specific person's death or assault,,9
@@ -474,7 +514,7 @@ Timeline_of_the_killing_of_Trayvon_Martin,False,not a specific person's death or
 Tishaura_Jones,False,not a specific person's death or assault,,29
 Titania_McGrath,False,not a specific person's death or assault,,11
 Trayvon_Martin,False,not a specific person's death or assault,,10
-Trayvon_Martin_could_have_been_me_35_years_ago,False,not a specific person's death or assault,,3
+Trey_Songz,False,not a specific person's death or assault,,16
 Trial_of_Derek_Chauvin,False,not a specific person's death or assault,,10
 Trial_of_George_Zimmerman,False,not a specific person's death or assault,,10
 Tsion_Gurmu,False,not a specific person's death or assault,,14
@@ -484,8 +524,10 @@ Tyre_Nichols_protests,False,not a specific person's death or assault,,6
 Ultraliberalism,False,not a specific person's death or assault,,5
 United_States_racial_unrest_(2020–2023),False,not an incident (riots),,21
 Use-of-force_law_in_Missouri,False,not a specific person's death or assault,,4
+Uvalde_school_shooting,False,not a specific person's death or assault,,23
+Vanessa_Marquez,False,not a specific person's death or assault,,18
 W.L._Nolen,False,no New York marker in its categories,,10
-Walter_Lamar_Scott,False,not a specific person's death or assault,,13
+We_Stand_with_You,False,not a specific person's death or assault,,10
 Wesley_Bell,False,not a specific person's death or assault,,21
 Wesley_Lowery,False,not a specific person's death or assault,,13
 "When_the_looting_starts,_the_shooting_starts",False,not an incident (riots),,30
