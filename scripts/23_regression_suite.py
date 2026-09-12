@@ -499,6 +499,22 @@ def s_estimators_gate_on_calibration():
         if "require_calibrated" not in called:
             missing.append(f"{name} reports RI p-values without calling "
                            "require_calibrated()")
+    # N6: randomization inference must be checkpointed, for the same reason the
+    # calibration is. This environment restarts every 30-70 minutes and both long
+    # jobs died having written nothing; the only difference was that one had a
+    # ledger and one did not.
+    es = (SCRIPTS / "event_study.py").read_text()
+    if "SeedSequence" not in es:
+        missing.append("randomization_p does not seed draws per index, so a resumed "
+                       "run cannot reproduce the run it resumed")
+    if "ledger" not in es:
+        missing.append("randomization_p keeps no ledger, so an interrupted run loses "
+                       "every draw it completed")
+    f17 = (SCRIPTS / "17_stacked_event_study.py")
+    if f17.exists() and "ledger=" not in f17.read_text():
+        missing.append("17 calls randomization_p without a ledger, so the discovery "
+                       "run cannot survive a restart")
+
     # The no-downgrade rule in 17: the published write must be guarded by a
     # comparison against the draws already on disk.
     f17 = SCRIPTS / "17_stacked_event_study.py"
@@ -3497,7 +3513,7 @@ CHECKS = [
     ("S.draw_scheme_total", "N5", "every draw scheme is dispatched explicitly, none by fallback", s_draw_scheme_total),
     ("S.ri_pvalue_form", "N1", "randomization p-values use the (1+k)/(1+n) form", s_ri_pvalue_form),
     ("S.calibration_writes_stratified", "P5,D1,N4", "every calibration output names the stratum it describes", s_calibration_writes_stratified),
-    ("S.estimators_gate_on_calibration", "P7,D1", "estimators certify their own null and cannot be downgraded by a cheap run", s_estimators_gate_on_calibration),
+    ("S.estimators_gate_on_calibration", "P7,D1,N6", "estimators certify their own null and cannot be downgraded by a cheap run", s_estimators_gate_on_calibration),
     ("S.ppml_wired", "X5,R8", "counts/PPML arm actually called", s_ppml_wired),
     ("S.dose_arm_wired", "D6", "dose-response arm has a caller and recovers a planted effect", s_dose_arm_wired),
     ("D.freeze_not_tautological", "D3", "freeze guard is not a tautology", d_freeze_not_tautological),

@@ -103,6 +103,31 @@ freeze_banner("17_stacked_event_study")
 rng = np.random.default_rng(20260908)
 
 
+# RANDOMIZATION INFERENCE IS CHECKPOINTED (finding N6). This environment restarts
+# every 30-70 minutes and this script writes only at the end, so a 1000-draw run
+# never finished: one died at 33 minutes having saved nothing. Each (outcome,
+# window, arm) keeps its own ledger of completed draws and its own fixed seed
+# root, so a restart costs at most one draw and a resumed run reproduces the run
+# it resumed exactly rather than approximately.
+#
+# The seed is derived from the cell's identity rather than drawn, so re-running
+# one cell does not perturb any other, and the ledger is keyed the same way for
+# the same reason a calibration ledger is keyed by stratum: statistics from
+# different cells are different quantities and pooling them would be a second
+# source of truth.
+def _ri_cell(outcome, post, arm):
+    return f"{outcome}_{post}_{arm}"
+
+
+def _ri_ledger(outcome, post, arm):
+    return OUTPUTS_TABLES / f"ri_ledger_{_ri_cell(outcome, post, arm)}.csv"
+
+
+def _ri_seed(outcome, post, arm):
+    import zlib
+    return zlib.crc32(_ri_cell(outcome, post, arm).encode()) ^ 20260908
+
+
 # ---------------------------------------------------------------------------
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
 panel["incident_date"] = pd.to_datetime(panel["incident_date"])
@@ -199,8 +224,10 @@ for outcome in outcomes:
                           "   (reported beside the RI p, never instead of it)")
 
         # -- randomization inference (primary p-value) --
-        obs, p_ri, draws = randomization_p(panel, real_starts, outcome,
-                                           EVENT_WINDOW_PRE, post, args.draws, rng)
+        obs, p_ri, draws = randomization_p(
+            panel, real_starts, outcome, EVENT_WINDOW_PRE, post, args.draws, rng,
+            ledger=_ri_ledger(outcome, post, "ols"),
+            seed=_ri_seed(outcome, post, "ols"))
 
         # -- counts arm: PPML on the count with a log total-calls offset --
         # Reported BESIDE the share result, never instead of it. The 2020
@@ -211,9 +238,10 @@ for outcome in outcomes:
         # unnoticed (finding T3.1; the arm itself was dead code, X5/R8).
         cnt = count_outcome(outcome)
         if cnt in stack.columns:
-            c_obs, c_p, c_draws = randomization_p(panel, real_starts, cnt,
-                                                  EVENT_WINDOW_PRE, post,
-                                                  args.draws, rng, counts=True)
+            c_obs, c_p, c_draws = randomization_p(
+                panel, real_starts, cnt, EVENT_WINDOW_PRE, post, args.draws, rng,
+                counts=True, ledger=_ri_ledger(cnt, post, "ppml"),
+                seed=_ri_seed(cnt, post, "ppml"))
             if c_obs is not None:
                 rows.append({"outcome": cnt, "post_window": post,
                              "estimator": "PPML_count_offset",

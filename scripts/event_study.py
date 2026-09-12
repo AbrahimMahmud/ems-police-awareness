@@ -28,6 +28,7 @@ version of this file, all found by the audit and each independently fatal:
 """
 
 from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -662,7 +663,7 @@ def draw_scheme_for(windows, real_starts, pre, post):
 
 def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
                     fe="ep_cd + dow", counts=False, date_col="incident_date",
-                    cluster=CLUSTER_VAR, windows=None):
+                    cluster=CLUSTER_VAR, windows=None, ledger=None, seed=None):
     """Episode-level randomization inference. Returns (observed, p, null draws).
 
     The statistic is the joint chi-square, which is non-negative and increasing
@@ -686,6 +687,37 @@ def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
         windows = [(panel[date_col].min(), panel[date_col].max())]
     scheme, _why = draw_scheme_for(windows, real_starts, pre, post)
     lo, hi = pd.Timestamp(windows[0][0]), pd.Timestamp(windows[-1][1])
+
+    # RESUMABLE, BECAUSE THIS ENVIRONMENT WILL NOT HOLD A LONG JOB (finding N6).
+    #
+    # Measured three times in one session: the container restarts every 30-70
+    # minutes, and a run that writes only at the end loses everything. A 1000-sim
+    # calibration died at 45 minutes and the discovery run's primary estimator
+    # died at 33, each having saved nothing. 18_null_calibration.py was given a
+    # ledger and survived the same restart untouched; this function was not, and
+    # it is where every remaining compute-bound deliverable spends its time.
+    #
+    # Two things are needed and they are the same thing. Draw i must get the same
+    # placebo dates however many draws a run asks for — otherwise a resumed run
+    # is not the run it resumed — so the draws are seeded per index from one
+    # SeedSequence rather than pulled from a single shared rng. That also removes
+    # the dependence on completion order, which is why 18 was seeded this way.
+    #
+    # `seed` is the root. It defaults to the caller's rng so behaviour is
+    # unchanged for callers that pass neither, and a caller wanting resumability
+    # passes an explicit root and a ledger path.
+    root = seed if seed is not None else int(rng.integers(0, 2**31 - 1))
+    seeds = np.random.SeedSequence(root).spawn(int(draws))
+
+    done = {}
+    led = Path(ledger) if ledger else None
+    if led is not None and led.exists():
+        try:
+            _d = pd.read_csv(led)
+            done = {int(r["draw_index"]): float(r["stat"]) for _, r in _d.iterrows()}
+        except Exception:
+            done = {}
+
     stats_ = []
     # EXHAUSTIVE DISPATCH, AND NO SILENT DEFAULT.
     #
@@ -699,11 +731,15 @@ def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
     # So the mapping is explicit and an unknown scheme raises. A draw scheme is
     # the subject of a calibration certificate; guessing at one is not a
     # degraded mode, it is an uncertified p-value with no warning attached.
+    # Each drawer takes the DRAW'S OWN rng, not the shared one. Closing over the
+    # caller's rng would make draw i depend on how many draws ran before it,
+    # which is exactly what stops a resumed run from reproducing the run it
+    # resumed.
     DRAWERS = {
         "circular_within_block":
-            lambda: placebo_starts_circular(rng, real_starts, windows, pre, post)[0],
+            lambda r: placebo_starts_circular(r, real_starts, windows, pre, post)[0],
         "anchor_shift":
-            lambda: placebo_starts(rng, real_starts, lo, hi, pre, post),
+            lambda r: placebo_starts(r, real_starts, lo, hi, pre, post),
     }
     if scheme not in DRAWERS:
         raise ValueError(
@@ -712,14 +748,34 @@ def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
             "fallback here silently changes which null the p-value comes from.")
     draw_placebo = DRAWERS[scheme]
 
-    for _ in range(draws):
-        ps = draw_placebo()
-        if len(ps) != len(list(real_starts)):
-            continue                              # never let a short draw in
-        b = first_week_effect(build_stack(panel, ps, pre, post, date_col),
-                              outcome, fe=fe, counts=counts, cluster=cluster)
-        if b is not None:
-            stats_.append(b)
+    n_real = len(list(real_starts))
+    fh = None
+    if led is not None:
+        led.parent.mkdir(parents=True, exist_ok=True)
+        if not led.exists():
+            led.write_text("draw_index,stat\n")
+        fh = led.open("a")
+    try:
+        for i in range(int(draws)):
+            if i in done:
+                continue                          # already banked by an earlier run
+            ps = draw_placebo(np.random.default_rng(seeds[i]))
+            if len(ps) != n_real:
+                continue                          # never let a short draw in
+            b = first_week_effect(build_stack(panel, ps, pre, post, date_col),
+                                  outcome, fe=fe, counts=counts, cluster=cluster)
+            if b is not None:
+                done[i] = float(b)
+                if fh is not None:
+                    # Flushed per draw: a kill costs at most one.
+                    fh.write(f"{i},{b!r}\n")
+                    fh.flush()
+    finally:
+        if fh is not None:
+            fh.close()
+    # Ordered by draw index so the result never depends on which draws a
+    # particular run happened to compute.
+    stats_ = [done[i] for i in sorted(done)]
     stats_ = np.array(stats_)
     # (1 + k) / (1 + n), NOT k / n.
     #
