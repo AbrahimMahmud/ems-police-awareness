@@ -2,11 +2,15 @@
 
 MUST run and be committed BEFORE any extension-period (2015-16, 2021-24) EMS
 outcome data enters the environment (CONFIRMATION_PLAN.md discipline). Episode
-rules are the frozen ones from config (threshold 1.0 on the standardized
-index, merge gap < 7 days), applied to CAI-D exactly as they were applied to
-the legacy measure for the discovery sample.
+rules come from config and are NO LONGER the frozen ones: EPISODE_Z_THRESHOLD and
+EPISODE_MERGE_GAP_DAYS are retired (config.py:269-271), replaced by a within-year
+quantile rule with hysteresis — EPISODE_RATE to enter, EPISODE_EXIT_RATE to
+leave — so that stringency is constant across years instead of drifting with the
+index's own scale. The construct change is a disclosed deviation.
 
-Output: data/reference/confirmation_episodes.csv (committed)
+Output: data/reference/confirmation_episodes_rebuilt.csv
+        The frozen data/reference/confirmation_episodes.csv is NEVER regenerated
+        here; the guard below refuses to write it.
 """
 
 import pandas as pd

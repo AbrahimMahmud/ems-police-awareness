@@ -67,6 +67,21 @@ PANEL_BUFFER_END = "2021-01-31"     # covers 14-day leads after analysis end
 # 5.3). D.soda_guarded keys on this constant.
 EMS_DATASET_ID = "76xm-jjuj"
 
+# Dispositions dropped from the analysis extract, in ONE place.
+#
+# The list was written out three times — 00's docstring, 00:66 as SQL, 00b:75 as
+# a set — against this file's own opening rule that a value used in two places
+# belongs in exactly one. Three copies of a sample rule is three chances for the
+# local path and the API path to define the outcome differently and for nobody to
+# notice, since neither script reads the other's output.
+#
+# What they mean, per the FDNY data dictionary: CANCEL and 87 are cancelled
+# dispatches, DUP a duplicate incident, NOTSNT a unit never sent. DUP does not
+# occur at all in the discovery window. The calls this removes are NOT discarded
+# — they are written to ems_cd_day_calltype_excluded.parquet so the
+# cancelled-inclusive sensitivity can be run rather than promised (finding O1).
+EXCLUDED_DISPOSITIONS = ("CANCEL", "NOTSNT", "DUP", "87")
+
 # Every artifact that contains OUTCOME data, named here so freeze coverage is a
 # property of a list rather than of one hard-coded filename (finding X11, and
 # incident F1 which is how it was found).
@@ -84,7 +99,36 @@ OUTCOME_ARTIFACTS = (
     "panel_cd_day.parquet",            # district x day analysis panel
     "ems_cd_day_calltype.parquet",     # district x day x call type extract
     "ems_citywide_day_trends.parquet", # citywide daily call-group counts, 2005+
+    # Added 2026-09-12. The fix for finding O1 created this file and did not
+    # register it, and the omission was invisible because D.guard_coverage
+    # SUBSTRING-matches the names above: "ems_cd_day_calltype.parquet" is not a
+    # substring of "ems_cd_day_calltype_excluded.parquet". ~288k of its 443,719
+    # rows are confirmation-window outcome counts, so a script running the
+    # promised cancelled-dispatch sensitivity could have read them while the
+    # check still reported "all readers of 3 outcome artifacts guarded". That is
+    # the F1 mechanism, re-created inside the fix for O1.
+    "ems_cd_day_calltype_excluded.parquet",
 )
+
+# Artifacts in data/processed that are NOT outcome data, each with the reason.
+#
+# This list exists so the promise above can be kept. It said "an unlisted outcome
+# file is a check failure rather than a silent gap" - and that was FALSE, because
+# D.guard_coverage uses OUTCOME_ARTIFACTS to find READERS and nothing ever
+# enumerated the directory against it. An unlisted outcome file was precisely a
+# silent gap, which is how the O1 artifact went eight commits unnoticed.
+#
+# D.outcome_list_complete now requires every parquet in data/processed to appear
+# in exactly one of these two tuples, so a new file cannot be neither.
+NON_OUTCOME_ARTIFACTS = (
+    "cai_daily.parquet",       # the CAI-D treatment index: attention, not demand
+    "awareness_lags.parquet",  # lags and leads of the treatment index
+)
+
+# The raw paged download. It holds outcome rows for every year, so it is outcome
+# data by content; it is a directory rather than a file and is covered by its own
+# rule (O.ems_complete) plus the SODA producer list below.
+RAW_OUTCOME_DIRS = ("ems_pages",)
 
 MIN_TOTAL_CALLS_FOR_SHARE = 5        # primary; sensitivities at 3 and 10 (I17/plan §4.5)
 MIN_CALLS_SENSITIVITY = (3, 10)

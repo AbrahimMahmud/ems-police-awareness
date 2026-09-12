@@ -14,7 +14,7 @@ import urllib.request
 
 import pandas as pd
 
-from config import DATA_PROCESSED
+from config import DATA_PROCESSED, EXCLUDED_DISPOSITIONS
 from provenance import log_source
 
 BASE = "https://data.cityofnewyork.us/resource/76xm-jjuj.csv"
@@ -72,7 +72,7 @@ for c in ["special_event_indicator", "standby_indicator", "transfer_indicator"]:
 ems["disp"] = ems["incident_disposition_code"].astype(str).str.strip().str.upper()
 ems["final_call_type"] = ems["final_call_type"].astype(str).str.strip().str.upper()
 truthy = {"Y", "YES", "TRUE", "1"}
-excl_disp = {"CANCEL", "NOTSNT", "DUP", "87"}
+excl_disp = set(EXCLUDED_DISPOSITIONS)
 keep = (
     ems["incident_ts"].notna()
     & ~ems["special_event_indicator"].isin(truthy)
@@ -135,7 +135,18 @@ if True in by_year.columns:
 out1 = DATA_PROCESSED / "ems_cd_day_calltype.parquet"
 g1.to_parquet(out1, index=False)
 
-# The excluded calls, same grain, so mh_share_incl_cancelled is a join away.
+# The excluded calls, at the same grain PLUS the disposition code.
+#
+# THE DISPOSITION CODE IS LOAD-BEARING, AND A NAIVE JOIN IS WRONG. `keep` ANDs
+# four conditions, so `~keep` catches every drop reason, not only the cancelled
+# dispatches this artifact is named for: measured on the discovery window, 6.2%
+# of these rows (dispositions 90, 91, 82, 93, 96, 94, 83, 92, 95, ZZZZZZ) failed
+# the special-event / standby / transfer clauses instead. Adding the whole file
+# back would re-admit rows the sample rule removes for reasons that have nothing
+# to do with cancellation.
+#
+# So the sensitivity is a join FILTERED ON `disp` being in EXCLUDED_DISPOSITIONS,
+# not a join on everything here.
 excluded["incident_date"] = excluded["incident_ts"].dt.normalize()
 excluded["communitydistrict"] = pd.to_numeric(excluded["communitydistrict"], errors="coerce")
 ex_win = excluded[excluded["incident_date"].between("2014-12-01", "2024-12-31")]

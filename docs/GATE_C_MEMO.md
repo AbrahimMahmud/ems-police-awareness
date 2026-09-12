@@ -133,7 +133,7 @@ event study** (the continuous distributed lag becomes secondary):
 - Each frozen episode is an event; windows −14..+14, with +28 and +60 as
   sensitivities (Desmond et al. 2016 find call-reporting effects persisting over
   a year, so 14 days may truncate real dynamics).
-- Clean control days only; windows truncated at the next episode start.
+- Clean control days only; a district-day contested by two episode windows is assigned to the nearer episode (superseded the next-start truncation this line originally prescribed; see `event_study.build_stack` and finding S5).
 - Quasi-Poisson/PPML on counts and OLS on shares — the current finding is
   compositional and counts have stayed non-significant, so both are reported.
 - **Episode-level randomization inference as the primary p-value.** This is not a

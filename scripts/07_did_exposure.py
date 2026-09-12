@@ -9,8 +9,12 @@ within +/-7-day windows around each high-awareness episode start, where
   Post_t    = 1 for event days +1..+7 (0 for -7..-1; day 0 excluded)
   lambda_e  = episode fixed effects; alpha_i = district fixed effects
 Estimands: (i) week-after vs week-before (primary, per meeting notes);
-(ii) day +7 vs day -1. SEs clustered by date. Windows truncated at the
-next episode's start (no overlap).
+(ii) day +7 vs day -1. SEs clustered by date. No district-day appears in two
+episode windows: this script delegates window construction to
+`event_study.build_stack`, which assigns a contested day to the nearer episode
+rather than truncating at the next start. The docstring said "truncated at the
+next episode's start" long after that stopped being the mechanism, while the
+comments in the body described the real one — the file contradicted itself.
 
 Outputs: outputs/tables/did_exposure_results.csv, did_event_path.csv
 """

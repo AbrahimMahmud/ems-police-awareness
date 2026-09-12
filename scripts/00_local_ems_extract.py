@@ -32,13 +32,43 @@ from pathlib import Path
 
 import duckdb
 
+# This script is designed to run standalone on the machine holding the 6.5 GB raw
+# CSV, so it defines its own paths rather than importing them. It does import the
+# disposition list, because that is a SAMPLE RULE: a second copy of it here is a
+# second definition of the outcome, and the two paths would drift apart without
+# anything downstream noticing. Adding the script's own directory to sys.path
+# keeps `python scripts/00_local_ems_extract.py` working from the repo root.
+sys.path.insert(0, str(Path(__file__).parent))
+from config import EXCLUDED_DISPOSITIONS  # noqa: E402
+
+# THIS SCRIPT WRITES ONLY THE KEPT EXTRACT, AND THAT IS NOW A PROBLEM.
+#
+# 00b_download_ems_extract.py also writes ems_cd_day_calltype_excluded.parquet,
+# which the O1 cancelled-dispatch sensitivity joins against. Running this script
+# rewrites ems_cd_day_calltype.parquet and leaves the excluded file exactly as it
+# was, so the pair silently stops describing the same run — and both scripts are
+# in SODA_PRODUCERS and GUARD_EXEMPT, so nothing downstream notices.
+#
+# Refusing is the honest default. This is the legacy local path; 00b is the live
+# one and the only one run_all.py invokes. The check is HERE, before the raw file
+# is even looked for, so an unrelated FileNotFoundError cannot pre-empt it.
+if "--allow-desync" not in sys.argv:
+    raise SystemExit(
+        "00_local_ems_extract.py writes ems_cd_day_calltype.parquet but NOT "
+        "ems_cd_day_calltype_excluded.parquet, so running it desynchronises the "
+        "pair the O1 sensitivity joins. Use 00b_download_ems_extract.py, which "
+        "writes both. Pass --allow-desync only if you will rebuild the excluded "
+        "extract another way.")
+
+
 PROJECT_ROOT = Path(__file__).parent.parent
 DATA_RAW = PROJECT_ROOT / "data" / "raw"
 DATA_PROCESSED = PROJECT_ROOT / "data" / "processed"
 DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 
-if len(sys.argv) > 1:
-    EMS_PATH = Path(sys.argv[1])
+_args = [a for a in sys.argv[1:] if a != "--allow-desync"]
+if _args:
+    EMS_PATH = Path(_args[0])
 else:
     ems_files = sorted(DATA_RAW.glob("EMS_Incident_Dispatch_Data*.csv"), key=lambda p: p.stat().st_size)
     if not ems_files:
@@ -63,7 +93,9 @@ MH_GROUPS_SQL = """
 """
 
 TRUTHY_SQL = "('Y','YES','TRUE','1')"
-EXCLUDED_DISP_SQL = "('CANCEL','NOTSNT','DUP','87')"
+# Derived from config, so the local path and the API path cannot define the
+# outcome differently. The list was written out three times before this.
+EXCLUDED_DISP_SQL = "(" + ",".join(f"'{d}'" for d in EXCLUDED_DISPOSITIONS) + ")"
 
 BASE_CTE = f"""
 WITH ems_raw AS (

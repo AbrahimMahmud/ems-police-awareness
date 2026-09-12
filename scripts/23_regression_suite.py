@@ -439,6 +439,54 @@ def s_calibration_on_residual():
         f"S8 defect the null used to carry")
 
 
+def d_outcome_list_complete():
+    """O1 residual: every parquet in data/processed is classified, so none can be neither.
+
+    config.py's OUTCOME_ARTIFACTS carries the instruction "A NEW OUTCOME ARTIFACT
+    MUST BE ADDED HERE. The check reads this list, so an unlisted outcome file is
+    a check failure rather than a silent gap."
+
+    That sentence was FALSE. D.guard_coverage reads the list to find READERS —
+    it asks "does every script that opens one of these call the freeze guard?" —
+    and nothing ever compared the list against what is actually on disk. An
+    unlisted outcome file was therefore exactly a silent gap, and one existed:
+    the fix for finding O1 created ems_cd_day_calltype_excluded.parquet, 443,719
+    rows of which ~288k are confirmation-window outcome counts, and left it
+    unregistered for eight commits. D.guard_coverage substring-matches the listed
+    names, and "ems_cd_day_calltype.parquet" is not a substring of
+    "ems_cd_day_calltype_excluded.parquet", so it reported PASS throughout.
+
+    A guarantee asserted in a comment that no code provides is this project's
+    own recurring defect, and it was sitting in the file that defines the freeze.
+    This check makes the sentence true: every parquet directly in data/processed
+    must appear in exactly one of OUTCOME_ARTIFACTS or NON_OUTCOME_ARTIFACTS, so
+    a new artifact forces a decision instead of defaulting to unguarded.
+    """
+    from config import NON_OUTCOME_ARTIFACTS, OUTCOME_ARTIFACTS
+    if not DATA_PROCESSED.exists():
+        return "BLOCKED", "data/processed does not exist"
+    on_disk = {p.name for p in DATA_PROCESSED.glob("*.parquet")}
+    outcome, other = set(OUTCOME_ARTIFACTS), set(NON_OUTCOME_ARTIFACTS)
+
+    both = sorted(outcome & other)
+    unclassified = sorted(on_disk - outcome - other)
+    # A listed file that is absent is not an error: artifacts are gitignored and
+    # a fresh clone has none of them. Being unlisted is the failure.
+    if unclassified or both:
+        parts = []
+        if unclassified:
+            parts.append(f"{len(unclassified)} parquet(s) in data/processed are in "
+                         f"neither OUTCOME_ARTIFACTS nor NON_OUTCOME_ARTIFACTS, so "
+                         f"nothing decides whether the freeze covers them: {unclassified}")
+        if both:
+            parts.append(f"{len(both)} artifact(s) are in both lists: {both}")
+        return "FAIL", "; ".join(parts)
+    missing = sorted((outcome | other) - on_disk)
+    return "PASS", (f"{len(on_disk)} parquet(s) on disk, all classified "
+                    f"({len(on_disk & outcome)} outcome, {len(on_disk & other)} not); "
+                    f"{len(missing)} listed artifact(s) not built yet")
+
+
 def t_basket_is_police_violence():
     """B4: every article in the published basket has evidence police were the actor.
 
@@ -2275,6 +2323,7 @@ CHECKS = [
     ("D.guard_coverage", "D3,X11,X9", "every outcome-artifact reader calls the guard", d_guard_coverage),
     ("X.bheard_wired", "X6", "B-HEARD control is in a model and inert on discovery", x_bheard_wired_and_inert),
     ("D.soda_guarded", "F2", "the source API is guarded, not only the artifacts", d_soda_source_guarded),
+    ("D.outcome_list_complete", "O1,X11", "every processed artifact is classified as outcome or not", d_outcome_list_complete),
     ("D.incident_disclosed", "F1", "freeze incident stays in the record", d_incident_disclosed),
     ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),
     ("E.threshold_stringency", "D5,L5,E6", "episode threshold is constant stringency", e_threshold_constant_stringency),

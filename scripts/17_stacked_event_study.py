@@ -14,10 +14,19 @@ absorbed WITHIN episode rather than across them. Day EVENT_REFERENCE_DAY (-1) is
 the omitted category, so every coefficient reads as the change relative to the
 day before attention rose.
 
-Windows are truncated at the next episode's start, and any day belonging to more
-than one episode window is dropped, so no observation is a control for one event
-while being treated in another — the failure mode that made the original
-"difference-in-differences" uninterpretable (REWORK_PLAN I4).
+No observation is a control for one event while being treated in another — the
+failure mode that made the original "difference-in-differences" uninterpretable
+(REWORK_PLAN I4). A district-day contested by two episode windows is assigned to
+the episode whose start is NEAREST in absolute event time, and appears exactly
+once in the stack.
+
+This paragraph used to say windows were truncated at the next episode's start and
+contested days were DROPPED. Both halves were false: `event_study.build_stack`
+builds the full [start-pre, start+post] window unconditionally and deduplicates
+by nearest episode, which keeps the observation instead of discarding it (finding
+S5). The change was made in the code and not here, so the file described a
+sample-construction rule the project had already rejected — and a Methods section
+written from this docstring would have misreported how the estimator is built.
 
 Inference
 ---------
