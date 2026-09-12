@@ -375,71 +375,71 @@ def t_no_redirect_candidates():
 
 
 def s_ri_scheme_certified():
-    """P1: the randomization null actually used must be the one the calibration certifies.
+    """P1: every stratum's randomization null is the one its calibration certifies.
 
     `event_study.placebo_starts` shifts the whole real sequence by one anchor and
-    REJECTS the draw if the sequence does not fit. That is correct — an earlier
+    REJECTS the draw if it does not fit. That rejection is right — an earlier
     version walked forward and stopped early, so the null carried about half the
-    real episode count — but it means the scheme needs slack, and one stratum has
-    none.
+    real episode count — but it needs slack, and one stratum has none.
 
-    Measured on the confirmation strata: C1's 2021 block holds 5 episodes spanning
-    139 days inside a 151-day window. Reserving the +/-14-day event window leaves
-    120 usable days against 139 required — slack of MINUS 19. Every draw is
-    rejected, so C1's randomization p-value returns NaN after the whole budget is
-    spent. C1 is the CLEAN stratum, the one the discovery/confirmation split
-    exists to obtain, so this is not a corner case.
+    Measured at 500 draws per stratum: discovery and C2 produce 500 usable draws
+    under anchor shift, with 190 and 53 days of slack. C1 produces ZERO. It is two
+    windows sitting either side of the entire discovery period, so there is no
+    single span to slide within and 40.9% of anchors land outside its own
+    windows; its 2021 block alone needs 139 days of a 120-day interior. The
+    p-value on the CLEAN stratum would return NaN after the whole budget is spent.
 
-    A circular-shift scheme works there, and is pre-specified. But a CALIBRATED
-    verdict is a statement about a specific scheme on a specific sample geometry,
-    and the calibration artifact did not record either. This check makes the
-    artifact answer for itself: compute the slack each stratum needs, and require
-    the calibration to name the scheme it certified.
+    A circular shift over admissible days works there — and is a DIFFERENT NULL.
+    A CALIBRATED verdict is a statement about one geometry and one scheme, so
+    each stratum needs its own, and this check makes each artifact answer for
+    itself: it recomputes the scheme the stratum requires from the episode dates
+    and asserts the calibration certifies that scheme on that geometry.
 
     Episode dates are treatment-side, so this reads no outcome data.
     """
-    art = OUTPUTS_TABLES / "null_calibration.csv"
-    ep_f = DATA_REFERENCE / EPISODE_LIST_PRIMARY
-    if not ep_f.exists():
+    import sys as _sys
+    _sys.path.insert(0, str(SCRIPTS))
+    from event_study import draw_scheme_for, stratum_episodes
+    from config import CONFIRMATION_ANALYSIS_WINDOWS
+
+    f = DATA_REFERENCE / EPISODE_LIST_PRIMARY
+    if not f.exists():
         return "BLOCKED", f"{EPISODE_LIST_PRIMARY} absent — run 13_extension_episodes.py"
-    if not art.exists():
-        return "BLOCKED", "null_calibration.csv absent — run 18_null_calibration.py"
-    a = pd.read_csv(art).set_index("metric")["value"]
-    if "draw_scheme" not in a.index:
-        return "BLOCKED", ("null_calibration.csv predates the draw_scheme field, so "
-                           "which null it certified is unrecorded — re-run "
-                           "18_null_calibration.py (finding P1)")
+    ep = pd.read_csv(f, parse_dates=["start"])
 
-    ep = pd.read_csv(ep_f, parse_dates=["start"])
-    pre, post = EVENT_WINDOW_PRE, EVENT_WINDOW_POST
-    blocks = {"discovery": [(pd.Timestamp(DISCOVERY_START), pd.Timestamp(DISCOVERY_END))]}
-    for i, (lo, hi) in enumerate(CONFIRMATION_WINDOWS, 1):
-        blocks[f"confirmation_{i}"] = [(pd.Timestamp(lo), pd.Timestamp(hi))]
-
-    tight = []
-    for name, spans in blocks.items():
-        for lo, hi in spans:
-            starts = sorted(ep.loc[ep["start"].between(lo, hi), "start"])
-            if len(starts) < 2:
-                continue
-            span = (starts[-1] - starts[0]).days
-            room = ((hi - pd.Timedelta(days=post + 1))
-                    - (lo + pd.Timedelta(days=pre + 1))).days - span
-            if room < 0:
-                tight.append(f"{name} {lo.date()}..{hi.date()}: {len(starts)} episodes "
-                             f"span {span}d, slack {room}d")
-
-    scheme = str(a["draw_scheme"])
-    if tight and scheme == "anchor_shift":
-        return "FAIL", (
-            f"{len(tight)} window(s) cannot produce a single admissible anchor-shift "
-            f"draw ({tight[0]}), but the calibration certifies scheme "
-            f"'{scheme}' on a '{a.get('sample_geometry')}' sample. The null used "
-            "would not be the null certified (finding P1).")
-    return "PASS", (f"calibration certifies scheme '{scheme}' on a "
-                    f"'{a.get('sample_geometry')}' sample; "
-                    f"{len(tight)} window(s) need a different scheme"
-                    + (f" — {tight[0]}" if tight else ""))
+    strata = {
+        "discovery": ([(DISCOVERY_START, DISCOVERY_END)], "null_calibration.csv"),
+        "C1": ([CONFIRMATION_ANALYSIS_WINDOWS[0], CONFIRMATION_ANALYSIS_WINDOWS[1]],
+               "null_calibration_C1.csv"),
+        "C2": ([CONFIRMATION_ANALYSIS_WINDOWS[2]], "null_calibration_C2.csv"),
+    }
+    missing, wrong, ok = [], [], []
+    for name, (wins, fname) in strata.items():
+        kept, _ = stratum_episodes(ep["start"], wins, EVENT_WINDOW_PRE, EVENT_WINDOW_POST)
+        need, _why = draw_scheme_for(wins, [k["start"] for k in kept],
+                                     EVENT_WINDOW_PRE, EVENT_WINDOW_POST)
+        art = OUTPUTS_TABLES / fname
+        if not art.exists():
+            missing.append(f"{name} (needs '{need}', no {fname})")
+            continue
+        a = pd.read_csv(art).set_index("metric")["value"]
+        if "draw_scheme" not in a.index:
+            missing.append(f"{name} ({fname} predates the draw_scheme field)")
+            continue
+        got = str(a["draw_scheme"])
+        if got != need:
+            wrong.append(f"{name}: requires '{need}', calibration certifies '{got}'")
+        else:
+            ok.append(f"{name}={got}")
+    if wrong:
+        return "FAIL", (f"{len(wrong)} stratum/strata would use a null their calibration "
+                        f"does not certify: {wrong}")
+    if missing:
+        return "BLOCKED", (f"{len(missing)} stratum/strata have no calibration recording "
+                           f"their scheme: {missing} — run 18_null_calibration.py "
+                           "--stratum for each (finding P1)")
+    return "PASS", (f"all {len(ok)} strata certified on the scheme they require: "
+                    + ", ".join(ok))
 
 
 def s_calibration_on_residual():

@@ -941,6 +941,28 @@ general property of the estimator. Both runs came back CALIBRATED and inside the
 band (0.05 against 0.06), so nothing turned on it, but the second run is the one
 that describes the design being estimated.
 
+**A calibration certifies one stratum, not the estimator.** That sounds obvious
+written down and was not obvious in the code: a single `null_calibration.csv`
+held one verdict, and nothing said which sample geometry or which way of drawing
+placebo dates it described.
+
+It matters because the three strata do not share a way of drawing them. The
+method shifts the whole real sequence of episode dates by one random anchor and
+throws the draw away if the sequence no longer fits. Discovery and C2 have room —
+190 and 53 days of slack, and 500 of 500 draws land. **C1 has none.** It is two
+windows sitting either side of the whole discovery period, so there is no single
+stretch to slide within: 41% of anchors land outside C1 entirely, and its 2021
+block alone would need 139 days of a 120-day interior. Every draw is rejected, so
+the p-value on the *clean* stratum — the one the whole design exists to obtain —
+comes back as nothing at all, after spending its entire budget getting there.
+
+A circular shift over the days C1 actually contains works, and is a **different
+null**. It keeps each episode's position relative to the others, so clustering
+survives; it does not keep calendar gaps across the seam between the two windows.
+So each stratum is now calibrated separately, each verdict records the scheme and
+geometry it certifies, and a check recomputes what each stratum requires and
+refuses a verdict that certifies something else.
+
 **This section was wrong until 2026-09-12, and the reason is worth keeping.** It
 quoted a rejection rate of 0.065 and an AR(1) rho of 0.185, and closed with an
 open item saying the day shock was "assumed rather than estimated". Finding S8

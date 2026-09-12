@@ -507,21 +507,36 @@ def draw_scheme_for(windows, real_starts, pre, post):
 
 def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
                     fe="ep_cd + dow", counts=False, date_col="incident_date",
-                    cluster=CLUSTER_VAR):
+                    cluster=CLUSTER_VAR, windows=None):
     """Episode-level randomization inference. Returns (observed, p, null draws).
 
     The statistic is the joint chi-square, which is non-negative and increasing
     in departure from the null, so p is the share of placebo statistics at least
     as large as the observed one.
+
+    `windows` names the stratum's calendar windows and selects the draw scheme
+    through `draw_scheme_for`. Leave it None and the panel's own date range is
+    treated as one window, which is the historical behaviour and is correct for
+    discovery. It is NOT correct for a stratum made of disjoint windows: taking
+    min..max there spans the gap between them, so an anchor could be drawn inside
+    a period the stratum excludes. On C1 that is 40.9% of draws, and each one is
+    then rejected for not fitting, which is how a p-value comes back NaN after
+    the whole budget is spent (finding P1).
     """
     obs_stack = build_stack(panel, real_starts, pre, post, date_col)
     obs = first_week_effect(obs_stack, outcome, fe=fe, counts=counts, cluster=cluster)
     if obs is None:
         return None, np.nan, np.array([])
-    lo, hi = panel[date_col].min(), panel[date_col].max()
+    if windows is None:
+        windows = [(panel[date_col].min(), panel[date_col].max())]
+    scheme, _why = draw_scheme_for(windows, real_starts, pre, post)
+    lo, hi = pd.Timestamp(windows[0][0]), pd.Timestamp(windows[-1][1])
     stats_ = []
     for _ in range(draws):
-        ps = placebo_starts(rng, real_starts, lo, hi, pre, post)
+        if scheme == "circular":
+            ps, _snapped = placebo_starts_circular(rng, real_starts, windows, pre, post)
+        else:
+            ps = placebo_starts(rng, real_starts, lo, hi, pre, post)
         if len(ps) != len(list(real_starts)):
             continue                              # never let a short draw in
         b = first_week_effect(build_stack(panel, ps, pre, post, date_col),

@@ -55,6 +55,9 @@ import pandas as pd
 from scipy import stats
 
 from config import (
+    DISCOVERY_END,
+    DISCOVERY_START,
+    CONFIRMATION_ANALYSIS_WINDOWS,
     EPISODE_LIST_PRIMARY,
     ANALYSIS_END,
     ANALYSIS_START,
@@ -65,7 +68,8 @@ from config import (
     OUTPUTS_TABLES,
     VALID_CDS,
 )
-from event_study import randomization_p
+from event_study import (draw_scheme_for, randomization_p,
+                         stratum_episodes)
 from freeze_guard import select_sample
 
 parser = argparse.ArgumentParser()
@@ -76,6 +80,11 @@ parser.add_argument("--alpha", type=float, default=0.05)
 parser.add_argument("--day-shock", type=float, default=None,
                     help="citywide day shock SD as a fraction of sigma; default is "
                          "MEASURED from the panel (finding S6, S8)")
+parser.add_argument("--stratum", default="discovery",
+                    choices=["discovery", "C1", "C2"],
+                    help="which stratum's episode geometry to calibrate. A verdict "
+                         "is a statement about ONE geometry and one draw scheme "
+                         "(finding P1); it does not transfer between them.")
 parser.add_argument("--jobs", type=int, default=0,
                     help="parallel workers; 0 = cpu_count()-1")
 args = parser.parse_args()
@@ -83,8 +92,24 @@ args = parser.parse_args()
 OUTPUTS_TABLES.mkdir(parents=True, exist_ok=True)
 rng = np.random.default_rng(18_20260908)
 
-dates = pd.date_range(ANALYSIS_START, ANALYSIS_END, freq="D")
+# THE STRATUM'S CALENDAR, which for C1 is not one range.
+#
+# ANALYSIS_START..ANALYSIS_END is a single contiguous span, and using it for C1
+# would generate synthetic days inside the discovery period that C1 excludes —
+# then draw placebo anchors into them. The windows are taken as a union so the
+# synthetic sample has exactly the shape the stratum has.
+STRATUM_WINDOWS = {
+    "discovery": [(DISCOVERY_START, DISCOVERY_END)],
+    "C1": [CONFIRMATION_ANALYSIS_WINDOWS[0], CONFIRMATION_ANALYSIS_WINDOWS[1]],
+    "C2": [CONFIRMATION_ANALYSIS_WINDOWS[2]],
+}[args.stratum]
+dates = pd.DatetimeIndex([])
+for _a, _b in STRATUM_WINDOWS:
+    dates = dates.union(pd.date_range(_a, _b, freq="D"))
+dates = dates.sort_values()
 cds = list(VALID_CDS)
+print(f"calibrating the '{args.stratum}' geometry: {len(STRATUM_WINDOWS)} window(s), "
+      f"{len(dates):,} days")
 
 # ---------------------------------------------------------------------------
 # Calibrate the noise structure to the real panel when it is available, so the
@@ -149,8 +174,17 @@ else:
     print(f"real panel not built yet — using assumed rho={rho}, sigma={sigma}")
 
 ep = pd.read_csv(DATA_REFERENCE / EPISODE_LIST_PRIMARY, parse_dates=["start"])
-starts = ep.loc[ep["period"] == "discovery", "start"].sort_values().tolist()
-print(f"episode dates applied to synthetic outcomes: {len(starts)}")
+# stratum_episodes applies first-week containment (finding P2) rather than the
+# list's own `period` column, because a stratum is defined by calendar windows
+# and an episode near an edge does not fit inside one.
+_kept, _dropped = stratum_episodes(ep["start"], STRATUM_WINDOWS,
+                                   EVENT_WINDOW_PRE, EVENT_WINDOW_POST)
+starts = [k["start"] for k in _kept]
+DRAW_SCHEME, SCHEME_WHY = draw_scheme_for(STRATUM_WINDOWS, starts,
+                                          EVENT_WINDOW_PRE, EVENT_WINDOW_POST)
+print(f"episode dates applied to synthetic outcomes: {len(starts)}"
+      + (f" ({len(_dropped)} dropped: first week outside the stratum)" if _dropped else ""))
+print(f"draw scheme: {DRAW_SCHEME} — {SCHEME_WHY}")
 
 MIN_SIMS = 200          # below this the verdict is "UNDETERMINED", never a pass
 
@@ -203,7 +237,8 @@ def one_sim(seed):
     """Run a single synthetic panel end to end. Returns (obs, p) or None."""
     r = np.random.default_rng(seed)
     obs, p, _ = randomization_p(synthetic_panel(r), starts, "edp_share",
-                                EVENT_WINDOW_PRE, EVENT_WINDOW_POST, args.draws, r)
+                                EVENT_WINDOW_PRE, EVENT_WINDOW_POST, args.draws, r,
+                                windows=STRATUM_WINDOWS)
     if obs is None or np.isnan(p):
         return None
     return float(obs), float(p)
@@ -254,8 +289,11 @@ out = pd.DataFrame([
     # circular-shift fallback that does work is a different null. Recording the
     # scheme is what lets a check notice the mismatch instead of a reader having
     # to remember it.
-    {"metric": "draw_scheme", "value": "anchor_shift"},
-    {"metric": "sample_geometry", "value": "contiguous"},
+    {"metric": "stratum", "value": args.stratum},
+    {"metric": "draw_scheme", "value": DRAW_SCHEME},
+    {"metric": "sample_geometry",
+     "value": "contiguous" if len(STRATUM_WINDOWS) == 1 else "gapped"},
+    {"metric": "n_episodes", "value": len(starts)},
     {"metric": "ar1_rho", "value": round(rho, 4)},
     {"metric": "nominal_alpha", "value": args.alpha},
     {"metric": "empirical_rejection_rate", "value": round(rej, 4)},
@@ -289,7 +327,12 @@ out = pd.DataFrame([
 # run already on disk. Every run still leaves its own record in a sidecar keyed
 # by n, so a small diagnostic run is never lost either — it simply cannot
 # masquerade as the verdict.
-main_csv = OUTPUTS_TABLES / "null_calibration.csv"
+# ONE ARTIFACT PER STRATUM. A verdict certifies one geometry and one scheme, so
+# writing them all to the same file would let a C1 run overwrite discovery's
+# verdict with a statement about a different null. The discovery artifact keeps
+# the historical name so every existing reader still finds it.
+main_csv = OUTPUTS_TABLES / ("null_calibration.csv" if args.stratum == "discovery"
+                             else f"null_calibration_{args.stratum}.csv")
 pv = pd.DataFrame({"sim": np.arange(1, len(pvals) + 1), "p": pvals, "effect": effects})
 
 prior_n = 0
