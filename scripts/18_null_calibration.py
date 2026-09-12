@@ -186,6 +186,11 @@ print(f"episode dates applied to synthetic outcomes: {len(starts)}"
       + (f" ({len(_dropped)} dropped: first week outside the stratum)" if _dropped else ""))
 print(f"draw scheme: {DRAW_SCHEME} — {SCHEME_WHY}")
 
+def _strat(stem, ext="csv"):
+    tag = "" if args.stratum == "discovery" else f"_{args.stratum}"
+    return OUTPUTS_TABLES / f"{stem}{tag}.{ext}"
+
+
 MIN_SIMS = 200          # below this the verdict is "UNDETERMINED", never a pass
 
 dow = np.array([d.dayofweek for d in dates])
@@ -244,22 +249,66 @@ def one_sim(seed):
     return float(obs), float(p)
 
 
-pvals, effects = [], []
+# RESUMABLE, BECAUSE THIS ENVIRONMENT WILL NOT HOLD A LONG JOB (finding N4).
+#
+# Measured, not feared: a 1000-sim run was killed by a container restart at 45
+# minutes and left NOTHING, because results were held in memory and written once
+# at the end. The pre-freeze gate wants 1000 sims on three strata — roughly 18
+# hours — in a container that restarts, so "run it again and hope" is not a
+# plan, it is the same 45 minutes repeatedly.
+#
+# Resumability is nearly free here because the seeds were already right:
+# SeedSequence(root).spawn(n) is deterministic per INDEX, so sim i always gets
+# the same seed no matter how many sims a run asks for. The first 200 seeds of a
+# 1000-sim run are exactly the 200 a 200-sim run used. So each finished sim is
+# appended to a per-stratum ledger keyed by index, and a restart skips the
+# indices already in it. The 200 sims already spent on each stratum are carried
+# forward rather than thrown away, and a 1000-sim calibration becomes any number
+# of short runs.
+#
+# The ledger is keyed by (stratum, draws) because a p-value from a different
+# draw count is a different quantity — pooling those would be the "second source
+# of truth" defect this project keeps finding, in its most damaging form.
+LEDGER = _strat(f"null_calibration_ledger_d{args.draws}")
+prior_rows = {}
+if LEDGER.exists():
+    try:
+        _led = pd.read_csv(LEDGER)
+        prior_rows = {int(r["sim_index"]): (float(r["obs"]), float(r["p"]))
+                      for _, r in _led.iterrows()}
+    except Exception as e:
+        print(f"ledger unreadable ({e}); starting fresh")
+        prior_rows = {}
+
+todo = [i for i in range(args.sims) if i not in prior_rows]
+if prior_rows:
+    print(f"resuming: {len(prior_rows)} sim(s) already in "
+          f"{LEDGER.name}, {len(todo)} to run")
+
 jobs = args.jobs or max(1, (os.cpu_count() or 2) - 1)
-print(f"running {args.sims} sims x {args.draws} draws on {jobs} workers")
+print(f"running {len(todo)} of {args.sims} sims x {args.draws} draws on {jobs} workers")
 done = 0
-with ProcessPoolExecutor(max_workers=jobs) as ex:
-    for res in ex.map(one_sim, SEEDS, chunksize=1):
+LEDGER.parent.mkdir(parents=True, exist_ok=True)
+if not LEDGER.exists():
+    LEDGER.write_text("sim_index,obs,p\n")
+with ProcessPoolExecutor(max_workers=jobs) as ex, LEDGER.open("a") as fh:
+    for idx, res in zip(todo, ex.map(one_sim, [SEEDS[i] for i in todo], chunksize=1)):
         done += 1
         if res is not None:
-            effects.append(res[0])
-            pvals.append(res[1])
-        if done % 25 == 0 and pvals:
-            cur = np.mean(np.array(pvals) < args.alpha)
-            print(f"  {done}/{args.sims} sims — rejection rate so far {cur:.3f}", flush=True)
+            prior_rows[idx] = (res[0], res[1])
+            # Flushed per sim: a run killed between two sims loses at most one.
+            fh.write(f"{idx},{res[0]!r},{res[1]!r}\n")
+            fh.flush()
+        if done % 25 == 0 and prior_rows:
+            cur = np.mean(np.array([v[1] for v in prior_rows.values()]) < args.alpha)
+            print(f"  {done}/{len(todo)} new sims — rejection rate so far {cur:.3f}",
+                  flush=True)
 
-pvals = np.array(pvals)
-effects = np.array(effects)
+# Ordered by sim index so the result does not depend on completion order, which
+# is the same property the seed-per-sim design exists to give.
+_ordered = [prior_rows[i] for i in sorted(prior_rows)]
+effects = np.array([e for e, _ in _ordered])
+pvals = np.array([p for _, p in _ordered])
 rej = float((pvals < args.alpha).mean())
 # Binomial 95% interval for the rejection rate at this many sims
 se = np.sqrt(args.alpha * (1 - args.alpha) / max(len(pvals), 1))
@@ -396,9 +445,6 @@ pv = pd.DataFrame({"sim": np.arange(1, len(pvals) + 1), "p": pvals, "effect": ef
 #
 # A file that describes one stratum's null is named for that stratum. No
 # exceptions, including for the sidecars nothing currently reads.
-def _strat(stem, ext="csv"):
-    tag = "" if args.stratum == "discovery" else f"_{args.stratum}"
-    return OUTPUTS_TABLES / f"{stem}{tag}.{ext}"
 
 
 main_csv = _strat("null_calibration")

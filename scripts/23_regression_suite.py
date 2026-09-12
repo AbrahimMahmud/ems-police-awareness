@@ -520,6 +520,56 @@ def s_estimators_gate_on_calibration():
                     "and 17 refuses to publish fewer draws than the result on disk")
 
 
+def s_draw_scheme_total():
+    """N5: the draw-scheme dispatch is exhaustive and never falls back silently.
+
+    `randomization_p` used to read
+        if scheme == "circular": circular else: anchor_shift
+    so any scheme name it did not recognise became an anchor shift. Renaming the
+    circular scheme sent C1 — the one stratum for which an anchor shift is
+    arithmetically impossible — down the else branch, where every draw was
+    rejected and the p-value came back NaN.
+
+    The check exists because of what the failure mode ALMOST was. C1 produced no
+    p-value, which is loud. On any stratum with slack the same fallback produces
+    a perfectly ordinary number from a null nobody certified, and
+    S.ri_scheme_certified could not catch it: that check compares the scheme a
+    stratum REQUIRES against the scheme its calibration RECORDS, and neither is
+    the scheme the code actually ran. Requirement, certificate and behaviour
+    could all disagree with nothing to notice.
+
+    Asserted by AST: every scheme `draw_scheme_for` can return must appear as a
+    dispatch key, and the dispatcher must raise on anything else.
+    """
+    import ast as _ast
+    f = SCRIPTS / "event_study.py"
+    if not f.exists():
+        return "BLOCKED", "event_study.py absent"
+    tree = _ast.parse(f.read_text())
+    fns = {n.name: n for n in _ast.walk(tree) if isinstance(n, _ast.FunctionDef)}
+    for need in ("draw_scheme_for", "randomization_p"):
+        if need not in fns:
+            return "FAIL", f"event_study.py has no {need}"
+    # Every literal a scheme selector can return, minus the "no null" sentinel.
+    returned = {c.value for c in _ast.walk(fns["draw_scheme_for"])
+                if isinstance(c, _ast.Constant) and isinstance(c.value, str)
+                and c.value in ("anchor_shift", "circular", "circular_within_block",
+                                "none")}
+    schemes = returned - {"none"}
+    body = _ast.unparse(fns["randomization_p"])
+    missing = sorted(x for x in schemes if f'"{x}"' not in body and f"'{x}'" not in body)
+    if missing:
+        return "FAIL", (f"draw_scheme_for can return {missing}, which randomization_p "
+                        "never names — those draws would take whatever branch is left")
+    raises = any(isinstance(n, _ast.Raise) for n in _ast.walk(fns["randomization_p"]))
+    if not raises:
+        return "FAIL", ("randomization_p has no raise, so an unrecognised draw scheme "
+                        "falls through to whichever drawer the code ends on — a "
+                        "silent switch to a different null")
+    return "PASS", (f"randomization_p names every scheme draw_scheme_for can return "
+                    f"({sorted(schemes)}) and raises on anything else")
+
+
 def s_ri_pvalue_form():
     """N1: the randomization p-value is (1+k)/(1+n), in every spelling of it.
 
@@ -621,6 +671,19 @@ def s_calibration_writes_stratified():
         if "OUTPUTS_TABLES" in src:
             return src
         return None
+
+    # N4: the run must also be DURABLE. Holding every result in memory and
+    # writing once at the end meant a container restart destroyed 45 minutes and
+    # left nothing, which put the pre-freeze gate's 1000-sim requirement out of
+    # reach for reasons unrelated to statistics.
+    src_all = f.read_text()
+    if "null_calibration_ledger" not in src_all:
+        return "FAIL", ("18_null_calibration.py keeps no per-sim ledger, so an "
+                        "interrupted run loses everything and a 1000-sim "
+                        "calibration cannot survive a restart")
+    if ".flush()" not in src_all:
+        return "FAIL", ("the calibration ledger is never flushed, so a killed run "
+                        "loses whatever the buffer held rather than one sim")
 
     bare = [w for n in _ast.walk(tree) if (w := _writes_to_tables(n))]
     # The helper must also actually append the stratum, or routing through it
@@ -3266,9 +3329,10 @@ CHECKS = [
     ("S.calibration_can_fail", "S4,X3,R3", "calibration verdict can fail", s_calibration_can_fail),
     ("S.no_stale_calibration", "R3", "no stale low-n calibration artifact", s_stale_calibration_artifact),
     ("S.calibration_on_residual", "S8", "synthetic null has this design's dependence, not a harder one", s_calibration_on_residual),
-    ("S.ri_scheme_certified", "P1,P5", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
+    ("S.ri_scheme_certified", "P1,P5,N3", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
+    ("S.draw_scheme_total", "N5", "every draw scheme is dispatched explicitly, none by fallback", s_draw_scheme_total),
     ("S.ri_pvalue_form", "N1", "randomization p-values use the (1+k)/(1+n) form", s_ri_pvalue_form),
-    ("S.calibration_writes_stratified", "P5,D1", "every calibration output names the stratum it describes", s_calibration_writes_stratified),
+    ("S.calibration_writes_stratified", "P5,D1,N4", "every calibration output names the stratum it describes", s_calibration_writes_stratified),
     ("S.estimators_gate_on_calibration", "P7,D1", "estimators certify their own null and cannot be downgraded by a cheap run", s_estimators_gate_on_calibration),
     ("S.ppml_wired", "X5,R8", "counts/PPML arm actually called", s_ppml_wired),
     ("S.dose_arm_wired", "D6", "dose-response arm has a caller and recovers a planted effect", s_dose_arm_wired),

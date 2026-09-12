@@ -27,6 +27,8 @@ version of this file, all found by the audit and each independently fatal:
          entire first week of 5 of 30 episodes.
 """
 
+from functools import lru_cache
+
 import numpy as np
 import pandas as pd
 import pyfixest as pf
@@ -353,13 +355,8 @@ def placebo_starts(rng, real_starts, lo, hi, pre, post):
     return out
 
 
-def admissible_days(windows, pre, post):
-    """Every day a placebo episode may start on, across one or more windows.
-
-    A start needs `pre` days before it and `post` after, so each window
-    contributes only its interior. Returned sorted, as a DatetimeIndex, so a
-    position in it is a well-defined index.
-    """
+@lru_cache(maxsize=64)
+def _admissible_days_cached(windows, pre, post):
     days = pd.DatetimeIndex([])
     for lo, hi in windows:
         lo, hi = pd.Timestamp(lo), pd.Timestamp(hi)
@@ -368,6 +365,25 @@ def admissible_days(windows, pre, post):
         if b >= a:
             days = days.union(pd.date_range(a, b, freq="D"))
     return days.sort_values()
+
+
+def admissible_days(windows, pre, post):
+    """Every day a placebo episode may start on, across one or more windows.
+
+    A start needs `pre` days before it and `post` after, so each window
+    contributes only its interior. Returned sorted, as a DatetimeIndex, so a
+    position in it is a well-defined index.
+
+    CACHED, because the within-block shift (N3) calls this once PER WINDOW PER
+    DRAW rather than once per run, and rebuilding a 520-day DatetimeIndex 200
+    times a simulation made the calibration 3.6x slower — 1 sim/minute against
+    3.6, which is 16 hours for one stratum instead of 4.6. The windows are a
+    property of the stratum and never change inside a run, so the recomputation
+    bought nothing. Keyed on a tuple so the arguments are hashable; callers
+    passing a list still work.
+    """
+    key = tuple((str(lo), str(hi)) for lo, hi in windows)
+    return _admissible_days_cached(key, pre, post)
 
 
 def placebo_starts_circular(rng, real_starts, windows, pre, post):
@@ -408,17 +424,75 @@ def placebo_starts_circular(rng, real_starts, windows, pre, post):
     real = sorted(pd.to_datetime(pd.Series(list(real_starts))).tolist())
     if len(days) == 0 or len(real) < 2:
         return [], 0
-    pos, snapped = [], 0
-    for d in real:
-        i = days.searchsorted(d)
-        if i >= len(days) or days[i] != d:
-            # nearest admissible day, ties to the earlier one
-            cands = [j for j in (i - 1, i) if 0 <= j < len(days)]
-            i = min(cands, key=lambda j: (abs((days[j] - d).days), j))
-            snapped += 1
-        pos.append(int(i))
-    shift = int(rng.integers(0, len(days)))
-    out = [days[(i + shift) % len(days)] for i in pos]
+    # WITHIN EACH WINDOW, NOT ACROSS ALL OF THEM (finding N3).
+    #
+    # The first version of this concatenated every window's admissible days into
+    # one sequence and slid through it, which let a shift carry episodes across
+    # the seam between windows. That sounds like a detail about calendar gaps —
+    # the docstring above said so — and it is not: it changes HOW MANY EPISODES
+    # LAND IN EACH WINDOW, and the placebo design stops resembling the real one.
+    #
+    # Measured on C1, which really has 10 episodes in 2015-16 and 5 in 2021:
+    # block 1 is 520 of the 641 admissible days, so a uniform shift through the
+    # concatenation put a MEAN OF 12.1 episodes there, its modal draw was 13,
+    # and it reproduced the real 10/5 split on 12.4% OF DRAWS. Different
+    # episodes per window means a different effective sample and a different
+    # fixed-effect structure, so the null was not a null of this design, and
+    # C1's p-values were correspondingly non-uniform — the one stratum of three
+    # that could not pass its own uniformity test comfortably.
+    #
+    # Shifting inside each window fixes it by construction: the count per window
+    # is preserved on EVERY draw, clustering within a window survives, and there
+    # is no seam to cross. C1 has 520 and 121 admissible days, so 62,920
+    # distinct placebo designs remain against the 2,000 draws the design calls
+    # for. On a single-window stratum this is arithmetically identical to the old
+    # code, which is what keeps discovery and C2 untouched.
+    # Membership is decided by the WINDOW'S CALENDAR BOUNDS, not by its
+    # admissible days. The two differ by `pre` at the start and `post` at the
+    # end, and finding P2 is precisely that two of C1's fifteen episodes sit in
+    # that margin: 2021-01-05, whose pre-period reaches into discovery, and
+    # 2021-05-24, whose post-period crosses the B-HEARD launch. Keying on
+    # admissible days leaves those two belonging to no block, which sent them to
+    # a fallback that scattered them across the whole stratum and made the split
+    # WORSE than the seam-crossing version it replaced — 3.9% of draws against
+    # 12.4%. Measured, not reasoned about; the first version of this fix was
+    # wrong and the test said so.
+    blocks = []
+    for w in windows:
+        adm = admissible_days([w], pre, post)
+        if len(adm):
+            blocks.append((pd.Timestamp(w[0]), pd.Timestamp(w[1]), adm))
+    if not blocks:
+        return [], 0
+
+    out, snapped = [], 0
+    for lo_w, hi_w, b in blocks:
+        mine = [d for d in real if lo_w <= d <= hi_w]
+        # An episode inside the window's calendar span but not on an admissible
+        # day is snapped to the nearest one, and counted, exactly as before.
+        pos = []
+        for d in mine:
+            i = b.searchsorted(d)
+            if i >= len(b) or b[i] != d:
+                cands = [j for j in (i - 1, i) if 0 <= j < len(b)]
+                i = min(cands, key=lambda j: (abs((b[j] - d).days), j))
+                snapped += 1
+            pos.append(int(i))
+        if not pos:
+            continue
+        shift = int(rng.integers(0, len(b)))
+        out.extend(b[(i + shift) % len(b)] for i in pos)
+
+    # Every episode a stratum contains lies inside one of its windows by
+    # construction — that is what stratum_episodes selected on — so this should
+    # place all of them. If it ever does not, the draw is SHORT, and a draw
+    # carrying fewer episodes than the real design is the exact defect
+    # placebo_starts rejects draws to avoid. Refuse rather than return it.
+    if len(out) != len(real):
+        raise ValueError(
+            f"within-block shift placed {len(out)} of {len(real)} episodes; an "
+            "episode lies outside every window of its own stratum, which means "
+            "the stratum and the episode list disagree")
     return sorted(out), snapped
 
 
@@ -564,15 +638,25 @@ def draw_scheme_for(windows, real_starts, pre, post):
     if len(real) < 2:
         return "none", f"{len(real)} episode(s): no permutation null is defined"
     if len(windows) > 1:
-        return "circular", (f"{len(windows)} disjoint windows: an anchor shift has no "
-                            "single span to slide within")
+        # NAMED "circular_within_block", not "circular". The scheme changed in a
+        # way that changes the null (finding N3), so the name has to change too
+        # — otherwise a calibration certifying the seam-crossing version would
+        # go on satisfying S.ri_scheme_certified for a different null. The name
+        # IS the certificate's subject.
+        return "circular_within_block", (
+            f"{len(windows)} disjoint windows: an anchor shift has no single span "
+            "to slide within, and a shift across the concatenation would not "
+            "preserve how many episodes fall in each window")
     lo, hi = (pd.Timestamp(x) for x in windows[0])
     span = (real[-1] - real[0]).days
     room = ((hi - pd.Timedelta(days=post + 1))
             - (lo + pd.Timedelta(days=pre + 1))).days - span
     if room < 0:
-        return "circular", (f"one window, but the sequence spans {span}d against "
-                            f"{span + room}d usable: slack {room}")
+        # One window, so within-block and across-block are the same operation;
+        # the name still records which implementation drew the placebos.
+        return "circular_within_block", (
+            f"one window, but the sequence spans {span}d against "
+            f"{span + room}d usable: slack {room}")
     return "anchor_shift", f"one window with {room}d of slack for a {span}d sequence"
 
 
@@ -603,11 +687,33 @@ def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
     scheme, _why = draw_scheme_for(windows, real_starts, pre, post)
     lo, hi = pd.Timestamp(windows[0][0]), pd.Timestamp(windows[-1][1])
     stats_ = []
+    # EXHAUSTIVE DISPATCH, AND NO SILENT DEFAULT.
+    #
+    # This was `if scheme == "circular": ... else: anchor shift`. Renaming the
+    # circular scheme to circular_within_block therefore sent C1 — the stratum
+    # that CANNOT use an anchor shift, which is the entire reason the second
+    # scheme exists — down the else branch, where every draw was rejected and
+    # the p-value came back NaN. An `else` that means "the other scheme" turns
+    # every unrecognised name into a silent switch to a different null.
+    #
+    # So the mapping is explicit and an unknown scheme raises. A draw scheme is
+    # the subject of a calibration certificate; guessing at one is not a
+    # degraded mode, it is an uncertified p-value with no warning attached.
+    DRAWERS = {
+        "circular_within_block":
+            lambda: placebo_starts_circular(rng, real_starts, windows, pre, post)[0],
+        "anchor_shift":
+            lambda: placebo_starts(rng, real_starts, lo, hi, pre, post),
+    }
+    if scheme not in DRAWERS:
+        raise ValueError(
+            f"draw_scheme_for returned {scheme!r}, which randomization_p cannot "
+            f"draw. Known schemes: {sorted(DRAWERS)}. Refusing to fall back — a "
+            "fallback here silently changes which null the p-value comes from.")
+    draw_placebo = DRAWERS[scheme]
+
     for _ in range(draws):
-        if scheme == "circular":
-            ps, _snapped = placebo_starts_circular(rng, real_starts, windows, pre, post)
-        else:
-            ps = placebo_starts(rng, real_starts, lo, hi, pre, post)
+        ps = draw_placebo()
         if len(ps) != len(list(real_starts)):
             continue                              # never let a short draw in
         b = first_week_effect(build_stack(panel, ps, pre, post, date_col),

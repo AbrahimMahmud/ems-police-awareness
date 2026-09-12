@@ -1072,7 +1072,13 @@ refuses a verdict that certifies something else. All three are now discharged, a
 |---|---|---|---|---|---|---|
 | discovery | anchor shift | contiguous | 29 | 0.06 | 0.6767 | CALIBRATED |
 | C2 | anchor shift | contiguous | 30 | 0.06 | 0.4878 | CALIBRATED |
-| C1 | circular | gapped | 15 | 0.05 | 0.0660 | CALIBRATED |
+| C1 | circular, within block | gapped | 15 | — | — | RECALIBRATING |
+
+C1's row is empty because its scheme changed and the verdict that certified the
+old one has been moved aside rather than left in place to be misread. A
+calibration certifies one scheme; when the scheme is replaced the certificate
+does not carry over, and an artifact that says CALIBRATED about a null nobody
+draws from any more is worse than no artifact. The recalibration is running.
 
 **C1 passed by a margin worth stating rather than burying, and then the margin
 turned out to be a symptom.** Its KS statistic is 0.0875 against a critical value
@@ -1219,7 +1225,7 @@ is a harder thing to notice and a worse thing to have.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **70 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **71 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
