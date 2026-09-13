@@ -43,6 +43,7 @@ D.outcome_list_complete,"O1,X11",every processed artifact is classified as outco
 D.incident_disclosed,F1,freeze incident stays in the record,PASS,"2 incident(s) recorded and named in the disclosure section, dated: ['F1', 'F2']"
 D.addendum_complete,"E5,E6,F2",pre-registration text untouched and its addendum exists,PASS,"pre-specified text byte-identical (2554 bytes); addendum present (266 lines); 2 finding(s) promising disclosure all named in it ['E6', 'F2']"
 D.guard_can_fire,"D3,D4",freeze guard actually rejects things,PASS,guard fires on all 4 rejection cases
+D.declared_access_scoped,O2,"every read of confirmation outcomes is declared, scoped, logged and disclosed",PASS,"1 declared access(es), 1 caller(s), 3 output(s) with exactly the declared columns, each disclosed and logged; guard refuses all 4 self-test cases"
 E.threshold_stringency,"D5,L5,E6",episode threshold is constant stringency,PASS,stringency 10.1%-10.3% by year (spread 0.2%); all 74 peaks clear their year's cut
 E.no_mega_episode,"E3,D7,E6",no episode exceeds its analysis window,PASS,"74 episodes, span median 3 max 14 (cap 14)"
 E.frozen_list_untouched,D3,frozen episode list unmodified,PASS,byte-identical to HEAD

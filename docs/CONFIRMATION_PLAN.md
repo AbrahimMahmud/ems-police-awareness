@@ -399,7 +399,12 @@ scope fixed here first and a check that holds it there:
 - **Where it goes.** `data/reference/ems_call_code_span.csv` and
   `data/reference/ems_missing_district_rate_by_year.csv`, committed, so the
   access leaves an artifact with exactly the declared columns rather than a line
-  in a log.
+  in a log. A third file, `ems_coverage_breaks.csv`, holds the two decision
+  rules below evaluated on those two files and on the code lists and windows in
+  `config`; it is a pure function of them and carries no value that is not
+  already in them. It exists so the paper's counts of breaks can be claims over
+  an artifact rather than a reading of a log. (Declared after the first run,
+  which emitted (a) and (b) only; nothing further was read to produce it.)
 - **How the scope is enforced.** `D.declared_access_scoped` requires that every
   exemption in `config.FREEZE_EXEMPTIONS` is used by exactly the script it names
   and by no other, that each declared output exists with exactly the declared
@@ -420,9 +425,15 @@ scope fixed here first and a check that holds it there:
      adjacent years inside a confirmation analysis window, the year boundary is a
      **geocoding break**. The primary estimates are unchanged; a pre-specified
      sensitivity drops every episode whose ±14-day window crosses the boundary
-     and is reported beside the primary. This is the O2 fix text's second
-     option, chosen over month-year fixed effects because it changes the sample
-     and not the estimator, and so stays comparable with the calibrated null.
+     and is reported beside the primary. It is a *demonstration*, not a
+     correction: finding O2's refutation measured the artifact a proportional
+     change in geocoding induces in a share at about 0.0002 on the mental-health
+     share — far below the first-week statistic's resolution — and concluded
+     that neither month-year fixed effects nor dropping episodes is warranted in
+     the primary. The sensitivity exists so that a reader can see that rather
+     than take it on trust, and it is chosen over month-year fixed effects
+     because it changes the sample and not the estimator, so it stays comparable
+     with the calibrated null.
   3. Neither rule reads or uses an outcome value, and neither can change which
      estimate is primary.
 - **Blind?** No. This is a read of confirmation-period outcome coverage. It is

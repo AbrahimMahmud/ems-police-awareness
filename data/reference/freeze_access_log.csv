@@ -1,0 +1,3 @@
+accessed_utc,exemption,script,git_commit,rows_total,rows_confirmation_window,date_min,date_max,disclosure
+2026-09-13T02:39:51+00:00,O2_coverage_breaks,35_coverage_breaks.py,34211cc1b527,4876509,2975015,2014-12-01,2024-12-31,"docs/CONFIRMATION_PLAN.md, addendum section 18"
+2026-09-13T02:42:27+00:00,O2_coverage_breaks,35_coverage_breaks.py,34211cc1b527,4876509,2975015,2014-12-01,2024-12-31,"docs/CONFIRMATION_PLAN.md, addendum section 18"

@@ -386,7 +386,7 @@
       "role": "closes the rename defect T12. Fetching one canonical title discarded everything before a page move, including the spike at the moment of death; summing across historical titles recovered 79,082,746 views across 106 of 127 articles.",
       "artifacts": [
         "data/reference/article_title_map.csv",
-        "outputs/tables/rename_recovery.csv"
+        "data/reference/rename_recovery.csv"
       ],
       "known_flaws": [
         "Redirects include incidental pages, so a candidate must share a substantive word with the article title.",

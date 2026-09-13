@@ -33,13 +33,21 @@ two samples are disjoint by construction. Lifting the freeze switches the sample
 to the confirmation windows and EXCLUDES discovery, rather than widening a range.
 """
 
+import inspect
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
+
 import pandas as pd
 
 from config import (
     CONFIRMATION_WINDOWS,
+    DATA_REFERENCE,
     DISCOVERY_END,
     DISCOVERY_START,
+    FREEZE_ACCESS_LOG,
     FREEZE_ACTIVE,
+    FREEZE_EXEMPTIONS,
 )
 
 
@@ -143,3 +151,114 @@ def freeze_banner(script):
     state = "ACTIVE — discovery only" if FREEZE_ACTIVE else "LIFTED — confirmation sample"
     spans = ", ".join(f"{a.date()}..{b.date()}" for a, b in win)
     print(f"[freeze] {script}: {state} ({spans})")
+
+
+# ---------------------------------------------------------------------------
+# Declared accesses (config.FREEZE_EXEMPTIONS)
+# ---------------------------------------------------------------------------
+def _calling_script():
+    """The .py file that called into this module, so the exemption can be
+    checked against the script it was declared for rather than trusted."""
+    for fr in inspect.stack()[1:]:
+        q = Path(fr.filename)
+        if q.suffix == ".py" and q.name != "freeze_guard.py" and q.exists():
+            return q.name
+    return None
+
+
+def _git_commit():
+    try:
+        r = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True,
+                           text=True, timeout=20, cwd=Path(__file__).parent)
+        return r.stdout.strip()[:12]
+    except Exception:
+        return ""
+
+
+def declared_access(df, exemption, date_col="incident_date", where=""):
+    """Return the WHOLE frame - confirmation rows included - under a declared exemption.
+
+    This is the opposite of select_sample: it does not filter. It exists so that
+    the one kind of confirmation-window read this project permits - a coverage
+    diagnostic that emits dates and missingness rates and no outcome value - is
+    a decision on the record rather than a script quietly added to an exemption
+    list. Three things make it different from GUARD_EXEMPT:
+
+      1. The exemption must be declared in config.FREEZE_EXEMPTIONS, with the
+         script that may use it, what it reads, and exactly which columns it may
+         write. An undeclared name raises. A declared name used from any other
+         script raises, so the exemption cannot be borrowed.
+      2. Every call appends a row to FREEZE_ACCESS_LOG - when, which exemption,
+         which script, which commit, how many rows and how many of them fall in a
+         confirmation window. The log is committed. Incidents F1 and F2 were
+         found weeks late because nothing recorded the read; this records it at
+         the moment it happens.
+      3. declared_output() below refuses to write anything but the declared
+         columns, so the scope written in the addendum is the scope on disk.
+
+    The freeze flag is irrelevant here on purpose: a declared access is allowed
+    while the freeze holds (that is the point) and stays logged after it lifts.
+    """
+    spec = FREEZE_EXEMPTIONS.get(exemption)
+    if spec is None:
+        raise FreezeViolation(
+            f"{where or 'caller'}: exemption {exemption!r} is not declared in "
+            f"config.FREEZE_EXEMPTIONS ({sorted(FREEZE_EXEMPTIONS)}). A read of "
+            "confirmation-window outcomes must be declared and disclosed first.")
+    caller = _calling_script()
+    if caller != spec["script"]:
+        raise FreezeViolation(
+            f"{where or 'caller'}: exemption {exemption!r} is declared for "
+            f"{spec['script']} and was invoked from {caller!r}. An exemption "
+            "belongs to one script and cannot be borrowed.")
+    if date_col not in df.columns:
+        raise FreezeViolation(
+            f"{where or 'caller'}: no '{date_col}' column, so the access cannot be "
+            "described in the log.")
+    d = pd.to_datetime(df[date_col])
+    conf = [(pd.Timestamp(a), pd.Timestamp(b)) for a, b in CONFIRMATION_WINDOWS]
+    n_conf = int(_in_windows(d, conf).sum())
+    row = {
+        "accessed_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "exemption": exemption,
+        "script": caller,
+        "git_commit": _git_commit(),
+        "rows_total": int(len(df)),
+        "rows_confirmation_window": n_conf,
+        "date_min": str(d.min().date()),
+        "date_max": str(d.max().date()),
+        "disclosure": spec["disclosure"],
+    }
+    FREEZE_ACCESS_LOG.parent.mkdir(parents=True, exist_ok=True)
+    new = not FREEZE_ACCESS_LOG.exists()
+    pd.DataFrame([row]).to_csv(FREEZE_ACCESS_LOG, mode="a", header=new, index=False)
+    print(f"[freeze] DECLARED ACCESS {exemption!r} by {caller}: {len(df):,} rows, "
+          f"{n_conf:,} in a confirmation window ({row['date_min']}..{row['date_max']}); "
+          f"logged to {FREEZE_ACCESS_LOG.name}; scope: {spec['disclosure']}")
+    return df
+
+
+def declared_output(frame, exemption, name):
+    """Write one of an exemption's declared outputs, refusing anything else.
+
+    The columns must equal the declared tuple exactly - not a superset, not a
+    reordering. A column that is not in the declaration is, by definition,
+    something the disclosure did not promise, and it does not get written.
+    """
+    spec = FREEZE_EXEMPTIONS.get(exemption)
+    if spec is None:
+        raise FreezeViolation(f"exemption {exemption!r} is not declared")
+    if name not in spec["writes"]:
+        raise FreezeViolation(
+            f"{name!r} is not a declared output of {exemption!r} "
+            f"(declared: {sorted(spec['writes'])})")
+    want = tuple(spec["writes"][name])
+    got = tuple(str(c) for c in frame.columns)
+    if got != want:
+        raise FreezeViolation(
+            f"{name}: columns {list(got)} differ from the declared {list(want)}. "
+            "The disclosure fixed the scope; the output does not get to widen it.")
+    out = DATA_REFERENCE / name
+    frame.to_csv(out, index=False)
+    print(f"[freeze] declared output {name}: {len(frame):,} rows, columns {list(want)}")
+    return out

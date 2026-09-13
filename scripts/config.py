@@ -159,6 +159,54 @@ NON_OUTCOME_ARTIFACTS = (
 # rule (O.ems_complete) plus the SODA producer list below.
 RAW_OUTCOME_DIRS = ("ems_pages",)
 
+# DECLARED ACCESSES to confirmation-window outcome data.
+#
+# The freeze has two kinds of hole and only one of them was ever a decision.
+# GUARD_EXEMPT (in 23_regression_suite.py) names scripts that may read an outcome
+# artifact without select_sample because they PRODUCE it or audit it; that list
+# is static, checked by grep, and says nothing about what a script does with the
+# rows once it has them. Incidents F1 and F2 were both "it is only metadata"
+# reads that nobody had declared and nothing logged.
+#
+# An exemption here is the other kind: a deliberate, pre-disclosed read of
+# confirmation-period outcome data for a stated purpose, with its scope written
+# down BEFORE the code exists. freeze_guard.declared_access() refuses any name
+# not in this dict and any caller other than the script named here; it appends a
+# row to FREEZE_ACCESS_LOG every time it runs; and declared_output() refuses to
+# write a frame whose columns differ from the ones declared. D.declared_access_
+# scoped checks all of that, plus that the disclosure section actually exists.
+#
+# The first entry is finding O2: whether the 2015-2016 confirmation window has
+# structural breaks in coverage (a call code born or retired inside it, a step in
+# the missing-district rate) is a question that has to be answered before CP2,
+# and it can be answered from dates and missingness rates alone. What it emits is
+# exactly that and nothing else - no count by period, no outcome mean or share.
+# Disclosed in CONFIRMATION_PLAN.md addendum 18 before this entry was written;
+# approved 2026-09-13.
+FREEZE_EXEMPTIONS = {
+    "O2_coverage_breaks": dict(
+        script="35_coverage_breaks.py",
+        reads="ems_cd_day_calltype.parquet",
+        writes={
+            # per call code: the first and last incident_date it appears on
+            "ems_call_code_span.csv": ("final_call_type", "first_date", "last_date"),
+            # per calendar year: share of dispatched calls with no community district
+            "ems_missing_district_rate_by_year.csv": ("year", "missing_district_rate"),
+            # the two pre-specified rules evaluated on the two files above and on
+            # CALL_TYPE_GROUPS / CONFIRMATION_ANALYSIS_WINDOWS - a pure function of
+            # them, carrying no value that is not already in them
+            "ems_coverage_breaks.csv": ("window", "group", "final_call_type", "kind", "date"),
+        },
+        disclosure="docs/CONFIRMATION_PLAN.md, addendum section 18",
+        approved="2026-09-13",
+        reason="coverage breaks inside the confirmation window (finding O2) must be "
+               "known before CP2; dates and missingness rates carry no outcome value",
+    ),
+}
+# Append-only record of every declared access, committed so a read of the
+# confirmation window is visible in the repository whether or not it is written up.
+FREEZE_ACCESS_LOG = DATA_REFERENCE / "freeze_access_log.csv"
+
 MIN_TOTAL_CALLS_FOR_SHARE = 5        # primary; sensitivities at 3 and 10 (I17/plan §4.5)
 MIN_CALLS_SENSITIVITY = (3, 10)
 

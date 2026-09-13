@@ -117,6 +117,15 @@ STAGES = [
          needs=["data/processed/ems_cd_day_calltype.parquet"],
          writes=["data/processed/panel_cd_day.parquet"],
          note="district x day analysis panel"),
+    # The one declared read of confirmation-window outcome rows (finding O2,
+    # CONFIRMATION_PLAN.md addendum 18): dates and missingness rates only, through
+    # freeze_guard.declared_access, logged to freeze_access_log.csv on every run.
+    dict(script="35_coverage_breaks.py", kind="build",
+         needs=["data/processed/ems_cd_day_calltype.parquet"],
+         writes=["data/reference/ems_call_code_span.csv",
+                 "data/reference/ems_missing_district_rate_by_year.csv",
+                 "data/reference/ems_coverage_breaks.csv"],
+         note="coverage breaks inside the confirmation window (declared access)"),
     dict(script="12_build_cai.py", kind="build",
          needs=["data/reference/cai_components_daily.csv",
                 "data/reference/cai_trends_daily.csv"],

@@ -627,6 +627,60 @@ year to 161 and 71% of 2024 at zero. That series was retired from the index on
 independent grounds, so it attenuates nothing estimated here — which is the only
 reason this is a paragraph rather than a problem.
 
+### 5.1d Coverage breaks inside the confirmation window — read under a declared exemption
+
+**Layer 1.** Before the sealed half of the data is analysed, we checked whether
+the *way calls are recorded* changes inside it: whether any call code appears or
+disappears there, and whether the share of calls with no district changes. We
+did this without looking at any call volume or any outcome, and we wrote down
+what we would look at, and what we would do about it, before we looked.
+
+**Layer 2.** Finding O2 named two such breaks in 2015–2016 — a geocoding regime
+change at 2016-01-01 and the retirement of the INJALS injury code — and asked
+for a coverage table before CP2. Producing it means reading confirmation-window
+rows of the outcome extract, which the freeze protects, and "it is only
+metadata" is the reasoning behind both freeze incidents in §5.3. So the read was
+made a **declared access**: its scope is written in the `CONFIRMATION_PLAN.md`
+addendum (§18) and in `config.FREEZE_EXEMPTIONS`; it runs only through
+`freeze_guard.declared_access`, which refuses any undeclared exemption or any
+caller other than `35_coverage_breaks.py` and appends a row to
+`data/reference/freeze_access_log.csv` every time; the outputs go through
+`declared_output`, which refuses any column the declaration does not name; and
+`D.declared_access_scoped` holds all of that and fails if an output is widened
+(defeat-tested). What was emitted is per call code its first and last date, and
+per year the share of calls with no district. No count by period, no mean, no
+share of any call group.
+
+**Layer 3.** `data/reference/ems_call_code_span.csv`,
+`ems_missing_district_rate_by_year.csv`, `ems_coverage_breaks.csv`. Of the
+codes in any outcome group, **20 outcome-group codes** are born or retired
+strictly inside a confirmation analysis window:
+
+| window | outcome-group codes born or retired inside it | which |
+|---|---|---|
+| C1a, 2015-07→2016-12 | 1 | INJALS retired 2015-12-16 (injury placebo); and the geocoding step at 2016-01-01 |
+| C1b, 2021-01→2021-05 | 2 | CARDFT born 2021-01-06 (cardiac placebo); ALTMFT born 2021-03-10 (altmen, inside the narrow mental-health family) |
+| C2, 2021-06→2024-12 | 17 | EDPM born 2021-06-03 and EDPW retired 2021-08-25 (EDP family, both already disclosed in `config`); the other 15 are FC/FT dispatch variants across the cardiac, asthma, altmen and drug groups |
+
+The share of dispatched calls with no community district is **2.97%** in 2015
+and **0.91%** in 2016 — a ratio of **0.31**, the only adjacent-year change
+beyond a factor of two anywhere in 2014–2024 — and sits between 0.87% and 0.98%
+in every later year. So the geocoding break is real, dated to 2016-01-01, and
+confined to the first half of C1a.
+
+**What follows is pre-specified, not chosen.** The primary estimates do not
+change. For each break, addendum §18 fixes a sensitivity: re-estimate the
+affected group in the affected stratum with every episode dropped whose ±14-day
+window contains the break date, and report it beside the primary. On the
+rebuilt episode list that touches episode 4 (2015-12-28; both C1a breaks),
+episode 40 (2021-01-05; CARDFT) and episode 41 (2021-03-12; ALTMFT) in C1, and
+the C2 episodes around EDPM's birth and EDPW's retirement. The geocoding
+sensitivity is expected to show nothing: O2's own refutation measured the
+artifact a proportional geocoding change induces in a *share* at about 0.0002
+on the mental-health share, well below the first-week statistic's resolution.
+The value of running it anyway is that a reader sees the number rather than the
+assurance.
+
 ### 5.1a A measurement break inside the treatment series
 
 `wiki_ext` counts Wikipedia pageviews filtered to `agent=user`. In late April
@@ -1307,7 +1361,7 @@ MDE, and none of them is available here.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **75 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **76 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
@@ -1616,6 +1670,15 @@ district-day standard deviation is 0.047.
    have detected it unless it were roughly twice the size we said would matter, or
    unless it took a transient shape". That is a real statement and a weak one, and
    the paper should present it as both.
+13. **The confirmation window has recording breaks inside it, mapped under a
+   declared read.** Twenty outcome-group codes are born or retired inside the
+   confirmation analysis windows and the missing-district share drops by two
+   thirds at 2016-01-01 (§5.1d). They were found by reading confirmation-period
+   *coverage* — dates and a missingness rate, no outcome value — through a
+   logged, scope-checked exemption disclosed before it ran. That is still a read
+   of the sealed sample, and it is listed beside F1 and F2 in the addendum's
+   summary table rather than presented as blind. The breaks themselves are
+   handled by pre-specified sensitivities, never by changing the primary.
 
 ---
 

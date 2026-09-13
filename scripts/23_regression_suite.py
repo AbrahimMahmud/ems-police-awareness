@@ -2437,8 +2437,12 @@ def d_guard_coverage():
     tautology — made this check report the fixed scripts as unguarded.
     """
     from config import OUTCOME_ARTIFACTS
+    # declared_access is a guard entry too: it does not filter, but it refuses
+    # undeclared exemptions and foreign callers and logs every call, and
+    # D.declared_access_scoped holds its scope. A script using it is routed
+    # through freeze_guard, which is the property this check tests.
     entries = ("select_sample", "assert_no_confirmation_outcomes",
-               "assert_discovery_only")
+               "assert_discovery_only", "declared_access")
     missing = []
     for f in sorted(SCRIPTS.glob("*.py")):
         if f.name in GUARD_EXEMPT:
@@ -2689,6 +2693,126 @@ def d_guard_can_fire():
     return ("PASS" if not bad else "FAIL",
             f"guard fires on all {len(results)} rejection cases" if not bad
             else f"guard did NOT fire on: {bad}")
+
+
+def d_declared_access_scoped():
+    """O2: every read of confirmation-window outcomes is declared, scoped, logged
+    and disclosed - and the guard refuses everything outside that.
+
+    GUARD_EXEMPT says which scripts may read an outcome artifact unfiltered; it
+    says nothing about what they do with the rows, and it is checked by grep.
+    Incidents F1 and F2 were both reads that nobody had declared and nothing
+    logged. Finding O2 needs one more such read - a coverage table over the
+    2015-2016 extract - and the decision (CONFIRMATION_PLAN.md addendum 18) was
+    to permit it only as a DECLARED access: named in config.FREEZE_EXEMPTIONS
+    with the script, the input and the exact output columns; routed through
+    freeze_guard.declared_access, which logs every call; written through
+    declared_output, which refuses undeclared columns.
+
+    This check holds all four sides of that at once, because each can drift on
+    its own: (1) the set of scripts calling declared_access equals the set of
+    scripts the declarations name - no borrowing, no orphan declaration; (2)
+    every declared output exists with EXACTLY the declared columns - a widened
+    output is a widened access; (3) the exemption is disclosed in the addendum
+    by name; (4) the access log records a run by the declared script. Then a
+    self-test: the guard must refuse an undeclared exemption, a declared one
+    invoked from the wrong script, an output with an extra column, and an output
+    name that was never declared. A guard that has never refused anything has
+    not been tested (the D.guard_can_fire lesson).
+
+    Defeat-tested before baselining: adding a column to the written output
+    fails (2); calling the exemption from this suite is refused (self-test).
+    """
+    from config import FREEZE_EXEMPTIONS, FREEZE_ACCESS_LOG
+    sys.path.insert(0, str(SCRIPTS))
+    import freeze_guard as fg
+
+    problems = []
+    # Real CALL SITES, found by parsing, not by grep: config.py and the script's
+    # own docstring both mention "declared_access(" in prose, and a grep would
+    # report the config file as a reader of confirmation outcomes.
+    def _calls_declared_access(path):
+        try:
+            tree = ast.parse(path.read_text())
+        except SyntaxError:
+            return False
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call):
+                fn = node.func
+                name = fn.id if isinstance(fn, ast.Name) else getattr(fn, "attr", None)
+                if name == "declared_access":
+                    return True
+        return False
+
+    callers = [f.name for f in sorted(SCRIPTS.glob("*.py"))
+               if f.name not in ("freeze_guard.py", "23_regression_suite.py")
+               and _calls_declared_access(f)]
+    declared = {s["script"]: n for n, s in FREEZE_EXEMPTIONS.items()}
+    stray = [c for c in callers if c not in declared]
+    if stray:
+        problems.append(f"undeclared caller(s) of declared_access: {stray}")
+    plan = PROJECT_ROOT / "docs" / "CONFIRMATION_PLAN.md"
+    plan_text = plan.read_text() if plan.exists() else ""
+    for name, spec in FREEZE_EXEMPTIONS.items():
+        script = SCRIPTS / spec["script"]
+        if not script.exists():
+            problems.append(f"{name}: declared for {spec['script']}, which does not exist")
+            continue
+        src = script.read_text()
+        if f'"{name}"' not in src and f"'{name}'" not in src:
+            problems.append(f"{name}: {spec['script']} never names the exemption")
+        if spec["script"] not in callers:
+            problems.append(f"{name}: {spec['script']} does not call declared_access")
+        if name not in plan_text:
+            problems.append(f"{name}: not disclosed by name in CONFIRMATION_PLAN.md")
+        for out, cols in spec["writes"].items():
+            p = DATA_REFERENCE / out
+            if not p.exists():
+                return "BLOCKED", f"{out} absent — run {spec['script']} (declared access {name})"
+            got = tuple(pd.read_csv(p, nrows=0).columns)
+            if got != tuple(cols):
+                problems.append(f"{out}: columns {list(got)} differ from the declared {list(cols)}")
+        if not FREEZE_ACCESS_LOG.exists():
+            problems.append(f"{FREEZE_ACCESS_LOG.name} absent: no declared access has been logged")
+        else:
+            log = pd.read_csv(FREEZE_ACCESS_LOG)
+            if not ((log["exemption"] == name) & (log["script"] == spec["script"])).any():
+                problems.append(f"{name}: no row in {FREEZE_ACCESS_LOG.name} for {spec['script']}")
+
+    # Self-test: the guard must REFUSE. None of these writes anything: the caller
+    # and declaration checks run before the log append, and the column check
+    # before the file write.
+    frame = pd.DataFrame({"incident_date": pd.date_range("2015-01-01", "2015-01-10"),
+                          "x": 1.0})
+    first = next(iter(FREEZE_EXEMPTIONS))
+    first_out, first_cols = next(iter(FREEZE_EXEMPTIONS[first]["writes"].items()))
+    widened = pd.DataFrame({c: ["v"] for c in first_cols}).assign(mean_edp_share=[0.1])
+    cases = [
+        ("undeclared exemption",
+         lambda: fg.declared_access(frame, "not_a_declared_exemption", where="selftest")),
+        ("exemption borrowed by another script",
+         lambda: fg.declared_access(frame, first, where="selftest")),
+        ("output with an undeclared column",
+         lambda: fg.declared_output(widened, first, first_out)),
+        ("output name never declared",
+         lambda: fg.declared_output(frame, first, "ems_outcome_means_by_period.csv")),
+    ]
+    not_refused = []
+    for label, fn in cases:
+        try:
+            fn()
+            not_refused.append(label)
+        except fg.FreezeViolation:
+            pass
+    if not_refused:
+        problems.append(f"guard did NOT refuse: {not_refused}")
+
+    n_out = sum(len(s["writes"]) for s in FREEZE_EXEMPTIONS.values())
+    return ("PASS" if not problems else "FAIL",
+            f"{len(FREEZE_EXEMPTIONS)} declared access(es), {len(callers)} caller(s), "
+            f"{n_out} output(s) with exactly the declared columns, each disclosed and "
+            f"logged; guard refuses all {len(cases)} self-test cases"
+            if not problems else "; ".join(problems))
 
 
 # ===========================================================================
@@ -3559,6 +3683,7 @@ CHECKS = [
     ("D.incident_disclosed", "F1", "freeze incident stays in the record", d_incident_disclosed),
     ("D.addendum_complete", "E5,E6,F2", "pre-registration text untouched and its addendum exists", d_addendum_complete),
     ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),
+    ("D.declared_access_scoped", "O2", "every read of confirmation outcomes is declared, scoped, logged and disclosed", d_declared_access_scoped),
     ("E.episodes_labelled", "E7,E8", "every episode says what drove it, from the treatment series", e_episodes_labelled),
     ("E.threshold_stringency", "D5,L5,E6", "episode threshold is constant stringency", e_threshold_constant_stringency),
     ("E.no_mega_episode", "E3,D7,E6", "no episode exceeds its analysis window", e_no_mega_episode),

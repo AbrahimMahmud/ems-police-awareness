@@ -126,6 +126,31 @@ scripts). Update this file whenever a source is added, replaced, or re-downloade
 - **Cite as**: NYC Mayor's Office of Community Mental Health, B-HEARD program
   announcements; New York City Independent Budget Office (2026).
 
+## Derived coverage diagnostics — a declared read of the confirmation window
+
+### D4–D6. Call-code spans, missing-district share by year, and the break table
+- **Provider**: derived in-project from S1's district × day × call-type extract
+  (`data/processed/ems_cd_day_calltype.parquet`, all years 2014-12→2024-12)
+- **Accessed**: 2026-09-13 via `scripts/35_coverage_breaks.py`, through
+  `freeze_guard.declared_access("O2_coverage_breaks")`. This is the one permitted
+  read of confirmation-window outcome rows while the freeze holds. It is declared
+  in `config.FREEZE_EXEMPTIONS`, disclosed in `docs/CONFIRMATION_PLAN.md`
+  addendum §18 *before* the script existed, and every run appends a row to
+  `data/reference/freeze_access_log.csv`.
+- **Method**: (D4) per `final_call_type`, first and last `incident_date`;
+  (D5) per calendar year, share of dispatched calls with no community district;
+  (D6) the two pre-specified rules of addendum §18 evaluated on D4, D5 and the
+  code lists and windows in `config` — a pure function of them. Written through
+  `declared_output`, which refuses any column not declared. No call count by
+  period, no outcome mean or share, no district-level value.
+- **Files in project**: `data/reference/ems_call_code_span.csv`,
+  `data/reference/ems_missing_district_rate_by_year.csv`,
+  `data/reference/ems_coverage_breaks.csv`
+- **Role**: QC map of recording breaks inside the confirmation window (finding
+  O2); drives the pre-specified coverage sensitivities of the confirmatory run.
+  Not an input to any estimate.
+- **Cite as**: derived from S1.
+
 ## Planned sources (not yet fetched)
 
 - **NYC Well contact volumes** (NYC Open Data) — substitution outcome; granularity TBD
