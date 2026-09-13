@@ -158,7 +158,7 @@ concl = rdg[(rdg.stratum == "family") & (rdg.item == "conclusion_9_4")]["value"]
 lines += ["", f"*Conclusion under note §9.4 as amended: {concl}*", ""]
 
 # ---- Table C: placebos and denominator diagnostics -------------------------
-lines += [f"**Table 8b.3 — Falsification outcomes and the denominator diagnostic, per stratum (unadjusted randomization p; addendum §23.3–23.4){A_SYN}.**", "",
+lines += [f"**Table 8b.3 — Falsification outcomes and the denominator diagnostic, per stratum (unadjusted randomization p; addendum §23.3–23.4){A_SYN}.** Cardiac and asthma cells at p ≤ 0.05 override the stratum's primary rejections; injury is reported but does not override (§23.4); the no-offset counts are the denominator diagnostic (§23.3).", "",
           "| stratum | outcome | arm | episodes | first-week mean | RI p | asymptotic p |", "|---|---|---|---|---|---|---|"]
 for s in ("C1_clean", "C2_exposed"):
     sl = STRATA[s]

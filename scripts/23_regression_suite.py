@@ -659,6 +659,10 @@ def s_confirmatory_reading_rules():
          ("rejects, predicted direction; PLACEBO OVERRIDE", "does not reject"), "NOT SUPPORT FOR H1"),
         ("denominator-driven (23.3)", {**rej(S1, "edp_share"), f"{S1}:diag_total": dict(p_randomization=0.01)},
          ("rejects, denominator-driven", "does not reject"), "NOT SUPPORT FOR H1"),
+        ("injury moves but does not override (23.4)", {**rej(S1, "edp_share"),
+                                                       f"{S1}:placebo:injury_share:share": dict(p_randomization=0.01),
+                                                       f"{S1}:placebo:injury_share:count": dict(p_randomization=0.01)},
+         ("rejects, predicted direction", "does not reject"), "CONFIRMED IN THE CLEAN STRATUM ONLY"),
         ("BH boundary is strict (23.1)", rej(S1, "edp_share", p_bh=0.05),
          ("does not reject", "does not reject"), "THE PRE-SPECIFIED NULL"),
         ("uncertified null cannot reject (25)", {**uncert, **{k: {**v, "null_certified": False} for k, v in rej(S1, "edp_share").items()}},
@@ -682,6 +686,12 @@ def s_confirmatory_reading_rules():
             row = res[(res["stratum"] == S1) & (res["item"] == "placebo_rejects_any")]
             if row.empty or int(float(row["value"].iloc[0])) != 1:
                 problems.append("placebo override: placebo_rejects_any not recorded as 1")
+        if name.startswith("injury moves"):
+            row = res[(res["stratum"] == S1) & (res["item"] == "placebo_rejects_any")]
+            if row.empty or int(float(row["value"].iloc[0])) != 0:
+                problems.append("injury: recorded as an override outcome; 23.4 names cardiac and asthma")
+            if "OVERRIDE" in verdicts[S1]:
+                problems.append("injury: triggered the placebo override")
         if name.startswith("uncertified"):
             row = res[(res["stratum"] == S1) & (res["item"] == "null_certified")]
             if row.empty or int(float(row["value"].iloc[0])) != 0:

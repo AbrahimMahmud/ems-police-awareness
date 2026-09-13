@@ -6,7 +6,7 @@ those numbers. Every rule it applies is written down before the freeze lifted:
 
   * PRE_ANALYSIS_NOTE.md §9 (interpretation) and §10 (the family), as amended by
   * CONFIRMATION_PLAN.md addendum §23.1–23.4 (what "rejects" means, direction,
-    the denominator diagnostic, the placebo override),
+    the denominator diagnostic, the placebo override on cardiac and asthma),
   * addendum §19 rule 2 (a non-rejection is a bounded null whose bound is the
     pre-freeze MDE) and §23.11 (the family-correction factor quoted beside it),
   * addendum §25 (a stratum whose null is uncertified enters the family as p = 1
@@ -38,6 +38,12 @@ from event_study import count_outcome
 ALPHA = 0.05                       # unadjusted level for placebo, diagnostic and sensitivity cells
 FAMILY_CORRECTION_FACTOR = 1.28    # addendum 23.11: (z_.9969 + z_.8)/(z_.975 + z_.8) at the Bonferroni bound
 INFERENTIAL = ("C1_clean", "C2_exposed")
+# Addendum 23.4: the override is defined on cardiac and asthma. Injury is estimated
+# and reported in the falsification family but does not override — the discovery
+# decomposition found the injury channel responds to attention episodes (protest
+# injuries), so a movement in injury is a plausible effect of the treatment rather
+# than evidence that the design measures something else.
+OVERRIDE_PLACEBOS = ("cardiac_share", "cardiac", "asthma_share", "asthma")
 POWER_KEY = {"C1_clean": "C1", "C2_exposed": "C2"}
 
 parser = argparse.ArgumentParser()
@@ -182,12 +188,17 @@ def read_stratum(d, s, rows, mde):
                 f"total-dispatch diagnostic p = {p_tot:.4f}, raw-count diagnostic p = {p_raw:.4f}")
         else:
             denom[o] = False
-    # 23.4 placebo override, within the stratum, unadjusted
-    plac = d[(d["stratum"] == s) & (d["family"] == "placebo")]
+    # 23.4 placebo override, within the stratum, unadjusted, on cardiac and asthma
+    plac_all = d[(d["stratum"] == s) & (d["family"] == "placebo")]
+    plac = plac_all[plac_all["outcome"].isin(OVERRIDE_PLACEBOS)]
     plac_rej = plac[plac["p_randomization"].astype(float) <= ALPHA]
     add("placebo_rejects_any", int(len(plac_rej) > 0), "23.4",
         "; ".join(f"{r.outcome}/{r.estimator} p = {float(r.p_randomization):.4f}" for r in plac_rej.itertuples())
-        or f"no placebo cell at p <= {ALPHA} ({len(plac)} cells)")
+        or f"no cardiac or asthma cell at p <= {ALPHA} ({len(plac)} cells)")
+    for r in plac_all[~plac_all["outcome"].isin(OVERRIDE_PLACEBOS)].itertuples():
+        add(f"falsification_reported_only:{r.outcome}:{r.estimator}", f(r.p_randomization), "23.4",
+            "injury is reported, not an override outcome: the discovery decomposition found it responds "
+            "to attention episodes (protest injuries)")
     stratum_rejects = any(reject_on.values())
     add("stratum_rejects", int(stratum_rejects), "23.1",
         "rejects on at least one primary outcome" if stratum_rejects else "no primary outcome rejects on both arms")

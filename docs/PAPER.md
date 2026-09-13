@@ -308,7 +308,9 @@ correction, chosen over month-year fixed effects because it changes the sample
 and not the estimator, so it stays comparable with the calibrated null.
 Falsification: cardiac and asthma shares and counts in every stratum; a placebo
 cell with unadjusted randomization *p* ≤ 0.05 overrides every primary rejection
-in its stratum, which is then reported as not supporting the hypothesis. A
+in its stratum, which is then reported as not supporting the hypothesis. Injury
+is estimated and reported beside them but does not override, because the
+exploratory decomposition found it responds to attention episodes. A
 family cell *rejects* when its adjusted *p* is below 0.05; a stratum rejects on
 an outcome when both arms reject with the same sign of the first-week mean, and
 direction is that sign. Two diagnostic cells per stratum — the outcome's raw

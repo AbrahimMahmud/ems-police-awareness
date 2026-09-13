@@ -687,7 +687,12 @@ share or count) *rejects* when its unadjusted randomization p ≤ 0.05. The
 override of §9.3 applies within a stratum: if any placebo cell in that stratum
 rejects, every primary rejection in that stratum is reported as not supporting
 H1. Placebo p-values are uncorrected on purpose — a correction would make the
-falsification easier to pass.
+falsification easier to pass. Injury is estimated and reported in the
+falsification family but is not an override outcome: the discovery decomposition
+found the injury channel responds to attention episodes (protest injuries,
+PAPER_MASTER §8.2), so a movement in injury is a plausible effect of the treatment
+rather than evidence that the design measures something else. Note §9.3's
+parenthetical listed it; this section governs.
 
 **23.4a The reading is code.** Rules 23.1–23.4, §19 rule 2 and §25 are
 implemented by `34_confirmatory_reading.py`, a pure function of the sealed table

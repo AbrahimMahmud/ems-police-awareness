@@ -1041,6 +1041,37 @@ non-human-subjects determination in writing; OSF deposit with timestamp.
 
 ## Session log — where execution stopped
 
+**2026-09-13 ~21:50Z — CP2 in its last stretch; compute is the clock. See the Status block at the top.**
+
+What happened since 17:45Z, in order: C1 certified at 1,000 simulations under the
+corrected drawer (20:56Z; P1, P5, RI3, P12, P13 closed; addendum §25 not invoked);
+the discovery 1,000-sim run started twelve seconds after a cold pass cleared the
+panel and calibrated a null on assumed noise until the ledger identity check
+exposed it — killed, restored, restarted on the panel, and 18 now refuses to run
+without the panel (N11, `S.calibration_noise_measured`); the reading of the
+sealed result was made code (`34_confirmatory_reading.py`, addendum §23.4a,
+`S.confirmatory_reading_rules` on 13 planted tables) and the Phase I runner and
+table generator were written and tested on the synthetic dry run; Table 1 is
+generated and held by re-rendering (`V.table1_regenerates`); and, while preparing
+the lift commit, the guard was found to derive every caller's window from the
+flag, so the lift would have moved every exploratory script onto the sealed
+sample — fixed by naming the window at every call (D8, addendum §26,
+`D.discovery_scripts_pinned`). Gate 87 checks; findings 116/116 fixed; every
+non-PASS is artifact-pending on the cold passes.
+
+- **In flight** (relaunch from `ops/` after any restart): `calib1000.sh`
+  (discovery 1,000 since 21:09Z, ~3 sims/min under contention, then C2);
+  `coldrun.sh` pass 1 (17 at 2,000 draws on the six cells, the narrow-MH cells
+  still to bank; then 05/03/04/06/07/08/33/25 and 31/23/22), then pass 2 with
+  every ledger banked, then the manifest comparison.
+- **Then, in order**: gate clean twice with the baseline refreshed → `outputs/run_manifest.json`
+  committed → 1,000-sim certificates on discovery and C2 → the lift commit
+  (`FREEZE_ACTIVE = False`, one line) → `ops/phase_i.sh` (30 at 2,000 draws,
+  `--jobs 4`, then 34) → `ops/phase_i_tables.py` → PAPER_MASTER §8b and the
+  PAPER.md Results, Discussion and Abstract → CP3.
+- **Untouched**: `FREEZE_ACTIVE` is True. No confirmation outcome has entered a
+  model or test; the declared accesses are the ones §5.3 lists.
+
 **2026-09-13 ~08:00Z — fresh container; see the Status block at the top.**
 
 What happened, in order: the handoff was read against the repository (its branch
