@@ -281,7 +281,11 @@ the empirical rejection rate at α = 0.05 lies inside its binomial band and the
 p-values are uniform against the exact discrete lattice of (1 + *k*)/(1 + *n*)
 by a Kolmogorov–Smirnov test with a simulated null. The confirmatory script
 refuses to run without a current certificate for each stratum naming the scheme
-it draws.
+it draws. A stratum whose null fails calibration at 1,000 simulations is, by a
+rule written before that verdict existed, estimated and reported with its
+randomization p-values flagged uncertified and excluded from the family
+decision; its primary inference is then the asymptotic p, labelled, and a
+rejection on it cannot count as confirmation.
 
 **Multiple testing.** The pre-specified primary family is two outcomes (EDP
 share, narrow mental-health share) × two arms (share, count) × two strata (C1,

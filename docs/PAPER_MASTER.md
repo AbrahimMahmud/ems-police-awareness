@@ -1238,15 +1238,16 @@ corrected code):
 | discovery | anchor shift | contiguous | 29 | 0.05 | 0.7516 | CALIBRATED |
 | C2 | anchor shift | contiguous | 30 | 0.05 | 0.4838 | CALIBRATED |
 | C1 | circular, within block (fw7) | gapped | 15 | 0.035 | 0.0455 | **NOT CALIBRATED** at 200 |
-| pooled | circular, within block | gapped | 45 | 0.03 | 0.5127 | CALIBRATED (superseded drawer; re-certifying) |
+| pooled | circular, within block (fw7) | gapped | 45 | 0.04 | 0.5492 | CALIBRATED |
 
 *C1's row is the 200-simulation run under the corrected drawer (addendum §24):
 the rejection rate sits inside its band and the lattice uniformity test fails.
 The 1,000-simulation run decides, and addendum §25 pre-registers what happens if
 it also fails — C1's cells are reported with their randomization p flagged
 uncertified and excluded from the family decision, and its primary inference is
-the asymptotic p, labelled. The pooled row still describes the snapping drawer
-and is being re-issued.*
+the asymptotic p, labelled. The pooled row is the corrected drawer's
+certificate (2026-09-13 19:00Z); its three-window geometry has 1,302 admissible
+days in C2 to absorb the shift, which is why it certifies where C1 does not.*
 
 C1's certificate under the within-block scheme landed on **2026-09-13** and was
 withdrawn the same day: the drawer it certified snapped the two edge episodes
