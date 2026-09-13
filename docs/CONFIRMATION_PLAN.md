@@ -81,6 +81,7 @@ confirmation-period outcomes**.
 | 17 | Two C1 episodes' windows leave the stratum: first-week containment rule | yes |
 | 18 | **Coverage diagnostic over the 2015–2016 outcome extract (O2)** | **NO — a declared, scoped access; disclosed here before it was run** |
 | 19 | Interpretation rules restated against the measured power (Phase H) | yes |
+| 20 | Spliced `user + automated` Wikipedia series as a sensitivity arm (L7) | yes |
 
 ---
 
@@ -414,13 +415,17 @@ scope fixed here first and a check that holds it there:
 - **What is decided from it — pre-specified now, before the values exist.**
   1. A call code whose first or last date falls inside a confirmation *analysis*
      window is a **within-window break** for every outcome group containing it.
-     The primary estimates are unchanged. For each affected group and stratum, a
-     pre-specified sensitivity re-estimates with every episode dropped whose
-     ±14-day window contains the break date, and the result is reported beside
-     the primary with the code and date named. (The EDP-family births already
-     disclosed in `config.CALL_TYPE_GROUPS` — EDPC mid-2018, T-EDP 2020-06-05,
-     EDPM 2021-06-03 — are expected to appear here and are already handled the
-     same way.)
+     The primary estimates are unchanged. For each affected outcome and stratum,
+     a pre-specified **coverage-clean sensitivity** re-estimates with every
+     episode dropped whose ±14-day window contains *any* break date belonging to
+     a code in that outcome's group(s) or the geocoding step of rule 2 — one
+     cell per outcome, arm and stratum, not one per break, so the sensitivity is
+     the same size whether a window holds one break or seventeen — and the
+     result is reported beside the primary with the codes and dates named. A
+     sensitivity that drops no episode is recorded as identical to the primary
+     and not re-run. (The EDP-family births already disclosed in
+     `config.CALL_TYPE_GROUPS` — EDPC mid-2018, T-EDP 2020-06-05, EDPM
+     2021-06-03 — are expected to appear here and are handled the same way.)
   2. If the missing-district share changes by more than a factor of two between
      adjacent years inside a confirmation analysis window, the year boundary is a
      **geocoding break**. The primary estimates are unchanged; a pre-specified
@@ -440,6 +445,108 @@ scope fixed here first and a check that holds it there:
   listed in the summary table as an access, in the same column as F1 and F2, and
   the difference between it and them is that the scope was written down before
   the read and a check enforces it afterwards.
+
+## 19. Interpretation rules restated against the measured power (Phase H)
+
+**Blind.** Power was computed by simulation on the discovery panel's dependence
+structure and the strata's episode geometry (`scripts/19_power.py`); no
+confirmation-window outcome was read. The figures are in `PAPER_MASTER.md` §7.5b
+and the claims register (C97–C106) and are not restated here, so that they have
+one home.
+
+**What Phase H found, in one sentence.** Against the minimum effect of interest
+(`config.MINIMUM_EFFECT_OF_INTEREST`, −0.005 of mental-health call share), every
+stratum is **underpowered for a sustained level shift** and **adequately powered
+for a transient dip-and-rebound** of the same size. The frozen H1 is stated as a
+decline over the first week, which is the sustained shape.
+
+**Decision, 2026-09-13.** The confirmatory run proceeds as pre-specified. Power
+does not change the test; it changes what a non-rejection is allowed to mean,
+and that meaning is fixed now:
+
+1. **The test is unchanged.** Estimator, statistic, draw schemes, strata, arms,
+   sensitivities and the multiple-testing family are as pre-specified in
+   `PRE_ANALYSIS_NOTE.md` §6–§10 and above. Nothing in this section adds,
+   removes or re-weights a test.
+2. **A non-rejection is a bounded null, and the bound is the pre-freeze MDE.**
+   In any stratum where the primary family does not reject, the result is
+   reported as: *no effect detected; a sustained level shift at or above that
+   stratum's worst-profile MDE is disfavoured at 80% power; a sustained shift of
+   the size the paper declared it cares about is not excluded; a transient
+   dip-and-rebound at or above that size is disfavoured.* The MDEs quoted are
+   the ones computed before the freeze lifted (`outputs/tables/power_analysis.csv`
+   as registered by C97–C106). They are not recomputed afterwards for the
+   purpose of interpretation.
+3. **The "precise null / underpowered" row of §9.1 is resolved in advance.**
+   For the sustained shape the "precise null" reading is unavailable in every
+   stratum; for the transient shape it is available in every stratum. No
+   post-hoc reclassification from a confidence interval seen after the fact.
+4. **A rejection is read by §9.1–§9.4 unchanged.** Power neither strengthens nor
+   weakens a rejection; the placebo override (§9.3), the two-arms rule (§9.2)
+   and the asymmetric C1/C2 table (§9.4) apply as written.
+5. **The paper's framing is fixed whatever the sign.** It is a
+   measurement-and-design contribution carrying (a) a confirmatory result on the
+   transient shape, (b) a bounded null or a rejection on the sustained shape,
+   and (c) the discovery-period findings as exploratory. None of these three
+   moves to the headline because of the result.
+6. **Sensitivities added since the note** — the coverage-break sensitivities of
+   §18 and the spliced Wikipedia series of §20 — are reported beside the primary
+   in the `sensitivity` family and never substituted for it (§9.5, §10).
+7. **Any power figure computed after the freeze lifts is post hoc** and is
+   labelled as such wherever it appears; it does not enter rule 2.
+
+**Why proceed at all, stated so it can be disagreed with.** The alternative was
+to stop at the bounded discovery null and never open the sealed sample. The
+design is powered for the shape this project's own mechanism work
+(`event_study.py`, findings S3/R7) says a help-seeking response would most
+plausibly take, the pre-registration is the paper's inferential spine, and a
+one-shot test whose reading is fixed in advance cannot be made worse by being
+run. What it can be is uninformative about the sustained shape — and rule 2
+says so in every stratum where that is the outcome.
+
+## 20. A spliced Wikipedia series for the April 2020 agent-class break (finding L7)
+
+**Blind.** Treatment-side only: it changes how attention is measured and touches
+no outcome. Written 2026-09-13 before the freeze lifted.
+
+**The break.** `wiki_ext` is built from pageviews requested with `agent=user`.
+Wikimedia added an `automated` class in late April 2020 and did not apply it
+retroactively, so `user` means "not obviously a spider" before that date and
+"not a spider and not automated" after it. Measured on this basket
+(`PAPER_MASTER.md` §5.1a, `data/reference/wiki_agent_class_break.csv`): the
+class is exactly zero through 2019 and first appears on 2020-04-29; the shift it
+implies in the standardised index is about 0.001 SD across discovery and about
+0.09 SD across 2021–2024 — half the confirmation sample and all of C2. It is a
+footnote for the discovery result and a live measurement problem for the
+confirmatory one.
+
+**The series.** The decade-long comparable series is `user + automated`: before
+the break `automated` is identically zero, so the sum equals `user` there and
+equals the pre-break definition of `user` afterwards. No splice date is chosen;
+the series is the sum on every day. (`all-agents` was proposed and is rejected —
+it adds spider traffic, a larger contamination than the one being removed.)
+
+**The arm.** Built by the same pipeline as the broad-basket arm, under the arm
+name `spliced`, on the strict basket: `11_fetch_awareness_components.py --arm
+spliced` fetches `agent=automated` for every title `wiki_ext` already sums over
+and writes `wiki_ext` alone to `cai_components_daily_spliced.csv`;
+`12_build_cai.py --arm spliced` builds `cai_daily_spliced.parquet` with every
+other component shared with the primary; `13_extension_episodes.py --arm
+spliced` writes `confirmation_episodes_rebuilt_spliced.csv`. Every artifact and
+provenance id carries the `_spliced` suffix, so the arm cannot overwrite the
+primary (the P3 lesson).
+
+**How it is reported.** `30_confirmatory_run.py` runs it as `sens_spliced_wiki`
+in the `sensitivity` family, on both H1 outcomes and both arms, in every
+stratum, using the spliced episode list — exactly as the broad basket is run.
+It is reported beside the primary and never substituted for it (§9.5, §10). If
+the spliced episode list is absent at run time the cell is recorded `NOT_RUN`
+with the reason rather than skipped.
+
+**What it can show.** In C1 the two series are identical by construction
+(automated is zero before 2020), so any difference there is a rounding check.
+In C2 a result that moves between the arms is a result that depends on how
+Wikimedia classifies traffic, and is reported as such.
 
 ---
 

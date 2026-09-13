@@ -375,6 +375,19 @@ null. Both outcomes are publishable and neither is a failure — and this senten
 is in the plan (`EXECUTION_PLAN.md`, "Honest risks") rather than being invented at
 the end.
 
+**9.7 Power has now been measured, and the reading of a non-rejection is fixed
+by it.** Written 2026-09-13, after Phase H and before the freeze lifted. Against
+the minimum effect of interest every stratum is underpowered for a sustained
+level shift and adequately powered for a transient dip-and-rebound
+(`PAPER_MASTER.md` §7.5b). The confirmatory run proceeds unchanged; a
+non-rejection is reported as a *bounded null* whose bound is the pre-freeze MDE
+of that stratum — "no effect detected; a sustained shift at or above the MDE is
+disfavoured; a sustained shift of the minimum effect of interest is not
+excluded; a transient effect of that size is disfavoured" — and the
+precise-null / underpowered distinction of §9.1 is thereby settled in advance
+for both shapes rather than read off an interval after the fact. The full rules
+are `CONFIRMATION_PLAN.md` addendum §19.
+
 ## 10. Multiple testing
 
 The pre-specified **primary family** is:
@@ -500,6 +513,11 @@ frozen record, and they should be read as decisions of this document:
 * the **B-HEARD interaction arm** as a secondary, direction-predicted test;
 * the decision to run the confirmatory analysis as a **single sealed script**
   written before the freeze lifts (`scripts/30_confirmatory_run.py`).
+* added 2026-09-13, still blind: the **reading of a non-rejection against the
+  measured power** (§9.7; `CONFIRMATION_PLAN.md` addendum §19), the
+  **coverage-break sensitivities** (addendum §18, which records the one declared
+  read of confirmation-window coverage), and the **spliced Wikipedia series**
+  sensitivity for the agent-class break (addendum §20).
 
 ### 11.6 Known limitations that no pre-specification can remove
 
