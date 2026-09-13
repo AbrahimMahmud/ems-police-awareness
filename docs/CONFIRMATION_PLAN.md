@@ -77,6 +77,10 @@ confirmation-period outcomes**.
 | 13 | Power note W5 is superseded | yes |
 | 14 | **H1 framing and the DID control choice** | **NO — see below** |
 | 15 | **Freeze incidents F1 and F2** | **NO — these are accesses** |
+| 16 | Randomization scheme on C1: circular shift within each block | yes |
+| 17 | Two C1 episodes' windows leave the stratum: first-week containment rule | yes |
+| 18 | **Coverage diagnostic over the 2015–2016 outcome extract (O2)** | **NO — a declared, scoped access; disclosed here before it was run** |
+| 19 | Interpretation rules restated against the measured power (Phase H) | yes |
 
 ---
 
@@ -362,6 +366,69 @@ days of 29. So the primary test is exact for both, and the loss is confined to
 the longer sensitivity windows where it is reported rather than absorbed.
 
 Nothing is dropped: all 15 C1, 29 discovery and 30 C2 episodes are kept.
+
+## 18. A declared coverage diagnostic over the 2015–2016 outcome extract (finding O2)
+
+**Disclosed before it is run, and before the code that runs it exists.** Finding
+O2 records two structural breaks inside the 2015–2016 confirmation window that
+neither the panel builder nor the event study can see: the share of dispatches
+with no community district falls sharply at 2016-01-01 (a geocoding regime
+change), and the INJALS call code is retired inside the window. Whether the
+confirmation sample straddles breaks like these is a question about *coverage*,
+and it has to be answered before CP2 can be discharged — a confirmatory estimate
+run across a discontinuity nobody knew about is not a confirmatory estimate.
+
+Answering it means reading confirmation-window rows of the outcome extract, which
+the freeze protects. "It is only metadata" is exactly the reasoning that produced
+incidents F1 and F2, so this is not treated as an assumption. It is a **declared
+access**, approved by Abrahim Mahmud on 2026-09-13 as a narrow exception, with its
+scope fixed here first and a check that holds it there:
+
+- **What is read.** `data/processed/ems_cd_day_calltype.parquet` — the district
+  × day × call-type extract, all years — through a named exemption in
+  `freeze_guard` (`declared_access("O2_coverage_breaks", ...)`). The function
+  refuses any exemption not declared in `config.FREEZE_EXEMPTIONS`, refuses a
+  caller other than the script the declaration names, prints a banner, and
+  appends a row to `data/reference/freeze_access_log.csv` every time it runs, so
+  each access is on the record whether or not anyone writes it up.
+- **What is emitted, and nothing else.** (a) Per `final_call_type`: the first and
+  last `incident_date` on which the code appears. (b) Per calendar year: the
+  share of dispatched calls whose community district is missing. **No call count
+  by period, no outcome mean or share of any call group, no district-level value,
+  and nothing crossed with the attention index or the episode list.**
+- **Where it goes.** `data/reference/ems_call_code_span.csv` and
+  `data/reference/ems_missing_district_rate_by_year.csv`, committed, so the
+  access leaves an artifact with exactly the declared columns rather than a line
+  in a log.
+- **How the scope is enforced.** `D.declared_access_scoped` requires that every
+  exemption in `config.FREEZE_EXEMPTIONS` is used by exactly the script it names
+  and by no other, that each declared output exists with exactly the declared
+  columns, that this section exists, and that the access log records the run.
+  Defeat-tested before it is baselined: add an outcome column to the output and
+  the check must fail; call the exemption from another script and it must fail.
+- **What is decided from it — pre-specified now, before the values exist.**
+  1. A call code whose first or last date falls inside a confirmation *analysis*
+     window is a **within-window break** for every outcome group containing it.
+     The primary estimates are unchanged. For each affected group and stratum, a
+     pre-specified sensitivity re-estimates with every episode dropped whose
+     ±14-day window contains the break date, and the result is reported beside
+     the primary with the code and date named. (The EDP-family births already
+     disclosed in `config.CALL_TYPE_GROUPS` — EDPC mid-2018, T-EDP 2020-06-05,
+     EDPM 2021-06-03 — are expected to appear here and are already handled the
+     same way.)
+  2. If the missing-district share changes by more than a factor of two between
+     adjacent years inside a confirmation analysis window, the year boundary is a
+     **geocoding break**. The primary estimates are unchanged; a pre-specified
+     sensitivity drops every episode whose ±14-day window crosses the boundary
+     and is reported beside the primary. This is the O2 fix text's second
+     option, chosen over month-year fixed effects because it changes the sample
+     and not the estimator, and so stays comparable with the calibrated null.
+  3. Neither rule reads or uses an outcome value, and neither can change which
+     estimate is primary.
+- **Blind?** No. This is a read of confirmation-period outcome coverage. It is
+  listed in the summary table as an access, in the same column as F1 and F2, and
+  the difference between it and them is that the scope was written down before
+  the read and a check enforces it afterwards.
 
 ---
 
