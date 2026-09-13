@@ -1252,30 +1252,57 @@ was found by reviewing a *power* design rather than the calibration itself. The
 numbers above are now in the claims register, so a future drift fails a check
 instead of sitting in prose.
 
-### 7.5b Power, and the question it cannot answer for us
+### 7.5b Power — the design cannot deliver a confirmation
 
-`scripts/19_power.py` computes a minimum detectable effect per stratum by
-simulation, with Roth's pre-trend diagnostic beside it. Two things about it are
-worth stating before any number it produces is quoted.
+**This is the result that decides what the paper is.** `scripts/19_power.py`
+computes a minimum detectable effect per stratum by simulation, at 200 null sims
+and 200 scan sims, with no gate breaches. Against the minimum effect of interest
+of **−0.005**:
 
-**"Underpowered" needs something to be underpowered against, and this project has
-never named one.** A minimum effect of interest — the smallest change in
-mental-health call share that would matter to anyone — is a judgement about the
-world, not a property of the data, and nobody has written one down. The script
-therefore reports every MDE against both numbers the project has ever named: the
-−0.010 effect planted to verify the estimator recovers something, and GATE2's
-−0.00108. **These are different estimands** — a continuous-awareness
-heterogeneity coefficient against a stacked first-week level shift — and the
-ratio to each is reported separately rather than blended. Reporting both is the
-honest default. The paper still has to say which one it means, and that is a
-decision for the supervisor.
+| stratum | MDE, worst profile | MDE, best profile | MDE ÷ MEI | verdict |
+|---|---|---|---|---|
+| discovery | 0.00950 | 0.00291 | 1.901 | UNDERPOWERED |
+| C1 | 0.01235 | 0.00382 | 2.471 | UNDERPOWERED |
+| C2 | 0.00875 | 0.00290 | 1.750 | UNDERPOWERED |
 
-**The pre-trend test is what clustering costs.** Because contested district-days
-go to the nearer episode, almost no first-week observation is lost to a
-neighbouring episode — 2 episode-days out of 592 across all three strata. The
-loss lands in the pre-period, 9–15% of it. So the price of clustered episodes is
-not a weaker estimate; it is weaker evidence that the estimate is credible, which
-is a harder thing to notice and a worse thing to have.
+**Every stratum is underpowered**, including the one the whole discovery /
+confirmation split exists to obtain. C1 is the worst of the three at nearly two
+and a half times the effect the paper has said it would care about — which is
+what fifteen episodes buys.
+
+Under the randomization-inference procedure that is actually the ratified primary
+inference, discovery's MDE is **0.01023** — roughly twice the MEI, and close to
+the −0.010 effect that was planted to verify the estimator recovers anything at
+all. The design can see the effect it was built to prove it could see, and not
+much smaller.
+
+**The verdict is shape-dependent, and that is worth more than the headline.** Two
+effect profiles were simulated. A *sustained level shift* of half a percentage
+point is invisible everywhere: MDE 0.0095 to 0.0124. A *dip-and-rebound* of the
+same size is detectable everywhere: MDE 0.0029 to 0.0038, comfortably below the
+MEI. So this design is not uniformly blind — it is blind to exactly the shape
+that a persistent change in help-seeking would take, and sensitive to a transient
+one. The go/no-go is taken on the worst profile, which is the conservative and
+correct choice, but a reader should know the design has a shape it can see.
+
+**What follows, and it was pre-committed.** `EXECUTION_PLAN.md` Phase H and
+`REBUILD_PLAN.md:495` both say in advance that an underpowered verdict is a
+legitimate conclusion rather than a failed run. So: **the confirmatory design
+cannot deliver a confirmation**, and the paper becomes a measurement-and-design
+contribution with a precisely bounded null. §8's discovery null stops being a
+null of unknown resolution and becomes a bounded one — we did not detect an
+effect, and we can now say how large an effect would have had to be before we
+could have.
+
+That is a real ending. It was written into the plan before the number existed,
+which is the only reason it can be stated without it looking like a
+rationalisation after the fact.
+
+**What it does not license.** It does not say there is no effect. It says this
+design, on this sample, with these episode counts, could not have found one of
+the size the paper cares about unless it took a particular shape. A larger
+episode set, a longer panel, or a sharper treatment measure would each move the
+MDE, and none of them is available here.
 
 ### 7.5 The verification apparatus — and its own failure mode
 
@@ -1581,11 +1608,14 @@ district-day standard deviation is 0.047.
    predicts a sharp, short-lived rise; two separated bumps are at least as
    consistent with episode windows coinciding with something seasonal. This is
    stated before anyone becomes attached to the mechanism, not after.
-12. **Every discovery number is a null of unknown resolution.** §8 reports no
-   detectable movement in the mental-health share, but the power of the discovery
-   sample against the −0.005 minimum effect of interest has not been computed.
-   Until Phase H runs, "we did not detect it" cannot be upgraded to "it is not
-   there", and the paper must not do so.
+12. **The discovery null is bounded, not empty — and the bound is wide.** §8
+   reports no detectable movement in the mental-health share, and §7.5b now says
+   how large an effect would have had to be before this design could have found
+   it: **1.9 times the minimum effect of interest on discovery, 2.5 on C1**, under
+   a sustained level shift. "We did not detect it" therefore means "we could not
+   have detected it unless it were roughly twice the size we said would matter, or
+   unless it took a transient shape". That is a real statement and a weak one, and
+   the paper should present it as both.
 
 ---
 
