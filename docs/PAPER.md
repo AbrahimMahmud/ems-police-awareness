@@ -104,7 +104,7 @@ interface begins on 1 July 2015.
 
 The confirmation strata were protected by a code-level freeze: every analysis
 script draws its sample through one guard function whose active window is derived
-from a single flag, and a regression suite of automated checks (82 at the time of
+from a single flag, and a regression suite of automated checks (83 at the time of
 writing) verifies that no script can read confirmation-period outcome values
 without passing through it. The hypotheses, the estimator, the primary inference,
 the calibration precondition, the sensitivity battery, the multiple-testing family
@@ -217,13 +217,13 @@ byte-identical in the repository; the adopted list holds 74 episodes in the
 strict basket (29 in discovery, 15 in C1, 30 in C2) and 75 in the broad.
 
 **Outcome.** For each community district and day we counted dispatches whose
-final call type falls in the *emotionally disturbed person* family (EDP, EDPC,
-EDPM, EDPW, T-EDP) and divided by all dispatches. This **EDP share** is the
+final call type carries the *emotionally disturbed person* prefix (EDP, EDPC,
+EDPE, EDPM, EDPT, EDPW, T-EDP) and divided by all dispatches. This **EDP share** is the
 primary outcome. A **narrow mental-health share** adds altered-mental-status and
 suicide-related codes. Because a share can move when its denominator does, every
 outcome is also modelled as a **count**, with the district-day's total dispatches
 as an offset. District-days with fewer than five dispatches are excluded from
-share calculations. Falsification outcomes are the cardiac and asthma families,
+the analysis sample in both arms. Falsification outcomes are the cardiac and asthma families,
 which should not respond to news about policing; the injury family is reported
 as a marker of street activity. Call-type codes are born and retired across the
 decade (EDPC phases in during 2018; EDPM appears on 3 June 2021), and the full
@@ -265,15 +265,18 @@ least as large as the observed one. Where a stratum is a single contiguous
 calendar block (discovery, C2) the whole sequence is shifted by one uniformly
 drawn anchor; where it is two blocks (C1) one circular shift is drawn within each
 block so that the number of episodes per block is preserved on every draw. On a
-single block the two schemes are identical. Formula-based clustered standard
-errors are reported beside the randomization p-value and never instead of it,
-because on these data they have proved anti-conservative.
+single block the two schemes are identical. The asymptotic joint-Wald p-value is
+reported beside the randomization p-value and never instead of it, because on
+these data formula-based inference has proved anti-conservative. The run draws
+exactly the pre-specified 2,000 placebos and writes its result to a tracked
+file once.
 
 **Calibration precondition.** Before any p-value is reported for a stratum, the
 full estimator and randomization procedure is run on 200 synthetic panels built
 to contain no effect but carrying the real panel's serial dependence, district
 levels, day-of-week pattern and a citywide day shock, on that stratum's own
-episode geometry and draw scheme. The stratum's p-values are reported only if
+episode geometry and draw scheme — separately for C1, C2 and the pooled sample,
+whose three-window geometry is its own null. The stratum's p-values are reported only if
 the empirical rejection rate at α = 0.05 lies inside its binomial band and the
 p-values are uniform against the exact discrete lattice of (1 + *k*)/(1 + *n*)
 by a Kolmogorov–Smirnov test with a simulated null. The confirmatory script
@@ -299,10 +302,14 @@ the stratum, or the geocoding step at 1 January 2016 at which the share of
 dispatches with no district fell by two thirds — a demonstration rather than a
 correction, chosen over month-year fixed effects because it changes the sample
 and not the estimator, so it stays comparable with the calibrated null.
-Falsification: cardiac and asthma shares and counts in every stratum. A placebo
-that rejects at a level comparable to the primary outcomes overrides them: the
-primary result is then reported as not supporting the hypothesis whatever its own
-p-value.
+Falsification: cardiac and asthma shares and counts in every stratum; a placebo
+cell with unadjusted randomization *p* ≤ 0.05 overrides every primary rejection
+in its stratum, which is then reported as not supporting the hypothesis. A
+family cell *rejects* when its adjusted *p* is below 0.05; a stratum rejects on
+an outcome when both arms reject with the same sign of the first-week mean, and
+direction is that sign. Two diagnostic cells per stratum — the outcome's raw
+count without an offset, and total dispatches — decide whether a share-arm
+rejection is denominator-driven.
 
 **Power and the reading of a non-rejection.** Before the freeze lifted, the
 minimum detectable effect at 80% power was computed by simulation for each
@@ -310,7 +317,7 @@ stratum against a pre-declared minimum effect of interest of −0.005 in the
 mental-health share (about 6% of the discovery-period mean), for two effect
 shapes — a sustained level shift over the first week and a dip-and-rebound of
 the same size. Every stratum is underpowered for the sustained shape (minimum
-detectable effects of 1.75 to 2.47 times the minimum effect of interest) and
+detectable effects of 1.75 to 2.31 times the minimum effect of interest) and
 adequately powered for the transient shape. The reading of a non-rejection was
 therefore fixed in advance: no effect detected; a sustained shift at or above
 that stratum's minimum detectable effect is disfavoured; a sustained shift of
@@ -361,9 +368,10 @@ MIT COUHES non-human-subjects determination: pending — Abrahim.]**
 sensitivities — in that order, no interpretation. Drafted from PAPER_MASTER.md
 §8; every number below has a claim.*
 
-The buffered discovery panel holds 89,857 district-days across the 59 community
-districts. The mean EDP share is 0.0856 and the mean district-day carries 66.1
-dispatches. Twenty-nine attention episodes begin inside the discovery window.
+The panel holds 217,356 district-days across the 59 community districts from
+December 2014 to December 2024; the discovery analysis window holds 86,199 of
+them. In that window the mean EDP share is 0.0856 and the mean district-day
+carries 66.1 dispatches. Twenty-nine attention episodes begin inside the discovery window.
 
 Stacked over those 29 episodes with day −1 as reference, the first-week
 coefficient on the EDP share is −0.00123 (randomization *p* = 0.695, 500 draws)
@@ -422,7 +430,7 @@ remains valid for.
    beside shares for every outcome, and a movement present in one arm only is
    reported as denominator-driven and not claimed as a change in demand.
 4. **Dispatch-code drift** (RECORD 19.1). The EDPC code phased in during 2018,
-   inside the discovery window; EDPM appeared on 3 June 2021; 20 outcome-group
+   inside the discovery window; EDPM appeared on 3 June 2021; 22 outcome-group
    codes are born or retired inside the confirmation windows. Codes are grouped
    into families so that a recode within a family does not move the family; the
    coverage-clean sensitivities drop every episode whose window contains a break.
@@ -445,10 +453,11 @@ remains valid for.
    2020 with a shift that is negligible in discovery and material in 2021–2024,
    which the spliced sensitivity series addresses; Google Trends returns a
    sample, not a census.
-9. **The freeze was breached three times before it lifted,** each disclosed: two
+9. **The freeze was breached four times before it lifted,** each disclosed: two
    undeclared metadata reads during automated audits, one of which informed a
-   specification decision about the EDPM code, and one record-level read of
-   2015–16 coverage statistics made while refuting an audit finding. A fourth,
+   specification decision about the EDPM code, one record-level read of
+   2015–16 coverage statistics made while refuting an audit finding, and a
+   precinct-to-district crosswalk counted over every year. A fourth,
    declared and logged read of coverage — first and last dates per code and the
    yearly missing-district rate, no outcome value — produced the coverage
    sensitivities. None entered a model or a test of the hypothesis; their

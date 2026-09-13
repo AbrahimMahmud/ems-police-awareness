@@ -81,8 +81,14 @@ assert all(
 # they are what existing scripts filter on.
 ANALYSIS_START = DISCOVERY_START
 ANALYSIS_END = DISCOVERY_END
-PANEL_BUFFER_START = "2016-12-01"   # covers 28-day lags before analysis start
-PANEL_BUFFER_END = "2021-01-31"     # covers 14-day leads after analysis end
+# The panel holds EVERY district-day the extract covers. Until 2026-09-13 it was
+# hard-bounded to the discovery buffer (2016-12-01..2021-01-31), so after the
+# freeze lifted no confirmation-window row would have existed for 30 to read -
+# the sealed run would have failed on an empty stratum (CP2 audit). Which rows
+# any script may SEE is decided by freeze_guard.select_sample, never by these
+# bounds; the analysis window is ANALYSIS_START..ANALYSIS_END above.
+PANEL_BUFFER_START = "2014-12-01"
+PANEL_BUFFER_END = "2024-12-31"
 
 # The OUTCOME SOURCE itself, not just the files derived from it. Freeze coverage
 # was a list of artifacts, so querying this dataset directly bypassed every guard
@@ -255,7 +261,12 @@ CALL_TYPE_GROUPS = {
     # appears 2021-06-03; T-EDP appears 2020-06-05 and is ~0.2% of the family.
     # See O3 for what each birth date does and does not imply, and 5.3 for the
     # freeze access that established them.
-    "edp": ["EDP", "EDPC", "EDPM", "EDPW", "T-EDP"],
+    # EVERY EDP-prefixed code. EDPT (born 2023-03-01) and EDPE (born 2024-04-10)
+    # were absent until 2026-09-13: they appear only in the declared coverage
+    # span table (addendum 18), both inside C2, and a family that omits them
+    # would carry a downward break in the EDP share from 2023. Added blind - no
+    # outcome value was read - and disclosed in addendum 23 (CP2 audit).
+    "edp": ["EDP", "EDPC", "EDPE", "EDPM", "EDPT", "EDPW", "T-EDP"],
     "altmen": ["ALTMEN", "ALTMFC", "ALTMFT"],
     # JUMPDC, OD, ODC, POISON never occur in 2016-2021 (legacy codes); kept out.
     "suicide_jump": ["JUMPDN", "JUMPUP"],
@@ -571,6 +582,10 @@ RANDOMIZATION_DRAWS = 2000             # episode-level RI; primary p-value
 # silently (CP1 audit, 2026-09-13); it is defined once here.
 MIN_SIMS_FOR_VERDICT = 200
 NOMINAL_ALPHA = 0.05                   # the RI test's nominal size, calibration and power alike
+# CP2, line 2: simulations every INFERENTIAL stratum's certificate must carry
+# before the freeze may be lifted and before 30_confirmatory_run.py will run for
+# real (finding P11; the pooled, descriptive stratum needs MIN_SIMS_FOR_VERDICT).
+LIFT_MIN_SIMS = 1000
 
 # THE SMALLEST EFFECT THIS PAPER WOULD CARE ABOUT, in share points.
 #

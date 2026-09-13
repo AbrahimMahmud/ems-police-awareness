@@ -28,8 +28,12 @@ WHAT IT REFUSES TO DO
    `--dry-run-synthetic`. The freeze is the design; a script that could be run
    "just to see" while it holds would be a fourth freeze incident waiting to be
    written up next to F1 and F2 (`PAPER_MASTER.md` §5.3).
-2. **It refuses to run unless `outputs/tables/null_calibration.csv` reads
-   `VERDICT,CALIBRATED`** at or above its own `min_sims_required`. An
+2. **It refuses to run unless every stratum it reports has a certificate
+   reading `VERDICT,CALIBRATED`** — `null_calibration_C1.csv`, `_C2.csv` and
+   `_pooled.csv` — at or above its own `min_sims_required`, and, for the two
+   inferential strata, at or above `config.LIFT_MIN_SIMS` (1,000: CP2's second
+   line, finding P11; until 2026-09-13 only the suite enforced that number and
+   this script would have run on 200-sim certificates). An
    uncalibrated randomization p-value is not a weak p-value, it is not a
    p-value: if the estimator over-rejects on data built to contain no effect,
    the number this script writes has no interpretation at all. Gate C §6.3
@@ -113,7 +117,7 @@ so before any outcome is touched:
     C2                    1        30    53
     C1 block 2015-07..2016-12   10        23
     C1 block 2021-01..2021-05    5       -19     <- INFEASIBLE
-    pooled block 2021-01..2024-12  35     33
+    pooled  (three windows: C1a, C1b, C2)  45   within-block shift, own certificate
 
 C1's 2021 block holds 5 episodes spanning 139 days inside a 151-day window; once
 14 days of pre-period and 14 of post are reserved there are 120 usable days and
@@ -274,6 +278,7 @@ import warnings
 from contextlib import contextmanager
 
 import numpy as np
+from scipy.stats import chi2 as chi2_dist
 import pandas as pd
 import pyfixest as pf
 
@@ -335,6 +340,7 @@ from config import (
     EVENT_WINDOW_PRE,
     FREEZE_ACTIVE,
     H1_OUTCOMES,
+    LIFT_MIN_SIMS,
     MH_NARROW_GROUPS,
     MIN_TOTAL_CALLS_FOR_SHARE,
     OUTPUTS_TABLES,
@@ -414,7 +420,10 @@ STRATUM_BREAK_LABELS = {"C1_clean": {"C1a", "C1b"}, "C2_exposed": {"C2"},
 CLUSTER_VAR = "incident_date"
 SEED = 30_20260912
 
-OUT_REAL = OUTPUTS_TABLES / "confirmatory_results.csv"
+# The sealed result is COMMITTED, not left under the gitignored outputs/: the
+# one-shot is only a one-shot if the record shows the file existed (CP2 audit,
+# 2026-09-13). data/reference is tracked; the sidecar sits beside it.
+OUT_REAL = DATA_REFERENCE / "confirmatory_results.csv"
 OUT_SYNTHETIC = OUTPUTS_TABLES / "confirmatory_results_dryrun_synthetic.csv"
 
 
@@ -512,6 +521,15 @@ def check_calibration():
     for stratum in ("C1", "C2", "pooled"):
         try:
             out[stratum] = require_calibrated(stratum)
+            # CP2, line 2 (finding P11): the inferential strata need the
+            # pre-freeze 1,000-sim certificate, not the artifact's own 200-sim
+            # minimum. Enforced here as well as in the suite, because a failing
+            # suite check is a report and this is the run.
+            n_done = int(float(out[stratum].get("n_sims_completed", 0)))
+            if stratum in ("C1", "C2") and n_done < LIFT_MIN_SIMS:
+                raise Uncalibrated(
+                    f"{stratum}: certificate rests on {n_done} simulations; the sealed "
+                    f"run requires >= {LIFT_MIN_SIMS} (config.LIFT_MIN_SIMS, CP2 line 2)")
         except Uncalibrated as e:
             if SYNTHETIC:
                 # The dry run proves the MACHINERY, on fabricated outcomes, and
@@ -810,7 +828,7 @@ def assert_bheard_inert(stack, outcome, label):
             "crosswalk is wrong and the confirmatory estimate cannot be trusted.")
     return delta
 def randomization(panel, real_starts, outcome, pre, post, draws, windows, cell,
-                  extra=("bheard_exposure",), counts=False, label=""):
+                  extra=("bheard_exposure",), counts=False, label="", offset=True):
     """Episode-level randomization inference through event_study.randomization_p.
 
     Returns a dict carrying the observed statistic, the p-value, and — the part
@@ -822,11 +840,15 @@ def randomization(panel, real_starts, outcome, pre, post, draws, windows, cell,
     obs_stack = build_stack(panel, real_starts, pre, post)
     with collected_warnings():
         obs, k = first_week_effect(obs_stack, outcome, counts=counts, extra=extra,
-                                   return_n=True)
-        mean_coef = (first_week_mean(obs_stack, outcome, counts=counts, extra=extra)
+                                   return_n=True, offset=offset)
+        mean_coef = (first_week_mean(obs_stack, outcome, counts=counts, extra=extra,
+                                     offset=offset)
                      if obs is not None else None)
+    # The asymptotic joint-Wald p, promised "beside the randomization p-value,
+    # never instead of it" (note 7) and until 2026-09-13 computed for no cell.
+    p_asym = float(chi2_dist.sf(obs, k)) if obs is not None and k else np.nan
     res = {"first_week_chi2": obs, "first_week_mean_coef": mean_coef,
-           "n_first_week_coefs": k, "n_obs": len(obs_stack),
+           "n_first_week_coefs": k, "n_obs": len(obs_stack), "p_asymptotic": p_asym,
            "p_randomization": np.nan, "n_draws": 0, "null_sd": np.nan,
            "ri_scheme": None, "ri_exact": 0,
            "n_admissible_starts": len(admissible_days(windows, pre, post))}
@@ -844,7 +866,8 @@ def randomization(panel, real_starts, outcome, pre, post, draws, windows, cell,
     with collected_warnings():
         obs2, p, stats_ = randomization_p(
             panel, real_starts, outcome, pre, post, draws, np.random.default_rng(seed),
-            counts=counts, windows=windows, ledger=ledger, seed=seed, extra=extra)
+            counts=counts, windows=windows, ledger=ledger, seed=seed, extra=extra,
+            offset=offset)
     if obs2 is not None and abs(obs2 - obs) > 1e-9:
         raise SealBroken(f"{label}: the observed statistic differs between the two "
                          f"calls ({obs} vs {obs2}); the estimator is not deterministic")
@@ -855,23 +878,30 @@ def randomization(panel, real_starts, outcome, pre, post, draws, windows, cell,
                 "null_sd": float(stats_.std()) if len(stats_) > 1 else np.nan,
                 "status": "OK"})
     return res
-def benjamini_hochberg(p):
+def benjamini_hochberg(p, m=None):
     """Step-up BH adjusted p-values, monotone by construction.
 
     Applied only to rows whose `family` is the pre-specified primary family. A
     correction is only as meaningful as the set it is applied over, so the set is
     written into the output and a reader who disagrees with it can recompute.
+
+    `m` is the FAMILY SIZE, fixed at the pre-specified eight: a member that
+    produced no p-value counts as a non-rejection (p = 1) at the top of the
+    ordering, so the family cannot shrink because a cell failed (CP2 audit).
     """
     p = np.asarray(p, dtype=float)
-    n = len(p)
-    order = np.argsort(p)
+    n_obs = len(p)
+    m = int(m) if m else n_obs
+    full = np.concatenate([p, np.ones(max(0, m - n_obs))])
+    n = len(full)
+    order = np.argsort(full)
     adj = np.empty(n)
     prev = 1.0
     for rank, i in enumerate(order[::-1]):
         k = n - rank
-        prev = min(prev, p[i] * n / k)
+        prev = min(prev, full[i] * n / k)
         adj[i] = prev
-    return adj
+    return adj[:n_obs]
 
 
 # ---------------------------------------------------------------------------
@@ -904,10 +934,10 @@ def load_episodes(filename, require=True):
 
 
 def run_cell(rows, panel, ep, stratum, outcome, arm_counts, spec, family,
-             extra, draws, bound, episode_set, windows, note=""):
+             extra, draws, bound, episode_set, windows, note="", offset=True):
     """One reported number, with everything needed to read it beside it."""
-    col = count_outcome(outcome) if arm_counts else outcome
-    arm = "PPML" if arm_counts else "OLS"
+    col = (outcome if outcome == "total_calls" else count_outcome(outcome)) if arm_counts else outcome
+    arm = ("PPML" if offset else "PPML_raw") if arm_counts else "OLS"
     label = f"{stratum}/{spec}/{col}/{arm}"
     cell = f"{stratum}_{spec}_{col}_{arm.lower()}_{bound}"
     if col not in panel.columns:
@@ -922,9 +952,10 @@ def run_cell(rows, panel, ep, stratum, outcome, arm_counts, spec, family,
                          status=f"NOT_RUN: {len(starts)} episode(s) in this stratum"))
         return
     res = randomization(panel, starts, col, EVENT_WINDOW_PRE, EVENT_WINDOW_POST,
-                        draws, windows, cell, extra=extra, counts=arm_counts, label=label)
+                        draws, windows, cell, extra=extra, counts=arm_counts, label=label,
+                        offset=offset)
     rows.append(_row(stratum, col, arm_counts, spec, family, bound, episode_set,
-                     len(ep), note=note,
+                     len(ep), note=note, offset=offset,
                      n_districts=panel["communitydistrict"].nunique(), **res))
     chi = res.get("first_week_chi2")
     p = res.get("p_randomization")
@@ -939,7 +970,7 @@ def execute_job(job):
     run_cell(rows, job["panel"], job["ep"], job["stratum"], job["outcome"],
              job["counts"], job["spec"], job["family"], ("bheard_exposure",),
              ARGS.draws, job["bound"], job["episode_set"], job["windows"],
-             note=job.get("note", ""))
+             note=job.get("note", ""), offset=job.get("offset", True))
     return rows[0]
 
 
@@ -965,11 +996,12 @@ def drop_break_windows(ep, dates):
         hit |= (lo <= d) & (d <= hi)
     return ep[~hit].reset_index(drop=True), int(hit.sum())
 def _row(stratum, outcome, arm_counts, spec, family, bound, episode_set,
-         n_episodes, note="", status="OK", n_districts=np.nan, **kw):
+         n_episodes, note="", status="OK", n_districts=np.nan, offset=True, **kw):
     row = {
         "stratum": stratum,
         "outcome": outcome,
-        "estimator": "PPML_count_offset" if arm_counts else "OLS_share",
+        "estimator": ("PPML_count_offset" if offset else "PPML_count_no_offset")
+                     if arm_counts else "OLS_share",
         "spec": spec,
         "family": family,
         "bheard_bound": bound,
@@ -1074,11 +1106,15 @@ def main():
             "re-run (finding D1). To replace it, pass "
             "--overwrite-sealed-result 'the reason', which is recorded in the file.")
     if ARGS.draws != RANDOMIZATION_DRAWS:
-        print(f"[seal] NOTE: --draws {ARGS.draws} overrides the pre-specified "
-              f"{RANDOMIZATION_DRAWS}. This is legitimate for the dry run and is "
-              f"a disclosed deviation for anything else.")
         if not SYNTHETIC:
-            print("[seal] the override is recorded in every output row.")
+            # A post-hoc lever on every sampled p-value if it were allowed: the
+            # docstring said dry-run only, the code only printed a note (CP2
+            # audit, 2026-09-13). The real run draws exactly what was
+            # pre-specified.
+            raise SealBroken(f"--draws {ARGS.draws} is not the pre-specified "
+                             f"{RANDOMIZATION_DRAWS}; the real run does not take a draw count")
+        print(f"[seal] NOTE: --draws {ARGS.draws} overrides the pre-specified "
+              f"{RANDOMIZATION_DRAWS}; legitimate for the synthetic dry run only.")
 
     rng = np.random.default_rng(SEED)
 
@@ -1111,10 +1147,11 @@ def main():
 
     rows, jobs = [], []
 
-    def add(stratum, sp, ep, outcome, counts, spec, family, bound, episode_set, note=""):
+    def add(stratum, sp, ep, outcome, counts, spec, family, bound, episode_set, note="",
+            offset=True):
         jobs.append(dict(stratum=stratum, panel=sp, ep=ep, outcome=outcome, counts=counts,
                          spec=spec, family=family, bound=bound, episode_set=episode_set,
-                         windows=STRATUM_WINDOWS[stratum], note=note))
+                         windows=STRATUM_WINDOWS[stratum], note=note, offset=offset))
 
     for stratum, spanel in strata.items():
         windows = STRATUM_WINDOWS[stratum]
@@ -1151,12 +1188,28 @@ def main():
 
             spec = "primary" if is_primary_bound else "sens_bheard_late_bound"
             for outcome in list(H1_OUTCOMES):
-                fam = ("primary_H1" if is_primary_bound
-                       and stratum in ("C1_clean", "C2_exposed") else "secondary")
+                # Primary family: the two inferential strata. The pooled
+                # primary-bound cells are descriptive; the late bound is a
+                # sensitivity (note 9.5, addendum 19), not "secondary".
+                fam = ("primary_H1" if is_primary_bound and stratum in ("C1_clean", "C2_exposed")
+                       else "descriptive" if is_primary_bound else "sensitivity")
                 for counts in (False, True):
                     add(stratum, sp, ep_here, outcome, counts, spec, fam, bound, "primary")
             if not is_primary_bound:
                 continue
+
+            # Denominator diagnostic (addendum 23, rule 9.2 made mechanical): the
+            # count arm's offset is the same denominator the share divides by,
+            # so it cannot by itself tell a change in demand from a change in the
+            # denominator. Two cells per stratum, outside every family: the raw
+            # count of each H1 outcome with NO offset, and total dispatches.
+            for outcome in list(H1_OUTCOMES):
+                add(stratum, sp, ep_here, outcome, True, "diag_raw_count", "diagnostic",
+                    bound, "primary", note="PPML on the count, no offset (addendum 23)",
+                    offset=False)
+            add(stratum, sp, ep_here, "total_calls", True, "diag_total_dispatches",
+                "diagnostic", bound, "primary",
+                note="PPML on total dispatches, no offset (addendum 23)", offset=False)
 
             for outcome in PLACEBO_OUTCOMES:
                 for counts in (False, True):
@@ -1193,6 +1246,15 @@ def main():
                                  "the treatment index after the lift is not blind"))
                     continue
                 ep_a = episodes_for(ep_alt, windows, sp)
+                if sorted(ep_a["start"].tolist()) == sorted(ep_here["start"].tolist()):
+                    # The same design under a different seed would print a second
+                    # p-value for one estimate (CP2 audit); record identity instead.
+                    for outcome in list(H1_OUTCOMES):
+                        rows.append(_row(stratum, outcome, False, spec_name, "sensitivity",
+                                         bound, listname, len(ep_a),
+                                         status="IDENTICAL_TO_PRIMARY: same episode starts "
+                                                "in this stratum", note=note))
+                    continue
                 for outcome in list(H1_OUTCOMES):
                     for counts in (False, True):
                         add(stratum, sp, ep_a, outcome, counts, spec_name, "sensitivity",
@@ -1244,8 +1306,11 @@ def main():
             rows.append(execute_job(job))
 
     # B-HEARD as identification, where there is exposure (fast, single fits).
+    # C2 ONLY, as the note pre-specifies (5, H1 secondary); the pooled sample
+    # mixes exposed and unexposed years and was estimated here until the CP2
+    # audit (2026-09-13) without being promised anywhere.
     for stratum, spanel in strata.items():
-        if spanel.empty:
+        if spanel.empty or stratum != "C2_exposed":
             continue
         sp = attach_bheard(spanel, bound=BHEARD_BOUND_PRIMARY)
         if float(sp["bheard_exposure"].max()) <= 0:
@@ -1260,12 +1325,17 @@ def main():
 
     # -- multiple testing across the pre-specified family -------------------
     fam = (res["family"] == "primary_H1") & res["p_randomization"].notna()
+    n_family = int((res["family"] == "primary_H1").sum())
+    if not SYNTHETIC and n_family != 8:
+        raise SealBroken(f"the primary family has {n_family} cells, not the pre-specified 8")
     if fam.any():
+        # m = 8 ALWAYS. A cell that produced no p-value counts as a non-rejection
+        # in the family, not as a smaller family (CP2 audit, 2026-09-13).
         res.loc[fam, "p_bh_adjusted"] = benjamini_hochberg(
-            res.loc[fam, "p_randomization"].to_numpy())
+            res.loc[fam, "p_randomization"].to_numpy(), m=n_family)
         print(f"\n[BH] Benjamini-Hochberg at q={BH_Q} over the pre-specified "
-              f"family of {int(fam.sum())} test(s) "
-              f"(2 outcomes x 2 arms x 2 strata when complete)")
+              f"family of {n_family} test(s), {int(fam.sum())} with a p-value "
+              f"(2 outcomes x 2 arms x 2 strata)")
         n_sig = int((res.loc[fam, "p_bh_adjusted"] < BH_Q).sum())
         print(f"[BH] {n_sig} of {int(fam.sum())} survive at q={BH_Q}")
     else:

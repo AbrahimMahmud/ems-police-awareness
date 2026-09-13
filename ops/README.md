@@ -16,6 +16,8 @@ resume scripts that no longer existed.
     bash ops/rebuild.sh      # download → panel → 200-sim calibrations → discovery
                              # estimator at 500 draws → secondary models → power
     bash ops/calib1000.sh    # after rebuild: 1000-sim calibrations, all strata
+    bash ops/coldrun.sh      # after rebuild: run_all twice from cold (definition in
+                             # the script header) and compare the two manifests
 
 Both write a PID file, a state file of completed steps, and a log under
 `ops/state/` (gitignored). Poll them by PID file or sentinel — never `pgrep -f`,

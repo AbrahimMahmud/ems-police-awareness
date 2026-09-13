@@ -189,6 +189,17 @@ STAGES = [
          needs=["data/processed/panel_cd_day.parquet"], writes=['outputs/tables/did_exposure_results.csv'], note=""),
     dict(script="08_figures.py", kind="model",
          needs=["data/processed/panel_cd_day.parquet"], writes=['outputs/figures/fig1_raw_series.png'], note="figures"),
+    # Two exhibit scripts whose numbers the paper claims (C46-C50, C133-C137;
+    # C144-C149) were not stages, so a clean clone could not produce them
+    # (2026-09-13, while defining the cold run). Both are treatment-side.
+    dict(script="33_antipolice_sensitivity.py", kind="model",
+         needs=["data/processed/cai_daily.parquet", "data/reference/wiki_pageviews_by_article.csv"],
+         writes=['outputs/tables/antipolice_sensitivity.csv'],
+         note="what excluding attention to violence against police does to the index peak"),
+    dict(script="25_zscore_simulation.py", kind="model",
+         needs=["data/processed/cai_daily.parquet", "data/reference/confirmation_episodes_rebuilt.csv"],
+         writes=['outputs/tables/zscore_simulation.csv', 'outputs/tables/zscore_simulation_params.csv'],
+         note="SIMULATED: what within-window standardisation does to a planted effect"),
 ]
 
 KINDS = ("fetch", "build", "check", "model")

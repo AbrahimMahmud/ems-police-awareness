@@ -37,21 +37,21 @@ that the design cannot deliver one. Both are publishable; neither is a failure.
 
 ---
 
-## Status (2026-09-13 ~08:20Z) — fresh container, CP1 remediation committed, C1 certified
+## Status (2026-09-13 ~17:45Z) — CP2 specification audit acted on; C1 and pooled being re-certified under `circular_within_block_fw7`; cold runs queued
 
 **Read this block first; everything below it under "Status (2026-09-12…)" is the
 historical record of the previous session and is kept for its reasoning.**
 
 | | |
 |---|---|
-| Branch | `analysis-rework`; commits `34211cc`…`HEAD` on top of the handoff's `e541632` |
+| Branch | `analysis-rework`; commits `34211cc`…`0551662` on top of the handoff's `e541632`, pushed. Working tree carries only the in-flight CP2 edits (run_all stages for 25/33, `ops/coldrun.sh`) until the power artifact lands. |
 | Environment | **A fresh container.** No `data/processed`, no `outputs/tables`, no scratchpad survived. Everything regenerable was regenerated from committed inputs: the EMS extract re-downloaded with an unchanged provenance hash (S1b), the panel and both basket arms byte-identical, discovery re-calibrated (CALIBRATED, rejection 0.05, lattice KS p 0.7516). |
 | Environment, the rule | **Compute advances only while a session is active.** The container is suspended or reset when the session is idle (a 4-hour usage-limit pause advanced the ledger by zero rows; it came back with `up 1 min` and an empty process table). Every long job is checkpointed and driven by the runners in `ops/`, which are relaunched blind after any restart. Poll by PID file, never `pgrep -f`. |
 | Decisions (user, 2026-09-13) | **Continue to Phase I** as pre-registered, with the reading of a non-rejection fixed against the measured power (addendum §19). Branch stays `analysis-rework`, no attribution. **O2 diagnostic: disclosed first, then run** as a declared access (addendum §18; done). Deliverable: a Markdown manuscript in the repo. |
 | CP1 | **Done as an adversarial audit** (8 finders by failure class, 3-lens refutation where the usage limit allowed): 60 raw findings, of which the confirmed and self-verified ones are filed as O2-close, X16, N7–N10, X17, P8–P10 and the pending items in remediation groups A–E below. |
-| Gate | 82 checks (S.lift_requires_1000_sims and X.run_all_refresh_guard added 2026-09-13): 77 PASS, 1 BLOCKED, 2 FAIL before the re-stamp finishes, run twice with identical results. Every non-PASS is artifact-pending in this container: `S.ri_scheme_certified` BLOCKED until C2's certificate regenerates (C1's landed 08:08Z and satisfies it), `V.claims_reproduce` (26 of 128 absent, 4 reading the 2-draw smoke estimator until the 500-draw run lands) and `M.status_honest` (X14, tagged to it). `main()` reports an unbaselined check as a failing condition; the baseline covers every check. |
-| Findings | 105: 105 fixed, 0 open, 0 unverified. P1, P5, RI3 and P12 closed 2026-09-13 ~12:20Z when `S.ri_scheme_certified` passed on all four strata (C2 regenerated: rejection 0.05, KS p 0.4838; pooled: 45 episodes, 0.03, 0.5127). **C1 certified 2026-09-13** under `circular_within_block`, 200 × 200: rejection 0.04, KS D 0.083, lattice p 0.1229, median p 0.4776, CALIBRATED — but their check covers both confirmation strata, so they stay unverified until C2's certificate regenerates here and the check passes. |
-| Claims | 204 registered. C1's §7.4 row and prose are re-registered as C65, C66, C128–C131 and verify; C132–C149 close the cell-level exhibit coverage. Claims on regenerated artifacts (the C2 rows, §8 p-values, decomposition, power) re-establish as the chain writes them and are read from the artifact, never "fixed" to the old numbers. |
+| Gate | 83 checks (S.lift_requires_1000_sims, X.run_all_refresh_guard and S.confirmatory_spec_audit added 2026-09-13): 77 PASS, 1 BLOCKED, 2 FAIL before the re-stamp finishes, run twice with identical results. Every non-PASS is artifact-pending in this container: `S.ri_scheme_certified` BLOCKED until C2's certificate regenerates (C1's landed 08:08Z and satisfies it), `V.claims_reproduce` (26 of 128 absent, 4 reading the 2-draw smoke estimator until the 500-draw run lands) and `M.status_honest` (X14, tagged to it). `main()` reports an unbaselined check as a failing condition; the baseline covers every check. |
+| Findings | 113: 108 fixed, 0 open, 5 unverified (P1, P5, RI3, P12, P13 — held until C1 and pooled are re-certified under the renamed scheme; they closed at 12:20Z on the old certificates and reopened at 17:30Z when P13 was measured). The CP2 audit added P13–P18, O4 and F4. **C1 certified 2026-09-13** under `circular_within_block`, 200 × 200: rejection 0.04, KS D 0.083, lattice p 0.1229, median p 0.4776, CALIBRATED — but their check covers both confirmation strata, so they stay unverified until C2's certificate regenerates here and the check passes. |
+| Claims | 206 registered; every registered claim whose artifact exists verifies (144); the rest wait on the cold run's model stages, which the cold-run runner deleted before rebuilding. C1's §7.4 row and prose are re-registered as C65, C66, C128–C131 and verify; C132–C149 close the cell-level exhibit coverage. Claims on regenerated artifacts (the C2 rows, §8 p-values, decomposition, power) re-establish as the chain writes them and are read from the artifact, never "fixed" to the old numbers. |
 | Manuscript | `docs/PAPER.md` started 2026-09-13 in the PAPER_PLAN drafting order: Introduction, Methods (with the deviations subsection), Limitations, display-item list, RECORD table and references are drafted; Abstract, confirmatory Results and Discussion are marked **PHASE I PENDING**. Every number in it is registered: C150–C187 address PAPER.md directly (design counts, panel moments, discovery estimates, MDE ratios) and verify except where the artifact is still regenerating; `V.claims_cover_exhibits` scans PAPER.md's tables as well as PAPER_MASTER's. Unsourced figures found by a prose sweep (district population range, the 184-day regime episode, the fixed-threshold selection range, the F3-derived 0.0002) were removed rather than registered. |
 
 ### What the CP1 audit found that changes Phase I
@@ -70,6 +70,7 @@ historical record of the previous session and is kept for its reasoning.**
 - **D — gate integrity: done (2026-09-13 ~09:00Z).** Unbaselined/retired checks fail `main()`; a template without exactly one `{}` is `malformed`; `M.status_honest` first-run BLOCKED; `V.sources_verified` compares hashes; arm suffixes collapse over `config.ARMS`. **Cell-level exhibit coverage**: `V.claims_cover_exhibits` now requires every number in every numeric table cell of PAPER_MASTER (cells that start with a number, decoration included: `1.05×`, `2.203 → 2.092`, `1 of 3,472`) to sit inside a claim's captured group — 57 numbers in 52 cells, 0 exemptions, claims C132–C149 added (the §7.4 rejection rates, the §3 counts, the anti-police rank cells, the z-score multiplier table via a fresh `25_zscore_simulation.py` run, the O2 code counts, the strict-arm cells). U+2212 in `NUMBER_RE` and `_template_regex` (either minus, never the en dash); the updater keeps the document's typography. `M.register_sync` requires the register's `checks` column to equal the suite's tags for every finding and a three-word severity vocabulary — 10 rows reconciled (RI2 and N5 had named a check that never tested them), `major`/`serious` normalised to `blocking` (64 blocking, all covered). `X.run_all_stages_declared` imports `STAGES` instead of regex-parsing the source. `E.episodes_labelled` recomputes every driver label from the attention series (the blank test could not fail). `D.outcome_list_complete` enumerates every file in `data/processed` (two orphan `.txt` summaries with no writer deleted). run_all fails a stage that exits 0 without refreshing its declared outputs. 19's early UNDETERMINED exit honours no-downgrade. `MIN_SIMS_FOR_VERDICT` and `NOMINAL_ALPHA` defined once in config for 18 and 19. 09 writes `wikipedia_article_resolution_legacy.csv` and 10/21 read it, so a fetch can no longer overwrite the published basket; 32 registers the basket it publishes (D7). `31` reports an artifact with no provenance row as `unregistered` instead of "verified" — ten were: 00b, 11 (all arms) and 16 now register every file they write (S1c, S1d, S11a–c, S15b); 28 and 29 were re-fetched live to register theirs and **upstream had moved** (one more article with a historical title, 533 titles against 530, more recovered views), which would have changed the frozen treatment input `article_title_map.csv` — so the fetch was reverted to the committed bytes, the code edits with it, and the three side files stay pinned until a deliberate treatment rebuild; the two committed inputs (S5, S6) and the Trends stitch diagnostic (S12; 11b registers it as S12b next fetch) are pinned. `fetch_leads`' first-sentence cut measured **immaterial and correct**: on the full intro 2 of 13 unestablished articles would flip to police_violence — McGlockton and Scurlock, both civilian killings whose intros name the investigating agency.
 - **E — documents: done** except the numbers that the chain regenerates (§7.4 C2 row, §7.5b power, §8 p-values), which re-establish from artifacts.
 - **L7 spliced arm: done** (addendum §20; 11 → 12 → 13 under `--arm spliced`; identical on all 1,764 pre-break days, differs on 1,708 of 1,708 post-break days, `T.spliced_arm_prebreak_identical`; §5.1a; C122–C127).
+- **Compute plan from 17:45Z** (`scratchpad` runners, relaunched blind after each restart): `calibfix.sh` rebuilt the build stages on the full-span panel and is re-certifying C1 then pooled at 200 sims under `circular_within_block_fw7`; it then hands over to `calib1000.sh` (C1, discovery, C2 at 1,000). `coldrun.sh` waits for `calibfix.done` and then runs `run_all` twice from cold (the first clear already happened at 17:14Z when the runner was killed mid-wait, which is why every model artifact is currently absent). The synthetic dry run of 30 was re-stamped after the addendum-23 edits. Two more container restarts today (13:xxZ and ~17:12Z), each on a usage-limit pause.
 - **Container restart during a usage-limit pause (10:18Z–12:11Z)** killed `19_power.py` mid-run and both runners; relaunched 12:14Z from their state files (calib_C2 skipped as done, power19 restarted). The rule stands: compute advances only while the session is active.
 - **Rebuild chain (ops/rebuild.sh), in flight:** the 500-draw discovery estimator finished 09:00Z and **reproduced every §8 number exactly** in this fresh container (coefficients −0.00123/−0.01084/−0.00103/−0.00615, randomization p 0.695/0.519/0.880/0.826) → 05, 03, 04, 06, 07, 08, 33 → C2 calibration → 19 power; then `ops/calib1000.sh` (1000 sims × 3 strata). Alongside: `18 --stratum pooled --sims 200` (new, P12) and the re-stamp of 30's synthetic dry run after the pooled-certificate edit.
 - **Two CP2 gaps found while preparing the checklist (2026-09-13):** nothing enforced the 1,000-sim requirement at the lift (P11 → `S.lift_requires_1000_sims`), and the pooled stratum's p-values rested on C1's and C2's certificates with no calibration of its own three-window geometry (P12 → `18 --stratum pooled`, `STRATUM_CALIBRATION["pooled"] = ("pooled",)`, addendum §22).
@@ -834,8 +835,18 @@ All must hold **before** `FREEZE_ACTIVE = False`.
       `S.estimators_gate_on_calibration`, `S.no_downgrade`)*.
 - [ ] `run_all.py` clean twice from cold; manifest committed; model stages
       declare their outputs so the empty-run guard is live. *(Guard live and now
-      also fails a stage that leaves its outputs unrefreshed; the two cold runs
-      follow the rebuild chain so they do not compete with it for CPU.)*
+      also fails a stage that leaves its outputs unrefreshed. **Cold is defined**:
+      every file under `outputs/tables` that a run_all stage writes is deleted
+      first, and `data/processed` is cleared except the raw page cache
+      (`ems_pages/`, so 00b rebuilds from cached pages) and the
+      calibration/power products of 18 and 19, which are not run_all stages —
+      they cost hours, are resumable through their ledgers, and enter the
+      model stages as certified inputs recorded in the manifest. Fetch stages
+      are excluded: upstream mutates (28/29 moved on 2026-09-13), and the
+      treatment inputs are frozen. `--kind build --kind check --kind model`,
+      twice; the second run's manifest must hash-match the first. 17 runs at
+      the pre-registered 2,000 draws in run_all, so §8's "500 draws" becomes
+      2,000 after the first cold run.)*
 - [x] Adding B-HEARD leaves discovery numerically unchanged.
       *(`X.bheard_wired` refits with and without the control and requires every
       coefficient identical; the control is in the formula since `10256d4`.)*
@@ -856,9 +867,20 @@ All must hold **before** `FREEZE_ACTIVE = False`.
 - [x] `PAPER_MASTER.md` current through Phase H *(§7.4 all three strata, §7.5b
       power, §8.1 bounded null, §5.3 three incidents; cell-level exhibit coverage
       holds it to its claims)*.
-- [ ] A final adversarial audit of the **specification**, not the code.
-      *(Runs once the power artifact is regenerated, so the reading rules can be
-      audited against the numbers they cite.)*
+- [x] A final adversarial audit of the **specification**, not the code.
+      *(Run 2026-09-13 as an 8-finder / 3-lens workflow: six finders completed
+      (46 raw findings); the two remaining finders, every refuter and the critic
+      failed on the session limit, so every finding acted on was verified by hand
+      against the cited lines. Filed and fixed before the lift: P13 (placebo
+      admissibility snapped C1's edge episodes — measured 397/400 draws with a
+      1-day gap; scheme renamed `circular_within_block_fw7`, C1 and pooled
+      recalibrated), P14 (reading rules made mechanical), P15 (denominator
+      diagnostic), P16 (fixed draws, tracked seal, BH over eight, asymptotic p),
+      P17 (panel spanned only the discovery buffer), P18 (family labels,
+      identical sensitivities, interaction C2-only), O4 (EDPT/EDPE), F4 (the
+      crosswalk's all-years SODA count). Addendum §23–§24. The refutation phase
+      can be resumed from the workflow's run id once the limit allows; its
+      absence is recorded here rather than papered over.)*
 
 **Then, and only then: `FREEZE_ACTIVE = False`.** One commit, greppable.
 

@@ -346,6 +346,10 @@ against a band wide enough to contain any estimate — a gate that could not fai
 
 ## 9. Interpretation rules, committed in advance
 
+*Amended 2026-09-13 by `CONFIRMATION_PLAN.md` addendum §23, which defines
+"rejects", direction, the denominator diagnostic and the placebo override
+mechanically; where this section and §23 differ, §23 governs.*
+
 These are the rules for reading the result. They are written now so that they
 cannot be chosen to suit the answer.
 

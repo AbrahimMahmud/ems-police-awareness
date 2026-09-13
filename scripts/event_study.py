@@ -120,7 +120,7 @@ def _rel_day_coefs(model):
 
 
 def fit_event_study(stack, outcome, fe="ep_cd + dow", counts=False,
-                    cluster=CLUSTER_VAR, extra=()):
+                    cluster=CLUSTER_VAR, extra=(), offset=True):
     """Fit the event-time model. Returns the pyfixest model, or None.
 
     Day EVENT_REFERENCE_DAY stays IN the estimation sample and is named as the
@@ -156,7 +156,7 @@ def fit_event_study(stack, outcome, fe="ep_cd + dow", counts=False,
     try:
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            model = _fit(fml, d, counts, vcov, outcome)
+            model = _fit(fml, d, counts, vcov, outcome, offset=offset)
         for w in caught:
             _note_warning(w)
         return model
@@ -165,8 +165,15 @@ def fit_event_study(stack, outcome, fe="ep_cd + dow", counts=False,
         return None
 
 
-def _fit(fml, d, counts, vcov, outcome):
+def _fit(fml, d, counts, vcov, outcome, offset=True):
     try:
+        if counts and not offset:
+            # RAW count, no offset: the denominator diagnostic of addendum 23.
+            # A rate model (offset) shares the share arm's denominator; this one
+            # does not, so it can tell a change in demand from a change in the
+            # denominator.
+            d = d[d[outcome].notna()].copy()
+            return pf.fepois(fml, d, vcov=vcov) if not d.empty else None
         if counts:
             # PPML on the count with a log total-calls OFFSET, so a coefficient
             # reads as a proportional change in the rate — the same quantity the
@@ -308,7 +315,7 @@ def _note_fit_failure(outcome, counts, exc):
 
 def first_week_effect(stack, outcome, fe="ep_cd + dow", counts=False, days=range(0, 8),
                       min_days=MIN_FIRST_WEEK_DAYS, return_n=False, cluster=CLUSTER_VAR,
-                      extra=()):
+                      extra=(), offset=True):
     """Test statistic for H1: the JOINT Wald statistic on the day 0..7 coefficients.
 
     H1 is that attention changes first-week demand — a joint claim that the
@@ -326,7 +333,8 @@ def first_week_effect(stack, outcome, fe="ep_cd + dow", counts=False, days=range
     draw with a degenerate design is discarded rather than contributing a
     statistic built from a different set of days than the observed one.
     """
-    m = fit_event_study(stack, outcome, fe=fe, counts=counts, cluster=cluster, extra=extra)
+    m = fit_event_study(stack, outcome, fe=fe, counts=counts, cluster=cluster, extra=extra,
+                        offset=offset)
     if m is None:
         return (None, 0) if return_n else None
     names = _rel_day_coefs(m)
@@ -360,9 +368,10 @@ def joint_p(model, wanted):
 
 
 def first_week_mean(stack, outcome, fe="ep_cd + dow", counts=False, days=range(0, 8),
-                    cluster=CLUSTER_VAR, extra=()):
+                    cluster=CLUSTER_VAR, extra=(), offset=True):
     """Reportable effect size: the mean day 0..7 coefficient. NOT the test statistic."""
-    m = fit_event_study(stack, outcome, fe=fe, counts=counts, cluster=cluster, extra=extra)
+    m = fit_event_study(stack, outcome, fe=fe, counts=counts, cluster=cluster, extra=extra,
+                        offset=offset)
     if m is None:
         return None
     names = _rel_day_coefs(m)
@@ -408,19 +417,30 @@ def placebo_starts(rng, real_starts, lo, hi, pre, post):
 
 
 @lru_cache(maxsize=64)
-def _admissible_days_cached(windows, pre, post):
+def _admissible_days_cached(windows, pre, post, first_week=None):
     days = pd.DatetimeIndex([])
     for lo, hi in windows:
         lo, hi = pd.Timestamp(lo), pd.Timestamp(hi)
-        a = lo + pd.Timedelta(days=pre + 1)
-        b = hi - pd.Timedelta(days=post + 1)
+        if first_week is None:
+            a = lo + pd.Timedelta(days=pre + 1)
+            b = hi - pd.Timedelta(days=post + 1)
+        else:
+            # FIRST-WEEK containment (addendum 17, 24): a start is admissible when
+            # day -1 and days 0..first_week lie inside the window, exactly the rule
+            # that decides which REAL episodes a stratum keeps. Tails may truncate.
+            a = lo + pd.Timedelta(days=1)
+            b = hi - pd.Timedelta(days=first_week)
         if b >= a:
             days = days.union(pd.date_range(a, b, freq="D"))
     return days.sort_values()
 
 
-def admissible_days(windows, pre, post):
+def admissible_days(windows, pre, post, first_week=None):
     """Every day a placebo episode may start on, across one or more windows.
+
+    With `first_week` given, admissibility is first-week containment (day -1
+    through day +first_week inside the window) rather than the full pre/post
+    window; see placebo_starts_circular and addendum 24.
 
     A start needs `pre` days before it and `post` after, so each window
     contributes only its interior. Returned sorted, as a DatetimeIndex, so a
@@ -435,7 +455,7 @@ def admissible_days(windows, pre, post):
     passing a list still work.
     """
     key = tuple((str(lo), str(hi)) for lo, hi in windows)
-    return _admissible_days_cached(key, pre, post)
+    return _admissible_days_cached(key, pre, post, first_week)
 
 
 def placebo_starts_circular(rng, real_starts, windows, pre, post):
@@ -509,9 +529,20 @@ def placebo_starts_circular(rng, real_starts, windows, pre, post):
     # WORSE than the seam-crossing version it replaced — 3.9% of draws against
     # 12.4%. Measured, not reasoned about; the first version of this fix was
     # wrong and the test said so.
+    # ADMISSIBILITY IS FIRST-WEEK CONTAINMENT, the same rule that keeps a real
+    # episode in the stratum (addendum 17). Keyed on the full +/-14 window, the two
+    # C1 episodes whose tails leave the 2021 block were snapped to the block's
+    # first and last admissible day, and a circular shift of positions 0 and
+    # N-1 puts them on CONSECUTIVE days: measured 2026-09-13, 397 of 400 C1
+    # placebo draws carried two episodes one day apart against a real minimum
+    # gap of 16, and build_stack then hands nearly all of one to the other. The
+    # null was drawing designs unlike the real one (CP2 audit; addendum 24).
+    # Under first-week admissibility every kept episode is on an admissible day
+    # and nothing snaps; the snapping branch below stays as a guard and its
+    # count is returned so a caller can refuse a draw that used it.
     blocks = []
     for w in windows:
-        adm = admissible_days([w], pre, post)
+        adm = admissible_days([w], pre, post, first_week=CIRCULAR_FIRST_WEEK)
         if len(adm):
             blocks.append((pd.Timestamp(w[0]), pd.Timestamp(w[1]), adm))
     if not blocks:
@@ -817,6 +848,13 @@ def adopt_ledger(path, design):
     return meta
 
 
+# The scheme NAME is the certificate's subject (finding N3), so it changes when
+# the null changes. "_fw7": admissible days by first-week containment (addendum
+# 24) rather than by the full window, which snapped edge episodes.
+CIRCULAR_FIRST_WEEK = 7
+CIRCULAR_SCHEME = f"circular_within_block_fw{CIRCULAR_FIRST_WEEK}"
+
+
 def draw_scheme_for(windows, real_starts, pre, post):
     """Which draw scheme a stratum requires, and why. Never guessed at runtime.
 
@@ -835,7 +873,7 @@ def draw_scheme_for(windows, real_starts, pre, post):
         # — otherwise a calibration certifying the seam-crossing version would
         # go on satisfying S.ri_scheme_certified for a different null. The name
         # IS the certificate's subject.
-        return "circular_within_block", (
+        return CIRCULAR_SCHEME, (
             f"{len(windows)} disjoint windows: an anchor shift has no single span "
             "to slide within, and a shift across the concatenation would not "
             "preserve how many episodes fall in each window")
@@ -846,7 +884,7 @@ def draw_scheme_for(windows, real_starts, pre, post):
     if room < 0:
         # One window, so within-block and across-block are the same operation;
         # the name still records which implementation drew the placebos.
-        return "circular_within_block", (
+        return CIRCULAR_SCHEME, (
             f"one window, but the sequence spans {span}d against "
             f"{span + room}d usable: slack {room}")
     return "anchor_shift", f"one window with {room}d of slack for a {span}d sequence"
@@ -855,7 +893,7 @@ def draw_scheme_for(windows, real_starts, pre, post):
 def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
                     fe="ep_cd + dow", counts=False, date_col="incident_date",
                     cluster=CLUSTER_VAR, windows=None, ledger=None, seed=None,
-                    extra=()):
+                    extra=(), offset=True):
     """Episode-level randomization inference. Returns (observed, p, null draws).
 
     The statistic is the joint chi-square, which is non-negative and increasing
@@ -872,7 +910,7 @@ def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
     the whole budget is spent (finding P1).
     """
     obs_stack = build_stack(panel, real_starts, pre, post, date_col)
-    obs = first_week_effect(obs_stack, outcome, fe=fe, counts=counts, cluster=cluster,
+    obs = first_week_effect(obs_stack, outcome, fe=fe, counts=counts, cluster=cluster, offset=offset,
                             extra=extra)
     if obs is None:
         return None, np.nan, np.array([])
@@ -916,6 +954,9 @@ def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
             "kind": "randomization_p", "outcome": outcome, "pre": int(pre),
             "post": int(post), "counts": bool(counts), "fe": fe, "cluster": cluster,
             "extra": list(extra), "scheme": scheme,
+            # Only written when it departs from the default, so every ledger
+            # fingerprinted before the raw-count diagnostic existed still matches.
+            **({"offset": False} if not offset else {}),
             "windows": [[str(pd.Timestamp(a).date()), str(pd.Timestamp(b).date())]
                         for a, b in windows],
             "starts": sorted(str(pd.Timestamp(s).date()) for s in real_starts),
@@ -954,7 +995,7 @@ def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
     # docstring, so no caller could see that every placebo design differed from
     # the observed one in where two episodes sat. It is now summed and reported.
     DRAWERS = {
-        "circular_within_block":
+        CIRCULAR_SCHEME:
             lambda r: placebo_starts_circular(r, real_starts, windows, pre, post),
         "anchor_shift":
             lambda r: (placebo_starts(r, real_starts, lo, hi, pre, post), 0),
@@ -978,7 +1019,7 @@ def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
                 n_short += 1
                 continue                          # never let a short draw in
             b = first_week_effect(build_stack(panel, ps, pre, post, date_col),
-                                  outcome, fe=fe, counts=counts, cluster=cluster,
+                                  outcome, fe=fe, counts=counts, cluster=cluster, offset=offset,
                                   extra=extra)
             if b is None:
                 n_unfit += 1

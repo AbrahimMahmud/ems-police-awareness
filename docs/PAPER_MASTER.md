@@ -600,10 +600,17 @@ disclosed as such.
 **Layer 1.** For each of the 59 districts on each day, we count mental-health 911
 medical calls and divide by all calls.
 
-**Layer 3.** `data/processed/panel_cd_day.parquet` — **89,857 rows**, 59 districts,
-2016-12-01→2021-01-31 (buffered discovery window). Mean EDP share **0.0856**, mean
+**Layer 3.** `data/processed/panel_cd_day.parquet` — **217,356 rows**, 59 districts,
+2014-12-01→2024-12-31: every district-day the extract covers, of which the
+discovery analysis window holds **86,199** (which rows a script may see is the
+freeze guard's decision, not the file's; until 2026-09-13 the file itself was
+bounded to the discovery buffer, addendum §23.8). On discovery: Mean EDP share **0.0856**, mean
 total calls per district-day **66.1**. Built by `scripts/01_build_panel.py`.
-Districts with fewer than 5 calls on a day are excluded from share calculations.
+District-days with fewer than 5 dispatches are excluded from the analysis sample, in
+both arms (the estimator and the sealed script have always applied the filter to
+both; this sentence used to say "share calculations"). The EDP family is every
+EDP-prefixed code — EDPT (from 2023-03) and EDPE (from 2024-04) were added
+blind on 2026-09-13 from the declared coverage table (addendum §23.7).
 
 ### 5.1c Does the Trends component lose resolution over the decade?
 
@@ -653,14 +660,14 @@ share of any call group.
 
 **Layer 3.** `data/reference/ems_call_code_span.csv`,
 `ems_missing_district_rate_by_year.csv`, `ems_coverage_breaks.csv`. Of the
-codes in any outcome group, **20 outcome-group codes** are born or retired
+codes in any outcome group, **22 outcome-group codes** are born or retired
 strictly inside a confirmation analysis window:
 
 | window | outcome-group codes born or retired inside it | which |
 |---|---|---|
 | C1a, 2015-07→2016-12 | 1 | INJALS retired 2015-12-16 (injury placebo); and the geocoding step at 2016-01-01 |
 | C1b, 2021-01→2021-05 | 2 | CARDFT born 2021-01-06 (cardiac placebo); ALTMFT born 2021-03-10 (altmen, inside the narrow mental-health family) |
-| C2, 2021-06→2024-12 | 17 | EDPM born 2021-06-03 and EDPW retired 2021-08-25 (EDP family, both already disclosed in `config`); the other 15 are FC/FT dispatch variants across the cardiac, asthma, altmen and drug groups |
+| C2, 2021-06→2024-12 | 19 | EDPM born 2021-06-03 and EDPW retired 2021-08-25 (EDP family, both already disclosed in `config`); the other 15 are FC/FT dispatch variants across the cardiac, asthma, altmen and drug groups |
 
 The share of dispatched calls with no community district is **2.97%** in 2015
 and **0.91%** in 2016 — a ratio of **0.31**, the only adjacent-year change
@@ -953,7 +960,7 @@ what actually moved was the unit the coefficient is denominated in.
 This is why the measure is standardised once, on a fixed reference window that
 contains no George Floyd, and never re-standardised inside a sample.
 
-### 5.3 The freeze incidents — **three**, all disclosed
+### 5.3 The freeze incidents — **four**, all disclosed
 
 **F1 (2026-09-10).** During an automated audit, an agent computed the citywide
 mental-health call share by year for 2005–2026, including confirmation years, in
@@ -1010,7 +1017,14 @@ on every run (§5.1d) — and the audit prompts used since forbid opening outcom
 files at all. The coverage facts the paper cites come from that declared access,
 not from F3.
 
-Materiality for all three is for the supervisor to judge, not us. The gaps are
+**F4 (found 2026-09-13, by the CP2 specification audit).** The precinct–district
+crosswalk that carries B-HEARD exposure onto districts (S14) was built by a
+server-side SODA count of dispatches per precinct × district pooled over
+2015–2024. It is a geography weight — no call type, no date, no outcome group —
+but it is a read of confirmation-period dispatch counts that no exemption
+declared, and it is listed here for that reason (addendum §23.10).
+
+Materiality for all four is for the supervisor to judge, not us. The gaps are
 closed in code where code can close them: outcome artifacts outside the guard's
 coverage (F1), the source API that no artifact guard can see (F2), and a
 declared-access path with a log for the reads that must happen (F3).
@@ -1211,7 +1225,7 @@ null**. It keeps each episode's position relative to the others, so clustering
 survives; it does not keep calendar gaps across the seam between the two windows.
 So each stratum is now calibrated separately, each verdict records the scheme and
 geometry it certifies, and a check recomputes what each stratum requires and
-refuses a verdict that certifies something else. All three are now discharged, at
+refuses a verdict that certifies something else. All four are now discharged, at
 200 simulations × 200 draws each (the pooled stratum the confirmatory script also
 reports — three windows, descriptive, outside the family — gets its own
 certificate too, addendum §22, rather than resting on C1's and C2's read
@@ -1225,6 +1239,13 @@ corrected code):
 | C2 | anchor shift | contiguous | 30 | 0.05 | 0.4838 | CALIBRATED |
 | C1 | circular, within block | gapped | 15 | 0.04 | 0.1229 | CALIBRATED |
 | pooled | circular, within block | gapped | 45 | 0.03 | 0.5127 | CALIBRATED |
+
+*The C1 and pooled rows above certify the drawer as it stood before addendum §24
+(placebo admissibility by the full window, which snapped C1's two edge episodes
+onto consecutive placebo days). Both strata are being re-certified under
+`circular_within_block_fw7`; the rows are replaced from the new certificates when
+they land and are kept here until then because a blank is not more honest than a
+superseded number with its supersession stated.*
 
 C1's certificate under the within-block scheme landed on **2026-09-13**, 200
 simulations × 200 draws: rejection rate **0.04** against the band
@@ -1368,13 +1389,15 @@ of **−0.005**:
 | stratum | MDE, worst profile | MDE, best profile | MDE ÷ MEI | verdict |
 |---|---|---|---|---|
 | discovery | 0.00950 | 0.00291 | 1.901 | UNDERPOWERED |
-| C1 | 0.01235 | 0.00382 | 2.471 | UNDERPOWERED |
+| C1 | 0.01156 | 0.00382 | 2.312 | UNDERPOWERED |
 | C2 | 0.00875 | 0.00290 | 1.750 | UNDERPOWERED |
 
 **Every stratum is underpowered**, including the one the whole discovery /
-confirmation split exists to obtain. C1 is the worst of the three at nearly two
-and a half times the effect the paper has said it would care about — which is
-what fifteen episodes buys.
+confirmation split exists to obtain. C1 is the worst of the three at more than
+twice the effect the paper has said it would care about — which is what fifteen
+episodes buys. (Its row was recomputed on 2026-09-13 on the corrected C1
+calendar, 2015-07-01 rather than 2015-01-01; the worst-profile MDE moved from
+0.01235 to the value shown.)
 
 Under the randomization-inference procedure that is actually the ratified primary
 inference, discovery's MDE is **0.01023** — roughly twice the MEI, and close to
@@ -1413,7 +1436,7 @@ MDE, and none of them is available here.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **82 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **83 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
@@ -1450,11 +1473,11 @@ not what was. A register full of prescriptions reads like a register full of
 completions, and whether anything had actually been fixed was recoverable only by
 reading the check suite and matching tags by eye.
 
-Each of the 105 findings now carries a status — `fixed`, `open`, or `unverified` —
+Each of the 113 findings now carries a status — `fixed`, `open`, or `unverified` —
 and the check that guards it asserts one direction only: **nothing may say
 `fixed` while a check tagged to it is not passing.** `unverified` means nothing
 checks it, which is a statement of work remaining and not a synonym for fine.
-Current state: **105 fixed, 0 open, 0 unverified**. P1, P5, RI3 and P12 were held at `unverified` until C2's and the pooled stratum's certificates existed in this container, because a BLOCKED check is not evidence; they closed on 2026-09-13 when `S.ri_scheme_certified` passed on all four strata.
+Current state: **108 fixed, 0 open, 5 unverified**. P1, P5, RI3, P12 and P13 are held at `unverified` until C1 and the pooled stratum are re-certified under the renamed scheme `circular_within_block_fw7` (addendum §24): they closed once on 2026-09-13 when every stratum was certified, and reopened the same day when the CP2 audit found the drawer had been snapping C1's two edge episodes onto consecutive placebo days. A failing check is not evidence, and neither is a certificate for a null nobody draws from any more.
 
 Writing that check taught two things worth keeping, both of which are the same
 defect it exists to prevent, committed inside it:
@@ -1726,9 +1749,10 @@ district-day standard deviation is 0.047.
 6. **The EDPC recode (mid-2018)** sits inside the discovery window.
 7. **The episode construct changed** after the original freeze, while blind to
    outcomes (§4.2) — disclosed, dated, with original wording preserved.
-8. **Three freeze incidents** (§5.3): two undeclared metadata reads, one of which
-   carried a specification decision, and one record-level read of 2015–16
-   outcome statistics made while refuting an audit finding.
+8. **Four freeze incidents** (§5.3): two undeclared metadata reads, one of which
+   carried a specification decision, one record-level read of 2015–16 outcome
+   statistics made while refuting an audit finding, and a geography-weight
+   crosswalk counted over every year (F4).
 9. **We do not use armed/unarmed status**, which is our protection against the Nix
    & Lozada critique of MPV coding — stated explicitly because a reader who knows
    that literature will ask.
@@ -1753,7 +1777,7 @@ district-day standard deviation is 0.047.
    unless it took a transient shape". That is a real statement and a weak one, and
    the paper should present it as both.
 13. **The confirmation window has recording breaks inside it, mapped under a
-   declared read.** Twenty outcome-group codes are born or retired inside the
+   declared read.** 22 outcome-group codes are born or retired inside the
    confirmation analysis windows and the missing-district share drops by two
    thirds at 2016-01-01 (§5.1d). They were found by reading confirmation-period
    *coverage* — dates and a missingness rate, no outcome value — through a

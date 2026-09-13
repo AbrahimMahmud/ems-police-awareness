@@ -374,6 +374,43 @@ def t_no_redirect_candidates():
                     "not collected directly")
 
 
+def s_confirmatory_spec_audit():
+    """P14-P16, P18: the sealed script does what addendum 23 says, structurally.
+
+    Read by AST and by source, so a comment cannot satisfy any clause: real mode
+    refuses a non-default --draws; the sealed result is written under
+    data/reference (tracked); Benjamini-Hochberg is called with a fixed family
+    size; an asymptotic p is computed from the chi-square for every
+    randomization cell; the raw-count and total-dispatch diagnostics exist; the
+    interaction arm is gated to C2_exposed.
+    """
+    import ast as _ast
+    f = SCRIPTS / "30_confirmatory_run.py"
+    src = f.read_text()
+    tree = _ast.parse(src)
+    problems = []
+    if not re.search(r"if ARGS\.draws != RANDOMIZATION_DRAWS:\s*\n\s*if not SYNTHETIC:\s*\n(.*\n){0,6}?\s*raise SealBroken", src):
+        problems.append("real mode does not refuse a non-default --draws")
+    if not re.search(r"^OUT_REAL = DATA_REFERENCE /", src, re.M):
+        problems.append("OUT_REAL is not under data/reference")
+    bh_calls = [n for n in _ast.walk(tree) if isinstance(n, _ast.Call)
+                and getattr(n.func, "id", "") == "benjamini_hochberg"]
+    if not bh_calls or not all(any(k.arg == "m" for k in c.keywords) for c in bh_calls):
+        problems.append("benjamini_hochberg is called without a fixed family size m=")
+    if "chi2_dist.sf(" not in src or '"p_asymptotic": p_asym' not in src:
+        problems.append("no asymptotic chi-square p is written for randomization cells")
+    for token in ("diag_raw_count", "diag_total_dispatches"):
+        if token not in src:
+            problems.append(f"diagnostic cell {token} is absent")
+    if 'stratum != "C2_exposed"' not in src:
+        problems.append("the interaction arm is not gated to C2_exposed")
+    if problems:
+        return "FAIL", "; ".join(problems)
+    return "PASS", ("real mode fixed to RANDOMIZATION_DRAWS; sealed result tracked; BH over a "
+                    "fixed family; asymptotic p beside every RI p; denominator diagnostics; "
+                    "interaction C2-only")
+
+
 def s_lift_requires_1000_sims():
     """P11: the freeze may not be lifted on 200-simulation certificates.
 
@@ -621,7 +658,7 @@ def s_draw_scheme_total():
     # Every literal a scheme selector can return, minus the "no null" sentinel.
     returned = {c.value for c in _ast.walk(fns["draw_scheme_for"])
                 if isinstance(c, _ast.Constant) and isinstance(c.value, str)
-                and c.value in ("anchor_shift", "circular", "circular_within_block",
+                and c.value in ("anchor_shift", "circular", "circular_within_block", "circular_within_block_fw7",
                                 "none")}
     schemes = returned - {"none"}
     body = _ast.unparse(fns["randomization_p"])
@@ -3603,9 +3640,10 @@ EXHIBIT_EXEMPT = {}
 # obliges a check (M.register_sync).
 SEVERITIES = {"blocking", "moderate", "minor"}
 
-# CP2, line 2: simulations required of every stratum certificate before the
-# freeze may be lifted (S.lift_requires_1000_sims).
-LIFT_MIN_SIMS = 1000
+# CP2, line 2: simulations required of every inferential stratum's certificate
+# before the freeze may be lifted (S.lift_requires_1000_sims); defined once in
+# config so 30_confirmatory_run.py refuses on the same number.
+from config import LIFT_MIN_SIMS  # noqa: E402
 
 
 def v_claims_cover_exhibits():
@@ -4243,8 +4281,9 @@ CHECKS = [
     ("S.calibration_can_fail", "S4,X3,R3,RI2", "calibration verdict can fail", s_calibration_can_fail),
     ("S.no_stale_calibration", "R3", "no stale low-n calibration artifact", s_stale_calibration_artifact),
     ("S.calibration_on_residual", "S8", "synthetic null has this design's dependence, not a harder one", s_calibration_on_residual),
-    ("S.ri_scheme_certified", "P1,P5,RI3,P12", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
+    ("S.ri_scheme_certified", "P1,P5,RI3,P12,P13", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
     ("S.lift_requires_1000_sims", "P11", "the freeze lifts only on 1000-sim certificates for every stratum", s_lift_requires_1000_sims),
+    ("S.confirmatory_spec_audit", "P14,P15,P16,P18", "the sealed script implements addendum 23 (draws, seal, BH family, asymptotic p, diagnostics, C2-only interaction)", s_confirmatory_spec_audit),
     ("S.draw_scheme_total", "N5", "every draw scheme is dispatched explicitly, none by fallback", s_draw_scheme_total),
     ("S.ri_pvalue_form", "RI1", "randomization p-values use the (1+k)/(1+n) form", s_ri_pvalue_form),
     ("S.calibration_writes_stratified", "P5,D1,N4", "every calibration output names the stratum it describes", s_calibration_writes_stratified),
@@ -4260,7 +4299,7 @@ CHECKS = [
     ("X.bheard_wired", "X6,X17", "B-HEARD control is in a model and inert on discovery", x_bheard_wired_and_inert),
     ("D.soda_guarded", "F2", "the source API is guarded, not only the artifacts", d_soda_source_guarded),
     ("D.outcome_list_complete", "O1,X11", "every processed artifact is classified as outcome or not", d_outcome_list_complete),
-    ("D.incident_disclosed", "F1,F2,F3", "every freeze incident stays in the record", d_incident_disclosed),
+    ("D.incident_disclosed", "F1,F2,F3,F4", "every freeze incident stays in the record", d_incident_disclosed),
     ("D.addendum_complete", "E5,E6,F2", "pre-registration text untouched and its addendum exists", d_addendum_complete),
     ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),
     ("D.declared_access_scoped", "O2,F3", "every read of confirmation outcomes is declared, scoped, logged and disclosed", d_declared_access_scoped),
@@ -4272,7 +4311,7 @@ CHECKS = [
     ("E.estimators_use_adopted_list", "D3,E6", "estimators read the adopted episode list, not the frozen record", e_estimators_use_adopted_list),
     ("E.labels_live_source", "E5,L6,R2", "episode labels not from retired Twitter", e_labels_not_from_twitter),
     ("E.attribution_lookback", "E2", "attribution lookback >= 60 days", e_attribution_lookback),
-    ("O.ems_complete", "O5", "EMS extract covers the full source", o_ems_download_complete),
+    ("O.ems_complete", "O5,O6", "EMS extract covers the full source", o_ems_download_complete),
     ("O.panel_exists", "O5", "panel_cd_day.parquet exists", o_panel_exists),
     ("O.dropna_groupby", "O4", "missing-district rows not silently dropped", o_dropna_groupby),
     ("V.artifacts_current", "T14", "no artifact predates the script that writes it", v_artifacts_current),
@@ -4282,7 +4321,7 @@ CHECKS = [
     ("V.claims_reproduce", "X14", "every claimed number recomputes from its artifact", v_claims_reproduce),
     ("V.claims_cover_exhibits", "P6", "no number enters a paper table without a claim behind it", v_claims_cover_exhibits),
     ("V.links_resolve", "X14", "every endpoint has a dated result", v_links_resolve),
-    ("X.run_all_stages_declared", "X10", "every pipeline stage exists and declares its outputs", x_run_all_stages_declared),
+    ("X.run_all_stages_declared", "X10,P17", "every pipeline stage exists and declares its outputs", x_run_all_stages_declared),
     ("X.run_all_refresh_guard", "X18", "a stage that leaves its outputs unrefreshed fails", x_run_all_refresh_guard),
     ("M.status_honest", "O5", "no finding is recorded fixed without a passing check", m_status_honest),
     ("M.finding_ids_unique", "RI4", "every finding id addresses exactly one row", m_finding_ids_unique),

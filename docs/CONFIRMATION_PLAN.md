@@ -84,6 +84,8 @@ confirmation-period outcomes**.
 | 20 | Spliced `user + automated` Wikipedia series as a sensitivity arm (L7) | yes |
 | 21 | C1 null: circular shift **within each block**, sampled not exact; one implementation | yes |
 | 22 | The pooled stratum's null is calibrated on its own three-window geometry | yes |
+| 23 | CP2 specification audit: reading rules made mechanical, denominator diagnostic, sealed run fixed to its draw count and committed, EDPT/EDPE in the EDP family, full-span panel | yes |
+| 24 | Placebo admissibility follows first-week containment; scheme renamed `circular_within_block_fw7`; C1 and pooled recalibrated | yes |
 
 ---
 
@@ -278,6 +280,8 @@ examined freely. That is the design working as intended. The confirmation window
 have not been used to choose any specification.
 
 ## 15. Freeze incidents
+
+*F4, found 2026-09-13 by the CP2 audit: the precinct–district crosswalk (S14) was built from a SODA server-side count of dispatches per precinct × district pooled over 2015–2024 — a geography weight with no call type and no date, but a read of confirmation-period dispatch counts that no exemption declared. See addendum §23.10 and PAPER_MASTER §5.3.*
 
 **F1** — a citywide annual aggregate of the mental-health call share was read
 from the confirmation period. No district variation, no episode alignment, no
@@ -637,6 +641,146 @@ primary family (`PRE_ANALYSIS_NOTE.md` §9.4, §10), so the 1,000-simulation
 requirement of the pre-freeze gate applies to the three inferential strata
 (discovery, C1, C2; `S.lift_requires_1000_sims`) and the pooled certificate is
 required to exist and read CALIBRATED at its own minimum of 200.
+
+---
+
+## 23. What the CP2 specification audit found, and what changes before the lift (findings P14, P15, P16, P17, P18, O6, F4)
+
+**Blind.** Written 2026-09-13 from an adversarial audit of the specification
+documents and the sealed script; no outcome value was read. Six of eight attack
+finders completed (the other two, and every refuter, failed on a session limit),
+so each item below was verified by hand against the cited lines before it was
+acted on. The interpretation rules of `PRE_ANALYSIS_NOTE.md` §9 are amended
+here; where this section and §9 differ, this section governs.
+
+**23.1 "Rejects" is defined.** A family cell rejects when its Benjamini–Hochberg
+adjusted randomization p-value (q = 0.05, family of exactly eight; a cell that
+produces no p-value counts as p = 1 in the family) is below 0.05. A **stratum
+rejects on an outcome** when both arms (share and count) for that outcome
+reject with the same sign of the first-week mean coefficient. A **stratum
+rejects** when it rejects on at least one of the two primary outcomes. A
+stratum whose cells reject in one arm only, or with opposite signs across arms,
+is read by 23.3 and does not count as a rejection in §9.4.
+
+**23.2 Direction is the sign of the first-week mean coefficient** (the effect
+size §6 already reports), taken over the rejecting cells. A rejection whose two
+arms disagree in sign, or whose mean coefficient is within one asymptotic
+standard error of zero in either arm, is reported as *a rejection without a
+consistent direction* — the joint statistic has detected a shape the mean does
+not summarise — and is a new row of §9.4: it is neither confirmation nor
+disconfirmation, and is reported with the day-by-day path.
+
+**23.3 The two-arms rule is made mechanical with a denominator diagnostic.**
+The count arm's log-total offset is the same denominator the share divides by,
+so the two arms cannot by themselves separate a change in demand from a change
+in the denominator. The sealed script therefore estimates, per stratum and
+outside every family, two diagnostic cells: PPML on the outcome's **raw count
+with no offset**, and PPML on **total dispatches**. A share-arm rejection is
+reported as *denominator-driven* when the total-dispatch diagnostic has
+randomization p ≤ 0.05 and the raw-count diagnostic does not; it is then not
+claimed as a change in demand.
+
+**23.4 The placebo override is defined.** A placebo cell (cardiac or asthma
+share or count) *rejects* when its unadjusted randomization p ≤ 0.05. The
+override of §9.3 applies within a stratum: if any placebo cell in that stratum
+rejects, every primary rejection in that stratum is reported as not supporting
+H1. Placebo p-values are uncorrected on purpose — a correction would make the
+falsification easier to pass.
+
+**23.5 The sealed run takes no draw count.** `--draws` other than the
+pre-specified `RANDOMIZATION_DRAWS` is refused in real mode (the docstring said
+so; the code only printed a note). The sealed result is written to a
+**tracked** path (`data/reference/confirmatory_results.csv`) so that the one-shot
+is visible in the commit history, not to the gitignored `outputs/`. The
+asymptotic joint-Wald p is computed for every randomization cell and written
+beside the randomization p, as §7 of the note promised and no code did.
+
+**23.6 Cells that would re-estimate the primary design under a new seed are not
+run.** A broad-basket or spliced sensitivity whose episode starts in a stratum
+equal the primary's is recorded `IDENTICAL_TO_PRIMARY`, as the coverage-clean
+cells already were, rather than printing a second p-value for one estimate.
+The late B-HEARD bound is filed in the `sensitivity` family (§9.5), not
+`secondary`; pooled primary-bound cells are `descriptive`; the interaction arm
+runs in C2 only, as §5 of the note states.
+
+**23.7 The EDP family is every EDP-prefixed code.** The declared coverage span
+table (§18) lists EDPT (first seen 2023-03-01) and EDPE (2024-04-10), both
+inside C2 and both absent from `config.CALL_TYPE_GROUPS["edp"]`, which held
+EDP, EDPC, EDPM, EDPW and T-EDP. A family that omits two later codes of the same
+prefix carries a downward break in the EDP share from 2023. They are added
+under the stated rule — every EDP-prefixed dispatch code — with no outcome
+value read; the two births become within-window breaks under §18 rule 1 and
+enter the coverage-clean sensitivity for C2.
+
+**23.8 The panel spans the extract.** `01_build_panel.py` was hard-bounded to
+the discovery buffer (2016-12-01..2021-01-31), so after the lift no
+confirmation-window row would have existed for the sealed script to read.
+`PANEL_BUFFER_START/END` now cover 2014-12-01..2024-12-31; which rows a script
+may see is decided by `freeze_guard.select_sample` alone. The five-dispatch
+minimum applies to both arms (it already did in the estimator and the sealed
+script; the note and PAPER_MASTER said "share calculations").
+
+**23.9 Dispositions of the frozen text.** H3's Black-victim clause is not run:
+its index (`aware_black`) was retired with the Twitter measure and CCRB/SQF data
+are not in the repository; the Q1-protest hypothesis is exploratory, formed on
+discovery heterogeneity (§14), and is not tested on the confirmation sample.
+The second primary outcome (`mh_narrow_share`) and the joint two-sided
+statistic over days 0–7 were adopted after discovery results had been seen; §14
+already discounts the H1 framing on that ground and now names both. "What has
+NOT changed" below keeps the frozen text's 2015-01-01; the analysis window
+begins 2015-07-01 because the pageview series does (§18, note §4).
+
+**23.10 Two accesses the record had not named.** The precinct–district
+crosswalk (S14) was built by a server-side SODA count of dispatches per
+precinct × district pooled over 2015–2024: a geography weight, no call type and
+no date, but a read of confirmation-period dispatch counts, recorded as
+incident **F4** in §15 and PAPER_MASTER §5.3. §18 rule 2's justification cites
+the 0.0002 step estimate from the F3 refutation; the rule stands on its
+pre-specified form, and the figure is now labelled as F3-derived where it
+appears. Rule 1 as implemented treats a code born or retired on a window's
+boundary day as inside it; the text is read the same way.
+
+**23.11 Power under the family correction.** Rule 2 of §19 reads a
+non-rejection against a minimum detectable effect computed at the per-test
+nominal α = 0.05. Under the eight-test correction the effective threshold is
+stricter, so the detectable effect is larger by a factor of roughly
+(z₀.₉₉₆₉ + z₀.₈)/(z₀.₉₇₅ + z₀.₈) ≈ 1.28 at the Bonferroni bound; the bounded
+null is stated at the nominal level and this factor is quoted beside it.
+
+**23.12 What the calibration certificates do not cover**, stated as a
+limitation: the synthetic null is OLS on a Gaussian EDP share with no covariate
+and a white-noise citywide day shock; the PPML arm, the narrow mental-health
+outcome and the B-HEARD control are not separately certified, and size is
+certified at α = 0.05 with a global uniformity test rather than at the
+correction's effective threshold.
+
+## 24. Placebo admissibility follows first-week containment (finding P13)
+
+**Blind.** Treatment-side geometry; found 2026-09-13 by the CP2 audit and
+confirmed by measurement before any outcome was read.
+
+The within-block shift (§21) drew placebo starts over days whose full ±14-day
+window lies inside the block. Two of C1's fifteen episodes (2021-01-05 and
+2021-05-24, §17) lie inside the block by first-week containment but not by the
+full window, so the drawer *snapped* each to the block's first or last
+admissible day — positions 0 and N−1 — and a circular shift of those two
+positions puts them on **consecutive days**. Measured over 400 C1 draws: 397
+carried two placebo episodes one day apart against a real minimum gap of 16
+days, and `build_stack` then hands nearly all of one episode's days to the
+other. The null was drawing designs structurally unlike the real one; C1's
+weak uniformity margin (§7.4) is consistent with that.
+
+The fix makes admissibility the same rule that keeps a real episode: a placebo
+may start on any day whose day −1 through day +7 lie inside the window. Every
+kept episode is then on an admissible day, nothing snaps (asserted and
+counted), and the shift preserves the real gaps except across the seam, which
+§21 already discloses (the cyclic complement of the 2021 block's 139-day span in
+143 admissible days is 4 days, so most draws contain one 4-day gap). The scheme
+is renamed **`circular_within_block_fw7`** so that the C1 and pooled
+certificates issued under the snapping drawer stop satisfying
+`S.ri_scheme_certified`; both strata are recalibrated at 200 and then 1,000
+simulations before the lift. Discovery and C2 use the anchor shift and are
+untouched.
 
 ---
 

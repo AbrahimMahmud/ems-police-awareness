@@ -15,7 +15,9 @@ C2,cardiac,CVACFC,last_date,2024-03-31
 C2,cardiac,CVACFT,first_date,2022-11-01
 C2,cardiac,CVACFT,last_date,2022-11-01
 C2,cardiac,CVAFC,last_date,2023-11-27
+C2,edp,EDPE,first_date,2024-04-10
 C2,edp,EDPM,first_date,2021-06-03
+C2,edp,EDPT,first_date,2023-03-01
 C2,edp,EDPW,last_date,2021-08-25
 C1a,injury,INJALS,last_date,2015-12-16
 C2,od_poison_drug,DRUGFC,last_date,2024-01-03
