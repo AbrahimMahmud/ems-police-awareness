@@ -692,6 +692,40 @@ def s_confirmatory_reading_rules():
                     "19.2, 25, note 9.4); 34 reads only the sealed table and the power table")
 
 
+def v_table1_regenerates():
+    """P6, the generated-table case: Table 1 is rendered from its artifacts, so it is
+    held to them by re-rendering rather than by a claim per cell.
+
+    The episode list has 74 rows and ten columns, most of them dates. Registering
+    a claim for every cell would be several hundred rows that say nothing a
+    reader could check by eye, so `docs/tables/TABLE1_episodes.md` is written by
+    `ops/paper_table1.py` from the adopted list, the frozen list and the stratum
+    rule, with the inputs' hashes in its header, and this check renders it again
+    and requires the committed bytes to match. A hand edit to the table, a
+    changed episode list, a changed stratum rule or a changed renderer all fail
+    it. V.claims_cover_exhibits does not scan docs/tables, so this is the only
+    thing holding that file to the data — which is why it fails rather than
+    blocks on a mismatch.
+    """
+    import importlib.util
+    f = PROJECT_ROOT / "docs" / "tables" / "TABLE1_episodes.md"
+    if not f.exists():
+        return "BLOCKED", "docs/tables/TABLE1_episodes.md absent — run ops/paper_table1.py"
+    spec = importlib.util.spec_from_file_location("_t1", PROJECT_ROOT / "ops" / "paper_table1.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    fresh = m.render()
+    committed = f.read_text()
+    if fresh != committed:
+        a, b = committed.splitlines(), fresh.splitlines()
+        first = next((i for i, (x, y) in enumerate(zip(a, b)) if x != y), min(len(a), len(b)))
+        return "FAIL", (f"committed Table 1 differs from a fresh render at line {first + 1} "
+                        f"({len(a)} vs {len(b)} lines): run ops/paper_table1.py and commit the result")
+    n = sum(1 for ln in fresh.splitlines() if ln.startswith("| ") and ln[2:3].isdigit())
+    return "PASS", (f"{n} table rows re-render byte-identical from {EPISODE_LIST_PRIMARY}, the frozen "
+                    "list and stratum_episodes")
+
+
 def s_ri_scheme_certified():
     """P1: every stratum's randomization null is the one its calibration certifies.
 
@@ -4581,6 +4615,7 @@ CHECKS = [
     ("V.source_id_per_artifact", "P3,P4", "a source id never gets repointed at a different artifact", v_source_id_per_artifact),
     ("V.claims_reproduce", "X14", "every claimed number recomputes from its artifact", v_claims_reproduce),
     ("V.claims_cover_exhibits", "P6", "no number enters a paper table without a claim behind it", v_claims_cover_exhibits),
+    ("V.table1_regenerates", "P6", "the generated episode table re-renders byte-identical from its artifacts", v_table1_regenerates),
     ("V.links_resolve", "X14", "every endpoint has a dated result", v_links_resolve),
     ("X.run_all_stages_declared", "X10,P17,X19", "every pipeline stage exists and declares its outputs", x_run_all_stages_declared),
     ("X.run_all_refresh_guard", "X18", "a stage that leaves its outputs unrefreshed fails", x_run_all_refresh_guard),
