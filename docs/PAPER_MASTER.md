@@ -1237,32 +1237,30 @@ corrected code):
 |---|---|---|---|---|---|---|
 | discovery | anchor shift | contiguous | 29 | 0.05 | 0.7516 | CALIBRATED |
 | C2 | anchor shift | contiguous | 30 | 0.05 | 0.4838 | CALIBRATED |
-| C1 | circular, within block (fw7) | gapped | 15 | 0.035 | 0.0455 | **NOT CALIBRATED** at 200 |
+| C1 | circular, within block (fw7) | gapped | 15 | 0.049 | 0.9930 | CALIBRATED at 1,000 |
 | pooled | circular, within block (fw7) | gapped | 45 | 0.04 | 0.5492 | CALIBRATED |
 
-*C1's row is the 200-simulation run under the corrected drawer (addendum §24):
-the rejection rate sits inside its band and the lattice uniformity test fails.
-The 1,000-simulation run decides, and addendum §25 pre-registers what happens if
-it also fails — C1's cells are reported with their randomization p flagged
-uncertified and excluded from the family decision, and its primary inference is
-the asymptotic p, labelled. The pooled row is the corrected drawer's
-certificate (2026-09-13 19:00Z); its three-window geometry has 1,302 admissible
-days in C2 to absorb the shift, which is why it certifies where C1 does not.*
+*C1's row is the 1,000-simulation certificate under the corrected drawer
+(addendum §24), issued 2026-09-13 20:56Z. The 200-simulation run that preceded
+it had failed uniformity (D 0.097, p 0.0455) and addendum §25 was written on that
+result, before this one existed, to fix what a second failure would mean; at
+1,000 simulations the null is uniform (D 0.0155) and the fallback is not
+invoked. The pooled row is the corrected drawer's 200-simulation certificate
+(19:00Z).*
 
 C1's certificate under the within-block scheme landed on **2026-09-13** and was
 withdrawn the same day: the drawer it certified snapped the two edge episodes
-onto consecutive placebo days (addendum §24). Under the corrected drawer, 200
-simulations × 200 draws give a rejection rate of **0.035** against the band
-[0.0198, 0.0802], KS statistic **0.097**, lattice p = **0.0455**, median
-p-value **0.4328** — **not calibrated**. The verdict that certified the seam-crossing scheme was moved
+onto consecutive placebo days (addendum §24). Under the corrected drawer, 1,000
+simulations × 200 draws give a rejection rate of **0.049** against the band
+[0.0365, 0.0635], KS statistic **0.0155**, lattice p = **0.9930**, median
+p-value **0.4975** — **calibrated**, and the most uniform of the four nulls.
+The 200-simulation run on the way there had failed (D 0.097, p 0.0455); it is
+the reason addendum §25 exists, and its failure at that size is what a
+1-in-20 fluctuation on a lattice of 200 looks like. The verdict that certified the seam-crossing scheme was moved
 aside rather than left in place to be misread: a calibration certifies one
 scheme; when the scheme is replaced the certificate does not carry over, and an
 artifact that says CALIBRATED about a null nobody draws from any more is worse
-than no artifact. C1 remains the weakest of the three strata — a KS p of 0.12 is
-a pass, not a comfortable one — and the 1,000-simulation certificate the
-pre-freeze gate requires is the run that decides whether the within-block null
-is uniform, not this one. Its predecessor's history is kept below because it is
-how the seam was found.
+than no artifact. Its predecessor's history is kept below because it is how the seam was found.
 
 **Under the seam-crossing shift, C1 passed by a margin worth stating rather than
 burying, and then the margin turned out to be a symptom.** Its KS statistic was
@@ -1477,11 +1475,11 @@ not what was. A register full of prescriptions reads like a register full of
 completions, and whether anything had actually been fixed was recoverable only by
 reading the check suite and matching tags by eye.
 
-Each of the 113 findings now carries a status — `fixed`, `open`, or `unverified` —
+Each of the 114 findings now carries a status — `fixed`, `open`, or `unverified` —
 and the check that guards it asserts one direction only: **nothing may say
 `fixed` while a check tagged to it is not passing.** `unverified` means nothing
 checks it, which is a statement of work remaining and not a synonym for fine.
-Current state: **108 fixed, 0 open, 5 unverified**. P1, P5, RI3, P12 and P13 are held at `unverified` until C1 and the pooled stratum are re-certified under the renamed scheme `circular_within_block_fw7` (addendum §24): they closed once on 2026-09-13 when every stratum was certified, and reopened the same day when the CP2 audit found the drawer had been snapping C1's two edge episodes onto consecutive placebo days. A failing check is not evidence, and neither is a certificate for a null nobody draws from any more.
+Current state: **114 fixed, 0 open, 0 unverified**. P1, P5, RI3, P12 and P13 closed on 2026-09-13 at 20:56Z, when C1's 1,000-simulation certificate under the renamed scheme `circular_within_block_fw7` landed and `S.ri_scheme_certified` passed with every stratum certified under the scheme its geometry requires (§7.4). They had closed once that morning on the old scheme's certificates and reopened when the CP2 audit found the drawer had been snapping C1's two edge episodes onto consecutive placebo days (addendum §24); the corrected drawer's C1 null then failed uniformity at 200 simulations and calibrated at 1,000, so the addendum-§25 fallback written between those two verdicts is not invoked. A failing check is not evidence, and neither is a certificate for a null nobody draws from any more.
 
 Writing that check taught two things worth keeping, both of which are the same
 defect it exists to prevent, committed inside it:
