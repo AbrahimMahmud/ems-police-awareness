@@ -155,20 +155,6 @@ STAGES = [
     dict(script="20_data_audit.py", kind="check", needs=[],
          writes=["outputs/tables/data_audit.csv"],
          note="data integrity audit"),
-    dict(script="31_verify_sources.py", kind="check", needs=[],
-         writes=["data/reference/source_verification_log.csv",
-                 "docs/SOURCE_REGISTER.md"],
-         args=["--offline"],
-         note="registers and claims (offline; --fetch makes it a full scan)"),
-    dict(script="23_regression_suite.py", kind="check", needs=[],
-         writes=["outputs/tables/regression_suite.csv"],
-         note="every audit finding as an executable check"),
-    # Now that the suite has written this run's results, check them.
-    dict(script="22_pipeline_check.py", kind="check",
-         needs=["outputs/tables/regression_suite.csv"],
-         writes=["outputs/tables/pipeline_check.csv"],
-         args=["--stage", "outputs"],
-         note="verdict on this run's suite output"),
 
     # --- model: estimates, freeze-guarded by the scripts themselves --------
     dict(script="17_stacked_event_study.py", kind="model",
@@ -200,6 +186,26 @@ STAGES = [
          needs=["data/processed/cai_daily.parquet", "data/reference/confirmation_episodes_rebuilt.csv"],
          writes=['outputs/tables/zscore_simulation.csv', 'outputs/tables/zscore_simulation_params.csv'],
          note="SIMULATED: what within-window standardisation does to a planted effect"),
+    # --- check: verify what was estimated ------------------------------------
+    # These three read MODEL outputs (the claims register cites them; the suite
+    # recomputes them), so from cold they can only run after the models. Until
+    # 2026-09-13 they sat before the model block, which passed only while a
+    # previous run's artifacts were still on disk - the first genuinely cold
+    # pass failed at 31 with every model claim absent (finding X19).
+    dict(script="31_verify_sources.py", kind="check", needs=[],
+         writes=["data/reference/source_verification_log.csv",
+                 "docs/SOURCE_REGISTER.md"],
+         args=["--offline"],
+         note="registers and claims (offline; --fetch makes it a full scan)"),
+    dict(script="23_regression_suite.py", kind="check", needs=[],
+         writes=["outputs/tables/regression_suite.csv"],
+         note="every audit finding as an executable check"),
+    # Now that the suite has written this run's results, check them.
+    dict(script="22_pipeline_check.py", kind="check",
+         needs=["outputs/tables/regression_suite.csv"],
+         writes=["outputs/tables/pipeline_check.csv"],
+         args=["--stage", "outputs"],
+         note="verdict on this run's suite output"),
 ]
 
 KINDS = ("fetch", "build", "check", "model")

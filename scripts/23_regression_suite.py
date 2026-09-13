@@ -1127,6 +1127,16 @@ def x_run_all_stages_declared():
     missing = [n for n, _ in stages if not (SCRIPTS / n).exists()]
     spaced = [n for n, _ in stages if " " in n]
     inert = [n for n, st in stages if not st.get("writes")]
+    # ORDER (X19): the stages that verify model outputs - the source/claims
+    # verifier and the regression suite - must come after every model stage,
+    # or a cold run checks claims against artifacts that do not exist yet.
+    kinds = [st["kind"] for _, st in stages]
+    last_model = max((i for i, k in enumerate(kinds) if k == "model"), default=-1)
+    early = [n for i, (n, st) in enumerate(stages)
+             if n in ("31_verify_sources.py", "23_regression_suite.py") and i < last_model]
+    if early:
+        return "FAIL", (f"{early} run before the last model stage, so from cold they "
+                        "verify claims against artifacts the models have not written yet")
     if missing or spaced or inert:
         parts = []
         if missing:
@@ -4336,7 +4346,7 @@ CHECKS = [
     ("V.claims_reproduce", "X14", "every claimed number recomputes from its artifact", v_claims_reproduce),
     ("V.claims_cover_exhibits", "P6", "no number enters a paper table without a claim behind it", v_claims_cover_exhibits),
     ("V.links_resolve", "X14", "every endpoint has a dated result", v_links_resolve),
-    ("X.run_all_stages_declared", "X10,P17", "every pipeline stage exists and declares its outputs", x_run_all_stages_declared),
+    ("X.run_all_stages_declared", "X10,P17,X19", "every pipeline stage exists and declares its outputs", x_run_all_stages_declared),
     ("X.run_all_refresh_guard", "X18", "a stage that leaves its outputs unrefreshed fails", x_run_all_refresh_guard),
     ("M.status_honest", "O5", "no finding is recorded fixed without a passing check", m_status_honest),
     ("M.finding_ids_unique", "RI4", "every finding id addresses exactly one row", m_finding_ids_unique),

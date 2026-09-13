@@ -75,7 +75,7 @@ V.source_id_per_artifact,"P3,P4",a source id never gets repointed at a different
 V.claims_reproduce,X14,every claimed number recomputes from its artifact,PASS,49 claims recomputed and found verbatim in the document
 V.claims_cover_exhibits,P6,no number enters a paper table without a claim behind it,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 V.links_resolve,X14,every endpoint has a dated result,PASS,"15 endpoints, last result recorded"
-X.run_all_stages_declared,"X10,P17",every pipeline stage exists and declares its outputs,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+X.run_all_stages_declared,"X10,P17,X19",every pipeline stage exists and declares its outputs,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 M.status_honest,O5,no finding is recorded fixed without a passing check,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 M.finding_ids_unique,RI4,every finding id addresses exactly one row,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 M.register_sync,O5,register and suite have not drifted apart,PASS,69/77 findings tagged; all 43 blocking covered
