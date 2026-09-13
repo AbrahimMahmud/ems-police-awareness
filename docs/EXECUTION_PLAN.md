@@ -822,15 +822,20 @@ All must hold **before** `FREEZE_ACTIVE = False`.
 *Status column added 2026-09-13; each tick names the evidence.*
 
 - [ ] Every check PASS. No FAIL, no BLOCKED, no ERROR. Baseline refreshed.
-      *(80 checks; the non-PASS ones are pending the regenerating artifacts —
-      C2's certificate, the 500-draw estimator, decomposition, power.)*
+      *(85 checks at 21:30Z 2026-09-13: 83 PASS, 2 FAIL, both artifact-pending —
+      `V.claims_reproduce` on the model artifacts the cold pass is regenerating
+      and `M.status_honest` following it. Re-run after cold pass 2.)*
 - [ ] Calibration passes KS uniformity at ≥1000 sims **on all three strata**,
       against the **lattice** rather than a continuous uniform, after C1's scheme
-      is replaced with the within-block shift. *(200-sim certificates: discovery
-      0.05/0.7516, C1 within-block 0.04/0.1229; C2 regenerating. The 1000-sim
-      runs are `ops/calib1000.sh`, queued behind the rebuild chain.
+      is replaced with the within-block shift. *(C1: CALIBRATED at 1,000 under
+      `circular_within_block_fw7`, 0.049/0.9930 (20:56Z). Discovery (0.05/0.7516)
+      and C2 (0.05/0.4838) hold at 200 while `ops/calib1000.sh` extends them to
+      1,000 — discovery restarted 21:09Z on the panel after the N11 near-miss, C2
+      follows. Pooled 0.04/0.5492 at 200 (descriptive; its own minimum).
       `S.lift_requires_1000_sims` fails the suite if `FREEZE_ACTIVE` is False
-      on any certificate below 1,000 sims — added 2026-09-13, finding P11.)*
+      on any certificate below 1,000 sims — added 2026-09-13, finding P11;
+      `S.calibration_noise_measured` requires every certificate's null to carry
+      the panel's measured noise — N11.)*
 - [x] Estimator recovers a planted effect; **RI p uses the (1+k)/(1+n) form**.
       *(`S.ri_pvalue_form` — one implementation, the form asserted;
       `S.dose_arm_wired` and the PPML check recover planted effects; 19 measures
@@ -859,10 +864,13 @@ All must hold **before** `FREEZE_ACTIVE = False`.
 - [x] Adding B-HEARD leaves discovery numerically unchanged.
       *(`X.bheard_wired` refits with and without the control and requires every
       coefficient identical; the control is in the formula since `10256d4`.)*
-- [ ] Power reports an MDE per stratum against the MEI of **−0.005**; the
+- [x] Power reports an MDE per stratum against the MEI of **−0.005**; the
       MDE-to-MEI ratio and the go/no-go are recorded as claims. *(C97–C106
-      registered; 19 re-runs on the corrected C1 calendar as the chain's last
-      step and C100–C102 re-register if they move.)*
+      registered and verifying; 19 re-ran on the corrected C1 calendar 12:59Z —
+      C1 0.01156 / 0.00382 / 2.312, C2 0.00875 / 0.00290 / 1.750, discovery
+      0.00950 / 0.00291 / 1.901, all UNDERPOWERED for the sustained shape;
+      `power_analysis.csv` is kept across cold passes and its noise parameters
+      are what `S.calibration_noise_measured` compares the certificates to.)*
 - [x] `CONFIRMATION_PLAN.md` addendum committed **first** *(§15–§21, through
       `ed8a883`)*.
 - [x] `30_confirmatory_run.py` committed and dry-run on synthetic outcomes
@@ -886,8 +894,10 @@ All must hold **before** `FREEZE_ACTIVE = False`.
       recalibrated), P14 (reading rules made mechanical), P15 (denominator
       diagnostic), P16 (fixed draws, tracked seal, BH over eight, asymptotic p),
       P17 (panel spanned only the discovery buffer), P18 (family labels,
-      identical sensitivities, interaction C2-only), O4 (EDPT/EDPE), F4 (the
-      crosswalk's all-years SODA count). Addendum §23–§24. The refutation phase
+      identical sensitivities, interaction C2-only), O6 (EDPT/EDPE), F4 (the
+      crosswalk's all-years SODA count). Addendum §23–§24. The reading rules
+      are code (`34_confirmatory_reading.py`, addendum §23.4a) held to planted
+      tables by `S.confirmatory_reading_rules`. The refutation phase
       can be resumed from the workflow's run id once the limit allows; its
       absence is recorded here rather than papered over.)*
 
