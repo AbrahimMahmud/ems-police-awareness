@@ -3449,6 +3449,40 @@ def m_status_honest():
     return "PASS", detail
 
 
+def m_finding_ids_unique():
+    """Every finding has its own id, which a register keyed by id needs to be true.
+
+    AUDIT_FINDINGS.csv is addressed by id everywhere — the CHECKS table tags
+    findings by id, M.register_sync resolves those tags, M.status_honest reads a
+    status per id. All of that quietly assumes one row per id, and nothing
+    checked it.
+
+    It broke on 2026-09-12. The register already held N1, N2 and N3 from the
+    Wikidata scope work, and three new findings about randomization inference
+    were filed under the same three ids. Two rows then shared an id with
+    different statuses and different checks, so "what is N3's status" had two
+    answers and the tag `N3` resolved to whichever pandas returned first. The
+    first attempt to fix it collided AGAIN, because R2 and R3 were also taken —
+    which is the same mistake a second time and the reason this check exists
+    rather than a note saying to be careful.
+
+    Cheap, total, and it makes the assumption every other register check rests on
+    into something that fails loudly.
+    """
+    f = PROJECT_ROOT / "docs" / "AUDIT_FINDINGS.csv"
+    if not f.exists():
+        return "BLOCKED", "AUDIT_FINDINGS.csv absent"
+    d = pd.read_csv(f)
+    if "id" not in d.columns:
+        return "FAIL", "AUDIT_FINDINGS.csv has no id column"
+    dup = d[d.duplicated("id", keep=False)]
+    if len(dup):
+        byid = {k: len(g) for k, g in dup.groupby("id")}
+        return "FAIL", (f"{len(byid)} finding id(s) appear on more than one row, so "
+                        f"every check tagged to them resolves ambiguously: {byid}")
+    return "PASS", f"all {len(d)} findings carry a distinct id"
+
+
 def m_register_sync():
     """Every tag resolves to a finding, and every blocking finding has a check.
 
@@ -3509,9 +3543,9 @@ CHECKS = [
     ("S.calibration_can_fail", "S4,X3,R3", "calibration verdict can fail", s_calibration_can_fail),
     ("S.no_stale_calibration", "R3", "no stale low-n calibration artifact", s_stale_calibration_artifact),
     ("S.calibration_on_residual", "S8", "synthetic null has this design's dependence, not a harder one", s_calibration_on_residual),
-    ("S.ri_scheme_certified", "P1,P5,N3", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
+    ("S.ri_scheme_certified", "P1,P5,RI3", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
     ("S.draw_scheme_total", "N5", "every draw scheme is dispatched explicitly, none by fallback", s_draw_scheme_total),
-    ("S.ri_pvalue_form", "N1", "randomization p-values use the (1+k)/(1+n) form", s_ri_pvalue_form),
+    ("S.ri_pvalue_form", "RI1", "randomization p-values use the (1+k)/(1+n) form", s_ri_pvalue_form),
     ("S.calibration_writes_stratified", "P5,D1,N4", "every calibration output names the stratum it describes", s_calibration_writes_stratified),
     ("S.estimators_gate_on_calibration", "P7,D1,N6", "estimators certify their own null and cannot be downgraded by a cheap run", s_estimators_gate_on_calibration),
     ("S.ppml_wired", "X5,R8", "counts/PPML arm actually called", s_ppml_wired),
@@ -3545,6 +3579,7 @@ CHECKS = [
     ("V.links_resolve", "X14", "every endpoint has a dated result", v_links_resolve),
     ("X.run_all_stages_declared", "X10", "every pipeline stage exists and declares its outputs", x_run_all_stages_declared),
     ("M.status_honest", "O5", "no finding is recorded fixed without a passing check", m_status_honest),
+    ("M.finding_ids_unique", "RI4", "every finding id addresses exactly one row", m_finding_ids_unique),
     ("M.register_sync", "O5", "register and suite have not drifted apart", m_register_sync),
 ]
 
