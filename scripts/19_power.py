@@ -550,7 +550,7 @@ def _variance_components(outcome):
         return None
     real = pd.read_parquet(path)
     real["incident_date"] = pd.to_datetime(real["incident_date"])
-    real = select_sample(real, where="19_power")
+    real = select_sample(real, where="19_power", window="discovery")
 
     # select_sample is the guard, but assert its postcondition anyway: this file
     # computes numbers FOR the confirmation strata and a reader is entitled to

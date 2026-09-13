@@ -1114,9 +1114,16 @@ The cleanest confirmation sample runs **backward**. 2015–2016 has never been l
 at *and* carries none of the confounds.
 
 **Layer 3.** `scripts/freeze_guard.py`. Discovery and confirmation are separate
-named constants; the active window is *derived* from `FREEZE_ACTIVE`, never
-hand-set. Lifting the freeze **switches** the sample and excludes discovery — there
-is deliberately no state in which both are returned.
+named constants, and a script asks for its window by name: every exploratory
+reader calls `select_sample(..., window="discovery")` and stays on the discovery
+window whatever the flag says; the sealed script alone leaves the window derived
+from `FREEZE_ACTIVE`, and `window="confirmation"` is refused while the freeze is
+active. Lifting the freeze therefore opens the confirmation sample to one script
+and moves no other — there is deliberately no state in which both windows are
+returned. Until 2026-09-13 the window was derived for every caller, so the lift
+would have switched the discovery estimator, the figures and the calibration onto
+the sealed sample and made the discovery results irreproducible afterwards
+(finding D8, addendum §26; `D.discovery_scripts_pinned`).
 
 Verified to reject four things it should, including that one:
 `D.guard_can_fire`. A gate that has never rejected anything has not been tested.
@@ -1449,7 +1456,7 @@ MDE, and none of them is available here.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **86 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **87 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
@@ -1486,11 +1493,11 @@ not what was. A register full of prescriptions reads like a register full of
 completions, and whether anything had actually been fixed was recoverable only by
 reading the check suite and matching tags by eye.
 
-Each of the 115 findings now carries a status — `fixed`, `open`, or `unverified` —
+Each of the 116 findings now carries a status — `fixed`, `open`, or `unverified` —
 and the check that guards it asserts one direction only: **nothing may say
 `fixed` while a check tagged to it is not passing.** `unverified` means nothing
 checks it, which is a statement of work remaining and not a synonym for fine.
-Current state: **115 fixed, 0 open, 0 unverified**. P1, P5, RI3, P12 and P13 closed on 2026-09-13 at 20:56Z, when C1's 1,000-simulation certificate under the renamed scheme `circular_within_block_fw7` landed and `S.ri_scheme_certified` passed with every stratum certified under the scheme its geometry requires (§7.4). They had closed once that morning on the old scheme's certificates and reopened when the CP2 audit found the drawer had been snapping C1's two edge episodes onto consecutive placebo days (addendum §24); the corrected drawer's C1 null then failed uniformity at 200 simulations and calibrated at 1,000, so the addendum-§25 fallback written between those two verdicts is not invoked. A failing check is not evidence, and neither is a certificate for a null nobody draws from any more.
+Current state: **116 fixed, 0 open, 0 unverified**. P1, P5, RI3, P12 and P13 closed on 2026-09-13 at 20:56Z, when C1's 1,000-simulation certificate under the renamed scheme `circular_within_block_fw7` landed and `S.ri_scheme_certified` passed with every stratum certified under the scheme its geometry requires (§7.4). They had closed once that morning on the old scheme's certificates and reopened when the CP2 audit found the drawer had been snapping C1's two edge episodes onto consecutive placebo days (addendum §24); the corrected drawer's C1 null then failed uniformity at 200 simulations and calibrated at 1,000, so the addendum-§25 fallback written between those two verdicts is not invoked. A failing check is not evidence, and neither is a certificate for a null nobody draws from any more.
 
 Writing that check taught two things worth keeping, both of which are the same
 defect it exists to prevent, committed inside it:

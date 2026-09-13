@@ -140,7 +140,7 @@ def _ri_seed(outcome, post, arm):
 # ---------------------------------------------------------------------------
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
 panel["incident_date"] = pd.to_datetime(panel["incident_date"])
-panel = select_sample(panel, where="17_stacked_event_study")
+panel = select_sample(panel, where="17_stacked_event_study", window="discovery")
 panel = panel[panel["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE].copy()
 panel["dow"] = panel["incident_date"].dt.dayofweek
 
@@ -164,8 +164,10 @@ panel["dow"] = panel["incident_date"].dt.dayofweek
 panel = attach_bheard(panel, bound=BHEARD_BOUND_PRIMARY)
 
 ep = pd.read_csv(DATA_REFERENCE / EPISODE_LIST_PRIMARY, parse_dates=["start", "end"])
-if FREEZE_ACTIVE:
-    ep = ep[ep["period"] == "discovery"]
+# Discovery episodes whatever the flag says. Until 2026-09-13 this read `if
+# FREEZE_ACTIVE:`, so the lift would have handed this script — the discovery
+# estimator, 2,000 draws, no seal — every confirmation episode (D8, addendum 26).
+ep = ep[ep["period"] == "discovery"]
 
 # THE NULL BEHIND THIS SCRIPT'S p-VALUES MUST BE CERTIFIED BEFORE IT REPORTS ANY.
 #
@@ -198,7 +200,7 @@ require_calibrated("discovery")
 
 ep = ep.sort_values("start").reset_index(drop=True)
 real_starts = ep["start"].tolist()
-print(f"episodes in scope: {len(ep)}  ({'discovery only' if FREEZE_ACTIVE else 'all'})")
+print(f"episodes in scope: {len(ep)}  (discovery only)")
 
 lo_d, hi_d = panel["incident_date"].min(), panel["incident_date"].max()
 gaps = np.diff([d.toordinal() for d in real_starts]) if len(real_starts) > 1 else np.array([30])

@@ -89,8 +89,8 @@ def check_panel():
     # panel can be sampled legally, and everything below is asserted on exactly
     # the rows a model would see.
     n_all = len(p)
-    p = select_sample(p, where="22_pipeline_check")
-    lo_hi = active_windows()
+    p = select_sample(p, where="22_pipeline_check", window="discovery")
+    lo_hi = active_windows("discovery")
     record(stage, "sample_window", "PASS",
            f"{len(p):,} rows in {[(str(a.date()), str(b.date())) for a, b in lo_hi]}")
 
@@ -250,9 +250,9 @@ def check_episodes():
     # Through the guard, like every other read of the panel in this file. This
     # one used the raw frame for its date extent (CP1 audit): harmless today,
     # and exactly the shape a later per-episode summary would inherit.
-    p = select_sample(p, where="22:check_episodes")
+    p = select_sample(p, where="22:check_episodes", window="discovery")
     lo, hi = p["incident_date"].min(), p["incident_date"].max()
-    windows = active_windows()
+    windows = active_windows("discovery")
     in_scope = ep[[any(a <= t <= b for a, b in windows) for t in ep["start"]]]
     outside = in_scope[(in_scope["start"] < lo) | (in_scope["start"] > hi)]
     record(stage, "starts_inside_panel", "PASS" if outside.empty else "FAIL",

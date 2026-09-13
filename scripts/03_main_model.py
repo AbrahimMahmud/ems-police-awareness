@@ -62,7 +62,7 @@ win_cols = [f"{PRIMARY_AWARENESS}_w{lo}{hi}" for lo, hi in ROLLING_WINDOWS]
 keep = ["date"] + lag_cols + lead_cols + [c for c in win_cols if c in lags.columns]
 
 df = panel.merge(lags[keep], left_on="incident_date", right_on="date", how="left")
-df = select_sample(df, where="03_main_model")
+df = select_sample(df, where="03_main_model", window="discovery")
 df = df[df["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE]
 df = df.dropna(subset=[OUTCOME] + lag_cols + lead_cols)
 df["month_year"] = df["year"] * 100 + df["month"]

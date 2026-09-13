@@ -87,6 +87,7 @@ confirmation-period outcomes**.
 | 23 | CP2 specification audit: reading rules made mechanical, denominator diagnostic, sealed run fixed to its draw count and committed, EDPT/EDPE in the EDP family, full-span panel | yes |
 | 24 | Placebo admissibility follows first-week containment; scheme renamed `circular_within_block_fw7`; C1 and pooled recalibrated | yes |
 | 25 | Pre-registered fallback for a stratum whose null fails calibration at 1,000 simulations | yes |
+| 26 | After the lift only the sealed script reads the confirmation sample; every exploratory script pins the discovery window by name | yes |
 
 ---
 
@@ -834,6 +835,37 @@ NOT CALIBRATED verdict under the required scheme as this case rather than as a
 missing certificate; `30_confirmatory_run.py` implements items 1–3.
 
 ---
+
+## 26. After the lift, only the sealed script reads the confirmation sample (finding D8)
+
+**Blind. Written 2026-09-13 before the lift; no outcome value read.**
+
+`freeze_guard.select_sample` derived every caller's window from `FREEZE_ACTIVE`:
+discovery while frozen, the confirmation windows once lifted. That is the right
+behaviour for the sealed script and the wrong one for everything else. With the
+flag flipped, the discovery estimator (17), the decomposition (05), the main and
+robustness models (03, 04, 06), the figures (08), the difference-in-differences
+(07), the power analysis (19) and the null calibration (18) would all have read
+the confirmation sample — so `python3 17_stacked_event_study.py` after the lift
+was an unsealed confirmatory analysis at 2,000 draws with no family correction,
+and the discovery results the paper reports could not have been regenerated from
+a fresh clone once the flag changed, which is CP3's first line. Three scripts also
+widened their episode list on the same flag.
+
+**The rule.** The window is asked for by name. Every exploratory reader calls
+`select_sample(..., window="discovery")` and stays on the discovery window
+whatever the flag says; the sealed script alone leaves the window derived; and
+`window="confirmation"` is refused while the freeze is active, whoever asks.
+`D.discovery_scripts_pinned` holds every caller to this by AST and exercises the
+guard with the flag flipped in both directions. Nothing about the sample the
+sealed run reads changes: `30_confirmatory_run.py` still refuses to run while
+frozen, still proves the guard switches sample, and still reads exactly the
+confirmation windows after the lift.
+
+**What this does not change.** The discovery estimates remain exploratory and are
+not re-estimated, re-specified or re-read because of this; it changes only which
+sample a script sees after the lift, so that the lift opens one door rather than
+every door.
 
 ## What has NOT changed
 

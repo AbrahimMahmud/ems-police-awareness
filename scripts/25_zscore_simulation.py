@@ -323,12 +323,12 @@ if not panel_path.exists():
 
 panel = pd.read_parquet(panel_path)
 panel["incident_date"] = pd.to_datetime(panel["incident_date"])
-panel = select_sample(panel, where="25_zscore_simulation:panel")
+panel = select_sample(panel, where="25_zscore_simulation:panel", window="discovery")
 panel = panel[panel["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE].copy()
 
 cai = pd.read_parquet(DATA_PROCESSED / "cai_daily.parquet")
 cai["date"] = pd.to_datetime(cai["date"])
-cai = select_sample(cai, date_col="date", where="25_zscore_simulation:cai")
+cai = select_sample(cai, date_col="date", where="25_zscore_simulation:cai", window="discovery")
 if PRIMARY_AWARENESS not in cai.columns:
     raise SystemExit(f"cai_daily.parquet has no {PRIMARY_AWARENESS} column")
 
@@ -345,7 +345,7 @@ if panel["x"].isna().any():
 # eligible is DERIVED from the freeze rather than from the list's own `period`
 # column, so the two can never disagree about what this run may touch.
 episodes = pd.read_csv(DATA_REFERENCE / EPISODE_LIST_PRIMARY, parse_dates=["start"])
-_win = active_windows()
+_win = active_windows("discovery")
 _eligible = pd.Series(False, index=episodes.index)
 for lo, hi in _win:
     _eligible |= episodes["start"].between(lo, hi)
@@ -827,7 +827,7 @@ def check_dates_inside_freeze(main, par):
     """No sample may reach outside the permitted window. select_sample already
     filtered the inputs; this proves the SAMPLES BUILT FROM THEM stayed inside,
     which is a different statement and the one the artifact asserts."""
-    wins = [(pd.Timestamp(a), pd.Timestamp(b)) for a, b in active_windows()]
+    wins = [(pd.Timestamp(a), pd.Timestamp(b)) for a, b in active_windows("discovery")]
     lo = pd.to_datetime(main["sample_date_min"])
     hi = pd.to_datetime(main["sample_date_max"])
     inside = pd.Series(False, index=main.index)

@@ -170,7 +170,7 @@ panel_path = DATA_PROCESSED / "panel_cd_day.parquet"
 if panel_path.exists():
     real = pd.read_parquet(panel_path)
     real["incident_date"] = pd.to_datetime(real["incident_date"])
-    real = select_sample(real, where="18_null_calibration")
+    real = select_sample(real, where="18_null_calibration", window="discovery")
     if "edp_share" in real.columns and real["edp_share"].notna().any():
         s = real.dropna(subset=["edp_share"]).sort_values(["communitydistrict", "incident_date"])
         mu = float(s["edp_share"].mean())

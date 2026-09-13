@@ -726,6 +726,92 @@ def v_table1_regenerates():
                     "list and stratum_episodes")
 
 
+def d_discovery_scripts_pinned():
+    """D8: lifting the freeze must not move the exploratory scripts onto the sealed sample.
+
+    `select_sample` derived its window from FREEZE_ACTIVE for every caller, so
+    the lift — one flag — would have switched the discovery estimator, the
+    decomposition, the figures, the power analysis and the null calibration onto
+    the confirmation windows: `python3 17_stacked_event_study.py` after the lift
+    was an unsealed confirmatory run at 2,000 draws, and the discovery results
+    the paper reports could not have been regenerated (CP3's fresh-clone line)
+    once the flag flipped. Three scripts also widened their EPISODE list on the
+    flag (`if FREEZE_ACTIVE: ep = ep[period == "discovery"]`).
+
+    Found 2026-09-13 before the lift (addendum 26). Now every reader except the
+    sealed script asks for its window by name — `select_sample(...,
+    window="discovery")`, `active_windows("discovery")` — and the guard refuses
+    window="confirmation" while the freeze is active. This check holds both
+    halves: (source) every select_sample / active_windows call outside
+    30_confirmatory_run.py, freeze_guard.py and this suite carries
+    window="discovery", and no script branches its episode list on
+    FREEZE_ACTIVE; (behaviour) with the flag flipped False in the loaded guard,
+    window="discovery" still returns discovery rows only, and with the flag True
+    window="confirmation" raises.
+    """
+    import ast as _ast
+    problems, callers = [], []
+    exempt = {"30_confirmatory_run.py", "freeze_guard.py", "23_regression_suite.py"}
+    for f in sorted(SCRIPTS.glob("*.py")):
+        if f.name in exempt:
+            continue
+        try:
+            tree = _ast.parse(f.read_text())
+        except SyntaxError as e:
+            problems.append(f"{f.name}: does not parse ({e})")
+            continue
+        for n in _ast.walk(tree):
+            if isinstance(n, _ast.Call):
+                fn = n.func
+                name = fn.id if isinstance(fn, _ast.Name) else getattr(fn, "attr", None)
+                if name in ("select_sample", "active_windows"):
+                    win = None
+                    if name == "active_windows" and n.args:
+                        win = n.args[0]
+                    for kw in n.keywords:
+                        if kw.arg == "window":
+                            win = kw.value
+                    val = win.value if isinstance(win, _ast.Constant) else None
+                    if val != "discovery":
+                        problems.append(f"{f.name}:{n.lineno} {name}() without window='discovery'")
+                    else:
+                        callers.append(f.name)
+            if isinstance(n, _ast.If):
+                t = _ast.unparse(n.test)
+                body = _ast.unparse(_ast.Module(body=n.body, type_ignores=[]))
+                if "FREEZE_ACTIVE" in t and "period" in body and "discovery" in body:
+                    problems.append(f"{f.name}:{n.lineno} widens the episode list when FREEZE_ACTIVE is False")
+    sys.path.insert(0, str(SCRIPTS))
+    import freeze_guard as fg
+    frame = pd.DataFrame({"incident_date": pd.date_range("2015-01-01", "2024-12-31", freq="D"),
+                          "edp_share": 0.1})
+    saved = fg.FREEZE_ACTIVE
+    try:
+        fg.FREEZE_ACTIVE = False
+        out = fg.select_sample(frame, where="selftest", window="discovery")
+        if not (out["incident_date"].min() == pd.Timestamp(DISCOVERY_START)
+                and out["incident_date"].max() == pd.Timestamp(DISCOVERY_END)
+                and len(out) == (pd.Timestamp(DISCOVERY_END) - pd.Timestamp(DISCOVERY_START)).days + 1):
+            problems.append("window='discovery' did not return exactly the discovery window with the freeze lifted")
+        fg.FREEZE_ACTIVE = True
+        try:
+            fg.select_sample(frame, where="selftest", window="confirmation")
+            problems.append("window='confirmation' was served while the freeze is active")
+        except fg.FreezeViolation:
+            pass
+        try:
+            fg.active_windows("both")
+            problems.append("active_windows accepted an unknown window name")
+        except ValueError:
+            pass
+    finally:
+        fg.FREEZE_ACTIVE = saved
+    if problems:
+        return "FAIL", "; ".join(problems)
+    return "PASS", (f"{len(set(callers))} scripts pin the discovery window by name; the guard refuses "
+                    "the confirmation sample under the freeze and keeps discovery pinned when lifted")
+
+
 def s_ri_scheme_certified():
     """P1: every stratum's randomization null is the one its calibration certifies.
 
@@ -4576,6 +4662,7 @@ CHECKS = [
     ("S.calibration_on_residual", "S8", "synthetic null has this design's dependence, not a harder one", s_calibration_on_residual),
     ("S.ri_scheme_certified", "P1,P5,RI3,P12,P13", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
     ("S.lift_requires_1000_sims", "P11", "the freeze lifts only on 1000-sim certificates for every stratum", s_lift_requires_1000_sims),
+    ("D.discovery_scripts_pinned", "D8", "lifting the freeze cannot move the exploratory scripts onto the sealed sample", d_discovery_scripts_pinned),
     ("S.calibration_noise_measured", "N11", "every certificate's null takes its noise from the measured panel, never the assumed fallback", s_calibration_noise_measured),
     ("S.confirmatory_spec_audit", "P14,P15,P16,P18", "the sealed script implements addendum 23 (draws, seal, BH family, asymptotic p, diagnostics, C2-only interaction)", s_confirmatory_spec_audit),
     ("S.confirmatory_reading_rules", "P14", "the pre-registered reading of the sealed result is mechanical and reads as its text requires", s_confirmatory_reading_rules),

@@ -32,7 +32,7 @@ freeze_banner("04_robustness")
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
 aware = pd.read_parquet(DATA_PROCESSED / "cai_daily.parquet")[["date", "cai_d"]]
 
-df = select_sample(panel, where="04_robustness")
+df = select_sample(panel, where="04_robustness", window="discovery")
 df = df[df["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE]
 df["month_year"] = df["year"] * 100 + df["month"]
 df["date_id"] = df["incident_date"].dt.strftime("%Y%m%d").astype(int)

@@ -29,7 +29,7 @@ freeze_banner("05_placebo_and_calls")
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
 lags = pd.read_parquet(DATA_PROCESSED / "awareness_lags.parquet")
 df = panel.merge(lags, left_on="incident_date", right_on="date", how="left")
-df = select_sample(df, where="05_placebo_and_calls")
+df = select_sample(df, where="05_placebo_and_calls", window="discovery")
 df = df[df["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE]
 df["month_year"] = df["year"] * 100 + df["month"]
 df["date_id"] = df["incident_date"].dt.strftime("%Y%m%d").astype(int)

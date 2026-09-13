@@ -51,13 +51,13 @@ aw["date"] = pd.to_datetime(aw["date"])
 
 ep = pd.read_csv(DATA_REFERENCE / EPISODE_LIST_PRIMARY,
                  parse_dates=["start", "end", "peak_date"])
-if FREEZE_ACTIVE:
-    ep = ep[ep["period"] == "discovery"]
+# Discovery episodes whatever the flag says (D8, addendum 26).
+ep = ep[ep["period"] == "discovery"]
 
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
 panel["incident_date"] = pd.to_datetime(panel["incident_date"])
 # Figures are a way of examining outcomes, so they are inside the freeze too.
-panel = select_sample(panel, where="08_figures")
+panel = select_sample(panel, where="08_figures", window="discovery")
 # The column is `mh_narrow`, not `mh_narrow_calls`. The latter exists only as a
 # METRIC LABEL string in 01_build_panel.py's QC output, and this line has been
 # raising KeyError on Figure 1 — the first figure — so 08 has never produced

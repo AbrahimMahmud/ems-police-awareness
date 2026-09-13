@@ -55,16 +55,38 @@ class FreezeViolation(RuntimeError):
     """Raised when outcome data outside the permitted sample reaches a model."""
 
 
-def active_windows():
+def active_windows(window=None):
     """The (start, end) intervals this run is permitted to touch.
 
-    Derived, never hand-set. While frozen this is discovery only; once lifted it
-    is the confirmation windows only. There is deliberately no state in which
-    both are returned, because pooling them is the failure this guards against.
+    `window=None` derives the sample from the flag: discovery while frozen, the
+    confirmation windows once lifted. That is the SEALED script's mode, and it
+    was every script's mode until 2026-09-13 (finding D8, addendum 26): lifting
+    the freeze would have switched the discovery estimators, figures, power and
+    calibration onto the confirmation sample — turning `python3
+    17_stacked_event_study.py` into an unsealed confirmatory run, and making the
+    discovery results irreproducible after the lift. So:
+
+      window="discovery"     the discovery window whatever the flag says. Every
+                             exploratory script asks for this by name.
+      window="confirmation"  the confirmation windows; REFUSED while the freeze
+                             is active, whoever asks.
+      window=None            derived from the flag (30_confirmatory_run only).
+
+    There is deliberately no value that returns both, because pooling them is
+    the failure this guards against.
     """
-    if FREEZE_ACTIVE:
-        return [(pd.Timestamp(DISCOVERY_START), pd.Timestamp(DISCOVERY_END))]
-    return [(pd.Timestamp(a), pd.Timestamp(b)) for a, b in CONFIRMATION_WINDOWS]
+    disc = [(pd.Timestamp(DISCOVERY_START), pd.Timestamp(DISCOVERY_END))]
+    conf = [(pd.Timestamp(a), pd.Timestamp(b)) for a, b in CONFIRMATION_WINDOWS]
+    if window == "discovery":
+        return disc
+    if window == "confirmation":
+        if FREEZE_ACTIVE:
+            raise FreezeViolation("the confirmation sample was requested while the freeze "
+                                  "is ACTIVE; only the lift (config.FREEZE_ACTIVE = False) opens it")
+        return conf
+    if window is not None:
+        raise ValueError(f"window must be None, 'discovery' or 'confirmation', not {window!r}")
+    return disc if FREEZE_ACTIVE else conf
 
 
 def _in_windows(dates, windows):
@@ -74,22 +96,24 @@ def _in_windows(dates, windows):
     return m
 
 
-def select_sample(df, date_col="incident_date", where=""):
+def select_sample(df, date_col="incident_date", where="", window=None):
     """Filter to the permitted sample AND prove the filter did what it claims.
 
     This replaces `df[df[date].between(ANALYSIS_START, ANALYSIS_END)]` followed
     by a separate assertion. Callers must not do their own window filtering:
     that is what made the old guard tautological.
 
-    Returns the permitted rows. Raises if the frame is empty afterwards, since a
-    silently empty sample is the failure mode that looks like a clean run.
+    `window` is passed to `active_windows`: exploratory scripts say
+    window="discovery" so the lift cannot move them; the sealed script leaves it
+    derived. Returns the permitted rows. Raises if the frame is empty afterwards,
+    since a silently empty sample is the failure mode that looks like a clean run.
     """
     if date_col not in df.columns:
         raise FreezeViolation(
             f"{where or 'caller'}: no '{date_col}' column, so the sample cannot be "
             "verified. Pass the correct date column rather than skipping the check.")
     d = pd.to_datetime(df[date_col])
-    win = active_windows()
+    win = active_windows(window)
     keep = _in_windows(d, win)
     out = df[keep].copy()
 
@@ -100,7 +124,7 @@ def select_sample(df, date_col="incident_date", where=""):
             f"(frame spans {d.min().date()}..{d.max().date()}).")
 
     # Disjointness, checked on the DATA rather than asserted in a comment.
-    if not FREEZE_ACTIVE:
+    if window == "confirmation" or (window is None and not FREEZE_ACTIVE):
         disc = pd.to_datetime(out[date_col]).between(
             pd.Timestamp(DISCOVERY_START), pd.Timestamp(DISCOVERY_END))
         if disc.any():

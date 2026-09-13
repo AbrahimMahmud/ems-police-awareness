@@ -21,10 +21,10 @@ from freeze_guard import select_sample
 # The discovery window is no longer restated here. This literal was the only
 # freeze enforcement in the repo and it was a SECOND source of truth: it could
 # drift from config.py silently, and a reader had no way to know which one the
-# run actually used. select_sample() derives the window from FREEZE_ACTIVE.
+# run actually used. select_sample(window="discovery") pins it whatever FREEZE_ACTIVE says.
 
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
-panel = select_sample(panel, where="03c_cai_discovery_robustness")
+panel = select_sample(panel, where="03c_cai_discovery_robustness", window="discovery")
 panel = panel[panel["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE].copy()
 panel["month_year"] = panel["year"] * 100 + panel["month"]
 panel["date_id"] = panel["incident_date"].dt.strftime("%Y%m%d").astype(int)

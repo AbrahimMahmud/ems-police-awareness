@@ -40,7 +40,7 @@ from freeze_guard import freeze_banner, select_sample
 
 freeze_banner("07_did_exposure")
 panel = pd.read_parquet(DATA_PROCESSED / "panel_cd_day.parquet")
-panel = select_sample(panel, where="07_did_exposure")
+panel = select_sample(panel, where="07_did_exposure", window="discovery")
 panel = panel[panel["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE].copy()
 panel["date_id"] = panel["incident_date"].dt.strftime("%Y%m%d").astype(int)
 
@@ -65,10 +65,11 @@ assert DID_CONTROL_PRIMARY in controls and DID_CONTROL_SENSITIVITY in controls
 # The frozen CAI-D episode list is the single source of episode timing. While the
 # confirmation freeze holds, only discovery-period episodes are in scope.
 ep = pd.read_csv(DATA_REFERENCE / EPISODE_LIST_PRIMARY, parse_dates=["start", "end"])
-if FREEZE_ACTIVE:
-    ep = ep[ep["period"] == "discovery"]
+# Discovery episodes whatever the flag says: this is an exploratory estimator and
+# the lift must not turn it into an unsealed confirmatory one (D8, addendum 26).
+ep = ep[ep["period"] == "discovery"]
 ep = ep.sort_values("start").reset_index(drop=True)
-print(f"episodes in scope: {len(ep)} ({'discovery only' if FREEZE_ACTIVE else 'all periods'})")
+print(f"episodes in scope: {len(ep)} (discovery only)")
 starts = ep["start"].tolist()
 
 # FINDING S7. This used to build its own windows, truncating FORWARD only:
