@@ -181,3 +181,12 @@ log_source(
     "EMS Incident Dispatch Data via SODA API (7 columns, paged), replaces "
     f"user-local export; {_src}",
     BASE, out_file=out1)
+# The other two artifacts this script writes had no provenance row (CP1 audit
+# #58, 2026-09-13): the source verifier reported them "verified; not registered",
+# which is the couldn't-check-reads-as-fine failure. One id per artifact, for
+# the life of the register (V.source_id_per_artifact).
+log_source("S1c", f"Citywide daily call-group counts, 2005+, from the same extract; {_src}",
+           BASE, out_file=out2)
+log_source("S1d", f"Cancelled/duplicate dispositions excluded from the district x day x call type "
+                  f"extract (finding O1), same extract; {_src}",
+           BASE, out_file=outx)

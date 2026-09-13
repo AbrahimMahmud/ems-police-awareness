@@ -10,7 +10,7 @@ Sources: 19 (13 live, 4 retired, 2 unverifiable).
 Every verification result ever recorded, including failures, is in
 `data/reference/source_verification_log.csv`, which is append-only.
 
-Last scan: **2026-09-13T08:12:15+00:00** — 26 absent, 4 mismatch, 18 skipped, 2 template, 6 unverifiable, 121 verified
+Last scan: **2026-09-13T12:17:42+00:00** — 15 absent, 18 skipped, 2 template, 6 unverifiable, 214 verified
 
 ## S1 — NYC EMS Incident Dispatch Data
 
@@ -22,8 +22,9 @@ Last scan: **2026-09-13T08:12:15+00:00** — 26 absent, 4 mismatch, 18 skipped, 
 - **Access**: SODA API, 7 columns, paged, by scripts/00b_download_ems_extract.py (S1b)
 - **What we take**: incident_datetime, communitydistrict, final_call_type, disposition and identifiers; aggregated to community-district x day x call type
 - **Role**: outcome - every EMS call count and share
-- **Artifact**: `data/processed/ems_cd_day_calltype.parquet` — _verified_ (sha256 6247a7239559f930, 4,876,509 rows, 2014-12-01..2024-12-31; not registered in data_sources.csv)
-- **Artifact**: `data/processed/ems_citywide_day_trends.parquet` — _verified_ (sha256 33c8850350f90ab3, 39,037 rows, 2005-01-01..2026-06-30; not registered in data_sources.csv)
+- **Artifact**: `data/processed/ems_cd_day_calltype.parquet` — _verified_ (sha256 6247a7239559f930, 4,876,509 rows, 2014-12-01..2024-12-31; matches the provenance register)
+- **Artifact**: `data/processed/ems_citywide_day_trends.parquet` — _verified_ (sha256 33c8850350f90ab3, 39,037 rows, 2005-01-01..2026-06-30; matches the provenance register)
+- **Artifact**: `data/processed/ems_cd_day_calltype_excluded.parquet` — _verified_ (sha256 9de95e3e1929c03a, 443,719 rows, 2014-12-01..2024-12-31; matches the provenance register)
 - **Cite as**: Fire Department of the City of New York. "EMS Incident Dispatch Data." NYC Open Data. https://data.cityofnewyork.us/d/76xm-jjuj
 - **Terms**: https://www.nyc.gov/home/terms-of-use.page
 - **Known flaws**:
@@ -92,7 +93,7 @@ Last scan: **2026-09-13T08:12:15+00:00** — 26 absent, 4 mismatch, 18 skipped, 
 - **Access**: workbook in the repository
 - **What we take**: community-district demographics, 2010 vintage
 - **Role**: superseded by S7 as the primary vintage; kept as a heterogeneity robustness comparison
-- **Artifact**: `data/raw/sf1_dp_cd_demoprofile.xlsx` — _verified_ (sha256 20459df2681c751b, unreadable: UnicodeDecodeError; not registered in data_sources.csv)
+- **Artifact**: `data/raw/sf1_dp_cd_demoprofile.xlsx` — _verified_ (sha256 20459df2681c751b, unreadable: UnicodeDecodeError; no provenance row and none can be made — accepted 2026-09-13: A committed input workbook (NYC DCP Census 2010 SF1 profile), not a fetch output: no script writes it, so no provenance row can be made by re-running anything. Retired source kept for the heterogeneity robustness check. Bytes pinned exactly (CP1 audit #58, 2026-09-13).)
 - **Known flaws**:
   - 2010 vintage is 5-14 years before the study period.
 
@@ -104,7 +105,7 @@ Last scan: **2026-09-13T08:12:15+00:00** — 26 absent, 4 mismatch, 18 skipped, 
 - **Access**: committed CSV
 - **What we take**: race and incident-type attribution for tweet volume unmatched to S4
 - **Role**: retired with the Twitter measure
-- **Artifact**: `data/reference/victim_curation_table.csv` — _verified_ (sha256 75e6bea4243eebe7, 101 rows, 2013-05-24..2020-10-20; not registered in data_sources.csv)
+- **Artifact**: `data/reference/victim_curation_table.csv` — _verified_ (sha256 75e6bea4243eebe7, 101 rows, 2013-05-24..2020-10-20; no provenance row and none can be made — accepted 2026-09-13: A hand-built committed table (retired with the Twitter measure): no script writes it, so no provenance row can be made. Bytes pinned exactly (CP1 audit #58, 2026-09-13).)
 - **Known flaws**:
   - Manual, and low-confidence rows were never verified by a second reader.
 
@@ -144,10 +145,10 @@ Last scan: **2026-09-13T08:12:15+00:00** — 26 absent, 4 mismatch, 18 skipped, 
 - **Status**: live
 - **Publisher**: Wikimedia Foundation
 - **Endpoint**: `https://en.wikipedia.org/api/rest_v1/page/summary/` — _skipped_ (--offline)
-- **Access**: scripts/09_fetch_public_data.py, scripts/26_resolve_basket_scope.py
+- **Access**: scripts/09_fetch_public_data.py (writes the _legacy table), scripts/26_resolve_basket_scope.py
 - **What we take**: article extracts, used to confirm a candidate article is about a police killing
 - **Role**: article resolution and basket screening
-- **Artifact**: `data/reference/wikipedia_article_resolution.csv` — _verified_ (sha256 8e488fc8819956be, 109 rows; not registered in data_sources.csv)
+- **Artifact**: `data/reference/wikipedia_article_resolution_legacy.csv` — _verified_ (sha256 154d296f9c560c7e, 150 rows; no provenance row and none can be made — accepted 2026-09-13: The Twitter-era name-to-article table written by 09_fetch_public_data.py. It has no provenance row and cannot get one: 09 selects its names from the retired per-victim Twitter file (S2), which is not in the repository. Until 2026-09-13 this table and the PUBLISHED BASKET shared the filename wikipedia_a)
 - **Known flaws**:
   - A summary mentioning police is necessary but not sufficient; the basket rules in 26/27 do the real screening.
 
@@ -177,8 +178,9 @@ Last scan: **2026-09-13T08:12:15+00:00** — 26 absent, 4 mismatch, 18 skipped, 
 - **What we take**: daily article volume (gdelt_news), daily TV mention volume (gdelt_tv), and summed daily pageviews across the victim basket (wiki_ext)
 - **Role**: gdelt_news and gdelt_tv are the supply tier CAI-S; wiki_ext is a demand-tier component of CAI-D
 - **Artifact**: `data/reference/cai_components_daily.csv` — _verified_ (sha256 f747bc27b7beada3, 9,232 rows, 2015-01-01..2024-12-31; matches the provenance register)
-- **Artifact**: `data/reference/wiki_ext_basket_used.csv` — _verified_ (sha256 97140b683f5a6506, 109 rows; not registered in data_sources.csv)
-- **Artifact**: `data/reference/wiki_ext_aggregation_diagnostic.csv` — _verified_ (sha256 2d37c4ad5d1c0c3d, 3,472 rows, 2015-07-01..2024-12-31; not registered in data_sources.csv)
+- **Artifact**: `data/reference/wiki_ext_basket_used.csv` — _verified_ (sha256 97140b683f5a6506, 109 rows; matches the provenance register)
+- **Artifact**: `data/reference/wiki_ext_aggregation_diagnostic.csv` — _verified_ (sha256 2d37c4ad5d1c0c3d, 3,472 rows, 2015-07-01..2024-12-31; matches the provenance register)
+- **Artifact**: `data/reference/wiki_pageviews_by_article.csv` — _verified_ (sha256 7cdf66711622c6b3, 231,503 rows, 2015-07-01..2024-12-31; matches the provenance register)
 - **Cite as**: The GDELT Project. https://www.gdeltproject.org ; Wikimedia Foundation, Pageviews API.
 - **Known flaws**:
   - gdelt_news covers 2017-01-01..2022-12-31 with 3 internal gaps, so it does not span the study period; gdelt_tv ends 2024-10-11.
@@ -194,7 +196,7 @@ Last scan: **2026-09-13T08:12:15+00:00** — 26 absent, 4 mismatch, 18 skipped, 
 - **What we take**: daily index for a fixed term basket, United States and NYC DMA 501, stitched from 180-day windows with 60-day overlaps by through-origin regression
 - **Role**: trends_us is a CAI-D component; trends_nyc was one and is being retired
 - **Artifact**: `data/reference/cai_trends_daily.csv` — _verified_ (sha256 f18c11eb209350bd, 7,306 rows, 2015-01-01..2024-12-31; matches the provenance register)
-- **Artifact**: `data/reference/cai_trends_stitch_diagnostics.csv` — _verified_ (sha256 a79bdc97be843bd6, 58 rows; not registered in data_sources.csv)
+- **Artifact**: `data/reference/cai_trends_stitch_diagnostics.csv` — _verified_ (sha256 a79bdc97be843bd6, 58 rows; no provenance row and none can be made — accepted 2026-09-13: Written by 11b_fetch_trends.py beside cai_trends_daily.csv but never registered. Google Trends is sampled and re-fetching does not reproduce the file, so the current bytes are pinned; 11b now registers it as S12b on its next run and this pin then stops being needed (CP1 audit #58, 2026-09-13).)
 - **Known flaws**:
   - Trends is a SAMPLED index rescaled to integers 0-100 within each requested window, so it is ordinal within a window and not comparable across windows without stitching.
   - Region-days below an undisclosed volume floor are suppressed to zero. trends_nyc is exactly zero on 42.6 percent of days, ranging from 26 percent in 2020 to 71 percent in 2024 - so on those days it is an indicator of clearing the reporting floor, not a level (findings T3/L3).
@@ -237,7 +239,7 @@ Last scan: **2026-09-13T08:12:15+00:00** — 26 absent, 4 mismatch, 18 skipped, 
 - **What we take**: the date each precinct began B-HEARD response
 - **Role**: the principal confound control. B-HEARD diverts mental-health 911 calls away from police, which moves the outcome in the same direction as H1.
 - **Artifact**: `data/reference/bheard_precinct_adoption.csv` — _verified_ (sha256 b7627d01221e5159, 31 rows; matches the provenance register)
-- **Artifact**: `data/reference/bheard_cd_exposure.csv` — _verified_ (sha256 c387a640fc425626, 74 rows; not registered in data_sources.csv)
+- **Artifact**: `data/reference/bheard_cd_exposure.csv` — _verified_ (sha256 c387a640fc425626, 74 rows; matches the provenance register)
 - **Known flaws**:
   - 17 of 31 precinct dates are low confidence, 11 medium, 3 high. A pre-registered control resting on low-confidence dates is a real limitation and is carried as exposure BOUNDS rather than a point date.
   - Citywide launch is 2021-06-01, so the whole discovery window is unexposed - which is what makes 'adding B-HEARD leaves discovery numerically unchanged' a usable check.
@@ -250,7 +252,7 @@ Last scan: **2026-09-13T08:12:15+00:00** — 26 absent, 4 mismatch, 18 skipped, 
 - **Access**: scripts/27_finalise_basket.py (cached under data/processed/wikidata_cache/)
 - **What we take**: date of death, country, and person-hood for each candidate basket article
 - **Role**: the primary death-date source for the basket: 108 of 161 candidates are dated from Wikidata, 38 from the registry, 15 unresolved
-- **Artifact**: `data/reference/basket_decisions.csv` — _verified_ (sha256 cabfa4ca663e133c, 174 rows, 1958-04-25..2026-07-07; not registered in data_sources.csv)
+- **Artifact**: `data/reference/basket_decisions.csv` — _verified_ (sha256 cabfa4ca663e133c, 174 rows, 1958-04-25..2026-07-07; matches the provenance register)
 - **Cite as**: Wikidata. https://www.wikidata.org
 - **Known flaws**:
   - Community-edited, so a date can change; the cache pins what we used.
@@ -264,7 +266,7 @@ Last scan: **2026-09-13T08:12:15+00:00** — 26 absent, 4 mismatch, 18 skipped, 
 - **What we take**: every title redirecting to an article (its historical titles), and each title's first revision date
 - **Role**: closes the rename defect T12. Fetching one canonical title discarded everything before a page move, including the spike at the moment of death; summing across historical titles recovered 79,082,746 views across 106 of 127 articles.
 - **Artifact**: `data/reference/article_title_map.csv` — _verified_ (sha256 b1be98f09b916a90, 530 rows; matches the provenance register)
-- **Artifact**: `data/reference/rename_recovery.csv` — _verified_ (sha256 1657e5eb79e396c3, 116 rows; not registered in data_sources.csv)
+- **Artifact**: `data/reference/rename_recovery.csv` — _verified_ (sha256 1657e5eb79e396c3, 116 rows; no provenance row and none can be made — accepted 2026-09-13: 29_resolve_article_titles.py wrote this beside article_title_map.csv and registered only the latter; it now registers this as S17b, but that needs a live MediaWiki re-fetch. Until that run, the current bytes are pinned exactly (CP1 audit #58, 2026-09-13).)
 - **Known flaws**:
   - Redirects include incidental pages, so a candidate must share a substantive word with the article title.
   - rvdir=newer and rvlimit are rejected for multiple titles, so first revisions must be fetched one title at a time.
@@ -279,9 +281,9 @@ Last scan: **2026-09-13T08:12:15+00:00** — 26 absent, 4 mismatch, 18 skipped, 
 - **Access**: scripts/28_build_nyc_attention.py (cached under data/processed/wiki_cat_cache/)
 - **What we take**: articles in the NYC police-incident categories, screened to require a police marker AND an incident form AND a New York marker; then their summed daily pageviews
 - **Role**: wiki_nyc - the uncensored city-local attention component that replaces trends_nyc
-- **Artifact**: `data/reference/wiki_nyc_articles.csv` — _verified_ (sha256 a50359145a74a954, 543 rows; not registered in data_sources.csv)
+- **Artifact**: `data/reference/wiki_nyc_articles.csv` — _verified_ (sha256 a50359145a74a954, 543 rows; no provenance row and none can be made — accepted 2026-09-13: 28_build_nyc_attention.py registered only wiki_nyc_daily.csv; it now registers this as S18a on its next live run. Bytes pinned exactly until then (CP1 audit #58, 2026-09-13).)
 - **Artifact**: `data/reference/wiki_nyc_daily.csv` — _verified_ (sha256 66321420e2ed9675, 6,944 rows, 2015-07-01..2024-12-31; matches the provenance register)
-- **Artifact**: `data/reference/wiki_nyc_per_article.csv` — _verified_ (sha256 5b8fffc41defa7b1, 55,552 rows, 2015-07-01..2024-12-31; not registered in data_sources.csv)
+- **Artifact**: `data/reference/wiki_nyc_per_article.csv` — _verified_ (sha256 5b8fffc41defa7b1, 55,552 rows, 2015-07-01..2024-12-31; no provenance row and none can be made — accepted 2026-09-13: 28_build_nyc_attention.py registered only wiki_nyc_daily.csv; it now registers this as S18b on its next live run. Bytes pinned exactly until then (CP1 audit #58, 2026-09-13).)
 - **Known flaws**:
   - The basket is thin - roughly ten NYC articles, mostly historical cases - so much of the series is anniversary and spillover traffic rather than contemporaneous local attention. This bounds how strongly the locality claim can be made.
   - An early version measured notable NYC deaths generally (Babe Ruth, John Lennon, the UnitedHealthcare CEO shooting) because the filter required NYC and death but never police involvement.

@@ -30,7 +30,8 @@
       "role": "outcome - every EMS call count and share",
       "artifacts": [
         "data/processed/ems_cd_day_calltype.parquet",
-        "data/processed/ems_citywide_day_trends.parquet"
+        "data/processed/ems_citywide_day_trends.parquet",
+        "data/processed/ems_cd_day_calltype_excluded.parquet"
       ],
       "cite_as": "Fire Department of the City of New York. \"EMS Incident Dispatch Data.\" NYC Open Data. https://data.cityofnewyork.us/d/76xm-jjuj",
       "terms_url": "https://www.nyc.gov/home/terms-of-use.page",
@@ -127,7 +128,14 @@
       ],
       "known_flaws": [
         "2010 vintage is 5-14 years before the study period."
-      ]
+      ],
+      "accepted_hashes": {
+        "data/raw/sf1_dp_cd_demoprofile.xlsx": {
+          "sha256": "20459df2681c751b3b1c57db93eb17c129be7c4095235b087528cce1113103be",
+          "dated": "2026-09-13",
+          "reason": "A committed input workbook (NYC DCP Census 2010 SF1 profile), not a fetch output: no script writes it, so no provenance row can be made by re-running anything. Retired source kept for the heterogeneity robustness check. Bytes pinned exactly (CP1 audit #58, 2026-09-13)."
+        }
+      }
     },
     {
       "id": "S6",
@@ -143,7 +151,14 @@
       ],
       "known_flaws": [
         "Manual, and low-confidence rows were never verified by a second reader."
-      ]
+      ],
+      "accepted_hashes": {
+        "data/reference/victim_curation_table.csv": {
+          "sha256": "75e6bea4243eebe7a714104308c0da8b6515e01c5034490197bcafd77fe220fc",
+          "dated": "2026-09-13",
+          "reason": "A hand-built committed table (retired with the Twitter measure): no script writes it, so no provenance row can be made. Bytes pinned exactly (CP1 audit #58, 2026-09-13)."
+        }
+      }
     },
     {
       "id": "S7",
@@ -206,17 +221,24 @@
       "endpoints": [
         "https://en.wikipedia.org/api/rest_v1/page/summary/"
       ],
-      "access": "scripts/09_fetch_public_data.py, scripts/26_resolve_basket_scope.py",
+      "access": "scripts/09_fetch_public_data.py (writes the _legacy table), scripts/26_resolve_basket_scope.py",
       "we_take": "article extracts, used to confirm a candidate article is about a police killing",
       "role": "article resolution and basket screening",
       "artifacts": [
-        "data/reference/wikipedia_article_resolution.csv"
+        "data/reference/wikipedia_article_resolution_legacy.csv"
       ],
       "known_flaws": [
         "A summary mentioning police is necessary but not sufficient; the basket rules in 26/27 do the real screening."
       ],
       "probes": {
         "https://en.wikipedia.org/api/rest_v1/page/summary/": "https://en.wikipedia.org/api/rest_v1/page/summary/Killing_of_George_Floyd"
+      },
+      "accepted_hashes": {
+        "data/reference/wikipedia_article_resolution_legacy.csv": {
+          "sha256": "154d296f9c560c7e5a6add84c6ccfde08b6e252c8166e55515bc9f7e6528a559",
+          "dated": "2026-09-13",
+          "reason": "The Twitter-era name-to-article table written by 09_fetch_public_data.py. It has no provenance row and cannot get one: 09 selects its names from the retired per-victim Twitter file (S2), which is not in the repository. Until 2026-09-13 this table and the PUBLISHED BASKET shared the filename wikipedia_article_resolution.csv, so a re-run of 09 would have overwritten the basket 11 sums wiki_ext over; 09 now writes the _legacy name and 10/21 read it. The bytes accepted here are pinned exactly (CP1 audit)."
+        }
       }
     },
     {
@@ -256,7 +278,8 @@
       "artifacts": [
         "data/reference/cai_components_daily.csv",
         "data/reference/wiki_ext_basket_used.csv",
-        "data/reference/wiki_ext_aggregation_diagnostic.csv"
+        "data/reference/wiki_ext_aggregation_diagnostic.csv",
+        "data/reference/wiki_pageviews_by_article.csv"
       ],
       "cite_as": "The GDELT Project. https://www.gdeltproject.org ; Wikimedia Foundation, Pageviews API.",
       "known_flaws": [
@@ -289,7 +312,14 @@
         "Trends is a SAMPLED index rescaled to integers 0-100 within each requested window, so it is ordinal within a window and not comparable across windows without stitching.",
         "Region-days below an undisclosed volume floor are suppressed to zero. trends_nyc is exactly zero on 42.6 percent of days, ranging from 26 percent in 2020 to 71 percent in 2024 - so on those days it is an indicator of clearing the reporting floor, not a level (findings T3/L3).",
         "The censoring is worst in the years where the exposed confirmation stratum sits, which is why trends_nyc is being replaced by the uncensored wiki_nyc rather than merely caveated."
-      ]
+      ],
+      "accepted_hashes": {
+        "data/reference/cai_trends_stitch_diagnostics.csv": {
+          "sha256": "a79bdc97be843bd601f504f6657419d70f7ea06c9c94f2e685c2de40b0cf6b3a",
+          "dated": "2026-09-13",
+          "reason": "Written by 11b_fetch_trends.py beside cai_trends_daily.csv but never registered. Google Trends is sampled and re-fetching does not reproduce the file, so the current bytes are pinned; 11b now registers it as S12b on its next run and this pin then stops being needed (CP1 audit #58, 2026-09-13)."
+        }
+      }
     },
     {
       "id": "S13",
@@ -395,6 +425,13 @@
       ],
       "probes": {
         "https://en.wikipedia.org/w/api.php": "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=redirects&rdlimit=max&titles=Killing%20of%20George%20Floyd"
+      },
+      "accepted_hashes": {
+        "data/reference/rename_recovery.csv": {
+          "sha256": "1657e5eb79e396c33d7d7c0cd1ef143f8dcb7af8972f93e72eca6a32c9b7d8f9",
+          "dated": "2026-09-13",
+          "reason": "29_resolve_article_titles.py wrote this beside article_title_map.csv and registered only the latter; it now registers this as S17b, but that needs a live MediaWiki re-fetch. Until that run, the current bytes are pinned exactly (CP1 audit #58, 2026-09-13)."
+        }
       }
     },
     {
@@ -423,6 +460,18 @@
       "probes": {
         "https://en.wikipedia.org/w/api.php": "https://en.wikipedia.org/w/api.php?action=query&format=json&list=categorymembers&cmtitle=Category%3ADeaths%20by%20law%20enforcement%20in%20New%20York%20(state)&cmlimit=5",
         "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/": "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/Killing_of_George_Floyd/daily/20200525/20200601"
+      },
+      "accepted_hashes": {
+        "data/reference/wiki_nyc_articles.csv": {
+          "sha256": "a50359145a74a95432cfb91bc6cf61382170bf8e269b143ac50779b49ff1bc11",
+          "dated": "2026-09-13",
+          "reason": "28_build_nyc_attention.py registered only wiki_nyc_daily.csv; it now registers this as S18a on its next live run. Bytes pinned exactly until then (CP1 audit #58, 2026-09-13)."
+        },
+        "data/reference/wiki_nyc_per_article.csv": {
+          "sha256": "5b8fffc41defa7b1879e1010f6b79956d8d6995ba19da61fd5d588bb9fe9c559",
+          "dated": "2026-09-13",
+          "reason": "28_build_nyc_attention.py registered only wiki_nyc_daily.csv; it now registers this as S18b on its next live run. Bytes pinned exactly until then (CP1 audit #58, 2026-09-13)."
+        }
       }
     }
   ]

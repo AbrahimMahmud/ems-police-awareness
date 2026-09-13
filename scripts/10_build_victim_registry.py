@@ -45,7 +45,10 @@ wapo_names = set(wapo["cleaned_name"].astype(str).str.strip().str.lower())
 reg["in_wapo"] = reg["name"].str.lower().isin(wapo_names)
 
 # attach Wikipedia articles where resolved
-res = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv")
+# The Twitter-era name resolution (09), which is what this registry was built
+# from: all 44 of its wiki_article values are in the legacy table and only 18 in
+# the published basket that now carries the unsuffixed name.
+res = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution_legacy.csv")
 res["key"] = res["name"].str.strip().str.lower()
 art = res.dropna(subset=["article"]).set_index("key")["article"]
 reg["wiki_article"] = reg["name"].str.strip().str.lower().map(art)

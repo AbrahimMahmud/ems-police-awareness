@@ -374,6 +374,46 @@ def t_no_redirect_candidates():
                     "not collected directly")
 
 
+def s_lift_requires_1000_sims():
+    """P11: the freeze may not be lifted on 200-simulation certificates.
+
+    CP2's second line says the calibration must pass at >= 1000 simulations on
+    all three strata before FREEZE_ACTIVE becomes False. Nothing enforced it:
+    S.ri_scheme_certified reads each certificate's OWN min_sims_required, which
+    18 writes as 200, so a lift on 200-sim certificates passed every check
+    (CP1 audit follow-up, 2026-09-13). This check is the gate on the lift
+    itself. While the freeze is on it reports the sim counts and passes; the
+    moment FREEZE_ACTIVE is False it fails unless every stratum's certificate
+    reads CALIBRATED at or above LIFT_MIN_SIMS. Defeat-tested by flipping the
+    flag in a loaded copy of config against the 200-sim artifacts.
+    """
+    from config import FREEZE_ACTIVE
+    files = {"discovery": "null_calibration.csv", "C1": "null_calibration_C1.csv",
+             "C2": "null_calibration_C2.csv", "pooled": "null_calibration_pooled.csv"}
+    # The three inferential strata need LIFT_MIN_SIMS; the pooled stratum is
+    # descriptive and outside the family, so at the lift its certificate must
+    # exist and read CALIBRATED at its own minimum, not at 1000.
+    inferential = ("discovery", "C1", "C2")
+    state = {}
+    for name, fname in files.items():
+        art = OUTPUTS_TABLES / fname
+        if not art.exists():
+            state[name] = (0, "absent")
+            continue
+        a = pd.read_csv(art).set_index("metric")["value"]
+        state[name] = (int(float(a.get("n_sims_completed", 0))), str(a.get("VERDICT", "")).strip())
+    short = [f"{k}: {n} sims, {v}" for k, (n, v) in state.items()
+             if v != "CALIBRATED" or (k in inferential and n < LIFT_MIN_SIMS)]
+    summary = ", ".join(f"{k}={n}/{v or 'absent'}" for k, (n, v) in state.items())
+    if not FREEZE_ACTIVE and short:
+        return "FAIL", (f"FREEZE_ACTIVE is False but {len(short)} stratum/strata lack a "
+                        f"CALIBRATED certificate at >= {LIFT_MIN_SIMS} simulations: {short}")
+    if FREEZE_ACTIVE:
+        return "PASS", (f"freeze on; certificates {summary}; lift requires "
+                        f">= {LIFT_MIN_SIMS} sims on all three ({len(short)} short)")
+    return "PASS", f"freeze lifted on certificates {summary}, all >= {LIFT_MIN_SIMS} sims"
+
+
 def s_ri_scheme_certified():
     """P1: every stratum's randomization null is the one its calibration certifies.
 
@@ -412,6 +452,9 @@ def s_ri_scheme_certified():
         "C1": ([CONFIRMATION_ANALYSIS_WINDOWS[0], CONFIRMATION_ANALYSIS_WINDOWS[1]],
                "null_calibration_C1.csv"),
         "C2": ([CONFIRMATION_ANALYSIS_WINDOWS[2]], "null_calibration_C2.csv"),
+        # 30 reports a pooled stratum; its three-window null needs its own
+        # certificate (2026-09-13).
+        "pooled": (list(CONFIRMATION_ANALYSIS_WINDOWS), "null_calibration_pooled.csv"),
     }
     missing, wrong, ok = [], [], []
     for name, (wins, fname) in strata.items():
@@ -946,6 +989,51 @@ def d_addendum_complete():
                     f"{promised}")
 
 
+def x_run_all_refresh_guard():
+    """X18: run_all fails a stage that exits 0 without REFRESHING its outputs.
+
+    The empty-run guard asked only whether each declared output existed, so a
+    stage that wrote nothing was recorded PASS whenever an old copy sat on
+    disk - every run after the first. That is how the Phase G decomposition
+    came to rest on a lag artifact nobody had refreshed after the index was
+    rebuilt: regenerated from a clean container on 2026-09-13 its survivors
+    changed from three to two while the stacked event study, which reads the
+    index directly, reproduced every number exactly (PAPER_MASTER 8.2).
+
+    Asserted structurally: run_stage records each output's mtime, compares it
+    to the stage's start time, and fails on a stale one. Read by AST so a
+    comment cannot satisfy it.
+    """
+    import ast as _ast
+    f = SCRIPTS / "run_all.py"
+    if not f.exists():
+        return "BLOCKED", "run_all.py is absent"
+    tree = _ast.parse(f.read_text())
+    fact = next((n for n in _ast.walk(tree) if isinstance(n, _ast.FunctionDef)
+                 and n.name == "artifact_fact"), None)
+    stage = next((n for n in _ast.walk(tree) if isinstance(n, _ast.FunctionDef)
+                  and n.name == "run_stage"), None)
+    if fact is None or stage is None:
+        return "FAIL", "run_all.py lacks artifact_fact or run_stage"
+    records_mtime = any(isinstance(n, _ast.Constant) and n.value == "mtime"
+                        for n in _ast.walk(fact))
+    compares = any(isinstance(n, _ast.Compare) and "mtime" in _ast.unparse(n)
+                   and "t0" in _ast.unparse(n) for n in _ast.walk(stage))
+    fails = any(isinstance(n, _ast.Constant) and isinstance(n.value, str)
+                and "did not refresh" in n.value for n in _ast.walk(stage))
+    problems = []
+    if not records_mtime:
+        problems.append("artifact_fact records no mtime")
+    if not compares:
+        problems.append("run_stage never compares an output's mtime to its start time")
+    if not fails:
+        problems.append("run_stage has no 'did not refresh' failure")
+    if problems:
+        return "FAIL", "; ".join(problems)
+    return "PASS", ("run_stage fails a stage whose declared outputs predate its start; "
+                    "a leftover from an earlier run cannot be recorded as this run's product")
+
+
 def x_run_all_stages_declared():
     """X10: every pipeline stage names a script that exists and outputs it writes.
 
@@ -968,17 +1056,25 @@ def x_run_all_stages_declared():
     f = SCRIPTS / "run_all.py"
     if not f.exists():
         return "BLOCKED", "run_all.py is absent"
-    src = f.read_text()
-    stages = re.findall(r"dict\(script=\"([^\"]+)\"(.*?)\n    \),", src, re.S)
+    # Read STAGES from the module itself. The first version parsed the source
+    # with a regex keyed on the indentation of the closing paren, so a stage
+    # formatted differently fell out of the list and was never checked (CP1
+    # audit, 2026-09-13). run_all has no import-time side effects: its work is
+    # under main().
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("_run_all_stages", f)
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+    except Exception as e:                                    # noqa: BLE001
+        return "BLOCKED", f"run_all.py could not be imported: {type(e).__name__}: {e}"
+    stages = [(st["script"], st) for st in getattr(mod, "STAGES", [])]
     if not stages:
-        stages = [(m.group(1), m.group(2)) for m in
-                  re.finditer(r"dict\(script=\"([^\"]+)\"((?:.|\n)*?)note=", src)]
-    if not stages:
-        return "BLOCKED", "could not parse the stage list out of run_all.py"
+        return "BLOCKED", "run_all.STAGES is empty or absent"
 
     missing = [n for n, _ in stages if not (SCRIPTS / n).exists()]
     spaced = [n for n, _ in stages if " " in n]
-    inert = [n for n, body in stages if re.search(r"writes=\[\s*\]", body)]
+    inert = [n for n, st in stages if not st.get("writes")]
     if missing or spaced or inert:
         parts = []
         if missing:
@@ -1146,7 +1242,11 @@ def d_outcome_list_complete():
                 return base
         return name
 
-    on_disk = {base_of(p.name) for p in DATA_PROCESSED.glob("*.parquet")}
+    # EVERY regular file, not only parquet (CP1 audit #43, 2026-09-13): two
+    # orphan .txt summaries with no writer left in the tree sat here unseen,
+    # one a panel summary spanning every year.
+    files = [q for q in DATA_PROCESSED.iterdir() if q.is_file() and q.name != ".gitkeep"]
+    on_disk = {base_of(q.name) for q in files}
     outcome, other = set(OUTCOME_ARTIFACTS), set(NON_OUTCOME_ARTIFACTS)
 
     both = sorted(outcome & other)
@@ -1163,8 +1263,8 @@ def d_outcome_list_complete():
             parts.append(f"{len(both)} artifact(s) are in both lists: {both}")
         return "FAIL", "; ".join(parts)
     missing = sorted((outcome | other) - on_disk)
-    n_files = len(list(DATA_PROCESSED.glob("*.parquet")))
-    return "PASS", (f"{n_files} parquet(s) on disk ({len(on_disk)} distinct base "
+    n_files = len(files)
+    return "PASS", (f"{n_files} file(s) on disk ({len(on_disk)} distinct base "
                     f"artifacts), all classified "
                     f"({len(on_disk & outcome)} outcome, {len(on_disk & other)} not); "
                     f"{len(missing)} listed artifact(s) not built yet")
@@ -3000,7 +3100,7 @@ def e_episodes_labelled():
     the concentration measure E8 needs, so that "this period cannot separate
     individual killings" is a number rather than an assertion.
     """
-    out = []
+    out, attention = [], None
     for basket in ("strict", "broad"):
         f = DATA_REFERENCE / ("confirmation_episodes_rebuilt.csv" if basket == "strict"
                               else f"confirmation_episodes_rebuilt_{basket}.csv")
@@ -3019,6 +3119,29 @@ def e_episodes_labelled():
         if len(bad):
             return "FAIL", (f"{len(bad)} episode(s) carry a top_driver_share outside "
                             "(0, 1], so the share is not a share")
+        # The property, not its proxy (CP1 audit #29, 2026-09-13). label_drivers()
+        # returns a blank label only for a window with NO basket attention, and
+        # an episode is by construction a window with a great deal of it, so the
+        # blank test above cannot fail on a real artifact. What CAN fail is
+        # currency: labels on disk computed from an earlier attention series.
+        # Recompute every label from the series as it stands and require
+        # agreement.
+        if attention is None:
+            sys.path.insert(0, str(SCRIPTS))
+            from attribution import label_drivers as _label, load_attention
+            try:
+                attention = load_attention()
+            except SystemExit as e:
+                return "BLOCKED", f"cannot recompute episode labels: {e}"
+        stale = []
+        for _, r in d.iterrows():
+            lab, share = _label(attention, pd.Timestamp(r["start"]), pd.Timestamp(r["end"]))
+            if lab != str(r["drivers"]) or abs(share - float(r["top_driver_share"])) > 5e-4:
+                stale.append(f"{r['start']}: {str(r['drivers'])[:40]!r} on disk, {lab[:40]!r} now")
+        if stale:
+            return "FAIL", (f"{len(stale)} episode label(s) in {f.name} do not match the "
+                            f"attention series as it stands; re-run 13_extension_episodes.py: "
+                            + "; ".join(stale[:2]))
         out.append(f"{basket}={len(d)}")
     if not out:
         return "BLOCKED", "no episode list on disk — run 13_extension_episodes.py"
@@ -3476,6 +3599,14 @@ def v_no_duplicate_source_ids():
 # each with the reason it is exempt. Matched as substrings of the row.
 EXHIBIT_EXEMPT = {}
 
+# The only words the register may use for severity; "blocking" is the one that
+# obliges a check (M.register_sync).
+SEVERITIES = {"blocking", "moderate", "minor"}
+
+# CP2, line 2: simulations required of every stratum certificate before the
+# freeze may be lifted (S.lift_requires_1000_sims).
+LIFT_MIN_SIMS = 1000
+
 
 def v_claims_cover_exhibits():
     """P6: a number cannot enter a PAPER_MASTER table without a claim behind it.
@@ -3499,17 +3630,28 @@ def v_claims_cover_exhibits():
     only. Tables are where exhibit values live, they are few, they are where a
     reader looks for the result, and they are exactly where the six escaped.
 
-    A row is covered when some claim's template — rendered through the same
-    matcher the verifier and the updater use, so the three cannot disagree about
-    what "the claim is in the document" means — matches it. Rows that are
+    A cell value is covered when some claim's template — rendered through the
+    same matcher the verifier and the updater use, so the three cannot disagree
+    about what "the claim is in the document" means — captures it. Rows that are
     genuinely not claims (units, labels, schematic illustrations) go in
     EXHIBIT_EXEMPT with a reason, which is a decision on the record rather than
     a silent gap.
+
+    A template for a non-first column has to carry the values of the columns
+    before it as literal anchor text ("| C2 | anchor shift | contiguous | 30 |
+    0.06 | {} |"): there is no other way to say which cell is meant. The cost is
+    known and accepted: when a sibling value moves, that claim reports "wording
+    not in the document" rather than a mismatch, and the sibling's own claim
+    reports the mismatch. Both fail, so nothing is hidden.
     """
     import re as _re
-    doc = PROJECT_ROOT / "docs" / "PAPER_MASTER.md"
     reg = PROJECT_ROOT / "docs" / "CLAIMS_REGISTER.csv"
-    if not doc.exists() or not reg.exists():
+    # PAPER_MASTER is the source document; PAPER.md is the manuscript drafted
+    # from it (Phase J, 2026-09-13). A table in either is an exhibit, and the
+    # manuscript is where a number is most likely to be retyped by hand.
+    docs = [PROJECT_ROOT / "docs" / "PAPER_MASTER.md", PROJECT_ROOT / "docs" / "PAPER.md"]
+    docs = [d for d in docs if d.exists()]
+    if not docs or not reg.exists():
         return "BLOCKED", "PAPER_MASTER.md or CLAIMS_REGISTER.csv absent"
     sys.path.insert(0, str(SCRIPTS))
     import importlib.util
@@ -3518,48 +3660,71 @@ def v_claims_cover_exhibits():
     v31 = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(v31)
 
-    claims = pd.read_csv(reg)
-    claims = claims[claims["doc"].astype(str).str.endswith("PAPER_MASTER.md")]
-    pats = []
-    for t in claims["template"].dropna():
-        try:
-            pats.append(_re.compile(v31._template_regex(t)))
-        except _re.error:
-            continue
-
+    all_claims = pd.read_csv(reg)
     NUM = _re.compile(v31.NUMBER_RE)
-    # NUMBER_RE admits hyphens, so "2016-07-08" matches it. A date is a LABEL —
-    # it identifies which day an exhibit is about, it is not a quantity the study
-    # estimated — and flagging every one of them is how this check would become
-    # noise and then be ignored. Excluded by shape, not by allowlist, because
-    # there will be more of them.
+    # CELL BY CELL, not row by row (CP1 audit #27/#28, 2026-09-13). The first
+    # version asked whether ANY claim matched somewhere on the line, so one
+    # claim covered every number in its row: the 7.4 table's rejection rates
+    # rode on the KS claims beside them for months. Now each number token in a
+    # numeric cell must lie INSIDE some claim's captured group. And a cell is
+    # numeric when it STARTS with a number - "1.05x", "2.203 -> 2.092", "1 of
+    # 3,472" and "-0.005 pp" are numbers with decoration, not labels; the old
+    # whole-cell match skipped every one of them.
+    #
+    # Labels are still excluded by SHAPE: ISO dates, and a four-digit year
+    # followed by a dash, an arrow or a slash (a span such as 2015-2024 or
+    # 2017-2022 / 2015-2024). Flagging every date and span is how this check
+    # would become noise and then be ignored.
     ISO_DATE = _re.compile(r"\d{4}-\d{2}-\d{2}")
-    uncovered = []
-    for i, line in enumerate(doc.read_text().splitlines(), 1):
-        t = line.strip()
-        if not (t.startswith("|") and t.endswith("|") and t.count("|") >= 3):
-            continue
-        cells = [c.strip() for c in t.strip("|").split("|")]
-        if all(set(c) <= set("-: ") for c in cells):      # separator row
-            continue
-        # A cell that IS a number, not one that merely contains a digit: "2016-07-08"
-        # and "day -1" are labels, and flagging them is how this check would die.
-        numeric = [c for c in cells
-                   if (v := c.replace("*", "").replace("~", "").strip())
-                   and NUM.fullmatch(v) and not ISO_DATE.fullmatch(v)]
-        if not numeric:
-            continue
-        if any(r.search(line) for r in pats):
-            continue
-        if any(k in line for k in EXHIBIT_EXEMPT):
-            continue
-        uncovered.append(f"{doc.name}:{i}: {t[:70]}")
+
+    def label_like(rest, m):
+        return bool(ISO_DATE.match(rest)) or bool(
+            _re.fullmatch(r"\d{4}", m.group()) and rest[m.end():m.end() + 1] in "\u2013-\u2192/")
+
+    uncovered, n_cells, n_tokens, n_pats = [], 0, 0, 0
+    for doc in docs:
+      claims = all_claims[all_claims["doc"].astype(str).str.endswith(doc.name)]
+      pats = []
+      for t in claims["template"].dropna():
+          try:
+              pats.append(_re.compile(v31._template_regex(t)))
+          except _re.error:
+              continue
+      n_pats += len(pats)
+      for i, line in enumerate(doc.read_text().splitlines(), 1):
+          t = line.strip()
+          if not (t.startswith("|") and t.endswith("|") and t.count("|") >= 3):
+              continue
+          cells = t.strip("|").split("|")
+          if all(set(c.strip()) <= set("-: ") for c in cells):      # separator row
+              continue
+          covered_spans = [m.span(1) for r in pats for m in r.finditer(line)]
+          pos = line.index("|")
+          for c in cells:
+              cs, pos = pos + 1, pos + 1 + len(c)
+              v = c.replace("*", "").replace("~", "").strip()
+              first = v.split()[0] if v.split() else ""
+              m0 = NUM.match(first) if first else None
+              if not m0 or label_like(first, m0):
+                  continue
+              n_cells += 1
+              for m in NUM.finditer(c):
+                  if label_like(c[m.start():], NUM.match(c[m.start():])):
+                      continue
+                  n_tokens += 1
+                  a_, b_ = cs + m.start(), cs + m.end()
+                  if any(s0 <= a_ and b_ <= e0 for s0, e0 in covered_spans):
+                      continue
+                  if any(k in line for k in EXHIBIT_EXEMPT):
+                      continue
+                  uncovered.append(f"{doc.name}:{i}: {m.group()} in {c.strip()[:40]!r}")
 
     if uncovered:
-        return "FAIL", (f"{len(uncovered)} table row(s) carry a number with no claim "
+        return "FAIL", (f"{len(uncovered)} table cell value(s) carry a number with no claim "
                         f"reproducing it: " + "; ".join(uncovered[:3]))
-    return "PASS", (f"every numeric table row in PAPER_MASTER.md is reproduced by one of "
-                    f"{len(pats)} claims, or exempt with a reason ({len(EXHIBIT_EXEMPT)})")
+    return "PASS", (f"every one of {n_tokens} numbers in {n_cells} numeric table cells of "
+                    f"{', '.join(d.name for d in docs)} is reproduced by one of {n_pats} claims, "
+                    f"or exempt with a reason ({len(EXHIBIT_EXEMPT)})")
 
 
 def v_claims_reproduce():
@@ -3766,24 +3931,57 @@ def m_finding_ids_unique():
 
 
 def m_register_sync():
-    """Every tag resolves to a finding, and every blocking finding has a check.
+    """Every tag resolves to a finding, every blocking finding has a check, the
+    register's `checks` column says what the suite says, and severity is one of
+    three words.
 
     Without this, a finding can be silently dropped from the register or a check
     can be tagged with an ID that no longer exists, and coverage looks fine while
     the defect goes untested. That is the same "couldn't check reads as fine"
     failure the suite exists to prevent, applied to the suite itself.
+
+    The last two clauses are from the CP1 audit (2026-09-13). Ten findings named
+    a different check in the register than the suite tagged them with (RI2 said
+    S.ri_scheme_certified, which never tested it; the suite said
+    S.calibration_can_fail, which does), so M.status_honest - which reads the
+    REGISTER's column - was judging some findings by the wrong check. And
+    severity had five spellings, two of which ("major", "serious") escaped the
+    rule that a blocking finding must have a check.
     """
     reg = pd.read_csv(PROJECT_ROOT / "docs" / "AUDIT_FINDINGS.csv")
-    known = set(reg["id"])
-    tagged = {f.strip() for _, fids, _, _ in CHECKS for f in fids.split(",")}
+    known = set(reg["id"].astype(str))
+    tags = {}
+    for name, fids, _, _ in CHECKS:
+        for f in fids.split(","):
+            tags.setdefault(f.strip(), set()).add(name)
+    names = {c[0] for c in CHECKS}
+    tagged = set(tags)
     unknown = sorted(tagged - known)
-    blocking = set(reg.loc[reg["severity"] == "blocking", "id"])
+    blocking = set(reg.loc[reg["severity"] == "blocking", "id"].astype(str))
     uncovered = sorted(blocking - tagged)
+    bad_sev = sorted(set(reg["severity"].astype(str)) - SEVERITIES)
+    drift = []
+    for _, r in reg.iterrows():
+        declared = {c.strip() for c in re.split(r"[;,]", str(r.get("checks") or ""))
+                    if c.strip() and c.strip() != "nan"}
+        suite = tags.get(str(r["id"]), set())
+        if declared - names:
+            drift.append(f"{r['id']} names a check that does not exist: "
+                         f"{sorted(declared - names)}")
+        elif declared != suite:
+            drift.append(f"{r['id']}: register says {sorted(declared) or '-'}, "
+                         f"suite tags {sorted(suite) or '-'}")
     if unknown:
         return "FAIL", f"tags with no finding: {unknown}"
     if uncovered:
         return "FAIL", f"blocking findings with no check: {uncovered}"
-    return "PASS", f"{len(tagged)}/{len(known)} findings tagged; all {len(blocking)} blocking covered"
+    if bad_sev:
+        return "FAIL", f"severity outside {sorted(SEVERITIES)}: {bad_sev}"
+    if drift:
+        return "FAIL", (f"{len(drift)} finding(s) whose register `checks` column disagrees "
+                        f"with the suite's tags: " + "; ".join(drift[:3]))
+    return "PASS", (f"{len(tagged)}/{len(known)} findings tagged; all {len(blocking)} "
+                    f"blocking covered; register and suite agree on every finding")
 
 
 # ===========================================================================
@@ -4045,7 +4243,8 @@ CHECKS = [
     ("S.calibration_can_fail", "S4,X3,R3,RI2", "calibration verdict can fail", s_calibration_can_fail),
     ("S.no_stale_calibration", "R3", "no stale low-n calibration artifact", s_stale_calibration_artifact),
     ("S.calibration_on_residual", "S8", "synthetic null has this design's dependence, not a harder one", s_calibration_on_residual),
-    ("S.ri_scheme_certified", "P1,P5,RI3", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
+    ("S.ri_scheme_certified", "P1,P5,RI3,P12", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
+    ("S.lift_requires_1000_sims", "P11", "the freeze lifts only on 1000-sim certificates for every stratum", s_lift_requires_1000_sims),
     ("S.draw_scheme_total", "N5", "every draw scheme is dispatched explicitly, none by fallback", s_draw_scheme_total),
     ("S.ri_pvalue_form", "RI1", "randomization p-values use the (1+k)/(1+n) form", s_ri_pvalue_form),
     ("S.calibration_writes_stratified", "P5,D1,N4", "every calibration output names the stratum it describes", s_calibration_writes_stratified),
@@ -4064,7 +4263,7 @@ CHECKS = [
     ("D.incident_disclosed", "F1,F2,F3", "every freeze incident stays in the record", d_incident_disclosed),
     ("D.addendum_complete", "E5,E6,F2", "pre-registration text untouched and its addendum exists", d_addendum_complete),
     ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),
-    ("D.declared_access_scoped", "O2", "every read of confirmation outcomes is declared, scoped, logged and disclosed", d_declared_access_scoped),
+    ("D.declared_access_scoped", "O2,F3", "every read of confirmation outcomes is declared, scoped, logged and disclosed", d_declared_access_scoped),
     ("E.episodes_labelled", "E7,E8", "every episode says what drove it, from the treatment series", e_episodes_labelled),
     ("E.threshold_stringency", "D5,L5,E6", "episode threshold is constant stringency", e_threshold_constant_stringency),
     ("E.no_mega_episode", "E3,D7,E6", "no episode exceeds its analysis window", e_no_mega_episode),
@@ -4077,13 +4276,14 @@ CHECKS = [
     ("O.panel_exists", "O5", "panel_cd_day.parquet exists", o_panel_exists),
     ("O.dropna_groupby", "O4", "missing-district rows not silently dropped", o_dropna_groupby),
     ("V.artifacts_current", "T14", "no artifact predates the script that writes it", v_artifacts_current),
-    ("V.sources_verified", "X8,X14", "every source verified after its last write", v_sources_verified),
+    ("V.sources_verified", "X8,X14,X16", "every source verified after its last write", v_sources_verified),
     ("V.no_duplicate_source_ids", "X8,X13", "one row per source id, no collisions", v_no_duplicate_source_ids),
     ("V.source_id_per_artifact", "P3,P4", "a source id never gets repointed at a different artifact", v_source_id_per_artifact),
     ("V.claims_reproduce", "X14", "every claimed number recomputes from its artifact", v_claims_reproduce),
     ("V.claims_cover_exhibits", "P6", "no number enters a paper table without a claim behind it", v_claims_cover_exhibits),
     ("V.links_resolve", "X14", "every endpoint has a dated result", v_links_resolve),
     ("X.run_all_stages_declared", "X10", "every pipeline stage exists and declares its outputs", x_run_all_stages_declared),
+    ("X.run_all_refresh_guard", "X18", "a stage that leaves its outputs unrefreshed fails", x_run_all_refresh_guard),
     ("M.status_honest", "O5", "no finding is recorded fixed without a passing check", m_status_honest),
     ("M.finding_ids_unique", "RI4", "every finding id addresses exactly one row", m_finding_ids_unique),
     ("M.register_sync", "O5", "register and suite have not drifted apart", m_register_sync),

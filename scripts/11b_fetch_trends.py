@@ -176,6 +176,10 @@ out.to_csv(path, index=False)
 # chain applied is inspectable, so a future break can be traced to its boundary.
 diag = pd.DataFrame(diagnostics)
 diag.to_csv(DATA_REFERENCE / "cai_trends_stitch_diagnostics.csv", index=False)
+# Had no provenance row of its own (CP1 audit #58, 2026-09-13); registered here on
+# the next fetch. Until then the current bytes are pinned in source_register.json.
+log_source("S12b", "Google Trends stitch diagnostics (per-window overlap scaling behind cai_trends_daily)",
+           "https://trends.google.com/trends/api", out_file=DATA_REFERENCE / "cai_trends_stitch_diagnostics.csv")
 print(f"\nstitch links: {len(diag)} boundaries, "
       f"scale range {diag['scale'].min():.3f}-{diag['scale'].max():.3f}, "
       f"min r2 {diag['r2'].min():.3f}")

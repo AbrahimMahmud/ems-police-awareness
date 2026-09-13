@@ -37,7 +37,7 @@ S.prewindow_truncation,"S5,E4","contested district-days reassigned, not deleted"
 S.calibration_can_fail,"S4,X3,R3",calibration verdict can fail,PASS,min-n enforced + uniformity test
 S.no_stale_calibration,R3,no stale low-n calibration artifact,PASS,"n_sims=200, VERDICT=CALIBRATED"
 S.calibration_on_residual,S8,"synthetic null has this design's dependence, not a harder one",PASS,"ar1_rho=0.0482 matches the residual 0.0482 (gap 0.0000) and not the level 0.1851, which is the S8 defect the null used to carry"
-S.ri_scheme_certified,"P1,P5,RI3",the randomization null used is the one the calibration certifies,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+S.ri_scheme_certified,"P1,P5,RI3,P12",the randomization null used is the one the calibration certifies,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 S.draw_scheme_total,N5,"every draw scheme is dispatched explicitly, none by fallback",PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 S.ri_pvalue_form,RI1,randomization p-values use the (1+k)/(1+n) form,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 S.calibration_writes_stratified,"P5,D1,N4",every calibration output names the stratum it describes,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
@@ -79,3 +79,5 @@ X.run_all_stages_declared,X10,every pipeline stage exists and declares its outpu
 M.status_honest,O5,no finding is recorded fixed without a passing check,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 M.finding_ids_unique,RI4,every finding id addresses exactly one row,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 M.register_sync,O5,register and suite have not drifted apart,PASS,69/77 findings tagged; all 43 blocking covered
+S.lift_requires_1000_sims,P11,the freeze lifts only on 1000-sim certificates for every stratum,PASS,"freeze on; certificates discovery=200/CALIBRATED, C1=200/CALIBRATED, C2=0/absent; lift requires >= 1000 sims on all three (3 short)"
+X.run_all_refresh_guard,X18,a stage that leaves its outputs unrefreshed fails,PASS,run_stage fails a stage whose declared outputs predate its start; a leftover from an earlier run cannot be recorded as this run's product

@@ -219,7 +219,8 @@ def artifact_fact(rel):
     p = PROJECT_ROOT / rel
     if not p.exists():
         return {"path": rel, "exists": False}
-    fact = {"path": rel, "exists": True, "bytes": p.stat().st_size, "sha256": sha256(p)}
+    fact = {"path": rel, "exists": True, "bytes": p.stat().st_size, "sha256": sha256(p),
+            "mtime": p.stat().st_mtime}
     try:
         if p.suffix == ".parquet":
             import pyarrow.parquet as pq
@@ -268,8 +269,17 @@ def run_stage(st, timeout):
 
     outputs = [artifact_fact(w) for w in st["writes"]]
     unwritten = [o["path"] for o in outputs if not o["exists"]]
+    # An output that exists but predates this stage's start is a LEFTOVER from
+    # some earlier run, not this run's product. The first version of this guard
+    # asked only whether the file existed, so a stage that exited 0 having
+    # written nothing was recorded as PASS whenever an old copy sat on disk -
+    # which is every run after the first (CP1 audit, 2026-09-13).
+    stale = [o["path"] for o in outputs if o["exists"] and o.get("mtime", 0) < t0]
     if rc == 0 and unwritten:
         state, detail = "FAIL", f"exited 0 but did not write: {unwritten}"
+    elif rc == 0 and stale:
+        state, detail = "FAIL", (f"exited 0 but did not refresh (left over from an "
+                                 f"earlier run): {stale}")
     elif rc == 0:
         state, detail = "PASS", ""
     else:

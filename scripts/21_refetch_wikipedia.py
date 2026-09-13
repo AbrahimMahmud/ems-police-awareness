@@ -30,7 +30,7 @@ script can be interrupted and restarted without re-hitting the API.
 
 Outputs:
   data/reference/wikipedia_pageviews_victims.csv    per-victim daily, summed
-  data/reference/wikipedia_article_resolution.csv   updated with every title used
+  data/reference/wikipedia_article_resolution_legacy.csv   the 09 name table, every title used
   data/reference/cai_components_daily.csv           wiki_ext recomputed
   outputs/tables/wiki_refetch_report.csv            per-victim before/after
 """
@@ -94,7 +94,7 @@ def pageviews(article):
     return items
 
 
-res = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv")
+res = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution_legacy.csv")  # the 09 table, not the published basket
 old_pv = pd.read_csv(DATA_REFERENCE / "wikipedia_pageviews_victims.csv", parse_dates=["date"])
 old_tot = old_pv.groupby("name")["views"].sum()
 

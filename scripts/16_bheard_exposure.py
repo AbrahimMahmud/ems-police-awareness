@@ -196,6 +196,10 @@ def main():
 
     steps = build_exposure(xwalk, adoption)
     steps.to_csv(EXPOSURE_CSV, index=False)
+    # Had no provenance row of its own (CP1 audit #58, 2026-09-13).
+    log_source("S15b", "B-HEARD community-district exposure steps (precinct crosswalk x "
+                       "adoption schedule; early and late bounds)",
+               "https://mentalhealth.cityofnewyork.us/b-heard", out_file=EXPOSURE_CSV)
     print(f"\nExposure step table: {len(steps)} rows "
           f"({steps['communitydistrict'].nunique()} CDs x 2 bounds)")
 

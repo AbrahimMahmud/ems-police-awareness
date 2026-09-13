@@ -299,6 +299,8 @@ from scipy import stats
 from scipy.optimize import brentq
 
 from config import (
+    MIN_SIMS_FOR_VERDICT,
+    NOMINAL_ALPHA,
     BHEARD_LAUNCH,
     CONFIRMATION_WINDOWS,
     DATA_PROCESSED,
@@ -330,9 +332,9 @@ from freeze_guard import freeze_banner, select_sample
 # tunable gate threshold or a tunable minimum sim count is a gate that the next
 # person under time pressure turns off (findings S4, X3, R3).
 # ---------------------------------------------------------------------------
-MIN_SIMS = 200              # completed sims below which no verdict is issued
+MIN_SIMS = MIN_SIMS_FOR_VERDICT   # rule E1.6, defined once in config (shared with 18)
 TARGET_POWER = 0.80
-ALPHA = 0.05
+ALPHA = NOMINAL_ALPHA
 FIRST_WEEK = tuple(range(0, 8))
 GATE_TOL_LOG = 0.15         # |log(mde_mc / mde_analytic)| the two routes may differ by
 
@@ -1243,7 +1245,18 @@ if vc is None:
     rows.append({"metric": "undetermined_reason",
                  "value": f"no {args.outcome} in panel_cd_day.parquet; "
                           "every noise component must be MEASURED (E1.5)"})
-    pd.DataFrame(rows).to_csv(OUTPUTS_TABLES / "power_analysis.csv", index=False)
+    # The no-downgrade rule applies on this path too. This early exit used to
+    # write power_analysis.csv unconditionally, so a run on a machine without
+    # the panel would have replaced a full 200-sim artifact with UNDETERMINED
+    # (CP1 audit, 2026-09-13). The record goes to the n0 sidecar; the main
+    # artifact is written only when there is nothing to downgrade.
+    _main = OUTPUTS_TABLES / "power_analysis.csv"
+    pd.DataFrame(rows).to_csv(OUTPUTS_TABLES / "power_analysis_n0.csv", index=False)
+    if _main.exists():
+        print(f"REFUSING TO PUBLISH: {_main.name} is on disk and this run measured "
+              "nothing; its record is power_analysis_n0.csv")
+    else:
+        pd.DataFrame(rows).to_csv(_main, index=False)
     print("UNDETERMINED — the discovery panel is not available, so the noise "
           "structure cannot be measured. This run refuses to assume one.")
     raise SystemExit(2)

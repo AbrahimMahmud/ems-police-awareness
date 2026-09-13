@@ -66,6 +66,8 @@ import pandas as pd
 from scipy import stats
 
 from config import (
+    MIN_SIMS_FOR_VERDICT,
+    NOMINAL_ALPHA,
     DISCOVERY_END,
     DISCOVERY_START,
     CONFIRMATION_ANALYSIS_WINDOWS,
@@ -87,12 +89,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--sims", type=int, default=200, help="synthetic panels to test")
 parser.add_argument("--draws", type=int, default=200, help="RI draws within each sim")
 parser.add_argument("--rho", type=float, default=0.6, help="AR(1) used if no real panel")
-parser.add_argument("--alpha", type=float, default=0.05)
+parser.add_argument("--alpha", type=float, default=NOMINAL_ALPHA)
 parser.add_argument("--day-shock", type=float, default=None,
                     help="citywide day shock SD as a fraction of sigma; default is "
                          "MEASURED from the panel (finding S6, S8)")
 parser.add_argument("--stratum", default="discovery",
-                    choices=["discovery", "C1", "C2"],
+                    choices=["discovery", "C1", "C2", "pooled"],
                     help="which stratum's episode geometry to calibrate. A verdict "
                          "is a statement about ONE geometry and one draw scheme "
                          "(finding P1); it does not transfer between them.")
@@ -117,6 +119,12 @@ STRATUM_WINDOWS = {
     "discovery": [(DISCOVERY_START, DISCOVERY_END)],
     "C1": [CONFIRMATION_ANALYSIS_WINDOWS[0], CONFIRMATION_ANALYSIS_WINDOWS[1]],
     "C2": [CONFIRMATION_ANALYSIS_WINDOWS[2]],
+    # The pooled stratum 30 reports (C1 + C2) is a THREE-window geometry. Its
+    # p-values used to rest on C1's and C2's certificates, neither of which
+    # describes a three-block within-block shift over 45 episodes (found
+    # 2026-09-13 while preparing CP2). It is descriptive and outside the
+    # primary family, but a p-value on an uncertified null is not a p-value.
+    "pooled": list(CONFIRMATION_ANALYSIS_WINDOWS),
 }[args.stratum]
 dates = pd.DatetimeIndex([])
 for _a, _b in STRATUM_WINDOWS:
@@ -206,7 +214,7 @@ def _strat(stem, ext="csv"):
     return OUTPUTS_TABLES / f"{stem}{tag}.{ext}"
 
 
-MIN_SIMS = 200          # below this the verdict is "UNDETERMINED", never a pass
+MIN_SIMS = MIN_SIMS_FOR_VERDICT   # rule E1.6, defined once in config; below it: UNDETERMINED, never a pass
 
 dow = np.array([d.dayofweek for d in dates])
 dow_effect = rng.normal(0, sigma * dow_scale, 7)

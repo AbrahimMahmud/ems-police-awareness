@@ -49,9 +49,10 @@ historical record of the previous session and is kept for its reasoning.**
 | Environment, the rule | **Compute advances only while a session is active.** The container is suspended or reset when the session is idle (a 4-hour usage-limit pause advanced the ledger by zero rows; it came back with `up 1 min` and an empty process table). Every long job is checkpointed and driven by the runners in `ops/`, which are relaunched blind after any restart. Poll by PID file, never `pgrep -f`. |
 | Decisions (user, 2026-09-13) | **Continue to Phase I** as pre-registered, with the reading of a non-rejection fixed against the measured power (addendum §19). Branch stays `analysis-rework`, no attribution. **O2 diagnostic: disclosed first, then run** as a declared access (addendum §18; done). Deliverable: a Markdown manuscript in the repo. |
 | CP1 | **Done as an adversarial audit** (8 finders by failure class, 3-lens refutation where the usage limit allowed): 60 raw findings, of which the confirmed and self-verified ones are filed as O2-close, X16, N7–N10, X17, P8–P10 and the pending items in remediation groups A–E below. |
-| Gate | 80 checks: 77 PASS, 1 BLOCKED, 2 FAIL, run twice with identical results. Every non-PASS is artifact-pending in this container: `S.ri_scheme_certified` BLOCKED until C2's certificate regenerates (C1's landed 08:08Z and satisfies it), `V.claims_reproduce` (26 of 128 absent, 4 reading the 2-draw smoke estimator until the 500-draw run lands) and `M.status_honest` (X14, tagged to it). `main()` reports an unbaselined check as a failing condition; the baseline covers every check. |
-| Findings | 102: 99 fixed, 0 open, 3 unverified (P1, P5, RI3). **C1 certified 2026-09-13** under `circular_within_block`, 200 × 200: rejection 0.04, KS D 0.083, lattice p 0.1229, median p 0.4776, CALIBRATED — but their check covers both confirmation strata, so they stay unverified until C2's certificate regenerates here and the check passes. |
-| Claims | 128 registered. C1's §7.4 row and prose are re-registered as C65, C66, C128–C131 and verify. Claims on regenerated artifacts (the C2 rows, §8 p-values, decomposition, power) re-establish as the chain writes them and are read from the artifact, never "fixed" to the old numbers. |
+| Gate | 82 checks (S.lift_requires_1000_sims and X.run_all_refresh_guard added 2026-09-13): 77 PASS, 1 BLOCKED, 2 FAIL before the re-stamp finishes, run twice with identical results. Every non-PASS is artifact-pending in this container: `S.ri_scheme_certified` BLOCKED until C2's certificate regenerates (C1's landed 08:08Z and satisfies it), `V.claims_reproduce` (26 of 128 absent, 4 reading the 2-draw smoke estimator until the 500-draw run lands) and `M.status_honest` (X14, tagged to it). `main()` reports an unbaselined check as a failing condition; the baseline covers every check. |
+| Findings | 105: 105 fixed, 0 open, 0 unverified. P1, P5, RI3 and P12 closed 2026-09-13 ~12:20Z when `S.ri_scheme_certified` passed on all four strata (C2 regenerated: rejection 0.05, KS p 0.4838; pooled: 45 episodes, 0.03, 0.5127). **C1 certified 2026-09-13** under `circular_within_block`, 200 × 200: rejection 0.04, KS D 0.083, lattice p 0.1229, median p 0.4776, CALIBRATED — but their check covers both confirmation strata, so they stay unverified until C2's certificate regenerates here and the check passes. |
+| Claims | 204 registered. C1's §7.4 row and prose are re-registered as C65, C66, C128–C131 and verify; C132–C149 close the cell-level exhibit coverage. Claims on regenerated artifacts (the C2 rows, §8 p-values, decomposition, power) re-establish as the chain writes them and are read from the artifact, never "fixed" to the old numbers. |
+| Manuscript | `docs/PAPER.md` started 2026-09-13 in the PAPER_PLAN drafting order: Introduction, Methods (with the deviations subsection), Limitations, display-item list, RECORD table and references are drafted; Abstract, confirmatory Results and Discussion are marked **PHASE I PENDING**. Every number in it is registered: C150–C187 address PAPER.md directly (design counts, panel moments, discovery estimates, MDE ratios) and verify except where the artifact is still regenerating; `V.claims_cover_exhibits` scans PAPER.md's tables as well as PAPER_MASTER's. Unsourced figures found by a prose sweep (district population range, the 184-day regime episode, the fixed-threshold selection range, the F3-derived 0.0002) were removed rather than registered. |
 
 ### What the CP1 audit found that changes Phase I
 
@@ -66,10 +67,12 @@ historical record of the previous session and is kept for its reasoning.**
 - **A — freeze exposures: done.** F3 disclosed (addendum §15, PAPER_MASTER §5.3, register row tagged to `D.incident_disclosed`, which now names every F-finding); `check_claim` filters outcome artifacts to the discovery window before eval; footer-only `realised()`; 00b prints counts only; 22's `check_episodes` uses `select_sample`; `ems_pages` is a raw outcome directory for coverage; `D.guard_coverage`, `D.soda_guarded`, `S.calibration_can_fail`, `X.bheard_wired` and `D.declared_access_scoped` are AST-based.
 - **B — confirmatory script: done** (`S.confirmatory_uses_certified_machinery`; synthetic dry run 105 rows, exit 0, sidecar stamped).
 - **C — ledger identity: done** (`S.ledger_identity`).
-- **D — gate integrity: part done.** Done: unbaselined/retired checks fail `main()`; a template without exactly one `{}` is `malformed`; `M.status_honest` first-run BLOCKED; `V.sources_verified` compares hashes not mtimes; arm suffixes collapse over `config.ARMS`. Remaining: cell-level exhibit coverage incl. unit/arrow cells; U+2212 in `_template_regex`/`NUMBER_RE`; templates embedding sibling values; register `checks` column vs CHECKS tags and severity vocabulary; `source_register.json` vs `data_sources.csv` ids and `check_artifact` 'verified' with no row; run_all stale-output PASS; 19's early-exit bypass of no-downgrade; `X.run_all_stages_declared` regex; `E.episodes_labelled` tautology; duplicate constants; 09 clobbering `wikipedia_article_resolution.csv`; `fetch_leads` truncation materiality; non-parquet legacy files in `data/processed`.
+- **D — gate integrity: done (2026-09-13 ~09:00Z).** Unbaselined/retired checks fail `main()`; a template without exactly one `{}` is `malformed`; `M.status_honest` first-run BLOCKED; `V.sources_verified` compares hashes; arm suffixes collapse over `config.ARMS`. **Cell-level exhibit coverage**: `V.claims_cover_exhibits` now requires every number in every numeric table cell of PAPER_MASTER (cells that start with a number, decoration included: `1.05×`, `2.203 → 2.092`, `1 of 3,472`) to sit inside a claim's captured group — 57 numbers in 52 cells, 0 exemptions, claims C132–C149 added (the §7.4 rejection rates, the §3 counts, the anti-police rank cells, the z-score multiplier table via a fresh `25_zscore_simulation.py` run, the O2 code counts, the strict-arm cells). U+2212 in `NUMBER_RE` and `_template_regex` (either minus, never the en dash); the updater keeps the document's typography. `M.register_sync` requires the register's `checks` column to equal the suite's tags for every finding and a three-word severity vocabulary — 10 rows reconciled (RI2 and N5 had named a check that never tested them), `major`/`serious` normalised to `blocking` (64 blocking, all covered). `X.run_all_stages_declared` imports `STAGES` instead of regex-parsing the source. `E.episodes_labelled` recomputes every driver label from the attention series (the blank test could not fail). `D.outcome_list_complete` enumerates every file in `data/processed` (two orphan `.txt` summaries with no writer deleted). run_all fails a stage that exits 0 without refreshing its declared outputs. 19's early UNDETERMINED exit honours no-downgrade. `MIN_SIMS_FOR_VERDICT` and `NOMINAL_ALPHA` defined once in config for 18 and 19. 09 writes `wikipedia_article_resolution_legacy.csv` and 10/21 read it, so a fetch can no longer overwrite the published basket; 32 registers the basket it publishes (D7). `31` reports an artifact with no provenance row as `unregistered` instead of "verified" — ten were: 00b, 11 (all arms) and 16 now register every file they write (S1c, S1d, S11a–c, S15b); 28 and 29 were re-fetched live to register theirs and **upstream had moved** (one more article with a historical title, 533 titles against 530, more recovered views), which would have changed the frozen treatment input `article_title_map.csv` — so the fetch was reverted to the committed bytes, the code edits with it, and the three side files stay pinned until a deliberate treatment rebuild; the two committed inputs (S5, S6) and the Trends stitch diagnostic (S12; 11b registers it as S12b next fetch) are pinned. `fetch_leads`' first-sentence cut measured **immaterial and correct**: on the full intro 2 of 13 unestablished articles would flip to police_violence — McGlockton and Scurlock, both civilian killings whose intros name the investigating agency.
 - **E — documents: done** except the numbers that the chain regenerates (§7.4 C2 row, §7.5b power, §8 p-values), which re-establish from artifacts.
 - **L7 spliced arm: done** (addendum §20; 11 → 12 → 13 under `--arm spliced`; identical on all 1,764 pre-break days, differs on 1,708 of 1,708 post-break days, `T.spliced_arm_prebreak_identical`; §5.1a; C122–C127).
-- **Rebuild chain (ops/rebuild.sh), in flight:** 500-draw discovery estimator → 05, 03, 04, 06, 07, 08, 33 → C2 calibration → 19 power; then `ops/calib1000.sh` (1000 sims × 3 strata). Progress: `wc -l outputs/tables/ri_ledger_*.csv`, `outputs/tables/null_calibration_ledger_d200_C2.csv`.
+- **Container restart during a usage-limit pause (10:18Z–12:11Z)** killed `19_power.py` mid-run and both runners; relaunched 12:14Z from their state files (calib_C2 skipped as done, power19 restarted). The rule stands: compute advances only while the session is active.
+- **Rebuild chain (ops/rebuild.sh), in flight:** the 500-draw discovery estimator finished 09:00Z and **reproduced every §8 number exactly** in this fresh container (coefficients −0.00123/−0.01084/−0.00103/−0.00615, randomization p 0.695/0.519/0.880/0.826) → 05, 03, 04, 06, 07, 08, 33 → C2 calibration → 19 power; then `ops/calib1000.sh` (1000 sims × 3 strata). Alongside: `18 --stratum pooled --sims 200` (new, P12) and the re-stamp of 30's synthetic dry run after the pooled-certificate edit.
+- **Two CP2 gaps found while preparing the checklist (2026-09-13):** nothing enforced the 1,000-sim requirement at the lift (P11 → `S.lift_requires_1000_sims`), and the pooled stratum's p-values rested on C1's and C2's certificates with no calibration of its own three-window geometry (P12 → `18 --stratum pooled`, `STRATUM_CALIBRATION["pooled"] = ("pooled",)`, addendum §22).
 - **Then CP2** (checklist below, plus: 1000-sim certificates on all three strata; planted-effect recovery; run_all clean twice from cold; B-HEARD inert; final adversarial audit of the specification) → `FREEZE_ACTIVE = False` in one commit → **Phase I** → **Phase J** (`docs/PAPER.md`).
 
 ## Status as of 2026-09-12 16:15Z — Phases A–E done, F part-done, all three strata calibrated (historical)
@@ -810,27 +813,52 @@ precisely bounded null. A real ending, not a failure mode.
 
 All must hold **before** `FREEZE_ACTIVE = False`.
 
+*Status column added 2026-09-13; each tick names the evidence.*
+
 - [ ] Every check PASS. No FAIL, no BLOCKED, no ERROR. Baseline refreshed.
+      *(80 checks; the non-PASS ones are pending the regenerating artifacts —
+      C2's certificate, the 500-draw estimator, decomposition, power.)*
 - [ ] Calibration passes KS uniformity at ≥1000 sims **on all three strata**,
       against the **lattice** rather than a continuous uniform, after C1's scheme
-      is replaced with the within-block shift. Requires the resumable
-      calibration (N4) to be reachable at all in this environment.
-- [ ] Estimator recovers a planted effect; **RI p uses the (1+k)/(1+n) form** —
-      currently it does not, and p = 0 appears in every stratum's artifact.
+      is replaced with the within-block shift. *(200-sim certificates: discovery
+      0.05/0.7516, C1 within-block 0.04/0.1229; C2 regenerating. The 1000-sim
+      runs are `ops/calib1000.sh`, queued behind the rebuild chain.
+      `S.lift_requires_1000_sims` fails the suite if `FREEZE_ACTIVE` is False
+      on any certificate below 1,000 sims — added 2026-09-13, finding P11.)*
+- [x] Estimator recovers a planted effect; **RI p uses the (1+k)/(1+n) form**.
+      *(`S.ri_pvalue_form` — one implementation, the form asserted;
+      `S.dose_arm_wired` and the PPML check recover planted effects; 19 measures
+      recovery of the planted −0.005 profile per stratum.)*
 - [x] 17 refuses to report an RI p-value on an uncalibrated null, per stratum,
-      and a cheap run cannot overwrite an expensive result *(done, `5fd53f3`)*.
+      and a cheap run cannot overwrite an expensive result *(done, `5fd53f3`;
+      `S.estimators_gate_on_calibration`, `S.no_downgrade`)*.
 - [ ] `run_all.py` clean twice from cold; manifest committed; model stages
-      declare their outputs so the empty-run guard is live.
-- [ ] Adding B-HEARD leaves discovery numerically unchanged.
+      declare their outputs so the empty-run guard is live. *(Guard live and now
+      also fails a stage that leaves its outputs unrefreshed; the two cold runs
+      follow the rebuild chain so they do not compete with it for CPU.)*
+- [x] Adding B-HEARD leaves discovery numerically unchanged.
+      *(`X.bheard_wired` refits with and without the control and requires every
+      coefficient identical; the control is in the formula since `10256d4`.)*
 - [ ] Power reports an MDE per stratum against the MEI of **−0.005**; the
-      MDE-to-MEI ratio and the go/no-go are recorded as claims.
-- [ ] `CONFIRMATION_PLAN.md` addendum committed **first**.
-- [ ] `30_confirmatory_run.py` committed and dry-run on synthetic outcomes.
-- [ ] Interpretation rules and the multiple-testing correction pre-committed.
-- [ ] Basket construct review complete: every included article carries a positive
-      law-enforcement signal, or a recorded reason.
-- [ ] `PAPER_MASTER.md` current through Phase H.
+      MDE-to-MEI ratio and the go/no-go are recorded as claims. *(C97–C106
+      registered; 19 re-runs on the corrected C1 calendar as the chain's last
+      step and C100–C102 re-register if they move.)*
+- [x] `CONFIRMATION_PLAN.md` addendum committed **first** *(§15–§21, through
+      `ed8a883`)*.
+- [x] `30_confirmatory_run.py` committed and dry-run on synthetic outcomes
+      *(105 rows, exit 0, stamped sidecar; `S.confirmatory_uses_certified_machinery`)*.
+- [x] Interpretation rules and the multiple-testing correction pre-committed
+      *(addendum §19 fixes the reading of a non-rejection against the pre-freeze
+      MDE; the family and correction are PAN §6–§10 and are not changed by it)*.
+- [x] Basket construct review complete: every included article carries a positive
+      law-enforcement signal, or a recorded reason *(`T.basket_is_police_violence`;
+      `fetch_leads` first-sentence rule measured correct, 2026-09-13)*.
+- [x] `PAPER_MASTER.md` current through Phase H *(§7.4 all three strata, §7.5b
+      power, §8.1 bounded null, §5.3 three incidents; cell-level exhibit coverage
+      holds it to its claims)*.
 - [ ] A final adversarial audit of the **specification**, not the code.
+      *(Runs once the power artifact is regenerated, so the reading rules can be
+      audited against the numbers they cite.)*
 
 **Then, and only then: `FREEZE_ACTIVE = False`.** One commit, greppable.
 

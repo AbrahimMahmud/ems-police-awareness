@@ -376,7 +376,9 @@ assert C2_WINDOWS == (("2021-06-01", "2024-12-31"),)
 STRATUM_WINDOWS = {"C1_clean": C1_WINDOWS, "C2_exposed": C2_WINDOWS,
                    "pooled": C1_WINDOWS + C2_WINDOWS}
 # Which calibration certificate each stratum's p-values rest on.
-STRATUM_CALIBRATION = {"C1_clean": ("C1",), "C2_exposed": ("C2",), "pooled": ("C1", "C2")}
+# The pooled stratum has its OWN certificate: its three-window geometry is a
+# different null from either C1's or C2's (18 --stratum pooled; 2026-09-13).
+STRATUM_CALIBRATION = {"C1_clean": ("C1",), "C2_exposed": ("C2",), "pooled": ("pooled",)}
 
 # The 181 days of 2015 that are inside the freeze window but carry no treatment,
 # because Wikimedia daily pageviews begin 2015-07-01. Named so the log can assert
@@ -507,7 +509,7 @@ def check_calibration():
     # scheme is new and whose uniformity is marginal — was the one it could
     # never have protected.
     out = {}
-    for stratum in ("C1", "C2"):
+    for stratum in ("C1", "C2", "pooled"):
         try:
             out[stratum] = require_calibrated(stratum)
         except Uncalibrated as e:

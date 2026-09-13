@@ -227,7 +227,16 @@ def fetch_categories(articles, batch=45):
 
 
 def fetch_leads(articles, batch=20):
-    """First sentence of each article — the evidence a reader can check."""
+    """First sentence of each article — the evidence a reader can check.
+
+    The cut to the FIRST SENTENCE is deliberate and was measured (CP1 audit
+    #30, 2026-09-13): classifying on the whole intro instead would flip 2 of
+    the 13 unestablished articles to police_violence - Markeis McGlockton and
+    James Scurlock, both killed by civilians, whose intros go on to name the
+    sheriff's office or police that investigated. The first sentence names the
+    actor; the paragraph names everyone involved. No first sentence in the
+    candidate set is longer than the 400-character cap.
+    """
     out = {}
     for i in range(0, len(articles), batch):
         chunk = articles[i:i + batch]
@@ -360,6 +369,15 @@ def main():
             out, index=False)
         print(f"wrote {out.name} from the {CAI_D_BASKET} basket: "
               f"{len(chosen)} articles (config.CAI_D_BASKET)")
+        # The file 11 sums wiki_ext over had no provenance row of its own, so a
+        # re-run of 09 overwriting it would have passed the source verifier
+        # (CP1 audit, 2026-09-13). Registered here, by the script that owns it.
+        log_source("D7",
+                   f"Published basket read by 11 as the wiki_ext article list: "
+                   f"{len(chosen)} articles from the {CAI_D_BASKET} construct "
+                   "(config.CAI_D_BASKET)",
+                   "English Wikipedia category graph (S15) + MPV registry (S10)",
+                   out_file=out)
         log_source("D3",
                    f"Basket construct review: {len(strict)} police_violence, "
                    f"{int((inc['construct'] == 'unestablished').sum())} unestablished, "

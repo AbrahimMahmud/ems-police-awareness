@@ -355,6 +355,17 @@ log_source(
                  for c, r in _realised.iterrows())),
     "https://api.gdeltproject.org/api/v2 + https://wikimedia.org/api/rest_v1",
     out_file=path)
+# The three wiki_ext side artifacts this script writes had no provenance row
+# (CP1 audit #58, 2026-09-13). One id per artifact per arm.
+for _sid, _name, _what in (
+        ("S11a", "wiki_ext_basket_used.csv", "articles summed into wiki_ext"),
+        ("S11b", "wiki_ext_aggregation_diagnostic.csv", "per-day wiki_ext aggregation diagnostic"),
+        ("S11c", "wiki_pageviews_by_article.csv", "per-article daily pageviews behind wiki_ext")):
+    _f = DATA_REFERENCE / arm_artifact(_name, ARM)
+    if _f.exists():
+        log_source(arm_source_id(_sid, ARM),
+                   f"{_what} ({ARM or 'primary'} arm; agent classes {AGENTS})",
+                   "https://wikimedia.org/api/rest_v1", out_file=_f)
 
 for c in out["component"].unique():
     s = out[out["component"] == c]

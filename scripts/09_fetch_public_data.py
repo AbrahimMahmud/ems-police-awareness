@@ -167,7 +167,11 @@ for name, vol in top_names.items():
     time.sleep(0.4)
 
 res = pd.DataFrame(res_rows)
-res.to_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv", index=False)
+# LEGACY filename. wikipedia_article_resolution.csv is now the PUBLISHED BASKET,
+# written by 32_validate_basket_construct.py --apply and read by 11 as the
+# wiki_ext article list; re-running this fetch used to overwrite it with the
+# retired Twitter-era name resolution (CP1 audit, 2026-09-13).
+res.to_csv(DATA_REFERENCE / "wikipedia_article_resolution_legacy.csv", index=False)
 pv = pd.DataFrame(pv_rows)
 pv.to_csv(DATA_REFERENCE / "wikipedia_pageviews_victims.csv", index=False)
 log_source("S8", f"Wikimedia pageviews, top-{WIKI_TOP_N} victims, en.wikipedia 2017-2020",

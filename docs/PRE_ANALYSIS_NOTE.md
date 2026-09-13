@@ -297,7 +297,9 @@ real 10/5 split on 12.4% of draws). Under that scheme C1 has 62,920 distinct
 placebo designs against 2,000 draws, so the test is **sampled, not exact**, and
 the "685 admissible days … exact" statement above no longer holds. C1 is
 calibrated under the within-block scheme separately (§8), and the confirmatory
-script draws from the same code the calibration certifies.
+script draws from the same code the calibration certifies. The pooled stratum's
+three-window geometry has its own certificate as well (addendum §22); its
+p-values no longer rest on C1's and C2's certificates read together.
 
 **The honest caveat, stated before the fact.** The circular-shift null is *not*
 the null certified by the 200-simulation calibration. It is the same estimator and

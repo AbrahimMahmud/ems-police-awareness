@@ -250,20 +250,30 @@ def check_artifact(src, rel):
     if not PROVENANCE_CSV.exists():
         return "verified", detail + "; no provenance register to compare against"
     prov = pd.read_csv(PROVENANCE_CSV)
-    row = prov[(prov["source_id"] == src["id"]) & (prov["output_file"] == rel)]
-    if not len(row):
-        return "verified", detail + "; not registered in data_sources.csv"
-    recorded = str(row["sha256"].iloc[-1] or "")
-    if not recorded or recorded == "nan":
-        return "verified", detail + "; register holds a payload hash only"
-    if recorded == digest:
-        return "verified", detail + "; matches the provenance register"
-
+    # Match on the OUTPUT FILE, whatever id registered it: S1's extract is
+    # registered under S1b, S16's basket_decisions.csv under D2. A provenance
+    # row for these bytes is provenance for these bytes.
+    row = prov[prov["output_file"] == rel]
     # A PINNED exemption, for an artifact that cannot be re-registered by
     # re-running its fetch. It must name the exact bytes being accepted, so the
     # moment the file changes again the pin stops matching and this fails - it
     # excuses one specific file, never the check.
     pin = (src.get("accepted_hashes") or {}).get(rel)
+    if not len(row):
+        if pin and pin.get("sha256") == digest:
+            return "verified", (f"{detail}; no provenance row and none can be made — "
+                                f"accepted {pin.get('dated')}: {pin.get('reason')}")
+        # "Nothing to compare against" used to come back as "verified". That is
+        # the couldn't-check-reads-as-fine failure this whole verifier exists to
+        # prevent, and it hid the published basket file having no provenance row
+        # at all (CP1 audit, 2026-09-13).
+        return "unregistered", (detail + "; on disk but no row in data_sources.csv "
+                                "names it, so nothing can be compared")
+    recorded = str(row["sha256"].iloc[-1] or "")
+    if not recorded or recorded == "nan":
+        return "verified", detail + "; register holds a payload hash only"
+    if recorded == digest:
+        return "verified", detail + "; matches the provenance register"
     if pin and pin.get("sha256") == digest:
         return "verified", (f"{detail}; provenance register is stale and cannot be "
                             f"refreshed — accepted {pin.get('dated')}: {pin.get('reason')}")
@@ -388,8 +398,16 @@ def check_claim(row, doc_cache):
 
 
 # Must match anything `fmt` can render: thousands separators, decimals,
-# percentages, and ISO dates (C03_wiki_start renders 2015-07-01).
-NUMBER_RE = r"[-+]?\d[\d,\-]*(?:\.\d+)?%?"
+# percentages, and ISO dates (C03_wiki_start renders 2015-07-01) - AND the
+# typographic minus the documents are written with. _normalise maps U+2212 to
+# "-" before the verifier compares, but this regex runs on the RAW bytes (the
+# updater and V.claims_cover_exhibits both use it), so without U+2212 here a
+# cell reading "−0.00123" was not a number to either of them: the updater
+# reported "matches 0 places; refusing to guess", and the coverage check
+# skipped the cell as a label (CP1 audit, 2026-09-13).
+NUMBER_RE = r"[-+\u2212]?\d[\d,\-]*(?:\.\d+)?%?"
+# Either minus, wherever a template's literal text carries one.
+MINUS_CLASS = "[-\u2212]"
 
 
 RENDERED = {}
@@ -410,7 +428,14 @@ def _template_regex(template):
         toks = part.split()
         lead = r"\s*" if part[:1].isspace() and part.strip() else ""
         trail = r"\s*" if part[-1:].isspace() and part.strip() else ""
-        out.append(lead + r"\s+".join(_re.escape(t) for t in toks) + trail)
+        # A hyphen-minus or a U+2212 in the template's literal text matches
+        # either in the document, mirroring _normalise. The en dash is NOT
+        # mapped, for the reason given there.
+        # U+2212 first, then the escaped hyphen: the class inserted for the
+        # former contains a hyphen, and the other order rewrote it.
+        esc = [_re.escape(t).replace("\u2212", MINUS_CLASS).replace("\\-", MINUS_CLASS)
+               for t in toks]
+        out.append(lead + r"\s+".join(esc) + trail)
     # The parenthesised group is built FIRST and then used as the separator.
     # Written as "(" + NUMBER_RE + ")".join(out) it parses as
     # "(" + NUMBER_RE + (")".join(out)) — the capture group lands at the front of
@@ -459,7 +484,10 @@ def update_claims(rows, verdicts):
             continue
         h = hits[0]
         old = h.group(1)
-        if old == new:
+        # Keep the document's typography: a real minus stays a real minus.
+        if old.startswith("\u2212") and new.startswith("-"):
+            new = "\u2212" + new[1:]
+        if _normalise(old) == _normalise(new):
             continue
         text = text[:h.start(1)] + new + text[h.end(1):]
         by_doc[doc] = text

@@ -83,6 +83,7 @@ confirmation-period outcomes**.
 | 19 | Interpretation rules restated against the measured power (Phase H) | yes |
 | 20 | Spliced `user + automated` Wikipedia series as a sensitivity arm (L7) | yes |
 | 21 | C1 null: circular shift **within each block**, sampled not exact; one implementation | yes |
+| 22 | The pooled stratum's null is calibrated on its own three-window geometry | yes |
 
 ---
 
@@ -611,6 +612,31 @@ in the `sensitivity` family; and a defect that would have crashed the run
 after all estimation and before writing its result (a stale dictionary key)
 is corrected. A synthetic dry run proceeds without calibration certificates so
 the machinery can be proven on a fresh clone; the real run still refuses.
+
+---
+
+## 22. The pooled stratum's null is calibrated on its own geometry (finding P12)
+
+**Blind.** Treatment-side geometry; no outcome read. Found 2026-09-13 while
+preparing the CP2 checklist.
+
+`30_confirmatory_run.py` reports every cell for C1, C2 and **pooled** (C1 + C2,
+three calendar windows, 45 episodes). Its calibration gate read C1's and C2's
+certificates and let the pooled cells rest on the two of them together. Neither
+describes the pooled null: a within-block shift over three windows is a
+different placebo geometry from a shift over two or over one, and the note's own
+rule — an uncalibrated randomization p-value is not a p-value — applies to a
+descriptive stratum as much as to an inferential one. So `18_null_calibration.py
+--stratum pooled` now calibrates the three-window geometry under the same scheme
+(`circular_within_block`), the confirmatory script gates the pooled cells on
+`null_calibration_pooled.csv` alone, and `S.ri_scheme_certified` requires that
+certificate to name the scheme the geometry needs.
+
+What does not change: the pooled estimate stays **descriptive** and outside the
+primary family (`PRE_ANALYSIS_NOTE.md` §9.4, §10), so the 1,000-simulation
+requirement of the pre-freeze gate applies to the three inferential strata
+(discovery, C1, C2; `S.lift_requires_1000_sims`) and the pooled certificate is
+required to exist and read CALIBRATED at its own minimum of 200.
 
 ---
 

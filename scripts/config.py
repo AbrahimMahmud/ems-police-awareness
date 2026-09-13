@@ -152,6 +152,11 @@ NON_OUTCOME_ARTIFACTS = (
     # the whole point: a new artifact forces a decision instead of defaulting to
     # unguarded.
     "cd_demographics_clean.parquet",
+    # The same table as a CSV, also written by 10d. D.outcome_list_complete
+    # enumerates every regular file in data/processed, not only parquet, since
+    # 2026-09-13: two orphan .txt summaries sat there with no writer left in the
+    # tree, one of them a panel summary spanning every year.
+    "cd_demographics_clean.csv",
 )
 
 # The raw paged download. It holds outcome rows for every year, so it is outcome
@@ -560,6 +565,12 @@ EVENT_WINDOW_POST = 14                 # primary post-window
 EVENT_WINDOW_POST_SENSITIVITY = (28, 60)   # U2: Desmond et al. find year-long effects
 EVENT_REFERENCE_DAY = -1               # omitted category in event-time dummies
 RANDOMIZATION_DRAWS = 2000             # episode-level RI; primary p-value
+# Rule E1.6: a calibration or power run that completes fewer simulations than
+# this issues no verdict at all (UNDETERMINED, exit 2), never a pass. It lived
+# as a private constant in both 18 and 19, so the two could drift apart
+# silently (CP1 audit, 2026-09-13); it is defined once here.
+MIN_SIMS_FOR_VERDICT = 200
+NOMINAL_ALPHA = 0.05                   # the RI test's nominal size, calibration and power alike
 
 # THE SMALLEST EFFECT THIS PAPER WOULD CARE ABOUT, in share points.
 #

@@ -1212,13 +1212,19 @@ survives; it does not keep calendar gaps across the seam between the two windows
 So each stratum is now calibrated separately, each verdict records the scheme and
 geometry it certifies, and a check recomputes what each stratum requires and
 refuses a verdict that certifies something else. All three are now discharged, at
-200 simulations × 200 draws each:
+200 simulations × 200 draws each (the pooled stratum the confirmatory script also
+reports — three windows, descriptive, outside the family — gets its own
+certificate too, addendum §22, rather than resting on C1's and C2's read
+together; C2's row is as regenerated on 2026-09-13, where the lattice KS p moved
+from 0.4878 to 0.4838 and the rejection rate from 0.06 to 0.05 under the
+corrected code):
 
 | stratum | scheme | geometry | episodes | rejection at α=.05 | KS p | verdict |
 |---|---|---|---|---|---|---|
 | discovery | anchor shift | contiguous | 29 | 0.05 | 0.7516 | CALIBRATED |
-| C2 | anchor shift | contiguous | 30 | 0.06 | 0.4878 | CALIBRATED |
+| C2 | anchor shift | contiguous | 30 | 0.05 | 0.4838 | CALIBRATED |
 | C1 | circular, within block | gapped | 15 | 0.04 | 0.1229 | CALIBRATED |
+| pooled | circular, within block | gapped | 45 | 0.03 | 0.5127 | CALIBRATED |
 
 C1's certificate under the within-block scheme landed on **2026-09-13**, 200
 simulations × 200 draws: rejection rate **0.04** against the band
@@ -1407,7 +1413,7 @@ MDE, and none of them is available here.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **80 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **82 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
@@ -1444,11 +1450,11 @@ not what was. A register full of prescriptions reads like a register full of
 completions, and whether anything had actually been fixed was recoverable only by
 reading the check suite and matching tags by eye.
 
-Each of the 102 findings now carries a status — `fixed`, `open`, or `unverified` —
+Each of the 105 findings now carries a status — `fixed`, `open`, or `unverified` —
 and the check that guards it asserts one direction only: **nothing may say
 `fixed` while a check tagged to it is not passing.** `unverified` means nothing
 checks it, which is a statement of work remaining and not a synonym for fine.
-Current state: **99 fixed, 0 open, 3 unverified** — the three (P1, P5, RI3) are held until C1's certificate under the within-block scheme exists, because a BLOCKED check is not evidence.
+Current state: **105 fixed, 0 open, 0 unverified**. P1, P5, RI3 and P12 were held at `unverified` until C2's and the pooled stratum's certificates existed in this container, because a BLOCKED check is not evidence; they closed on 2026-09-13 when `S.ri_scheme_certified` passed on all four strata.
 
 Writing that check taught two things worth keeping, both of which are the same
 defect it exists to prevent, committed inside it:
@@ -1619,20 +1625,41 @@ terms a referee will use.
 ### 8.2 The placebos are quiet, and one channel is not
 
 The decomposition runs 65 outcome-by-window tests. Under a Bonferroni threshold
-across all of them — α = 0.000769 — exactly **three** survive, and all three are
-the same thing:
+across all of them — α = 0.000769 — exactly **2** survive, and both are the same
+thing:
 
 | outcome | window | coefficient | p |
 |---|---|---|---|
-| injury share | days 0–2 | +0.00144 | 0.00019 |
-| injury share | days 12–14 | +0.00110 | 0.00071 |
-| log injury count | days 0–2 | +0.00962 | 0.00050 |
+| injury share | days 0–2 | +0.00159 | 0.00004 |
+| log injury count | days 0–2 | +0.01048 | 0.00008 |
 
-Nothing in the mental-health family survives — its smallest p anywhere is 0.066,
-which across thirty tests is what noise looks like. Neither placebo survives:
-cardiac share and asthma share reach 0.222 and 0.097 at their strongest, which is
-the behaviour a placebo is included to demonstrate and the reason the injury
-result can be read as something rather than as one more draw from a wide net.
+The injury-share coefficient for days 12–14 (+0.00104, p = 0.00172) sits above
+the threshold; an earlier run of this decomposition had it surviving, and the
+timing paragraph below was first written against that run. Nothing in the
+mental-health family survives — its smallest p anywhere is 0.044, which across
+thirty tests is what noise looks like. Neither placebo survives: cardiac share
+and asthma share reach 0.082 and 0.076 at their strongest — nearer the
+conventional line than the earlier run showed, and stated rather than smoothed.
+The reason the injury result can be read as something rather than as one more
+draw from a wide net is that the placebos do not keep pace with it: three orders
+of magnitude separate the strongest placebo from the injury p-values.
+
+**These are regenerated numbers, and they moved.** The decomposition was first
+estimated on 2026-09-12 (Phase G) and re-estimated from a clean container on
+2026-09-13. The stacked event study reproduced every §8.1 number exactly on the
+same rebuild — same panel, same index, same episodes — while the decomposition
+did not: the days 0–2 injury coefficients rose, the days 12–14 one fell below
+the threshold, and the smallest mental-health and placebo p-values moved. The
+two scripts share every input but one. The decomposition reads
+`awareness_lags.parquet`, the rolling windows of the index written by
+`02b_build_cai_lags.py`, and nothing in the previous container guaranteed that
+file had been refreshed after the index was last rebuilt — the stale-artifact
+pattern already documented for `28_build_nyc_attention.py` (§4.3). The Phase G
+artifact is gone, so the difference can be explained but not diffed.
+`run_all.py` now fails any stage that exits without refreshing its declared
+outputs, so a lag file older than the index it is built from cannot pass
+silently again (finding X18). The numbers above are the ones a clean clone
+produces.
 
 **The plain reading is a street-activity channel, not a help-seeking one.**
 Injury calls rise in the first three days after attention rises, in both share
@@ -1640,9 +1667,11 @@ and count, while every mental-health measure stays flat. That is what a protest
 mechanism looks like and it is not what this paper set out to measure.
 
 **The alternatives it does not rule out** are real and should be stated before
-anyone gets attached to the story. The days 12–14 coefficient is nearly as large
-as the days 0–2 one, which no simple protest account predicts and which is more
-consistent with episode windows overlapping something seasonal. "Injury" is a
+anyone gets attached to the story. The days 12–14 coefficient, which an earlier
+run had surviving beside the days 0–2 one, no longer clears the threshold, so
+the two-bump pattern that argued for something seasonal has weakened but not
+vanished (p = 0.0017); no simple protest account predicts a second rise two
+weeks on. "Injury" is a
 dispatch call type, not an adjudicated cause, so a change in how incidents are
 coded during a period of heightened activity would produce the same number. And
 the decomposition is estimated on shares within a total that is itself moving:
@@ -1671,8 +1700,8 @@ district-day standard deviation is 0.047.
    Both candidates were built and both were rejected on measurement (§4.3):
    `trends_nyc` is censored on 26–71% of days depending on the year, and
    `wiki_nyc` cannot be both local and disjoint from the national basket —
-   67% of its views come from three articles already in `wiki_ext`, and removing
-   them leaves four articles whose most recent killing is from 1999. The paper
+   59% of its views come from three articles already in `wiki_ext`, and removing
+   them leaves eight articles whose most recent killing is from 2012. The paper
    therefore tests whether *national* attention moves NYC demand, and treats the
    presence of an NYC killing in an episode as a heterogeneity dimension rather
    than as treatment. **We cannot separately identify New Yorkers' own attention
@@ -1697,7 +1726,9 @@ district-day standard deviation is 0.047.
 6. **The EDPC recode (mid-2018)** sits inside the discovery window.
 7. **The episode construct changed** after the original freeze, while blind to
    outcomes (§4.2) — disclosed, dated, with original wording preserved.
-8. **Two freeze incidents** (§5.3), one of which carried a specification decision.
+8. **Three freeze incidents** (§5.3): two undeclared metadata reads, one of which
+   carried a specification decision, and one record-level read of 2015–16
+   outcome statistics made while refuting an audit finding.
 9. **We do not use armed/unarmed status**, which is our protection against the Nix
    & Lozada critique of MPV coding — stated explicitly because a reader who knows
    that literature will ask.
@@ -1706,9 +1737,11 @@ district-day standard deviation is 0.047.
    what a dispatcher entered under time pressure. A change in *coding* during
    periods of heightened street activity would produce the identical number, and
    nothing in this design separates the two.
-11. **The injury result's timing does not fit the story it suggests.** The days
-   12–14 coefficient is nearly as large as days 0–2. A protest-activity account
-   predicts a sharp, short-lived rise; two separated bumps are at least as
+11. **The injury result's timing is not settled.** In the regenerated
+   decomposition only days 0–2 survive correction; the days 12–14 coefficient
+   (+0.00104, p = 0.0017) is below the threshold but not negligible, and an
+   earlier run had it surviving. A protest-activity account predicts a sharp,
+   short-lived rise; a second bump two weeks later would be at least as
    consistent with episode windows coinciding with something seasonal. This is
    stated before anyone becomes attached to the mechanism, not after.
 12. **The discovery null is bounded, not empty — and the bound is wide.** §8
