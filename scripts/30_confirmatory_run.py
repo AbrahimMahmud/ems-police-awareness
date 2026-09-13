@@ -28,12 +28,17 @@ WHAT IT REFUSES TO DO
    `--dry-run-synthetic`. The freeze is the design; a script that could be run
    "just to see" while it holds would be a fourth freeze incident waiting to be
    written up next to F1 and F2 (`PAPER_MASTER.md` §5.3).
-2. **It refuses to run unless every stratum it reports has a certificate
-   reading `VERDICT,CALIBRATED`** — `null_calibration_C1.csv`, `_C2.csv` and
-   `_pooled.csv` — at or above its own `min_sims_required`, and, for the two
-   inferential strata, at or above `config.LIFT_MIN_SIMS` (1,000: CP2's second
-   line, finding P11; until 2026-09-13 only the suite enforced that number and
-   this script would have run on 200-sim certificates). An
+2. **It refuses to run unless every stratum it reports has a certificate**
+   — `null_calibration_C1.csv`, `_C2.csv` and `_pooled.csv` — **reading
+   `VERDICT,CALIBRATED`** at or above its own `min_sims_required` and, for the
+   two inferential strata, at or above `config.LIFT_MIN_SIMS` (1,000: CP2's
+   second line, finding P11; until 2026-09-13 only the suite enforced that
+   number and this script would have run on 200-sim certificates) — with ONE
+   pre-registered exception (addendum 25): a certificate that reads
+   `NOT CALIBRATED` at or above 1,000 simulations under the scheme the stratum
+   requires lets the run proceed with that stratum's cells flagged
+   `UNCERTIFIED_NULL`, entering the family as p = 1, its primary inference the
+   labelled asymptotic p. An
    uncalibrated randomization p-value is not a weak p-value, it is not a
    p-value: if the estimator over-rejects on data built to contain no effect,
    the number this script writes has no interpretation at all. Gate C §6.3
@@ -107,9 +112,10 @@ result that depends on data we do not have, and must be reported as such.
 RANDOMIZATION INFERENCE ACROSS A GAPPED SAMPLE — A REAL PROBLEM, PRE-SOLVED
 ---------------------------------------------------------------------------
 `event_study.placebo_starts` draws one anchor uniformly and lays the real
-episodes' gaps down from it, rejecting any draw whose whole sequence does not fit.
-That is correct on a contiguous window, and it is the scheme the 200-sim null
-calibration certifies. It cannot be used everywhere here, and the arithmetic says
+episodes' inter-episode gaps down from it IN A RANDOM ORDER — the multiset of
+gaps, and so the clustering, is preserved on every draw; their sequence is not
+(addendum 27) — rejecting any draw whose whole sequence does not fit. That is
+the scheme the discovery and C2 certificates name (`anchor_shift`). It cannot be used everywhere here, and the arithmetic says
 so before any outcome is touched:
 
     stratum          blocks  episodes  anchor slack (days)
@@ -213,8 +219,25 @@ PRE-SPECIFIED SENSITIVITIES
       instead of skipping it silently.
   (c) **The `late` B-HEARD bound**, for C2 and pooled only, where the column is
       not identically zero.
+  (d) **The spliced Wikipedia series** (`sens_spliced_wiki`, addendum 20): the
+      user+automated pageview series, its own blind-built episode list, READ
+      like the broad basket and NOT_RUN if absent.
+  (e) **Coverage-clean** (`sens_coverage_clean`, addendum 18): per outcome, the
+      episodes whose window contains no recording break in that outcome's codes
+      and not the geocoding step; IDENTICAL_TO_PRIMARY when nothing is dropped.
+  (f) **The 28- and 60-day post windows** (`sens_post28`, `sens_post60`,
+      addendum 3): the same first-week statistic on a longer estimation window.
 
-Sensitivities are reported beside the primary and are never substituted for it.
+A broad-basket or spliced cell whose episode starts in a stratum equal the
+primary's is recorded IDENTICAL_TO_PRIMARY rather than re-estimated under a new
+seed (addendum 23.6). Sensitivities are reported beside the primary and are never
+substituted for it.
+
+Two SECONDARY arms, asymptotic p only, outside the family: the B-HEARD interaction
+(C2 only, `bheard_interaction`) and the dose-response arm (`dose_response`, the
+first-week effect per SD of peak episode intensity, addendum 9). Three DIAGNOSTIC
+cells per stratum (addendum 23.3): PPML on each H1 count with NO offset and on
+total dispatches, the denominator diagnostic behind the two-arms rule.
 
 MULTIPLE TESTING
 ----------------
@@ -226,17 +249,20 @@ as the set it is applied over.
 
 Pooled is NOT a family member: it is a summary of the same eight observations and
 including it would make the correction depend on how often the same data is
-described. Sensitivities, the dose and B-HEARD interaction arms, and the placebos
-are outside the family and report uncorrected p-values labelled as such. A cell's
-membership is in the `family` column of the output, so the correction can be
-recomputed by a reader who disagrees with the definition. The column takes four
-values and only the first is corrected:
+described. Sensitivities, the dose and B-HEARD interaction arms, the diagnostics
+and the placebos are outside the family and report uncorrected p-values labelled
+as such. A cell's membership is in the `family` column of the output, so the
+correction can be recomputed by a reader who disagrees with the definition. The
+column takes six values and only the first is corrected (addendum 23.6):
 
     primary_H1    the 8 corrected tests: H1 outcomes x both arms x C1 and C2
-    sensitivity   drop-July-2016 and the broad basket
-    secondary     everything else reported beside the primary — the pooled
-                  summary, the `late` B-HEARD bound, the B-HEARD interaction arm
+    descriptive   the pooled stratum's primary-bound H1 cells
+    sensitivity   drop-July-2016, broad basket, spliced series, coverage-clean,
+                  the `late` B-HEARD bound, the 28- and 60-day windows
+    secondary     the B-HEARD interaction arm (C2) and the dose-response arm
+    diagnostic    the no-offset counts behind the two-arms rule (addendum 23.3)
     placebo       cardiac, injury and asthma; falsification, never confirmation
+                  (the override of addendum 23.4 is on cardiac and asthma)
 
 RUNTIME
 -------
@@ -249,11 +275,11 @@ multi-hour run survives the container restarts this environment is known for.
 
 OUTPUT
 ------
-`outputs/tables/confirmatory_results.csv` (real) or
-`outputs/tables/confirmatory_results_dryrun_synthetic.csv` (dry run). Note that
-`outputs/tables/*.csv` is gitignored: the sealed result must be deliberately
-preserved once it exists, and Phase I's "freeze results the moment they exist"
-means copying it somewhere that git tracks, not trusting the working tree.
+`data/reference/confirmatory_results.csv` (real; TRACKED, so the one-shot is in
+the commit history — addendum 23.5) or
+`outputs/tables/confirmatory_results_dryrun_synthetic.csv` (dry run; gitignored).
+Each with a `.meta.json` sidecar naming the code that produced it. The
+pre-registered reading of the real table is `34_confirmatory_reading.py`.
 
 Usage:
     python 30_confirmatory_run.py                       # after the freeze lifts
@@ -338,6 +364,7 @@ from config import (
     DATA_REFERENCE,
     EPISODE_LIST_PRIMARY,
     EVENT_WINDOW_POST,
+    EVENT_WINDOW_POST_SENSITIVITY,
     EVENT_WINDOW_PRE,
     FREEZE_ACTIVE,
     H1_OUTCOMES,
@@ -355,6 +382,7 @@ from event_study import (
     draw_scheme_for,
     first_week_effect,
     first_week_mean,
+    fit_dose_response,
     randomization_p,
     require_calibrated,
     stratum_episodes,
@@ -975,8 +1003,15 @@ def load_episodes(filename, require=True):
 
 
 def run_cell(rows, panel, ep, stratum, outcome, arm_counts, spec, family,
-             extra, draws, bound, episode_set, windows, note="", offset=True):
-    """One reported number, with everything needed to read it beside it."""
+             extra, draws, bound, episode_set, windows, note="", offset=True,
+             post=EVENT_WINDOW_POST):
+    """One reported number, with everything needed to read it beside it.
+
+    `post` is the post-episode window in days: 14 for every family cell, 28 and
+    60 for the pre-specified window sensitivities (addendum 3; CP2 audit found
+    them promised and not estimated). The statistic is the same first-week joint
+    test; the window changes the estimation sample, as in 17.
+    """
     col = (outcome if outcome == "total_calls" else count_outcome(outcome)) if arm_counts else outcome
     arm = ("PPML" if offset else "PPML_raw") if arm_counts else "OLS"
     label = f"{stratum}/{spec}/{col}/{arm}"
@@ -992,11 +1027,11 @@ def run_cell(rows, panel, ep, stratum, outcome, arm_counts, spec, family,
                          episode_set, len(ep), note=note,
                          status=f"NOT_RUN: {len(starts)} episode(s) in this stratum"))
         return
-    res = randomization(panel, starts, col, EVENT_WINDOW_PRE, EVENT_WINDOW_POST,
+    res = randomization(panel, starts, col, EVENT_WINDOW_PRE, post,
                         draws, windows, cell, extra=extra, counts=arm_counts, label=label,
                         offset=offset)
     rows.append(_row(stratum, col, arm_counts, spec, family, bound, episode_set,
-                     len(ep), note=note, offset=offset,
+                     len(ep), note=note, offset=offset, post_window=post,
                      n_districts=panel["communitydistrict"].nunique(), **res))
     chi = res.get("first_week_chi2")
     p = res.get("p_randomization")
@@ -1011,7 +1046,8 @@ def execute_job(job):
     run_cell(rows, job["panel"], job["ep"], job["stratum"], job["outcome"],
              job["counts"], job["spec"], job["family"], ("bheard_exposure",),
              ARGS.draws, job["bound"], job["episode_set"], job["windows"],
-             note=job.get("note", ""), offset=job.get("offset", True))
+             note=job.get("note", ""), offset=job.get("offset", True),
+             post=job.get("post", EVENT_WINDOW_POST))
     return rows[0]
 
 
@@ -1037,7 +1073,8 @@ def drop_break_windows(ep, dates):
         hit |= (lo <= d) & (d <= hi)
     return ep[~hit].reset_index(drop=True), int(hit.sum())
 def _row(stratum, outcome, arm_counts, spec, family, bound, episode_set,
-         n_episodes, note="", status="OK", n_districts=np.nan, offset=True, **kw):
+         n_episodes, note="", status="OK", n_districts=np.nan, offset=True,
+         post_window=EVENT_WINDOW_POST, **kw):
     row = {
         "stratum": stratum,
         "outcome": outcome,
@@ -1049,7 +1086,7 @@ def _row(stratum, outcome, arm_counts, spec, family, bound, episode_set,
         "episode_set": episode_set,
         "n_episodes": n_episodes,
         "n_districts": n_districts,
-        "post_window": EVENT_WINDOW_POST,
+        "post_window": post_window,
         "first_week_chi2": np.nan,
         "first_week_mean_coef": np.nan,
         "first_week_mean_se": np.nan,
@@ -1190,10 +1227,10 @@ def main():
     rows, jobs = [], []
 
     def add(stratum, sp, ep, outcome, counts, spec, family, bound, episode_set, note="",
-            offset=True):
+            offset=True, post=EVENT_WINDOW_POST):
         jobs.append(dict(stratum=stratum, panel=sp, ep=ep, outcome=outcome, counts=counts,
                          spec=spec, family=family, bound=bound, episode_set=episode_set,
-                         windows=STRATUM_WINDOWS[stratum], note=note, offset=offset))
+                         windows=STRATUM_WINDOWS[stratum], note=note, offset=offset, post=post))
 
     for stratum, spanel in strata.items():
         windows = STRATUM_WINDOWS[stratum]
@@ -1257,6 +1294,53 @@ def main():
                 for counts in (False, True):
                     add(stratum, sp, ep_here, outcome, counts, "placebo", "placebo", bound,
                         "primary", note="falsification, not confirmation")
+
+            # (e) the 28- and 60-day post windows (addendum 3): pre-specified
+            # sensitivities of the primary design, promised and — until the CP2
+            # audit of 2026-09-13 — estimated by no cell here. Same statistic,
+            # longer estimation window; at a stratum edge the longer tail
+            # truncates and is reported (addendum 17). The certificates describe
+            # the 14-day statistic; these rows are read beside it, never instead.
+            for post in EVENT_WINDOW_POST_SENSITIVITY:
+                for outcome in list(H1_OUTCOMES):
+                    for counts in (False, True):
+                        add(stratum, sp, ep_here, outcome, counts, f"sens_post{post}",
+                            "sensitivity", bound, "primary",
+                            note=f"{post}-day post window (addendum 3); tails truncate at "
+                                 "the stratum edge (addendum 17)", post=post)
+
+            # (f) the dose-response arm (addendum 9, finding D6): the day 0..7
+            # effect per SD of episode intensity, SECONDARY, asymptotic p only —
+            # a randomization null would have to redraw intensities as well as
+            # dates, which is a different null from the certified one (17 says
+            # the same). One fit per H1 outcome on the share arm, as in 17.
+            for outcome in list(H1_OUTCOMES):
+                if len(ep_here) < 3 or "peak_cai_d" not in ep_here.columns:
+                    rows.append(_row(stratum, outcome, False, "dose_response", "secondary",
+                                     bound, "primary", len(ep_here),
+                                     status="NOT_RUN: fewer than 3 episodes or no intensity"))
+                    continue
+                stack_d = build_stack(sp, ep_here["start"].tolist(), EVENT_WINDOW_PRE,
+                                      EVENT_WINDOW_POST)
+                with collected_warnings():
+                    dose = fit_dose_response(stack_d, outcome,
+                                             dict(zip(ep_here["start"], ep_here["peak_cai_d"])))
+                if dose is None:
+                    rows.append(_row(stratum, outcome, False, "dose_response", "secondary",
+                                     bound, "primary", len(ep_here),
+                                     status="NOT_ESTIMABLE: dose arm did not fit"))
+                    continue
+                k = "_post_dose"
+                rows.append(_row(stratum, outcome, False, "dose_response", "secondary", bound,
+                                 "primary", len(ep_here), estimator="OLS_share_dose_per_sd",
+                                 first_week_mean_coef=float(dose.coef()[k]),
+                                 first_week_mean_se=float(dose.se()[k]),
+                                 p_asymptotic=float(dose.pvalue()[k]),
+                                 n_obs=len(stack_d), n_districts=sp["communitydistrict"].nunique(),
+                                 note="effect per SD of peak episode intensity; secondary, "
+                                      "asymptotic p only (addendum 9)"))
+                print(f"  {stratum}/dose_response/{outcome:18s} coef/SD={float(dose.coef()[k]):+.5f} "
+                      f"p_asy={float(dose.pvalue()[k]):.4f}  [secondary]")
 
             # (a) drop the July 2016 episode
             drop = ep_here[~ep_here["start"].isin(jul["start"])]

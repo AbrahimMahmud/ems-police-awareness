@@ -55,10 +55,13 @@ OUT_LABEL = {"edp_share": "EDP share", "edp": "EDP count", "mh_narrow_share": "n
              "mh_narrow": "narrow MH count", "cardiac_share": "cardiac share", "cardiac": "cardiac count",
              "injury_share": "injury share", "injury": "injury count", "asthma_share": "asthma share",
              "asthma": "asthma count", "total_calls": "total dispatches"}
-ARM_LABEL = {"OLS_share": "share", "PPML_count_offset": "count", "PPML_count_no_offset": "count, no offset"}
+ARM_LABEL = {"OLS_share": "share", "PPML_count_offset": "count", "PPML_count_no_offset": "count, no offset",
+             "OLS_share_dose_per_sd": "share, per SD intensity"}
 SPEC_LABEL = {"sens_drop_jul2016": "drop July 2016", "sens_broad_basket": "broad basket",
               "sens_spliced_wiki": "spliced Wikipedia series", "sens_coverage_clean": "coverage-clean",
-              "sens_bheard_late_bound": "late B-HEARD bound"}
+              "sens_bheard_late_bound": "late B-HEARD bound", "sens_post28": "28-day post window",
+              "sens_post60": "60-day post window", "bheard_interaction": "B-HEARD interaction",
+              "dose_response": "dose-response (per SD of peak intensity)"}
 
 claims = []
 counter = [A.start]
@@ -195,7 +198,7 @@ for s in ("C1_clean", "C2_exposed", "pooled"):
 lines.append("")
 
 # ---- Table E: pooled (descriptive) and the B-HEARD interaction (secondary) --
-lines += [f"**Table 8b.5 — The pooled stratum (descriptive, outside the family) and the B-HEARD interaction arm (secondary, asymptotic p only; note §10){A_SYN}.**", "",
+lines += [f"**Table 8b.5 — The pooled stratum (descriptive, outside the family) and the two secondary arms, the B-HEARD interaction (C2) and the dose-response arm (asymptotic p only; note §10, addendum §9){A_SYN}.**", "",
           "| stratum | item | outcome | arm | episodes | coefficient | RI p | asymptotic p |", "|---|---|---|---|---|---|---|---|"]
 for r in res[(res.stratum == "pooled") & (res.family == "descriptive")].itertuples():
     w = where("pooled", r.spec, r.outcome, r.estimator)
@@ -208,12 +211,12 @@ for r in res[(res.stratum == "pooled") & (res.family == "descriptive")].itertupl
 for r in res[res.family == "secondary"].itertuples():
     w = where(r.stratum, r.spec, r.outcome, r.estimator)
     sl = STRATA[r.stratum]
-    lines.append(emit_row([sl, "B-HEARD interaction", OUT_LABEL[r.outcome], ARM_LABEL[r.estimator]], [
+    lines.append(emit_row([sl, SPEC_LABEL.get(r.spec, r.spec), OUT_LABEL[r.outcome], ARM_LABEL.get(r.estimator, r.estimator)], [
         (int(r.n_episodes), "{}", f"int({w}['n_episodes'].iloc[0])", "episodes"),
         (r.first_week_mean_coef, "{:.5f}", f"float({w}['first_week_mean_coef'].iloc[0])", "coef"),
         (np.nan, "{:.4f}", "", "p_ri"),
         (r.p_asymptotic, "{:.4f}", f"float({w}['p_asymptotic'].iloc[0])", "p_asym"),
-    ], f"conf_interaction_{sl}_{r.outcome}_{ARM_LABEL[r.estimator]}", RES))
+    ], f"conf_{r.spec}_{sl}_{r.outcome}_{ARM_LABEL.get(r.estimator, r.estimator).replace(' ', '_')}", RES))
 lines.append("")
 
 out = ROOT / A.out

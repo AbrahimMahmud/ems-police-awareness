@@ -262,14 +262,18 @@ clustered against p = 0.26 by permutation**. Anyone reporting the clustered numb
 would have reported a result that is not there. The asymptotic joint Wald p-value
 is still printed beside the randomization p-value, and never instead of it.
 
-**Draws: 2,000** (`config.RANDOMIZATION_DRAWS`), with the real episodes' spacing
-preserved in every draw — attention episodes cluster in time, and a null built
-from uniformly scattered dates would understate how often clustered dates produce
-a large statistic by accident.
+**Draws: 2,000** (`config.RANDOMIZATION_DRAWS`), with the real episodes' set of
+inter-episode gaps preserved in every draw and laid down in a random order from
+one uniformly drawn anchor (`CONFIRMATION_PLAN.md` addendum §27: the earlier
+wording here, "spacing preserved", described a rigid shift the code does not
+perform) — attention episodes cluster in time, and a null built from uniformly
+scattered dates would understate how often clustered dates produce a large
+statistic by accident.
 
 **The scheme has to differ between strata, and that is arithmetic, not choice.**
-The calibrated draw scheme lays the real episodes' spacing down from one uniformly
-drawn anchor and rejects any draw that does not fit inside the sample. C1 is two
+The calibrated draw scheme lays the real episodes' gaps down, in a random order,
+from one uniformly drawn anchor and rejects any draw that does not fit inside the
+sample. C1 is two
 blocks of calendar time separated by the four discovery years, and its 2021 block
 holds 5 episodes spanning 139 days inside a 151-day window: once the 14-day
 pre-period and 14-day post-period are reserved, 120 days remain and the sequence
@@ -454,8 +458,11 @@ and its dates; the frozen episode list, kept byte-identical.
 
 ### 11.2 Deviations, disclosed and dated
 
-`CONFIRMATION_PLAN.md`'s addendum lists **15** deviations from the frozen plan.
-**Twelve are recorded as decided blind to every confirmation-period outcome** —
+`CONFIRMATION_PLAN.md`'s addendum lists the deviations from the frozen plan in
+its summary table (28 numbered sections at the time of writing, 2026-09-13; the
+table, not this sentence, is the record). Of the fifteen that existed when this
+note was written, **twelve are recorded as decided blind to every
+confirmation-period outcome** —
 the episode construct and threshold, the test window, the index composition, the
 Wikipedia rename correction, the basket selection rule, the basket construct, the
 Wikidata scope transport, the estimator, the episode list consumed, the outcome
@@ -474,7 +481,11 @@ most on-hypothesis event in the dataset. These are corrections a reader should
 want made; they are also changes to a pre-registered construct, and they are
 listed as such.
 
-### 11.3 The three rows not marked "decided blind"
+### 11.3 The rows not marked "decided blind"
+
+*Written for the fifteen rows of 2026-09-12; rows added since that are not blind
+in full are 18 (the declared coverage read, addendum §18) and 28 (the second
+outcome and the joint statistic, §14).*
 
 * **Row 12 — H2 and H3 are not runnable.** Marked "n/a": a missing dataset is not
   a decision.
@@ -486,8 +497,10 @@ listed as such.
   and the confirmatory run in this note does not rest on any of the three: H1's
   *direction* predates them, and the difference-in-differences is not part of the
   confirmatory package.
-* **Row 15 — the two freeze incidents.** These are accesses, not decisions, and
-  are set out below because one of them carried a decision with it.
+* **Row 15 — the freeze incidents.** These are accesses, not decisions, and are
+  set out below because one of them carried a decision with it. Two were known
+  when this note was written; addendum §15 now lists four (F1–F4; F3 and F4 are
+  disclosed in `PAPER_MASTER.md` §5.3).
 
 ### 11.4 The freeze incidents, and the one specification decision that is not blind
 

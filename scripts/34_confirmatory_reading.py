@@ -135,7 +135,7 @@ def read_stratum(d, s, rows, mde):
                         "primary inference and a rejection on it cannot count as confirmation")
 
     arms = {"share": "OLS_share", "count": "PPML_count_offset"}
-    reject_on, one_arm, denom, directions = {}, {}, {}, {}
+    reject_on, one_arm, discordant, denom, directions = {}, {}, {}, {}, {}
     for o in H1_OUTCOMES:
         cells = {}
         for arm, est in arms.items():
@@ -147,7 +147,13 @@ def read_stratum(d, s, rows, mde):
                 continue
             p_bh, p_ri, p_as = f(c["p_bh_adjusted"]), f(c["p_randomization"]), f(c["p_asymptotic"])
             mean, se = f(c["first_week_mean_coef"]), f(c.get("first_week_mean_se", np.nan))
-            rej = bool(cert and not np.isnan(p_bh) and p_bh < BH_Q)
+            if cert:
+                rej = bool(not np.isnan(p_bh) and p_bh < BH_Q)
+            else:
+                # Addendum 25.3: an uncertified stratum's primary inference is the
+                # asymptotic joint-Wald p, per cell at 0.05, labelled; a rejection
+                # on it is "not certified" and cannot count as confirmation.
+                rej = bool(not np.isnan(p_as) and p_as < ALPHA)
             cells[arm] = dict(rej=rej, mean=mean, se=se, p_bh=p_bh, p_ri=p_ri, p_as=p_as,
                               status=str(c["status"]))
             add(f"p_randomization:{o}:{arm}", p_ri, "note §7", str(c["status"]))
@@ -155,18 +161,31 @@ def read_stratum(d, s, rows, mde):
             add(f"p_asymptotic:{o}:{arm}", p_as, "note §7 (beside, never instead)")
             add(f"first_week_mean_coef:{o}:{arm}", mean, "note §6; 23.2")
             add(f"first_week_mean_se:{o}:{arm}", se, "23.2")
-            add(f"rejects_bh:{o}:{arm}", int(rej), "23.1",
+            add(f"rejects_bh:{o}:{arm}", int(rej) if cert else 0, "23.1",
                 "BH-adjusted randomization p below %.2f" % BH_Q + ("" if cert else "; uncertified null enters as p = 1"))
+            if not cert:
+                add(f"rejects_asymptotic:{o}:{arm}", int(rej), "25.3",
+                    f"asymptotic p below {ALPHA} in an uncertified stratum; labelled, cannot count as confirmation")
         both = all(v is not None and v["rej"] for v in cells.values())
         signs = {arm: np.sign(v["mean"]) for arm, v in cells.items() if v is not None and not np.isnan(v["mean"])}
         same_sign = len(signs) == 2 and len(set(signs.values())) == 1 and 0 not in signs.values()
         reject_on[o] = both and same_sign
         any_rej = any(v is not None and v["rej"] for v in cells.values())
-        one_arm[o] = any_rej and not reject_on[o]
+        # 23.2 governs both-arms rejections with opposite signs (a rejection
+        # without a consistent direction); 23.1a governs a one-arm rejection.
+        discordant[o] = both and not same_sign
+        one_arm[o] = any_rej and not both
         add(f"rejects_on_outcome:{o}", int(reject_on[o]), "23.1",
             "both arms reject with the same sign of the first-week mean" if reject_on[o]
-            else ("rejection in one arm only or with opposite signs: read by 23.3, not a rejection in 9.4"
+            else ("both arms reject with opposite signs: a rejection without a consistent direction (23.2)"
+                  if discordant[o] else
+                  "rejection in one arm only: a movement in one arm, not a rejection in 9.4 (23.1a, 23.3)"
                   if one_arm[o] else "no arm rejects"))
+        if one_arm[o]:
+            which = [arm for arm, v in cells.items() if v is not None and v["rej"]]
+            add(f"one_arm_movement:{o}", ",".join(which), "23.1a",
+                "share only: read by 23.3 (denominator diagnostic); count only: a count movement the share "
+                "did not follow, not claimed as a change in demand (note 9.2)")
         # 23.2 direction, over the rejecting cells
         if reject_on[o]:
             within_se = any(v["se"] is not None and not np.isnan(v["se"]) and abs(v["mean"]) <= v["se"]
@@ -199,42 +218,66 @@ def read_stratum(d, s, rows, mde):
         add(f"falsification_reported_only:{r.outcome}:{r.estimator}", f(r.p_randomization), "23.4",
             "injury is reported, not an override outcome: the discovery decomposition found it responds "
             "to attention episodes (protest injuries)")
-    stratum_rejects = any(reject_on.values())
-    add("stratum_rejects", int(stratum_rejects), "23.1",
-        "rejects on at least one primary outcome" if stratum_rejects else "no primary outcome rejects on both arms")
+    # 23.3a: a denominator-driven rejection is discounted per outcome and does not
+    # veto a clean rejection on the other outcome; the stratum rejects when at least
+    # one outcome rejects on both arms, same sign, and is not denominator-driven.
+    clean = [o for o in H1_OUTCOMES if reject_on[o] and not denom[o]]
+    discounted = [o for o in H1_OUTCOMES if reject_on[o] and denom[o]]
+    stratum_rejects = bool(clean)
+    add("stratum_rejects", int(stratum_rejects), "23.1, 23.3a",
+        f"rejects on {', '.join(clean)}" + (f"; the {', '.join(discounted)} rejection is denominator-driven and discounted" if discounted else "")
+        if stratum_rejects else
+        ("every both-arms rejection is denominator-driven (23.3)" if discounted else "no primary outcome rejects on both arms"))
+    rejected_outcomes = clean   # for the 9.4 same-outcome rule (23.1b)
 
     # The 9.4 input, after the overrides
+    any_cell = any(one_arm.values()) or any(discordant.values()) or any(reject_on.values())
+    m = mde.get(s, {})
+    lvl, dip = m.get("level", np.nan), m.get("dip_rebound", np.nan)
+    add("mde_level_prefreeze", lvl, "19.2", f"{m.get('verdict', 'power table absent')}; worst-profile MDE at nominal alpha")
+    add("mde_dip_rebound_prefreeze", dip, "19.2", "best-profile MDE at nominal alpha")
+    add("mde_level_family_corrected", lvl * FAMILY_CORRECTION_FACTOR if not np.isnan(lvl) else np.nan,
+        "23.11", f"nominal-level MDE x {FAMILY_CORRECTION_FACTOR} at the Bonferroni bound")
     if not stratum_rejects:
-        verdict = "does not reject"
-        m = mde.get(s, {})
-        lvl, dip = m.get("level", np.nan), m.get("dip_rebound", np.nan)
-        add("mde_level_prefreeze", lvl, "19.2", f"{m.get('verdict', 'power table absent')}; worst-profile MDE at nominal alpha")
-        add("mde_dip_rebound_prefreeze", dip, "19.2", "best-profile MDE at nominal alpha")
-        add("mde_level_family_corrected", lvl * FAMILY_CORRECTION_FACTOR if not np.isnan(lvl) else np.nan,
-            "23.11", f"nominal-level MDE x {FAMILY_CORRECTION_FACTOR} at the Bonferroni bound")
-        add("bounded_null", 1, "19.2",
-            f"no effect detected; a sustained level shift at or above {lvl:.5f} (about "
-            f"{lvl * FAMILY_CORRECTION_FACTOR:.5f} under the family correction) is disfavoured at 80% "
-            f"power; a sustained shift of the minimum effect of interest ({MINIMUM_EFFECT_OF_INTEREST}) "
-            f"is not excluded; a transient dip-and-rebound at or above {dip:.5f} is disfavoured")
-    else:
-        rej_outcomes = [o for o in H1_OUTCOMES if reject_on[o]]
-        dirs = {directions[o] for o in rej_outcomes}
-        if any(denom[o] for o in rej_outcomes):
-            verdict = "rejects, denominator-driven (23.3): not claimed as a change in demand"
-        elif "inconsistent" in dirs:
+        if any(discordant.values()) and not discounted:
             verdict = "rejects without a consistent direction (23.2): neither confirmation nor disconfirmation"
-        elif dirs == {"decline"}:
-            verdict = "rejects, predicted direction"
-        elif dirs == {"increase"}:
+        elif discounted:
+            verdict = "rejects, denominator-driven (23.3): not claimed as a change in demand"
+        elif any(one_arm.values()):
+            which = "; ".join(f"{o} ({v})" for o, v in one_arm.items() if v)
+            verdict = f"does not reject on both arms; a movement in one arm only in {which} is reported (23.1a)"
+        else:
+            verdict = "does not reject"
+        if not any_cell:
+            add("bounded_null", 1, "19.2",
+                f"no effect detected; a sustained level shift at or above {lvl:.5f} (about "
+                f"{lvl * FAMILY_CORRECTION_FACTOR:.5f} under the family correction) is disfavoured at 80% "
+                f"power; a sustained shift of the minimum effect of interest ({MINIMUM_EFFECT_OF_INTEREST}) "
+                f"is not excluded; a transient dip-and-rebound at or above {dip:.5f} is disfavoured")
+        else:
+            add("bounded_null", 0, "19.2, 23.1a",
+                "not asserted: a primary cell rejected, so 'no effect detected' would be false on this table; "
+                f"the pre-freeze bound for the sustained shape ({lvl:.5f}) is stated beside the movement")
+    else:
+        dirs = {directions[o] for o in clean}
+        if "inconsistent" in dirs and dirs == {"inconsistent"}:
+            verdict = "rejects without a consistent direction (23.2): neither confirmation nor disconfirmation"
+        elif dirs - {"inconsistent"} == {"decline"}:
+            verdict = "rejects, predicted direction" + (" (on " + ", ".join(o for o in clean if directions[o] == "decline") + ")")
+        elif dirs - {"inconsistent"} == {"increase"}:
             verdict = "rejects, opposite direction (9.1): not support for H1"
         else:
             verdict = "rejects, directions differ across outcomes: reported with both paths"
+        if discounted:
+            verdict += f"; the {', '.join(discounted)} rejection is denominator-driven (23.3) and discounted"
         if len(plac_rej):
             verdict += "; PLACEBO OVERRIDE (23.4): not supporting H1"
         if not cert:
-            verdict += "; UNCERTIFIED NULL (addendum 25): cannot count as confirmation"
+            verdict = verdict.replace("rejects", "rejects on the asymptotic p", 1) + \
+                      "; UNCERTIFIED NULL (addendum 25): not certified, cannot count as confirmation"
     add("reading_9_4_input", verdict, "23.1–23.4, 19.2, 25")
+    add("rejected_outcomes", ",".join(rejected_outcomes) if rejected_outcomes else "", "23.1b",
+        "outcomes on which the stratum rejects cleanly; 9.4 row 1 needs a common outcome across strata")
 
     # 9.5 sensitivities: reported beside, never substituted; unadjusted
     sens = d[(d["stratum"] == s) & (d["family"] == "sensitivity")]
@@ -246,8 +289,7 @@ def read_stratum(d, s, rows, mde):
     if stratum_rejects:
         # a rejection survives a sensitivity when the same outcome's cells stay at p <= alpha
         surv = [bool(float(r.p_randomization) <= ALPHA) for r in ran.itertuples()
-                if r.outcome in [o for o in H1_OUTCOMES if reject_on[o]]
-                or r.outcome in [count_outcome(o) for o in H1_OUTCOMES if reject_on[o]]]
+                if r.outcome in clean or r.outcome in [count_outcome(o) for o in clean]]
         label = ("robust: survives every sensitivity" if surv and all(surv)
                  else "fragile: survives no sensitivity" if surv and not any(surv)
                  else f"survives {sum(surv)} of {len(surv)} sensitivity cells")
@@ -257,27 +299,39 @@ def read_stratum(d, s, rows, mde):
                  + (" (reported, not substituted)" if n_hit else ""))
     add("sensitivity_summary", label, "9.5")
 
-    # secondary: the B-HEARD interaction arm (C2 only), asymptotic p only (note §10)
+    # secondary arms (the B-HEARD interaction, C2 only; the dose-response arm):
+    # asymptotic p only, outside the family (note §5, §10; addendum 9)
     sec = d[(d["stratum"] == s) & (d["family"] == "secondary")]
     for r in sec.itertuples():
-        add(f"bheard_interaction_p_asymptotic:{r.outcome}:{r.estimator}", f(r.p_asymptotic),
-            "note §5, §10", f"coef {f(r.first_week_mean_coef):.6f}; {r.status}")
-    return verdict
+        add(f"secondary_p_asymptotic:{r.spec}:{r.outcome}:{r.estimator}", f(r.p_asymptotic),
+            "note §5, §10; addendum 9", f"coef {f(r.first_week_mean_coef):.6f}; {r.status}")
+    return verdict, rejected_outcomes
 
 
-def conclusion_9_4(v1, v2):
-    """The asymmetric C1/C2 table of note §9.4, with 23.x readings folded in."""
+def conclusion_9_4(v1, v2, common_outcomes=()):
+    """The asymmetric C1/C2 table of note §9.4, with 23.x readings folded in.
+
+    23.1b: row 1 ("Confirmed") requires the two strata to reject on at least one
+    COMMON outcome in the same direction; rejections on different outcomes only
+    are row 2 with C2's rejection reported as partial agreement.
+    """
     def kind(v):
         if v.startswith("does not reject"):
             return "no"
+        if v.startswith("rejects on the asymptotic p"):
+            return "other"
         if v.startswith("rejects, predicted direction") and "OVERRIDE" not in v and "UNCERTIFIED" not in v:
             return "pred"
         if v.startswith("rejects, opposite"):
             return "opp"
         return "other"   # denominator-driven, inconsistent, overridden, uncertified
     k1, k2 = kind(v1), kind(v2)
+    if k1 == "pred" and k2 == "pred" and common_outcomes:
+        return ("CONFIRMED: C1 and C2 both reject in the predicted direction on "
+                + ", ".join(common_outcomes) + " (9.4 row 1)")
     if k1 == "pred" and k2 == "pred":
-        return "CONFIRMED: C1 and C2 both reject in the predicted direction (9.4 row 1)"
+        return ("CONFIRMED IN THE CLEAN STRATUM ONLY (9.4 row 2; 23.1b): C2 rejects in the same direction "
+                "but on a different outcome — partial agreement, reported, not row 1")
     if k1 == "pred" and k2 == "no":
         return "CONFIRMED IN THE CLEAN STRATUM ONLY (9.4 row 2): reported with C2's lower treatment precision and B-HEARD"
     if k1 == "no" and k2 == "pred":
@@ -285,7 +339,9 @@ def conclusion_9_4(v1, v2):
     if {k1, k2} == {"pred", "opp"}:
         return "THE CONFIRMATION HAS FAILED (9.4 row 4): the strata reject in opposite directions; both estimates in print"
     if k1 == "no" and k2 == "no":
-        return "THE PRE-SPECIFIED NULL (9.4 row 5): a bounded null in both strata, read by addendum 19 rule 2"
+        moved = [n for n, v in (("C1", v1), ("C2", v2)) if "one arm" in v]
+        return ("THE PRE-SPECIFIED NULL (9.4 row 5): a bounded null in both strata, read by addendum 19 rule 2"
+                + (f"; a one-arm movement in {', '.join(moved)} is reported under 23.1a" if moved else ""))
     parts = []
     for name, k, v in (("C1", k1, v1), ("C2", k2, v2)):
         if k == "opp":
@@ -312,8 +368,11 @@ def evaluate(d, mde):
     n_rej = int((fam["p_bh_adjusted"].astype(float) < BH_Q).sum())
     rows.append({"stratum": "family", "item": "family_rejections_bh", "value": n_rej,
                  "rule": "23.1", "detail": f"cells with BH-adjusted p < {BH_Q}"})
-    verdicts = {s: read_stratum(d, s, rows, mde) for s in INFERENTIAL}
-    concl = conclusion_9_4(verdicts["C1_clean"], verdicts["C2_exposed"])
+    out = {s: read_stratum(d, s, rows, mde) for s in INFERENTIAL}
+    verdicts = {s: v for s, (v, _) in out.items()}
+    rejected = {s: r for s, (_, r) in out.items()}
+    common = sorted(set(rejected["C1_clean"]) & set(rejected["C2_exposed"]))
+    concl = conclusion_9_4(verdicts["C1_clean"], verdicts["C2_exposed"], common)
     rows.append({"stratum": "family", "item": "conclusion_9_4", "value": concl, "rule": "note §9.4 as amended by 23",
                  "detail": f"C1: {verdicts['C1_clean']} | C2: {verdicts['C2_exposed']}"})
     # pooled: descriptive, promised, never overturns a stratum-level disagreement

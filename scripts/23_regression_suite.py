@@ -404,11 +404,26 @@ def s_confirmatory_spec_audit():
             problems.append(f"diagnostic cell {token} is absent")
     if 'stratum != "C2_exposed"' not in src:
         problems.append("the interaction arm is not gated to C2_exposed")
+    # P19 (CP2 audit, second pass): the pre-specified 28- and 60-day windows
+    # (addendum 3) and the dose-response arm (addendum 9) are estimated, not just
+    # promised — a loop over EVENT_WINDOW_POST_SENSITIVITY feeding add(), and a
+    # fit_dose_response call writing a 'dose_response' secondary row.
+    if not re.search(r"for post in EVENT_WINDOW_POST_SENSITIVITY:(.*\n){0,8}?\s*add\(", src):
+        problems.append("the 28/60-day post-window sensitivities are not estimated")
+    if "fit_dose_response(" not in src or '"dose_response", "secondary"' not in src:
+        problems.append("the dose-response arm is not estimated as a secondary cell")
+    # P26: the docstring is declared to be the specification, so it must name the
+    # executed family values and the tracked output path.
+    doc = _ast.get_docstring(tree) or ""
+    for token in ("descriptive", "diagnostic", "data/reference/confirmatory_results.csv", "sens_post28"):
+        if token not in doc:
+            problems.append(f"the module docstring does not mention {token}")
     if problems:
         return "FAIL", "; ".join(problems)
     return "PASS", ("real mode fixed to RANDOMIZATION_DRAWS; sealed result tracked; BH over a "
                     "fixed family; asymptotic p beside every RI p; denominator diagnostics; "
-                    "interaction C2-only")
+                    "interaction C2-only; 28/60-day windows and the dose arm estimated; docstring "
+                    "names the six families and the tracked output")
 
 
 def s_lift_requires_1000_sims():
@@ -636,27 +651,38 @@ def s_confirmatory_reading_rules():
         ("both null", {}, ("does not reject", "does not reject"), "THE PRE-SPECIFIED NULL"),
         ("C1 predicted, C2 null", rej(S1, "edp_share"),
          ("rejects, predicted direction", "does not reject"), "CONFIRMED IN THE CLEAN STRATUM ONLY"),
-        ("both predicted", {**rej(S1, "edp_share"), **rej(S2, "mh_narrow_share")},
+        ("both predicted, same outcome", {**rej(S1, "edp_share"), **rej(S2, "edp_share")},
          ("rejects, predicted direction", "rejects, predicted direction"), "CONFIRMED: C1 and C2"),
+        ("both predicted, different outcomes (23.1b)", {**rej(S1, "edp_share"), **rej(S2, "mh_narrow_share")},
+         ("rejects, predicted direction", "rejects, predicted direction"), "CONFIRMED IN THE CLEAN STRATUM ONLY (9.4 row 2; 23.1b)"),
         ("C2 only", rej(S2, "edp_share"),
          ("does not reject", "rejects, predicted direction"), "NOT CONFIRMATION (9.4 row 3)"),
         ("strata disagree in sign", {**rej(S1, "edp_share"), **rej(S2, "edp_share", mean=0.003)},
          ("rejects, predicted direction", "rejects, opposite direction"), "THE CONFIRMATION HAS FAILED"),
         ("C1 increase", rej(S1, "edp_share", mean=0.003),
          ("rejects, opposite direction", "does not reject"), "NOT SUPPORT FOR H1"),
-        ("one arm only (23.1)", {f"{S1}:edp_share:share": dict(p_bh_adjusted=0.01, first_week_mean_coef=-0.003)},
-         ("does not reject", "does not reject"), "THE PRE-SPECIFIED NULL"),
-        ("arms disagree in sign (23.1)", {**rej(S1, "edp_share"),
+        ("one arm only (23.1a)", {f"{S1}:edp_share:share": dict(p_bh_adjusted=0.01, first_week_mean_coef=-0.003)},
+         ("does not reject on both arms; a movement in one arm only", "does not reject"),
+         "THE PRE-SPECIFIED NULL (9.4 row 5): a bounded null in both strata, read by addendum 19 rule 2; a one-arm movement in C1"),
+        ("arms disagree in sign (23.2)", {**rej(S1, "edp_share"),
                                            f"{S1}:edp_share:count": dict(p_bh_adjusted=0.01, first_week_mean_coef=0.03,
                                                                          first_week_mean_se=0.005)},
-         ("does not reject", "does not reject"), "THE PRE-SPECIFIED NULL"),
+         ("rejects without a consistent direction", "does not reject"), "NOT SUPPORT FOR H1"),
+        ("denominator-driven on one outcome, clean on the other (23.3a)",
+         {**rej(S1, "edp_share"), **rej(S1, "mh_narrow_share"), f"{S1}:diag_total": dict(p_randomization=0.01),
+          f"{S1}:diag_raw:mh_narrow": dict(p_randomization=0.01)},
+         ("rejects, predicted direction (on mh_narrow_share)", "does not reject"), "CONFIRMED IN THE CLEAN STRATUM ONLY"),
+        ("uncertified null, asymptotic rejection (25.3)",
+         {**uncert, **{k: {**v, "null_certified": False, "p_bh_adjusted": 1.0, "p_asymptotic": 0.001}
+                       for k, v in rej(S1, "edp_share").items()}},
+         ("rejects on the asymptotic p", "does not reject"), "NOT SUPPORT FOR H1"),
         ("mean within one SE (23.2)", {**rej(S1, "edp_share"),
                                         f"{S1}:edp_share:count": dict(p_bh_adjusted=0.01, first_week_mean_coef=-0.001,
                                                                       first_week_mean_se=0.005)},
          ("rejects without a consistent direction", "does not reject"), "NOT SUPPORT FOR H1"),
         ("placebo override (23.4)", {**rej(S1, "edp_share"),
                                       f"{S1}:placebo:cardiac_share:share": dict(p_randomization=0.01)},
-         ("rejects, predicted direction; PLACEBO OVERRIDE", "does not reject"), "NOT SUPPORT FOR H1"),
+         ("rejects, predicted direction (on edp_share); PLACEBO OVERRIDE", "does not reject"), "NOT SUPPORT FOR H1"),
         ("denominator-driven (23.3)", {**rej(S1, "edp_share"), f"{S1}:diag_total": dict(p_randomization=0.01)},
          ("rejects, denominator-driven", "does not reject"), "NOT SUPPORT FOR H1"),
         ("injury moves but does not override (23.4)", {**rej(S1, "edp_share"),
@@ -665,7 +691,9 @@ def s_confirmatory_reading_rules():
          ("rejects, predicted direction", "does not reject"), "CONFIRMED IN THE CLEAN STRATUM ONLY"),
         ("BH boundary is strict (23.1)", rej(S1, "edp_share", p_bh=0.05),
          ("does not reject", "does not reject"), "THE PRE-SPECIFIED NULL"),
-        ("uncertified null cannot reject (25)", {**uncert, **{k: {**v, "null_certified": False} for k, v in rej(S1, "edp_share").items()}},
+        ("uncertified null, no asymptotic rejection (25.3)",
+         {**uncert, **{k: {**v, "null_certified": False, "p_bh_adjusted": 1.0, "p_asymptotic": 0.4}
+                       for k, v in rej(S1, "edp_share").items()}},
          ("does not reject", "does not reject"), "THE PRE-SPECIFIED NULL"),
     ]
     passed = 0
@@ -696,6 +724,14 @@ def s_confirmatory_reading_rules():
             row = res[(res["stratum"] == S1) & (res["item"] == "null_certified")]
             if row.empty or int(float(row["value"].iloc[0])) != 0:
                 problems.append("uncertified: null_certified not recorded as 0")
+        if name.startswith("one arm only") or name.startswith("arms disagree"):
+            row = res[(res["stratum"] == S1) & (res["item"] == "bounded_null")]
+            if row.empty or int(float(row["value"].iloc[0])) != 0:
+                problems.append(f"{name}: the bounded-null sentence ('no effect detected') was asserted although a cell rejected")
+        if name == "both null":
+            row = res[(res["stratum"] == S1) & (res["item"] == "bounded_null")]
+            if row.empty or int(float(row["value"].iloc[0])) != 1:
+                problems.append("both null: the bounded-null sentence was not asserted")
     if problems:
         return "FAIL", "; ".join(problems)
     return "PASS", (f"{passed} planted tables read as the pre-registration requires (23.1–23.4, "
@@ -4674,8 +4710,8 @@ CHECKS = [
     ("S.lift_requires_1000_sims", "P11", "the freeze lifts only on 1000-sim certificates for every stratum", s_lift_requires_1000_sims),
     ("D.discovery_scripts_pinned", "D8", "lifting the freeze cannot move the exploratory scripts onto the sealed sample", d_discovery_scripts_pinned),
     ("S.calibration_noise_measured", "N11", "every certificate's null takes its noise from the measured panel, never the assumed fallback", s_calibration_noise_measured),
-    ("S.confirmatory_spec_audit", "P14,P15,P16,P18", "the sealed script implements addendum 23 (draws, seal, BH family, asymptotic p, diagnostics, C2-only interaction)", s_confirmatory_spec_audit),
-    ("S.confirmatory_reading_rules", "P14", "the pre-registered reading of the sealed result is mechanical and reads as its text requires", s_confirmatory_reading_rules),
+    ("S.confirmatory_spec_audit", "P14,P15,P16,P18,P19,P26", "the sealed script implements addendum 23 (draws, seal, BH family, asymptotic p, diagnostics, C2-only interaction, the 28/60-day windows and dose arm; docstring matches code)", s_confirmatory_spec_audit),
+    ("S.confirmatory_reading_rules", "P14,P20,P21,P22,P25", "the pre-registered reading of the sealed result is mechanical and reads as its text requires", s_confirmatory_reading_rules),
     ("S.draw_scheme_total", "N5", "every draw scheme is dispatched explicitly, none by fallback", s_draw_scheme_total),
     ("S.ri_pvalue_form", "RI1", "randomization p-values use the (1+k)/(1+n) form", s_ri_pvalue_form),
     ("S.calibration_writes_stratified", "P5,D1,N4", "every calibration output names the stratum it describes", s_calibration_writes_stratified),
@@ -4692,7 +4728,7 @@ CHECKS = [
     ("D.soda_guarded", "F2", "the source API is guarded, not only the artifacts", d_soda_source_guarded),
     ("D.outcome_list_complete", "O1,X11", "every processed artifact is classified as outcome or not", d_outcome_list_complete),
     ("D.incident_disclosed", "F1,F2,F3,F4", "every freeze incident stays in the record", d_incident_disclosed),
-    ("D.addendum_complete", "E5,E6,F2", "pre-registration text untouched and its addendum exists", d_addendum_complete),
+    ("D.addendum_complete", "E5,E6,F2,P23,P24", "pre-registration text untouched and its addendum exists", d_addendum_complete),
     ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),
     ("D.declared_access_scoped", "O2,F3", "every read of confirmation outcomes is declared, scoped, logged and disclosed", d_declared_access_scoped),
     ("E.episodes_labelled", "E7,E8", "every episode says what drove it, from the treatment series", e_episodes_labelled),

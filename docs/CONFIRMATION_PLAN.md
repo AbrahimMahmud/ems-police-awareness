@@ -88,6 +88,8 @@ confirmation-period outcomes**.
 | 24 | Placebo admissibility follows first-week containment; scheme renamed `circular_within_block_fw7`; C1 and pooled recalibrated | yes |
 | 25 | Pre-registered fallback for a stratum whose null fails calibration at 1,000 simulations | yes |
 | 26 | After the lift only the sealed script reads the confirmation sample; every exploratory script pins the discovery window by name | yes |
+| 27 | The anchor-shift null is a gap-permuted placement, not a rigid shift; the record's descriptions corrected, §21's identity claim withdrawn | yes |
+| 28 | The inferential structure — two strata, the eight-test BH family, the both-arms rule, the second outcome and the joint statistic — numbered as a deviation | strata, family and both-arms rule yes; second outcome and joint statistic no (§14) |
 
 ---
 
@@ -273,7 +275,10 @@ is entitled to discount them.
 
 - **The H1 framing** and **the choice of control group for the
   difference-in-differences** were settled after discovery-period results had been
-  seen. They are not blind, and are not defended here as though they were.
+  seen. They are not blind, and are not defended here as though they were. The
+  framing includes the **second primary outcome** (`mh_narrow_share`) and the
+  **joint two-sided statistic over days 0–7** in place of the frozen directional
+  test on days 0–5 (§3, §23.9, §28).
 - The Q1-protest hypothesis above was formulated from discovery-period
   heterogeneity, which the frozen text already implies but does not state.
 
@@ -664,6 +669,25 @@ rejects** when it rejects on at least one of the two primary outcomes. A
 stratum whose cells reject in one arm only, or with opposite signs across arms,
 is read by 23.3 and does not count as a rejection in §9.4.
 
+**23.1a One-arm movements, and when the bounded-null sentence may be said**
+(second CP2 audit pass, 2026-09-13, before the lift). A stratum in which one arm
+rejects and the other does not is reported as *a movement in one arm only*: a
+share-only movement is read through 23.3 (denominator-driven or not); a
+count-only movement is a count the share did not follow and is not claimed as a
+change in demand (note §9.2). Either counts as "does not reject" in the §9.4
+table. The §19 rule 2 sentence "no effect detected" is said of a stratum only
+when no primary cell in it rejects; where a cell rejected, the pre-freeze bound
+for the sustained shape is stated beside the movement and the words "no effect
+detected" are not used. Both arms rejecting with opposite signs is 23.2's case
+(a rejection without a consistent direction), not a null: where 23.1 above says
+such a stratum "is read by 23.3", 23.2 governs.
+
+**23.1b Row 1 of §9.4 requires a common outcome.** "Confirmed" (both strata
+reject in the predicted direction) is said only when the two strata reject on at
+least one common primary outcome. Rejections in the same direction on different
+outcomes only are row 2 — confirmed in the clean stratum — with C2's rejection
+reported as partial agreement.
+
 **23.2 Direction is the sign of the first-week mean coefficient** (the effect
 size §6 already reports), taken over the rejecting cells. A rejection whose two
 arms disagree in sign, or whose mean coefficient is within one asymptotic
@@ -681,6 +705,14 @@ with no offset**, and PPML on **total dispatches**. A share-arm rejection is
 reported as *denominator-driven* when the total-dispatch diagnostic has
 randomization p ≤ 0.05 and the raw-count diagnostic does not; it is then not
 claimed as a change in demand.
+
+**23.3a The diagnostic is read per outcome.** A denominator-driven rejection is
+discounted on the outcome it concerns and does not veto a rejection on the other
+primary outcome that passes the diagnostic: the stratum rejects (23.1) when at
+least one outcome rejects on both arms, in the same direction, and is not
+denominator-driven; the discounted outcome is reported as such beside it. Only
+when every both-arms rejection in the stratum is denominator-driven is the
+stratum's reading "denominator-driven, not a change in demand".
 
 **23.4 The placebo override is defined.** A placebo cell (cardiac or asthma
 share or count) *rejects* when its unadjusted randomization p ≤ 0.05. The
@@ -826,6 +858,15 @@ applies. If it returns NOT CALIBRATED:
    non-rejection is read by §19 rule 2 unchanged. C1's estimates, intervals and
    day-by-day paths are reported in full: the clean years are still described,
    they are not confirmed.
+   *3a (second CP2 audit pass, 2026-09-13, before any verdict on the sealed
+   data).* The asymptotic reading is mechanical: a cell of an uncertified
+   stratum rejects when its date-clustered joint-Wald p is below 0.05,
+   unadjusted and labelled asymptotic; the both-arms and direction rules of
+   23.1–23.2 then apply as written, and the stratum's verdict carries the words
+   "on the asymptotic p; not certified". It enters the §9.4 table as a
+   rejection that cannot count as confirmation, whatever the other stratum
+   does. `34_confirmatory_reading.py` implements it and the suite plants both
+   the rejecting and the non-rejecting case.
 4. **The same rule applies to C2 and to the pooled stratum** at their own
    sizes (1,000 and 200), and to no other case: a certificate that is absent,
    below size, or issued for another scheme still refuses the run.
@@ -871,6 +912,52 @@ confirmation windows after the lift.
 not re-estimated, re-specified or re-read because of this; it changes only which
 sample a script sees after the lift, so that the lift opens one door rather than
 every door.
+
+## 27. The anchor-shift null permutes the gaps; the record described a rigid shift (second CP2 audit pass)
+
+**Blind. Written 2026-09-13 before the lift; treatment-side geometry only.**
+
+`event_study.placebo_starts` — the `anchor_shift` scheme the discovery and C2
+certificates name — draws one anchor uniformly inside the window and lays the
+real inter-episode gaps down from it **in a random order**
+(`rng.permutation(gaps)`), rejecting a draw whose whole sequence does not fit. It
+preserves the multiset of gaps, and so the clustering of the real design, on
+every draw; it does not preserve their sequence. The note (§7), PAPER_MASTER §7.4
+and the sealed script's docstring described it as shifting "the whole real
+sequence" with "spacing preserved", and §21 above said the within-block scheme is
+"arithmetically identical to the anchor-shift null" on a single window. The first
+description was incomplete and the second is false: the within-block scheme is a
+rigid circular shift of the real positions, the anchor shift a gap-permuted
+placement, and on one window they are different nulls.
+
+**What changes: the words, not the numbers.** The code is unchanged; the
+discovery and C2 certificates were issued by the same code and describe the null
+it draws; `S.ri_scheme_certified` compares the scheme a stratum requires with the
+scheme its certificate names, and both say `anchor_shift`. The descriptions in
+the note, PAPER_MASTER and the docstring are corrected to "the real gaps in a
+random order from one uniformly drawn anchor", and §21's sentence is withdrawn
+here rather than edited in place. The C1-versus-C2 comparison therefore rests on
+two differently constructed nulls — each certified on its own stratum's
+geometry — and the paper says so.
+
+## 28. The inferential structure is a deviation from the frozen text, and is numbered here
+
+**Blind. Written 2026-09-13 before the lift.**
+
+The frozen text specifies one directional test of one outcome. What runs is:
+two strata (C1 clean, C2 exposed) read by an asymmetric table (note §9.4); a
+pre-specified family of eight two-sided tests — two outcomes × two arms × two
+strata — under Benjamini–Hochberg at q = 0.05 (note §10); a stratum rejects on
+an outcome only when both arms reject with the same sign (23.1); and the
+second outcome (`mh_narrow_share`) and the joint two-sided statistic over days
+0–7 were adopted after discovery results had been seen (§14, 23.9). Each was
+disclosed — in the note's §11.5 and in 23.9 — but none was a numbered row of
+this addendum's summary table, which the paper cites as the list of
+departures from the frozen plan. This section numbers them. The stratification,
+the family and the both-arms requirement were decided blind (2026-09-12); the
+second outcome and the joint statistic were not, and are discounted as §14 says.
+The note's ledger (§11.2–11.4) is corrected to point at this table rather than
+at counts that were true on 2026-09-12.
 
 ## What has NOT changed
 

@@ -1218,8 +1218,10 @@ held one verdict, and nothing said which sample geometry or which way of drawing
 placebo dates it described.
 
 It matters because the three strata do not share a way of drawing them. The
-method shifts the whole real sequence of episode dates by one random anchor and
-throws the draw away if the sequence no longer fits. Discovery and C2 have room —
+anchor-shift method lays the real inter-episode gaps down in a random order from
+one random anchor — the set of gaps, and so the clustering, is preserved; their
+sequence is not (addendum §27) — and throws the draw away if the sequence no
+longer fits. Discovery and C2 have room —
 190 and 53 days of slack, and 500 of 500 draws land. **C1 has none.** It is two
 windows sitting either side of the whole discovery period, so there is no single
 stretch to slide within: 41% of anchors land outside C1 entirely, and its 2021
@@ -1493,11 +1495,11 @@ not what was. A register full of prescriptions reads like a register full of
 completions, and whether anything had actually been fixed was recoverable only by
 reading the check suite and matching tags by eye.
 
-Each of the 116 findings now carries a status — `fixed`, `open`, or `unverified` —
+Each of the 124 findings now carries a status — `fixed`, `open`, or `unverified` —
 and the check that guards it asserts one direction only: **nothing may say
 `fixed` while a check tagged to it is not passing.** `unverified` means nothing
 checks it, which is a statement of work remaining and not a synonym for fine.
-Current state: **116 fixed, 0 open, 0 unverified**. P1, P5, RI3, P12 and P13 closed on 2026-09-13 at 20:56Z, when C1's 1,000-simulation certificate under the renamed scheme `circular_within_block_fw7` landed and `S.ri_scheme_certified` passed with every stratum certified under the scheme its geometry requires (§7.4). They had closed once that morning on the old scheme's certificates and reopened when the CP2 audit found the drawer had been snapping C1's two edge episodes onto consecutive placebo days (addendum §24); the corrected drawer's C1 null then failed uniformity at 200 simulations and calibrated at 1,000, so the addendum-§25 fallback written between those two verdicts is not invoked. A failing check is not evidence, and neither is a certificate for a null nobody draws from any more.
+Current state: **124 fixed, 0 open, 0 unverified**. P1, P5, RI3, P12 and P13 closed on 2026-09-13 at 20:56Z, when C1's 1,000-simulation certificate under the renamed scheme `circular_within_block_fw7` landed and `S.ri_scheme_certified` passed with every stratum certified under the scheme its geometry requires (§7.4). They had closed once that morning on the old scheme's certificates and reopened when the CP2 audit found the drawer had been snapping C1's two edge episodes onto consecutive placebo days (addendum §24); the corrected drawer's C1 null then failed uniformity at 200 simulations and calibrated at 1,000, so the addendum-§25 fallback written between those two verdicts is not invoked. A failing check is not evidence, and neither is a certificate for a null nobody draws from any more.
 
 Writing that check taught two things worth keeping, both of which are the same
 defect it exists to prevent, committed inside it:
