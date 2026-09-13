@@ -104,7 +104,7 @@ same pattern. Our worst one is B-HEARD (§5.5).
 |---|---|---|---|
 | EMS dispatches | NYC OpenData `76xm-jjuj` | 2005–2026 (we use 2014-12→2024-12) | **29,978,154 rows downloaded, complete** |
 | Victim registry | Mapping Police Violence | 2013–2024 | 13,241 killings |
-| Wikipedia pageviews | Wikimedia REST API | **2015-07-01**→2024 | 121 articles, 111 people |
+| Wikipedia pageviews | Wikimedia REST API | **2015-07-01**→2024 | 120 articles in scope, 109 in the strict basket |
 | Google Trends | pytrends | 2015–2024 | national + NYC DMA |
 | GDELT news / TV | GDELT 2.0 | 2017–2022 / 2015–2024 | supply tier only |
 | Demographics | ACS 2019 by community district | — | 59 districts |
@@ -602,7 +602,7 @@ medical calls and divide by all calls.
 
 **Layer 3.** `data/processed/panel_cd_day.parquet` — **89,857 rows**, 59 districts,
 2016-12-01→2021-01-31 (buffered discovery window). Mean EDP share **0.0856**, mean
-total calls per district-day **65.9**. Built by `scripts/01_build_panel.py`.
+total calls per district-day **66.1**. Built by `scripts/01_build_panel.py`.
 Districts with fewer than 5 calls on a day are excluded from share calculations.
 
 ### 5.1c Does the Trends component lose resolution over the decade?
@@ -713,6 +713,17 @@ being removed.
 The class really is absent beforehand, which is what licenses that splice:
 `automated` is **exactly zero** on every day through 2019 and first appears on
 **2020-04-29**. That is checked rather than cited.
+
+**The spliced series exists as a pre-registered sensitivity arm** (addendum
+§20; `config.ARMS["spliced"]`, built by the same pipeline as the broad basket
+under the `_spliced` suffix, on the strict basket). Measured against the
+primary index over the 3,472 scored days: the two are **identical on 100%** of
+days through 2019 — the construction guarantee, asserted by a check rather than
+assumed — correlate **0.9996** overall, and differ after the break by
+**+0.0660 SD** on average across 2021–2024 with a single-day maximum of
+**0.9758 SD**. The episode lists share **72** of their 74 starts. So the arm
+changes nothing the discovery result rests on and is a live sensitivity for
+C2, which is what the break's location implied.
 
 ### 5.1b What each episode actually is
 
@@ -942,7 +953,7 @@ what actually moved was the unit the coefficient is denominated in.
 This is why the measure is standardised once, on a fixed reference window that
 contains no George Floyd, and never re-standardised inside a sample.
 
-### 5.3 The freeze incidents — **two**, both disclosed
+### 5.3 The freeze incidents — **three**, all disclosed
 
 **F1 (2026-09-10).** During an automated audit, an agent computed the citywide
 mental-health call share by year for 2005–2026, including confirmation years, in
@@ -982,9 +993,27 @@ which created the impression the freeze had exactly one breach. F2 produced a
 finding full of confirmation-period numbers and nobody asked where they came
 from: the numbers were read as *evidence*, not as an *access*.
 
-Materiality for both is for the supervisor to judge, not us. Both gaps are now
-closed in code: outcome artifacts outside the guard's coverage (F1), and the
-source API that no artifact guard can see (F2).
+**F3 (2026-09-09; found 2026-09-13, in the register itself).** The refutation
+of finding O2 — the one that measured how little the 2015–16 geocoding break
+could move a share — did so by computing record-level statistics from the
+outcome extract for 2014–2016: missing-district rates by year, by sub-window and
+by call type, the INJALS code's monthly counts and last timestamp, INJMAJ's share
+across the year boundary, and the estimated step in the mental-health share
+itself. The numbers were written into the finding's corrected claim, where they
+sat for four days as *evidence* while this section said the freeze had been
+breached exactly twice and recorded a decision not to take "a third access". It
+had already been taken. No artifact guard or API guard can see an agent opening
+a gitignored file, which is why the fix is procedural as much as structural:
+a read of the confirmation window that has to happen is now **declared** —
+scoped in `config.FREEZE_EXEMPTIONS`, disclosed in the addendum first, logged
+on every run (§5.1d) — and the audit prompts used since forbid opening outcome
+files at all. The coverage facts the paper cites come from that declared access,
+not from F3.
+
+Materiality for all three is for the supervisor to judge, not us. The gaps are
+closed in code where code can close them: outcome artifacts outside the guard's
+coverage (F1), the source API that no artifact guard can see (F2), and a
+declared-access path with a log for the reads that must happen (F3).
 
 **The posture taken from 2026-09-11, and it is reversible.** Three outcome-side
 questions remain open — the disposition filter (O1), two structural breaks that
@@ -994,9 +1023,11 @@ again. Rather than take a third access, the decision is to **hold the line
 strictly**:
 
 - O1 is resolved on discovery data and the FDNY data dictionary only.
-- O2's handling is **pre-specified blind**: the confirmatory specification must be
-  robust to both alleged breaks whether or not they are real, with each carried as
-  a pre-registered sensitivity rather than a measured correction.
+- O2's handling: the coverage facts were established on 2026-09-13 under a
+  **declared, scoped, logged access** disclosed before it ran (§5.1d, addendum
+  §18) — after F3 showed the "third access" this paragraph had declined to take
+  had already happened undeclared. The breaks are carried as pre-specified
+  sensitivities, never as a change to the primary.
 - O3 is closed on the record already taken; nothing further is derived from it.
 
 The cost is accepted openly: if a genuine break does sit in 2015–2016, we will
@@ -1062,8 +1093,8 @@ a pattern found by looking.
 | | Window | Status |
 |---|---|---|
 | Discovery | 2017-01-01 → 2020-12-31 | explored |
-| Confirmation A | 2015-07-01 → 2016-12-31 | **never examined** — no COVID, no B-HEARD |
-| Confirmation B | 2021-01-01 → 2024-12-31 | **never examined** — B-HEARD control required |
+| Confirmation A | 2015-07-01 → 2016-12-31 | **no outcome has entered a model or test** (accesses disclosed in §5.3 and §5.1d) — no COVID, no B-HEARD |
+| Confirmation B | 2021-01-01 → 2024-12-31 | **no outcome has entered a model or test** (accesses disclosed in §5.3 and §5.1d) — B-HEARD control required |
 
 The cleanest confirmation sample runs **backward**. 2015–2016 has never been looked
 at *and* carries none of the confounds.
@@ -1122,18 +1153,24 @@ the thing it was written to detect.
 
 **Layer 1.** Before trusting our method on real data, we ran it two hundred times
 on fake data built to contain *no* effect. A trustworthy method should cry wolf
-about 5% of the time. Ours cries wolf **6.0%** of the time, and the full spread of
+about 5% of the time. Ours cries wolf **5.0%** of the time, and the full spread of
 its answers is the right shape.
 
 **Layer 3.** `scripts/18_null_calibration.py`, 200 sims × 200 draws:
 
 ```
 VERDICT                   CALIBRATED
-empirical rejection rate  0.06     nominal 0.05, band [0.0198, 0.0802]
-median p                  0.5
-KS uniformity             p = 0.6767
+empirical rejection rate  0.05     nominal 0.05, band [0.0198, 0.0802]
+KS uniformity (lattice)   p = 0.7516
 AR(1) rho                 0.0482   estimated from the real panel
 ```
+
+These are the figures **regenerated on 2026-09-13** from a clean container under
+the corrected code — the (1+k)/(1+n) p-value form, the lattice uniformity test,
+and per-draw seeding (findings RI1, RI2, N6). The run they replace, made before
+those corrections, read 0.06 and 0.6767; both verdicts are CALIBRATED and both
+sit inside the band, and the numbers moved because the placebo draws and the
+test moved, not the design.
 
 Uniformity is the property that matters — a correct rejection rate with a
 non-uniform distribution still means a broken statistic. The synthetic panel
@@ -1179,21 +1216,30 @@ refuses a verdict that certifies something else. All three are now discharged, a
 
 | stratum | scheme | geometry | episodes | rejection at α=.05 | KS p | verdict |
 |---|---|---|---|---|---|---|
-| discovery | anchor shift | contiguous | 29 | 0.06 | 0.6767 | CALIBRATED |
+| discovery | anchor shift | contiguous | 29 | 0.05 | 0.7516 | CALIBRATED |
 | C2 | anchor shift | contiguous | 30 | 0.06 | 0.4878 | CALIBRATED |
-| C1 | circular, within block | gapped | 15 | — | — | RECALIBRATING |
+| C1 | circular, within block | gapped | 15 | 0.04 | 0.1229 | CALIBRATED |
 
-C1's row is empty because its scheme changed and the verdict that certified the
-old one has been moved aside rather than left in place to be misread. A
-calibration certifies one scheme; when the scheme is replaced the certificate
-does not carry over, and an artifact that says CALIBRATED about a null nobody
-draws from any more is worse than no artifact. The recalibration is running.
+C1's certificate under the within-block scheme landed on **2026-09-13**, 200
+simulations × 200 draws: rejection rate **0.04** against the band
+[0.0198, 0.0802], KS statistic **0.083**, lattice p = **0.1229**, median
+p-value **0.4776**. The verdict that certified the seam-crossing scheme was moved
+aside rather than left in place to be misread: a calibration certifies one
+scheme; when the scheme is replaced the certificate does not carry over, and an
+artifact that says CALIBRATED about a null nobody draws from any more is worse
+than no artifact. C1 remains the weakest of the three strata — a KS p of 0.12 is
+a pass, not a comfortable one — and the 1,000-simulation certificate the
+pre-freeze gate requires is the run that decides whether the within-block null
+is uniform, not this one. Its predecessor's history is kept below because it is
+how the seam was found.
 
-**C1 passed by a margin worth stating rather than burying, and then the margin
-turned out to be a symptom.** Its KS statistic is 0.0875 against a critical value
-of 0.0960 at 200 simulations, and its p-values lean the wrong way: mean 0.457
-against 0.5. The rejection rate at α = 0.05 is exactly 0.05, which is reassuring
-only because 0.05 is the one α that test examines.
+**Under the seam-crossing shift, C1 passed by a margin worth stating rather than
+burying, and then the margin turned out to be a symptom.** Its KS statistic was
+0.0875 against a critical value of 0.0960 at 200 simulations, and its p-values
+leaned the wrong way: mean 0.457 against 0.5. The rejection rate at α = 0.05 was
+exactly 0.05, which is reassuring only because 0.05 is the one α that test
+examines. (These figures describe the superseded certificate, which was moved
+aside; they are history, not a claim about the null now in use.)
 
 The pre-freeze gate requires uniformity at 1,000 simulations, where the critical
 value falls to 0.0429 — less than half the statistic observed. So a 1,000-run was
@@ -1226,13 +1272,13 @@ simulating the exact lattice null, which assumes nothing: measured false-failure
 rate 4.8% at 200 simulations. And the randomization p-value formula was wrong
 too (below).
 
-Neither accounts for C1. Correcting the formula moved it from 0.0900 to 0.0875;
-correcting the uniformity test leaves it at **p = 0.066**, still the weakest of
+Neither accounted for C1. Correcting the formula moved it from 0.0900 to 0.0875;
+correcting the uniformity test left it at **p = 0.066**, still the weakest of
 the three by a wide margin and still passing only because 0.05 is the threshold.
 A perfect null on this lattice has a median statistic of 0.028 at 1,000
 simulations against C1's 0.0924.
 
-The fix is to shift **within each block** rather than across both: one shift per
+The fix was to shift **within each block** rather than across both: one shift per
 block, wrapping inside it. The ten-five split then holds on every draw,
 clustering inside each block survives, and the seam disappears entirely. There
 are 520 × 121 = 62,920 distinct placebo designs available that way, against the
@@ -1361,7 +1407,7 @@ MDE, and none of them is available here.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **76 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **80 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
@@ -1398,11 +1444,11 @@ not what was. A register full of prescriptions reads like a register full of
 completions, and whether anything had actually been fixed was recoverable only by
 reading the check suite and matching tags by eye.
 
-Each of the 78 findings now carries a status — `fixed`, `open`, or `unverified` —
+Each of the 102 findings now carries a status — `fixed`, `open`, or `unverified` —
 and the check that guards it asserts one direction only: **nothing may say
 `fixed` while a check tagged to it is not passing.** `unverified` means nothing
 checks it, which is a statement of work remaining and not a synonym for fine.
-Current state: **70 fixed, 1 open, 7 unverified**.
+Current state: **99 fixed, 0 open, 3 unverified** — the three (P1, P5, RI3) are held until C1's certificate under the within-block scheme exists, because a BLOCKED check is not evidence.
 
 Writing that check taught two things worth keeping, both of which are the same
 defect it exists to prevent, committed inside it:
@@ -1532,7 +1578,8 @@ surfaced six defects, none of which was visible in any artifact:
 ## 8. Results
 
 **These are discovery-period results, 2017–2020, and they are exploratory.** The
-confirmation sample has never been examined. Nothing below tests H1 in the sense
+confirmation sample has entered no model and no test of H1; the accesses that
+have touched it are disclosed in §5.3 and §5.1d. Nothing below tests H1 in the sense
 the design reserves that word for; it describes what the explorable half of the
 data looks like once the pipeline is repaired. The randomization p-values use
 **500 draws**, not the 2,000 pre-specified for the confirmatory run.
@@ -1561,11 +1608,13 @@ is about a quarter of it and the narrow-MH estimate about a fifth. So the data
 are consistent with no effect, and equally consistent with an effect several
 times smaller than the one the paper has declared it would care about.
 
-**What this does not establish.** It does not show there is no effect. The
-discovery sample's power against −0.005 has not been computed — that is Phase H,
-and it is the next thing that has to happen for any of this to be interpretable
-as an absence rather than a silence. A null with unknown power is not evidence
-of nothing; it is evidence of nothing *detected*.
+**What this does not establish.** It does not show there is no effect. §7.5b
+measures how large an effect would have had to be before this design could have
+found it: under a sustained level shift the discovery sample is underpowered
+against −0.005 by a factor of about 1.9, while a transient dip-and-rebound of
+that size would have been detectable. So this is a *bounded* null — evidence of
+nothing detected, with the bound stated — and limitation 12 says so in the
+terms a referee will use.
 
 ### 8.2 The placebos are quiet, and one channel is not
 
@@ -1686,14 +1735,16 @@ district-day standard deviation is 0.047.
 
 | Decision | Owner | Status |
 |---|---|---|
-| Materiality of the freeze incident | Justin | open |
-| Sign-off on the rebuilt episode list (70 → 75) | Justin | open |
+| Materiality of the freeze incidents (§5.3) | Justin | open |
+| Sign-off on the rebuilt episode list (70 → 74 strict; 75 in the broad arm) | Justin | open |
 | Jordan Neely: pre-specified in `CONFIRMATION_PLAN.md:23-25` but killed by a civilian, not police | Justin + Abrahim | open |
 | Registered Report vs conventional submission | Justin | open |
 | H2 (NYC Well) and H3 — in, out, or amended | Justin | open |
 | `trends_nyc`: retire from CAI-D; `wiki_nyc` rejected as its replacement; index is national | **decided** 2026-09-11 | done |
 | Episode construct: regime → shock | **decided** 2026-09-10 | done |
-| Bridge exhibit → simulation instead | **decided** 2026-09-09 | pending |
+| Bridge exhibit → simulation instead | **decided** 2026-09-09 | done (`25_zscore_simulation.py`) |
+| After Phase H: run Phase I as pre-registered, with the reading of a non-rejection fixed in advance (addendum §19) | **decided** 2026-09-13 by Abrahim; Justin to confirm | decided |
+| O2 coverage diagnostic as a declared, scoped, logged access (addendum §18) | **decided** 2026-09-13 by Abrahim | done |
 
 ---
 

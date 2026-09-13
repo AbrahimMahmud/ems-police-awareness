@@ -247,6 +247,10 @@ def check_episodes():
     if p is None:
         record(stage, "starts_inside_panel", "BLOCKED", "panel not built")
         return
+    # Through the guard, like every other read of the panel in this file. This
+    # one used the raw frame for its date extent (CP1 audit): harmless today,
+    # and exactly the shape a later per-episode summary would inherit.
+    p = select_sample(p, where="22:check_episodes")
     lo, hi = p["incident_date"].min(), p["incident_date"].max()
     windows = active_windows()
     in_scope = ep[[any(a <= t <= b for a, b in windows) for t in ep["start"]]]

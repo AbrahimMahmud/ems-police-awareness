@@ -54,6 +54,11 @@ outputs/tables/*.txt
 # showed up as untracked. Everything under outputs/tables is regenerable by
 # re-running the stage that wrote it; none of it is an input.
 outputs/tables/**/*.csv
+# Ledger identity sidecars (<ledger>.meta.json, event_study.open_ledger) and
+# result sidecars (30_confirmatory_run.py). Regenerable with the ledger they
+# describe; a sidecar without its ledger is meaningless.
+outputs/tables/*.json
+outputs/tables/**/*.json
 outputs/*.pptx
 
 # OS
@@ -92,3 +97,6 @@ data/processed/wikimedia_state/
 # re-derive; caching exists only so a rate-limit interruption does not cost the
 # whole basket.
 data/processed/wiki_pageviews_cache/
+
+# ops runner state (PID files, step logs, sentinels)
+ops/state/

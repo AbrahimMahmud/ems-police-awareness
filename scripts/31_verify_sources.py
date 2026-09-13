@@ -105,21 +105,64 @@ def sha256_of(path):
     return h.hexdigest()
 
 
+def rows_in(path):
+    """Row count from the parquet FOOTER (no row group decoded) or a CSV newline count."""
+    p = Path(path)
+    if p.suffix == ".parquet":
+        import pyarrow.parquet as pq
+        return int(pq.ParquetFile(p).metadata.num_rows)
+    with open(p, "rb") as f:
+        return max(sum(1 for _ in f) - 1, 0)
+
+
 def realised(path):
-    """Row count and date span AS THEY ARE, not as intended."""
+    """Row count and date span AS THEY ARE, not as intended - without loading values.
+
+    This used to `pd.read_parquet` every registered artifact in full to find its
+    date span, which for the outcome parquets means every confirmation-window
+    row in memory on every scan (CP1 audit, 2026-09-13). The span is metadata,
+    and parquet keeps it in the footer: each row group records min and max per
+    column. So the outcome parquets are described from their footers and no
+    outcome value is decoded. A parquet with no footer statistics, or a CSV,
+    is read for its date column only.
+    """
     p = Path(path)
     try:
-        d = pd.read_parquet(p) if p.suffix == ".parquet" else pd.read_csv(p)
-    except Exception as e:
-        return f"unreadable: {type(e).__name__}"
-    span = ""
-    for c in d.columns:
-        if "date" in str(c).lower():
-            s = pd.to_datetime(d[c], errors="coerce").dropna()
+        if p.suffix == ".parquet":
+            import pyarrow.parquet as pq
+            pf = pq.ParquetFile(p)
+            n = int(pf.metadata.num_rows)
+            names = list(pf.schema_arrow.names)
+            date_cols = [c for c in names if "date" in str(c).lower()]
+            span = ""
+            if date_cols:
+                col = names.index(date_cols[0])
+                mins, maxs = [], []
+                for g in range(pf.metadata.num_row_groups):
+                    s = pf.metadata.row_group(g).column(col).statistics
+                    if s is not None and s.has_min_max:
+                        mins.append(s.min); maxs.append(s.max)
+                if mins:
+                    lo, hi = pd.Timestamp(min(mins)), pd.Timestamp(max(maxs))
+                    span = f", {lo.date()}..{hi.date()}"
+                else:                                   # no footer statistics
+                    s = pd.to_datetime(pf.read(columns=[date_cols[0]])
+                                       .column(0).to_pandas(), errors="coerce").dropna()
+                    if len(s):
+                        span = f", {s.min().date()}..{s.max().date()}"
+            return f"{n:,} rows{span}"
+        head = pd.read_csv(p, nrows=0)
+        date_cols = [c for c in head.columns if "date" in str(c).lower()]
+        n = rows_in(p)
+        span = ""
+        if date_cols:
+            s = pd.to_datetime(pd.read_csv(p, usecols=[date_cols[0]])[date_cols[0]],
+                               errors="coerce").dropna()
             if len(s):
                 span = f", {s.min().date()}..{s.max().date()}"
-            break
-    return f"{len(d):,} rows{span}"
+        return f"{n:,} rows{span}"
+    except Exception as e:
+        return f"unreadable: {type(e).__name__}"
 
 
 # ---------------------------------------------------------------------------
@@ -247,6 +290,14 @@ def _normalise(text):
 
 def check_claim(row, doc_cache):
     """Recompute a claimed number and require the document to say it."""
+    # A template with no placeholder can only ever "verify": the recomputed
+    # value is substituted into nothing and the literal is found in the
+    # document whatever the artifact says. C47 was certified that way for four
+    # days (CP1 audit). Malformed is a verdict, never a pass.
+    tmpl = str(row.get("template", ""))
+    if tmpl.count("{}") != 1:
+        return "malformed", (f"template has {tmpl.count('{}')} placeholder(s); exactly one "
+                             "'{}' is required so the recomputed value is actually compared")
     doc = PROJECT_ROOT / str(row["doc"])
     if not doc.exists():
         return "absent", f"document {row['doc']} does not exist"
@@ -265,11 +316,30 @@ def check_claim(row, doc_cache):
     art = row.get("artifact")
     art = "" if art is None or (isinstance(art, float) and pd.isna(art)) else str(art).strip()
     d = None
+    guarded = ""
     if art:
         p = PROJECT_ROOT / art
         if not p.exists():
             return "absent", f"artifact {art} does not exist"
         d = pd.read_parquet(p) if p.suffix == ".parquet" else pd.read_csv(p)
+        # AN OUTCOME ARTIFACT REACHES A CLAIM EXPRESSION ONLY THROUGH THE
+        # DISCOVERY WINDOW. C12/C13 averaged over the buffered panel, whose
+        # Dec-2016 and Jan-2021 rows are confirmation-window outcomes, and
+        # nothing in this path was a guard (CP1 audit). The filter is applied
+        # HERE, before eval, so no expression can see those rows whatever it
+        # says - and it is the discovery window by name rather than the active
+        # sample, because these claims describe discovery quantities and must
+        # keep doing so after the freeze lifts. A claim about confirmation
+        # results reads the sealed result table, never the raw panel.
+        from config import DISCOVERY_END, DISCOVERY_START, OUTCOME_ARTIFACTS
+        if p.name in OUTCOME_ARTIFACTS:
+            dc = next((c for c in d.columns if "date" in str(c).lower()), None)
+            if dc is None:
+                return "failed", f"{art} is an outcome artifact with no date column to guard on"
+            before = len(d)
+            d = d[pd.to_datetime(d[dc]).between(pd.Timestamp(DISCOVERY_START),
+                                                pd.Timestamp(DISCOVERY_END))].copy()
+            guarded = f" [outcome artifact: {before - len(d):,} non-discovery rows excluded before eval]"
 
     try:
         # A deliberately small namespace: enough to express an aggregation
@@ -283,7 +353,10 @@ def check_claim(row, doc_cache):
         # eval gets its own scope and sees only globals, so names passed as
         # locals are invisible inside "sum(... for p in ...)".
         ns = {"__builtins__": safe, "d": d, "pd": pd, "np": np, "json": json,
-              "Path": Path, "PROJECT_ROOT": PROJECT_ROOT}
+              "Path": Path, "PROJECT_ROOT": PROJECT_ROOT,
+              # footer-only row count, so a claim about the SIZE of an outcome
+              # file (C01, C10) never decodes a value
+              "rows_in": rows_in}
         value = eval(str(row["expr"]), ns)
     except Exception as e:
         return "failed", f"expression raised {type(e).__name__}: {e}"
@@ -302,7 +375,7 @@ def check_claim(row, doc_cache):
     RENDERED[str(row["claim_id"])] = rendered
     expect = _normalise(str(row["template"]).replace("{}", rendered))
     if expect in text:
-        return "verified", f"computed {rendered}; document agrees"
+        return "verified", f"computed {rendered}; document agrees{guarded}"
     # Distinguish "the number moved" from "the sentence was rewritten".
     stem = _normalise(str(row["template"]).split("{}")[0]).strip()
     if stem and stem in text:

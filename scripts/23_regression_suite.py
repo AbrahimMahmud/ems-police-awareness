@@ -617,24 +617,31 @@ def s_ri_pvalue_form():
     """
     import ast as _ast
     bad = []
-    for name, fn_name in (("event_study.py", "randomization_p"),
-                          ("30_confirmatory_run.py", None)):
-        f = SCRIPTS / name
-        if not f.exists():
-            bad.append(f"{name} absent")
-            continue
-        src = f.read_text()
-        # The corrected form divides (1 + <count>) by (1 + <total>).
-        if "(1 + (stats_ >= obs).sum()) / (1 + len(stats_))" not in src.replace("\n", " "):
-            tree = _ast.parse(src)
-            biased = [n for n in _ast.walk(tree)
-                      if isinstance(n, _ast.Call)
-                      and isinstance(n.func, _ast.Attribute)
-                      and n.func.attr == "mean"
-                      and "obs" in _ast.unparse(n.func.value)]
-            if biased:
-                bad.append(f"{name} computes an RI p-value as k/n: "
-                           f"{_ast.unparse(biased[0])[:60]}")
+    # ONE implementation. 30 used to keep its own copy of the draw and the
+    # p-value "because the confirmatory path draws its own placebos", and the
+    # copy drifted: it still crossed the window seam after RI3 replaced that
+    # scheme in event_study (CP1 audit, 2026-09-13). So event_study.randomization_p
+    # must carry the corrected form, and 30 must CALL it and carry no p-value
+    # arithmetic of its own.
+    f = SCRIPTS / "event_study.py"
+    src = f.read_text() if f.exists() else ""
+    if "(1 + (stats_ >= obs).sum()) / (1 + len(stats_))" not in src.replace("\n", " "):
+        bad.append("event_study.randomization_p does not compute (1+k)/(1+n)")
+    f30 = SCRIPTS / "30_confirmatory_run.py"
+    if f30.exists():
+        t30 = _ast.parse(f30.read_text())
+        calls = {n.func.id for n in _ast.walk(t30)
+                 if isinstance(n, _ast.Call) and isinstance(n.func, _ast.Name)}
+        if "randomization_p" not in calls:
+            bad.append("30_confirmatory_run.py does not call event_study.randomization_p")
+        local_p = [n for n in _ast.walk(t30) if isinstance(n, _ast.BinOp)
+                   and isinstance(n.op, _ast.Div)
+                   and "stats_" in _ast.unparse(n) and "obs" in _ast.unparse(n)]
+        if local_p:
+            bad.append(f"30_confirmatory_run.py computes its own RI p-value: "
+                       f"{_ast.unparse(local_p[0])[:60]}")
+    else:
+        bad.append("30_confirmatory_run.py absent")
     zeros = []
     for art in sorted(OUTPUTS_TABLES.glob("null_calibration_pvalues*.csv")):
         try:
@@ -646,8 +653,8 @@ def s_ri_pvalue_form():
     if bad or zeros:
         return "FAIL", ("randomization p-values are not (1+k)/(1+n): "
                         + "; ".join(bad + zeros))
-    return "PASS", ("both RI p-value computations use (1+k)/(1+n) and no stored "
-                    "p-value is zero")
+    return "PASS", ("one RI p-value implementation, (1+k)/(1+n), called by 17 and 30; "
+                    "no stored p-value is zero")
 
 
 def s_calibration_writes_stratified():
@@ -1123,15 +1130,20 @@ def d_outcome_list_complete():
     # listed by hand — which would make adding the pre-registered sensitivity a
     # config edit, and would eventually be done by rote instead of by decision.
     #
-    # The suffix is the one config.basket_artifact() produces, so this cannot
-    # drift from the naming rule it mirrors: a file only collapses to a base name
-    # if that base name is itself classified.
-    from config import basket_artifact
+    # The suffix is the one config.arm_artifact() produces, over the arms
+    # config.ARMS declares, so this cannot drift from the naming rule it mirrors:
+    # a file only collapses to a base name if that base name is itself
+    # classified. The first version hard-coded ("broad",), so the spliced arm's
+    # index (cai_daily_spliced.parquet, 2026-09-13) arrived unclassified even
+    # though the arm was declared in config - the list this comment argues
+    # against had simply moved into the check.
+    from config import ARMS, PRIMARY_ARM, arm_artifact
 
     def base_of(name):
-        for b in ("broad",):
-            if name == basket_artifact(name.replace(f"_{b}.", "."), b):
-                return name.replace(f"_{b}.", ".")
+        for arm in sorted(set(ARMS) - {PRIMARY_ARM}):
+            base = name.replace(f"_{arm}.", ".")
+            if base != name and name == arm_artifact(base, arm):
+                return base
         return name
 
     on_disk = {base_of(p.name) for p in DATA_PROCESSED.glob("*.parquet")}
@@ -2286,14 +2298,44 @@ def s_prewindow_truncation():
 
 
 def s_calibration_can_fail():
-    """S4/X3/R3: the calibration verdict must be able to fail."""
-    s = src("18_null_calibration.py")
-    has_min = "MIN_SIMS" in s or ("n_sims" in s and "raise" in s)
-    has_uniform = "kstest" in s or "ks_1samp" in s or "uniform" in s.lower()
-    ok = has_min and has_uniform
-    return ("PASS" if ok else "FAIL",
-            "min-n enforced + uniformity test" if ok
-            else "wide binomial band only; passes at any n")
+    """S4/X3/R3 (and RI2): the calibration verdict must be able to fail.
+
+    By AST, not by words: the first version tested that "MIN_SIMS" and
+    "uniform" appeared in the file, which 18's docstring satisfies on its own,
+    so the check would have passed with the verdict logic deleted (CP1 audit).
+    Required in the CODE: a MIN_SIMS constant; a uniformity function that
+    calls scipy's kstest against the lattice CDF and takes its p-value from a
+    Monte-Carlo null rather than the continuous approximation (finding RI2);
+    and a verdict that is the conjunction of the sim-count, rate and
+    uniformity conditions.
+    """
+    import ast as _ast
+    tree = _ast.parse(src("18_null_calibration.py"))
+    consts = {n.targets[0].id for n in _ast.walk(tree) if isinstance(n, _ast.Assign)
+              and len(n.targets) == 1 and isinstance(n.targets[0], _ast.Name)}
+    problems = []
+    if "MIN_SIMS" not in consts:
+        problems.append("no MIN_SIMS constant")
+    unif = next((n for n in _ast.walk(tree) if isinstance(n, _ast.FunctionDef)
+                 and n.name == "_uniformity"), None)
+    if unif is None:
+        problems.append("no _uniformity function")
+    else:
+        body = _ast.unparse(unif)
+        if "kstest" not in body or "_lattice_cdf" not in body:
+            problems.append("_uniformity does not test against the lattice CDF")
+        if "default_rng" not in body or "null" not in body:
+            problems.append("_uniformity takes its p-value from the continuous "
+                            "approximation, not a Monte-Carlo lattice null (RI2)")
+    verdict = [n for n in _ast.walk(tree) if isinstance(n, _ast.Assign)
+               and len(n.targets) == 1 and isinstance(n.targets[0], _ast.Name)
+               and n.targets[0].id == "calibrated"]
+    if not verdict or not all(k in _ast.unparse(verdict[0].value)
+                              for k in ("enough", "rate_ok", "uniform_ok")):
+        problems.append("the verdict is not the conjunction of sim count, rate and uniformity")
+    return ("PASS" if not problems else "FAIL",
+            "MIN_SIMS enforced; lattice KS with a Monte-Carlo null; verdict = enough and "
+            "rate_ok and uniform_ok" if not problems else "; ".join(problems))
 
 
 def s_stale_calibration_artifact():
@@ -2413,6 +2455,11 @@ SODA_PRODUCERS = {
     "31_verify_sources.py",
 }
 
+# Scripts that DEFINE the protected names without reading anything. Exempt from
+# the reader scans only while they contain no read call, which the checks assert.
+DEFINERS = {"config.py"}
+READ_CALLS = ("read_parquet", "read_csv", "read_table", "ParquetFile", "open")
+
 GUARD_EXEMPT = {
     # Builds the panel, including the lag/lead buffer that deliberately extends
     # to PANEL_BUFFER_END = 2021-01-31 — inside a confirmation window. Filtering
@@ -2437,6 +2484,36 @@ GUARD_EXEMPT = {
 }
 
 
+def _calls_any(path, names):
+    """True when the script contains a CALL to any of `names` (Name or Attribute).
+
+    Checks decide 'guarded' on this, not on the words appearing in the file:
+    a comment naming select_sample used to satisfy D.guard_coverage, so config.py
+    passed as a guarded reader and a deleted guard call would have gone unseen.
+    """
+    try:
+        tree = ast.parse(path.read_text())
+    except SyntaxError:
+        return False
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call):
+            fn = n.func
+            name = fn.id if isinstance(fn, ast.Name) else getattr(fn, "attr", None)
+            if name in names:
+                return True
+    return False
+
+
+def _string_constants(path):
+    """Every string literal in the script's code - not its comments."""
+    try:
+        tree = ast.parse(path.read_text())
+    except SyntaxError:
+        return set()
+    return {n.value for n in ast.walk(tree) if isinstance(n, ast.Constant)
+            and isinstance(n.value, str)}
+
+
 def d_guard_coverage():
     """D3: every panel-reading script must route the panel through the guard.
 
@@ -2445,23 +2522,36 @@ def d_guard_coverage():
     so renaming the entry point to `select_sample` — the actual fix for the
     tautology — made this check report the fixed scripts as unguarded.
     """
-    from config import OUTCOME_ARTIFACTS
+    from config import OUTCOME_ARTIFACTS, RAW_OUTCOME_DIRS
     # declared_access is a guard entry too: it does not filter, but it refuses
     # undeclared exemptions and foreign callers and logs every call, and
     # D.declared_access_scoped holds its scope. A script using it is routed
     # through freeze_guard, which is the property this check tests.
     entries = ("select_sample", "assert_no_confirmation_outcomes",
                "assert_discovery_only", "declared_access")
+    # A reader is a script whose CODE names an outcome artifact - or the raw
+    # paged download directory, which holds every incident row for every year
+    # and which config.RAW_OUTCOME_DIRS promised was covered while nothing read
+    # that constant (CP1 audit). Names in comments do not count either way, and
+    # 'guarded' means a CALL to a guard entry, not a mention.
+    names = tuple(OUTCOME_ARTIFACTS) + tuple(RAW_OUTCOME_DIRS)
     missing = []
     for f in sorted(SCRIPTS.glob("*.py")):
         if f.name in GUARD_EXEMPT:
             continue
-        t = f.read_text()
-        reads = [a for a in OUTCOME_ARTIFACTS if a in t]
-        if reads and not any(e in t for e in entries):
+        if f.name in DEFINERS:
+            # config.py DEFINES these names; it is exempt only while it reads
+            # nothing, which is asserted rather than assumed.
+            if _calls_any(f, READ_CALLS):
+                missing.append(f"{f.name}(defines the names AND reads a file)")
+            continue
+        consts = _string_constants(f)
+        reads = [a for a in names if any(a in c for c in consts)]
+        if reads and not _calls_any(f, entries):
             missing.append(f"{f.name}({','.join(a.split('.')[0] for a in reads)})")
     return ("PASS" if not missing else "FAIL",
-            f"all readers of {len(OUTCOME_ARTIFACTS)} outcome artifacts guarded "
+            f"all readers of {len(OUTCOME_ARTIFACTS)} outcome artifacts and "
+            f"{len(RAW_OUTCOME_DIRS)} raw directory guarded by a call "
             f"({len(GUARD_EXEMPT)} documented exemptions)"
             if not missing else f"unguarded: {missing}")
 
@@ -2619,13 +2709,19 @@ def d_soda_source_guarded():
     from config import EMS_DATASET_ID
     producers = SODA_PRODUCERS
     entries = ("select_sample", "assert_no_confirmation_outcomes",
-               "assert_discovery_only", "freeze_banner")
+               "assert_discovery_only", "freeze_banner", "declared_access")
     unguarded = []
     for f in sorted(SCRIPTS.glob("*.py")):
         if f.name in producers:
             continue
-        t = f.read_text()
-        if EMS_DATASET_ID in t and not any(e in t for e in entries):
+        if f.name in DEFINERS:
+            if _calls_any(f, READ_CALLS + ("urlopen", "get", "request")):
+                unguarded.append(f"{f.name}(defines the id AND performs a request)")
+            continue
+        # The dataset id in a STRING LITERAL (a URL being built), and 'guarded'
+        # means a call, not a word in a comment (CP1 audit).
+        names_it = any(EMS_DATASET_ID in c for c in _string_constants(f))
+        if names_it and not _calls_any(f, entries):
             unguarded.append(f.name)
     return ("FAIL" if unguarded else "PASS",
             f"scripts querying {EMS_DATASET_ID} without the guard: {unguarded}"
@@ -3252,7 +3348,13 @@ def v_sources_verified():
                 bad.append(f"{s['id']}:{Path(a).name}={last['status']}")
                 continue
             f = PROJECT_ROOT / a
-            if f.exists() and pd.Timestamp(f.stat().st_mtime, unit="s", tz="UTC") > last["run_utc"]:
+            # STALE means the CONTENT changed since it was verified, not the file's
+            # mtime: a fresh checkout resets every mtime and this check failed on 21
+            # byte-identical files (CP1 audit #56). The log records the sha256
+            # prefix of what was verified; compare to the file as it is now.
+            _logged = re.search(r"sha256 ([0-9a-f]{16})", str(last.get("detail", "")))
+            _now = hashlib.sha256(f.read_bytes()).hexdigest()[:16] if f.exists() else None
+            if f.exists() and _logged and _now != _logged.group(1):
                 stale.append(f"{s['id']}:{Path(a).name}")
     if unchecked:
         return "BLOCKED", f"{len(unchecked)} artifact(s) never scanned: {unchecked[:3]}"
@@ -3577,9 +3679,12 @@ def m_status_honest():
     bad_vals = sorted(set(d["status"].astype(str)) - allowed)
     if bad_vals:
         return "FAIL", f"status values outside {sorted(allowed)}: {bad_vals}"
-    if not res.exists():
-        return "BLOCKED", "regression_suite.csv absent — the suite has not run"
-
+    # No artifact yet (first run in a fresh container) is NOT a reason to
+    # return BLOCKED: this run's own results are in memory and cover every
+    # check that has already run, which is all but the ones after this one.
+    # Returning BLOCKED here made the register-honesty check inert on exactly
+    # the run where a fresh clone first shows which "fixed" findings have
+    # failing checks (CP1 audit #56).
     SELF = "M.status_honest"
     tagged = {}
     for cid, fids, _desc, _fn in CHECKS:
@@ -3600,7 +3705,8 @@ def m_status_honest():
     # A check that reports yesterday's state is a check that can be right about
     # the wrong day, which is the same class of error as reading a stale
     # artifact anywhere else in this project.
-    state = dict(zip(*[pd.read_csv(res)[c] for c in ("check", "state")]))
+    state = (dict(zip(*[pd.read_csv(res)[c] for c in ("check", "state")]))
+             if res.exists() else {})
     state.update({r["check"]: r["state"] for r in results})
 
     lying = []
@@ -3788,6 +3894,118 @@ def s_placebo_relocations_reported():
     return "PASS", "randomization_p unpacks and reports the relocation count per run"
 
 
+def s_confirmatory_uses_certified_machinery():
+    """P8, P9, P10: the sealed confirmatory script estimates with the SAME code the
+    calibration certifies, and its synthetic dry run proves the script as it
+    stands.
+
+    The CP1 audit (2026-09-13) found three things in 30_confirmatory_run.py
+    that no check looked at. It kept its own copy of the placebo draw, still
+    crossing the window seam that finding RI3 had replaced in event_study, so
+    C1's certificate would have described a null the run did not draw (P8). It
+    indexed the calibration dict with a key that no longer existed, so the real
+    run would have crashed after every cell was estimated and before the result
+    was written (P9). And it selected episodes by start-in-stratum rather than
+    by the pre-specified first-week containment the calibration applies (P10).
+
+    Asserted by AST: 30 calls event_study's randomization_p, draw_scheme_for and
+    stratum_episodes, passes windows= and a ledger to the draw, and defines no
+    placebo geometry of its own. And by artifact: the synthetic dry-run result
+    exists, is stamped SYNTHETIC, and its sidecar names the code fingerprint of
+    30 and event_study as they are now - a dry run that proved an older script
+    is BLOCKED, not evidence.
+    """
+    import ast as _ast
+    import json
+    sys.path.insert(0, str(SCRIPTS))
+    from provenance import code_fingerprint
+    f = SCRIPTS / "30_confirmatory_run.py"
+    if not f.exists():
+        return "BLOCKED", "30_confirmatory_run.py absent"
+    tree = _ast.parse(f.read_text())
+    called = {n.func.id for n in _ast.walk(tree)
+              if isinstance(n, _ast.Call) and isinstance(n.func, _ast.Name)}
+    problems = []
+    for need in ("randomization_p", "draw_scheme_for", "stratum_episodes", "require_calibrated"):
+        if need not in called:
+            problems.append(f"30 never calls event_study.{need}")
+    defined = {n.name for n in _ast.walk(tree) if isinstance(n, _ast.FunctionDef)}
+    own = defined & {"placebo_starts", "placebo_starts_circular", "circular_shift_starts",
+                     "contiguous_blocks", "admissible_starts", "calibrated_scheme_feasible",
+                     "fit", "first_week", "_formula"}
+    if own:
+        problems.append(f"30 defines its own estimator/placebo machinery: {sorted(own)}")
+    rp_calls = [n for n in _ast.walk(tree) if isinstance(n, _ast.Call)
+                and isinstance(n.func, _ast.Name) and n.func.id == "randomization_p"]
+    for c in rp_calls:
+        kws = {k.arg for k in c.keywords}
+        if not {"windows", "ledger", "seed"} <= kws:
+            problems.append("30 calls randomization_p without windows=, ledger= and seed=")
+    art = OUTPUTS_TABLES / "confirmatory_results_dryrun_synthetic.csv"
+    meta = art.with_suffix(".meta.json")
+    if problems:
+        return "FAIL", "; ".join(problems)
+    if not art.exists() or not meta.exists():
+        return "BLOCKED", ("no synthetic dry-run artifact with a code sidecar — run "
+                           "30_confirmatory_run.py --dry-run-synthetic --draws 20")
+    try:
+        m = json.loads(meta.read_text())
+        d = pd.read_csv(art)
+    except Exception as e:
+        return "FAIL", f"dry-run artifact unreadable: {type(e).__name__}: {e}"
+    if m.get("data_source") != "SYNTHETIC" or not (d.get("data_source") == "SYNTHETIC").all():
+        return "FAIL", "the dry-run artifact is not stamped SYNTHETIC in every row"
+    stale = []
+    if m.get("script_code_sha256") != code_fingerprint(f):
+        stale.append("30_confirmatory_run.py")
+    if m.get("event_study_code_sha256") != code_fingerprint(SCRIPTS / "event_study.py"):
+        stale.append("event_study.py")
+    if stale:
+        return "BLOCKED", (f"the synthetic dry run predates the current {stale}; re-run "
+                           "30_confirmatory_run.py --dry-run-synthetic before relying on it")
+    ok = int((d["status"] == "OK").sum())
+    return "PASS", (f"30 draws through event_study ({len(rp_calls)} call site(s), windows/ledger/"
+                    f"seed passed), defines no machinery of its own; dry run current: "
+                    f"{len(d)} rows, {ok} OK, at {m.get('draws')} draws on {m.get('jobs')} worker(s)")
+
+
+def t_spliced_arm_prebreak_identical():
+    """L7 (addendum 20): the spliced `user + automated` arm equals the primary on
+    every day before the agent class existed, and differs after.
+
+    A CONTENT check, not a coverage one. The arm's whole licence is that
+    `automated` is identically zero before 2020-04-29, so the sum is the primary
+    there; if the two indices ever differ before the break, either the class
+    was backfilled upstream or the arm was built from a different basket or a
+    different shared component - all of which would make the sensitivity a
+    comparison of two things, not one. Equal after the break would mean the arm
+    is not measuring the break at all.
+    """
+    from config import arm_artifact
+    a = DATA_PROCESSED / "cai_daily.parquet"
+    b = DATA_PROCESSED / arm_artifact("cai_daily.parquet", "spliced")
+    if not a.exists() or not b.exists():
+        return "BLOCKED", "primary or spliced index absent — run 12_build_cai.py [--arm spliced]"
+    x = pd.read_parquet(a)[["date", "cai_d", "wiki_ext"]].set_index("date")
+    y = pd.read_parquet(b)[["date", "cai_d", "wiki_ext"]].set_index("date")
+    j = x.join(y, rsuffix="_s").dropna()
+    if j.empty:
+        return "FAIL", "the two indices share no scored day"
+    break_day = pd.Timestamp("2020-04-29")
+    pre = j[j.index < break_day]
+    post = j[j.index >= break_day]
+    diff_pre = float((pre["cai_d"] - pre["cai_d_s"]).abs().max()) if len(pre) else 0.0
+    n_diff_post = int(((post["cai_d"] - post["cai_d_s"]).abs() > 1e-12).sum())
+    if diff_pre > 1e-9:
+        return "FAIL", (f"spliced and primary CAI-D differ before {break_day.date()} "
+                        f"(max |diff| {diff_pre:.3e}); the arm is not a splice of the primary")
+    if n_diff_post == 0:
+        return "FAIL", "spliced and primary CAI-D are identical after the break; the arm measures nothing"
+    return "PASS", (f"identical on all {len(pre):,} pre-break days; differs on "
+                    f"{n_diff_post:,} of {len(post):,} post-break days "
+                    f"(mean shift {(post['cai_d_s'] - post['cai_d']).mean():+.4f} SD)")
+
+
 CHECKS = [
     ("T.anchor_monthly", "X1,T4,T5,L4", "Trends anchor rescales all days, not just 1-7", t_anchor_monthly),
     ("T.title_agg_no_trend", "T12", "title aggregation is not measuring accumulation", t_title_agg_no_trend),
@@ -3801,6 +4019,7 @@ CHECKS = [
     ("T.basket_is_police_violence", "B1", "every basket article has evidence police were the actor", t_basket_is_police_violence),
     ("D.edp_family_justified", "O3", "the EDP grouping does not rest on a justification known to be false", d_edp_family_justified),
     ("T.trends_precision_stable", "T6", "the live Trends component keeps its resolution over the decade", t_trends_precision_stable),
+    ("T.spliced_arm_prebreak_identical", "L7", "the spliced Wikipedia arm equals the primary before the agent class existed", t_spliced_arm_prebreak_identical),
     ("T.agent_class_break_bounded", "L7", "the April 2020 agent-class break is measured and bounded", t_agent_class_break_bounded),
     ("T.basket_evidence_not_namesake", "T13,B3", "no basket article rests on an exact-name registry match alone", t_basket_evidence_not_namesake),
     ("T.basket_country_evidence", "B2", "no basket article admitted without US evidence", t_basket_country_evidence),
@@ -3823,7 +4042,7 @@ CHECKS = [
     ("S.joint_test", "S3,R7", "statistic sees a dip-then-rebound", s_joint_test),
     ("S.cluster_by_date", "S6", "SEs clustered by date, not hetero", s_cluster_by_date),
     ("S.prewindow_truncation", "S5,E4", "contested district-days reassigned, not deleted", s_prewindow_truncation),
-    ("S.calibration_can_fail", "S4,X3,R3", "calibration verdict can fail", s_calibration_can_fail),
+    ("S.calibration_can_fail", "S4,X3,R3,RI2", "calibration verdict can fail", s_calibration_can_fail),
     ("S.no_stale_calibration", "R3", "no stale low-n calibration artifact", s_stale_calibration_artifact),
     ("S.calibration_on_residual", "S8", "synthetic null has this design's dependence, not a harder one", s_calibration_on_residual),
     ("S.ri_scheme_certified", "P1,P5,RI3", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
@@ -3835,13 +4054,14 @@ CHECKS = [
     ("S.dose_arm_wired", "D6", "dose-response arm has a caller and recovers a planted effect", s_dose_arm_wired),
     ("S.ledger_identity", "N7,N8", "checkpoint ledgers are keyed to their design and quarantined when it differs", s_ledger_identity),
     ("S.placebo_relocations_reported", "N9", "the within-block shift's relocation count reaches the caller", s_placebo_relocations_reported),
+    ("S.confirmatory_uses_certified_machinery", "P8,P9,P10", "the sealed script estimates with the certified machinery and its dry run is current", s_confirmatory_uses_certified_machinery),
     ("D.freeze_not_tautological", "D3", "freeze guard is not a tautology", d_freeze_not_tautological),
     ("D.freeze_disjoint", "D3", "confirmation sample disjoint from discovery", d_freeze_enforces_disjoint),
     ("D.guard_coverage", "D3,X11,X9", "every outcome-artifact reader calls the guard", d_guard_coverage),
     ("X.bheard_wired", "X6,X17", "B-HEARD control is in a model and inert on discovery", x_bheard_wired_and_inert),
     ("D.soda_guarded", "F2", "the source API is guarded, not only the artifacts", d_soda_source_guarded),
     ("D.outcome_list_complete", "O1,X11", "every processed artifact is classified as outcome or not", d_outcome_list_complete),
-    ("D.incident_disclosed", "F1", "freeze incident stays in the record", d_incident_disclosed),
+    ("D.incident_disclosed", "F1,F2,F3", "every freeze incident stays in the record", d_incident_disclosed),
     ("D.addendum_complete", "E5,E6,F2", "pre-registration text untouched and its addendum exists", d_addendum_complete),
     ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),
     ("D.declared_access_scoped", "O2", "every read of confirmation outcomes is declared, scoped, logged and disclosed", d_declared_access_scoped),

@@ -37,7 +37,42 @@ that the design cannot deliver one. Both are publishable; neither is a failure.
 
 ---
 
-## Status (2026-09-12 16:15Z) — Phases A–E done, F part-done, all three strata calibrated
+## Status (2026-09-13 ~08:20Z) — fresh container, CP1 remediation committed, C1 certified
+
+**Read this block first; everything below it under "Status (2026-09-12…)" is the
+historical record of the previous session and is kept for its reasoning.**
+
+| | |
+|---|---|
+| Branch | `analysis-rework`; commits `34211cc`…`HEAD` on top of the handoff's `e541632` |
+| Environment | **A fresh container.** No `data/processed`, no `outputs/tables`, no scratchpad survived. Everything regenerable was regenerated from committed inputs: the EMS extract re-downloaded with an unchanged provenance hash (S1b), the panel and both basket arms byte-identical, discovery re-calibrated (CALIBRATED, rejection 0.05, lattice KS p 0.7516). |
+| Environment, the rule | **Compute advances only while a session is active.** The container is suspended or reset when the session is idle (a 4-hour usage-limit pause advanced the ledger by zero rows; it came back with `up 1 min` and an empty process table). Every long job is checkpointed and driven by the runners in `ops/`, which are relaunched blind after any restart. Poll by PID file, never `pgrep -f`. |
+| Decisions (user, 2026-09-13) | **Continue to Phase I** as pre-registered, with the reading of a non-rejection fixed against the measured power (addendum §19). Branch stays `analysis-rework`, no attribution. **O2 diagnostic: disclosed first, then run** as a declared access (addendum §18; done). Deliverable: a Markdown manuscript in the repo. |
+| CP1 | **Done as an adversarial audit** (8 finders by failure class, 3-lens refutation where the usage limit allowed): 60 raw findings, of which the confirmed and self-verified ones are filed as O2-close, X16, N7–N10, X17, P8–P10 and the pending items in remediation groups A–E below. |
+| Gate | 80 checks: 77 PASS, 1 BLOCKED, 2 FAIL, run twice with identical results. Every non-PASS is artifact-pending in this container: `S.ri_scheme_certified` BLOCKED until C2's certificate regenerates (C1's landed 08:08Z and satisfies it), `V.claims_reproduce` (26 of 128 absent, 4 reading the 2-draw smoke estimator until the 500-draw run lands) and `M.status_honest` (X14, tagged to it). `main()` reports an unbaselined check as a failing condition; the baseline covers every check. |
+| Findings | 102: 99 fixed, 0 open, 3 unverified (P1, P5, RI3). **C1 certified 2026-09-13** under `circular_within_block`, 200 × 200: rejection 0.04, KS D 0.083, lattice p 0.1229, median p 0.4776, CALIBRATED — but their check covers both confirmation strata, so they stay unverified until C2's certificate regenerates here and the check passes. |
+| Claims | 128 registered. C1's §7.4 row and prose are re-registered as C65, C66, C128–C131 and verify. Claims on regenerated artifacts (the C2 rows, §8 p-values, decomposition, power) re-establish as the chain writes them and are read from the artifact, never "fixed" to the old numbers. |
+
+### What the CP1 audit found that changes Phase I
+
+- **The sealed confirmatory script drew C1's null with the seam-crossing shift** that RI3 replaced in `event_study`, kept its own copy of the estimator, selected episodes by a second rule, was not checkpointed, and would have crashed after all estimation on a stale dictionary key. It now calls the certified machinery (`randomization_p`, `draw_scheme_for`, `stratum_episodes`) with per-cell identity-keyed ledgers and optional cell parallelism; the retired helpers are gone; addendum §21 discloses the within-block scheme the record had never described. `S.confirmatory_uses_certified_machinery` holds it.
+- **Checkpoint ledgers were keyed on filenames.** Both now carry a design fingerprint; a ledger from another design is quarantined, never pooled (N7). Failed sims are recorded, not dropped (N8).
+- **B-HEARD was attached to 17's panel and absent from its formula** (X17); the estimator takes covariates in one place now.
+- **The freeze had undisclosed reads**: the O2 register row held record-level 2015–16 numbers from the 2026-09-09 refutation (disclosed as F3, addendum §15); two claim expressions averaged over the buffered panel's confirmation rows; the source verifier loaded whole outcome parquets; 00b printed per-year missing-district rates. All closed: the claims verifier filters every outcome artifact to the discovery window before eval, `realised()` reads footers only, 00b prints counts, 22 selects the sample, and the guard checks are AST-based.
+- **Power was computed on the wrong C1 calendar** (2015-01-01 rather than 2015-07-01; 181 extra days). 19 now takes its calendar from `CONFIRMATION_ANALYSIS_WINDOWS` with assertions; the re-run is the last step of the rebuild chain, and C100–C102 are re-registered if they move.
+
+### Remediation groups (tracked in the session, mirrored here)
+
+- **A — freeze exposures: done.** F3 disclosed (addendum §15, PAPER_MASTER §5.3, register row tagged to `D.incident_disclosed`, which now names every F-finding); `check_claim` filters outcome artifacts to the discovery window before eval; footer-only `realised()`; 00b prints counts only; 22's `check_episodes` uses `select_sample`; `ems_pages` is a raw outcome directory for coverage; `D.guard_coverage`, `D.soda_guarded`, `S.calibration_can_fail`, `X.bheard_wired` and `D.declared_access_scoped` are AST-based.
+- **B — confirmatory script: done** (`S.confirmatory_uses_certified_machinery`; synthetic dry run 105 rows, exit 0, sidecar stamped).
+- **C — ledger identity: done** (`S.ledger_identity`).
+- **D — gate integrity: part done.** Done: unbaselined/retired checks fail `main()`; a template without exactly one `{}` is `malformed`; `M.status_honest` first-run BLOCKED; `V.sources_verified` compares hashes not mtimes; arm suffixes collapse over `config.ARMS`. Remaining: cell-level exhibit coverage incl. unit/arrow cells; U+2212 in `_template_regex`/`NUMBER_RE`; templates embedding sibling values; register `checks` column vs CHECKS tags and severity vocabulary; `source_register.json` vs `data_sources.csv` ids and `check_artifact` 'verified' with no row; run_all stale-output PASS; 19's early-exit bypass of no-downgrade; `X.run_all_stages_declared` regex; `E.episodes_labelled` tautology; duplicate constants; 09 clobbering `wikipedia_article_resolution.csv`; `fetch_leads` truncation materiality; non-parquet legacy files in `data/processed`.
+- **E — documents: done** except the numbers that the chain regenerates (§7.4 C2 row, §7.5b power, §8 p-values), which re-establish from artifacts.
+- **L7 spliced arm: done** (addendum §20; 11 → 12 → 13 under `--arm spliced`; identical on all 1,764 pre-break days, differs on 1,708 of 1,708 post-break days, `T.spliced_arm_prebreak_identical`; §5.1a; C122–C127).
+- **Rebuild chain (ops/rebuild.sh), in flight:** 500-draw discovery estimator → 05, 03, 04, 06, 07, 08, 33 → C2 calibration → 19 power; then `ops/calib1000.sh` (1000 sims × 3 strata). Progress: `wc -l outputs/tables/ri_ledger_*.csv`, `outputs/tables/null_calibration_ledger_d200_C2.csv`.
+- **Then CP2** (checklist below, plus: 1000-sim certificates on all three strata; planted-effect recovery; run_all clean twice from cold; B-HEARD inert; final adversarial audit of the specification) → `FREEZE_ACTIVE = False` in one commit → **Phase I** → **Phase J** (`docs/PAPER.md`).
+
+## Status as of 2026-09-12 16:15Z — Phases A–E done, F part-done, all three strata calibrated (historical)
 
 *Phases A–E below are the record of work already completed, kept for the
 reasoning rather than as a to-do list. The live work is Phase F's seven
@@ -369,6 +404,11 @@ something nearly every time it has been tried.
 **`docs/PAPER_MASTER.md` updates in the same commit as the change it describes**,
 in language a non-specialist can follow. **Baseline refreshed in the same commit
 as the fix**, never separately.
+
+**The container is suspended or reset whenever the session is idle, and every
+process dies with it.** Compute advances only while a session is active; the
+filesystem survives. Anything long is checkpointed and driven by the runners in
+`ops/`, which skip completed steps and resume ledgers when relaunched blind.
 
 **Background jobs are polled by PID file or sentinel file, never `pgrep -f`.**
 A `pgrep -f` pattern matches the shell whose command line contains it, so a
@@ -929,6 +969,33 @@ non-human-subjects determination in writing; OSF deposit with timestamp.
 ---
 
 ## Session log — where execution stopped
+
+**2026-09-13 ~08:00Z — fresh container; see the Status block at the top.**
+
+What happened, in order: the handoff was read against the repository (its branch
+state was accurate; the environment it described was gone); the outcome side was
+rebuilt from committed inputs and reproduced (EMS extract hash unchanged, panel
+and episode lists byte-identical, the four §8 first-week estimates recovered to
+the stated precision at 2 draws); the user decided the four open questions; the
+O2 coverage diagnostic was disclosed, then built as a declared, logged,
+scope-checked access and run (20 within-window code breaks, geocoding step at
+2016-01-01); addendum §§19–21 and PAN §9.7 pre-committed the reading of a
+non-rejection, the spliced arm and the within-block scheme; the CP1 adversarial
+audit ran and its findings were remediated in groups (C and B complete, A/D/E
+partly); the confirmatory script was rebuilt on the certified machinery.
+
+- **In flight** (relaunch `ops/rebuild.sh` then `ops/calib1000.sh` after any restart):
+  C1 200-sim calibration under the within-block scheme; then the 500-draw
+  discovery estimator (its 2-draw ledgers will be extended), the secondary
+  models, C2's calibration, the power run; then 1000 sims on all three strata.
+- **Untouched**: `FREEZE_ACTIVE` stays True. The only confirmation-window
+  reads this session are the declared O2 access (logged in
+  `data/reference/freeze_access_log.csv`) and — to be disclosed as F3 — the
+  2026-09-09 refutation numbers already sitting in the O2 register row.
+- **Next**: remediation A (freeze exposures, F3), D (gate integrity), the L7
+  arm, 19's C1 calendar and re-run, C1/C2 certificates → close P1/P5/RI3 and
+  re-establish the §7.4 rows and claims → CP2 → freeze lift → Phase I → Phase J.
+
 
 **2026-09-12 23:30Z, at `1731c92`.**
 

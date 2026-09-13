@@ -289,6 +289,16 @@ So, pre-specified now rather than discovered later:
 * the scheme used is recorded per result row, so no reader has to infer which null
   produced which p-value.
 
+**Superseded on 2026-09-12, disclosed 2026-09-13 (`CONFIRMATION_PLAN.md`
+addendum §21).** The shift is now drawn *within each block* of a gapped
+stratum, one shift per window, so the number of episodes per window is
+preserved on every draw (finding RI3: the concatenated shift reproduced C1's
+real 10/5 split on 12.4% of draws). Under that scheme C1 has 62,920 distinct
+placebo designs against 2,000 draws, so the test is **sampled, not exact**, and
+the "685 admissible days … exact" statement above no longer holds. C1 is
+calibrated under the within-block scheme separately (§8), and the confirmatory
+script draws from the same code the calibration certifies.
+
 **The honest caveat, stated before the fact.** The circular-shift null is *not*
 the null certified by the 200-simulation calibration. It is the same estimator and
 the same statistic under a different randomization scheme, adopted because the
@@ -303,16 +313,25 @@ cry wolf. It is run end-to-end on **200 synthetic panels built to contain no
 effect**, carrying the real design's serial correlation and a citywide day shock.
 A trustworthy test rejects about 5% of the time and its p-values are uniform.
 
-Current artifact (`outputs/tables/null_calibration.csv`):
+Discovery artifact (`outputs/tables/null_calibration.csv`), as regenerated on
+2026-09-13 under the corrected p-value form, the lattice uniformity test and
+per-draw seeding (the figures first written here — rejection 0.0500, KS p 0.5617
+— came from the code before those corrections; the current values are the
+registered claims in `PAPER_MASTER.md` §7.4):
 
 ```
 VERDICT                   CALIBRATED
-empirical rejection rate  0.0500   nominal 0.05, band [0.0198, 0.0802]
-median p                  0.5000
-KS uniformity             p = 0.5617
+empirical rejection rate  0.05     nominal 0.05, band [0.0198, 0.0802]
+KS uniformity (lattice)   p = 0.7516
 AR(1) rho                 0.0482   estimated from the real (discovery) panel
 n sims                    200      minimum required 200
 ```
+
+**Each stratum has its own certificate.** The confirmatory script gates on
+`null_calibration_C1.csv` and `null_calibration_C2.csv`, not on discovery's
+artifact (finding P7), and C1's certificate must name the within-block scheme
+(addendum §21). This paragraph used to describe a single gate on discovery's
+file; that was the code as first written, and it was wrong.
 
 Uniformity is the property that matters: a correct rejection rate with a
 badly-shaped distribution still means a broken statistic. **An uncalibrated

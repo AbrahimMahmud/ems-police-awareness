@@ -226,8 +226,7 @@ The estimates are all negative and all small: against the minimum effect of
 interest now fixed at **−0.005**, the EDP estimate is about a quarter of it. The
 honest statement is that the discovery data are consistent with no effect and
 equally consistent with an effect several times below the threshold the paper has
-said it cares about. **Power against −0.005 has not been computed** — that is
-Phase H — so this is a null of unknown resolution, not an established absence.
+said it cares about. **Power against −0.005 was computed on 2026-09-13 (Phase H; `PAPER_MASTER.md` §7.5b):** every stratum is underpowered for a sustained level shift of that size and powered for a transient dip-and-rebound, so this is a bounded null — not an established absence, and no longer one of unknown resolution.
 
 **One channel does move, and it is not the one the paper is about.** Across the
 65 outcome-by-window tests in the decomposition, three survive a Bonferroni

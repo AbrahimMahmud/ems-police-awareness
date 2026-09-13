@@ -11,6 +11,7 @@ T.scope_covers_candidates,N2,every basket candidate was actually asked about,PAS
 T.basket_is_police_violence,B1,every basket article has evidence police were the actor,PASS,all 109 published articles classified for the 'strict' basket; 109 rest on a police-action category or the MPV registry; 0 anti-police
 D.edp_family_justified,O3,the EDP grouping does not rest on a justification known to be false,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 T.trends_precision_stable,T6,the live Trends component keeps its resolution over the decade,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+T.spliced_arm_prebreak_identical,L7,the spliced Wikipedia arm equals the primary before the agent class existed,PASS,baseline row added 2026-09-13; contract state
 T.agent_class_break_bounded,L7,the April 2020 agent-class break is measured and bounded,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 T.basket_evidence_not_namesake,"T13,B3",no basket article rests on an exact-name registry match alone,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 T.basket_country_evidence,B2,no basket article admitted without US evidence,PASS,"all 109 published articles carry US evidence (65 from Wikidata, 109 from a category); 0 carry non-US evidence"
@@ -45,6 +46,7 @@ S.ppml_wired,"X5,R8",counts/PPML arm actually called,PASS,PPML recovers planted 
 S.dose_arm_wired,D6,dose-response arm has a caller and recovers a planted effect,PASS,called by ['17_stacked_event_study.py']; recovers planted dose effect +0.01001 per SD against a planted +0.01000
 S.ledger_identity,"N7,N8",checkpoint ledgers are keyed to their design and quarantined when it differs,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 S.placebo_relocations_reported,N9,the within-block shift's relocation count reaches the caller,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+S.confirmatory_uses_certified_machinery,"P8,P9,P10",the sealed script estimates with the certified machinery and its dry run is current,PASS,baseline row added 2026-09-13; contract state
 D.freeze_not_tautological,D3,freeze guard is not a tautology,PASS,guard is independent
 D.freeze_disjoint,D3,confirmation sample disjoint from discovery,PASS,explicit confirmation window
 D.guard_coverage,"D3,X11,X9",every outcome-artifact reader calls the guard,PASS,all readers of 4 outcome artifacts guarded (5 documented exemptions)

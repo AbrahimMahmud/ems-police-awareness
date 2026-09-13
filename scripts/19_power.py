@@ -591,23 +591,33 @@ def _variance_components(outcome):
 # Strata -- derived from config, and checked against PAPER_MASTER 6
 # ===========================================================================
 def _stratum_windows(name):
-    """The (start, end) intervals a stratum covers. DERIVED, never hand-set."""
+    """The (start, end) intervals a stratum covers. DERIVED from the ONE
+    definition in config, never hand-set.
+
+    This used to split CONFIRMATION_WINDOWS at the B-HEARD launch, which opens
+    C1 on 2015-01-01 - 181 days before the treatment index exists - while
+    18_null_calibration.py and 30_confirmatory_run.py open it on 2015-07-01
+    from CONFIRMATION_ANALYSIS_WINDOWS (CP1 audit, 2026-09-13). Three scripts,
+    two calendars, one stratum name: the power artifact described a C1 with 882
+    days that the calibration and the estimator never see. The immateriality
+    test below only asked whether an episode started in the gap, which does not
+    cover the calendar-length and placebo-room metrics the gap changes.
+    """
+    from config import CONFIRMATION_ANALYSIS_WINDOWS
     if name == "discovery":
         return [(pd.Timestamp(DISCOVERY_START), pd.Timestamp(DISCOVERY_END))]
+    if name == "C1":
+        wins = CONFIRMATION_ANALYSIS_WINDOWS[:2]
+    elif name == "C2":
+        wins = CONFIRMATION_ANALYSIS_WINDOWS[2:]
+    else:
+        raise ValueError(f"unknown stratum {name}")
+    out = [(pd.Timestamp(a), pd.Timestamp(b)) for a, b in wins]
+    # The strata must still refine the frozen windows and split at the launch.
     launch = pd.Timestamp(BHEARD_LAUNCH)
-    out = []
-    for a, b in CONFIRMATION_WINDOWS:
-        a, b = pd.Timestamp(a), pd.Timestamp(b)
-        if name == "C1":
-            hi = min(b, launch - pd.Timedelta(days=1))
-            if a <= hi:
-                out.append((a, hi))
-        elif name == "C2":
-            lo = max(a, launch)
-            if lo <= b:
-                out.append((lo, b))
-        else:
-            raise ValueError(f"unknown stratum {name}")
+    for a, b in out:
+        assert any(pd.Timestamp(x) <= a and b <= pd.Timestamp(y) for x, y in CONFIRMATION_WINDOWS)
+        assert (b < launch) if name == "C1" else (a >= launch), (name, a, b)
     return out
 
 

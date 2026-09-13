@@ -55,6 +55,13 @@ Usage:
     python 17_stacked_event_study.py [--outcome edp_share] [--draws 2000]
 """
 
+# One BLAS thread per process, set BEFORE numpy loads (see 30_confirmatory_run.py
+# for the measurement: forked workers deadlock on an inherited OpenBLAS pool, and
+# multi-threaded BLAS under several workers oversubscribes a 4-core box).
+import os
+for _v in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
+    os.environ.setdefault(_v, "1")
+
 import argparse
 
 import numpy as np

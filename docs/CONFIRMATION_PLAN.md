@@ -76,12 +76,13 @@ confirmation-period outcomes**.
 | 12 | H2 and H3 are not currently runnable | n/a |
 | 13 | Power note W5 is superseded | yes |
 | 14 | **H1 framing and the DID control choice** | **NO — see below** |
-| 15 | **Freeze incidents F1 and F2** | **NO — these are accesses** |
+| 15 | **Freeze incidents F1, F2 and F3** | **NO — these are accesses** |
 | 16 | Randomization scheme on C1: circular shift within each block | yes |
 | 17 | Two C1 episodes' windows leave the stratum: first-week containment rule | yes |
 | 18 | **Coverage diagnostic over the 2015–2016 outcome extract (O2)** | **NO — a declared, scoped access; disclosed here before it was run** |
 | 19 | Interpretation rules restated against the measured power (Phase H) | yes |
 | 20 | Spliced `user + automated` Wikipedia series as a sensitivity arm (L7) | yes |
+| 21 | C1 null: circular shift **within each block**, sampled not exact; one implementation | yes |
 
 ---
 
@@ -303,6 +304,18 @@ numbers were read as evidence rather than as an access.**
 
 The structural gap is closed: the guard now covers the source dataset and not
 only the files derived from it.
+
+**F3** — a third access, taken on 2026-09-09 and found on 2026-09-13 in the
+findings register itself. The refutation of finding O2 computed record-level
+statistics from the outcome extract for 2014–2016 — missing-district rates by
+year, sub-window and call type; the INJALS code's monthly counts and last
+timestamp; INJMAJ's share across the 2015/16 boundary; an estimated step in the
+mental-health share — and wrote them into the finding's corrected claim, where
+they were read as evidence rather than as an access while this section said
+there had been two. No artifact or API guard can see an agent opening a file.
+The declared-access mechanism of §18 exists because of this: a read that has to
+happen is scoped, disclosed and logged before it happens, and the coverage facts
+the paper cites are the ones from that declared read, not from F3.
 
 ## 16. The randomization scheme on C1 (finding P1)
 
@@ -547,6 +560,57 @@ with the reason rather than skipped.
 (automated is zero before 2020), so any difference there is a rounding check.
 In C2 a result that moves between the arms is a result that depends on how
 Wikimedia classifies traffic, and is reported as such.
+
+## 21. The C1 randomization null is a within-block circular shift, and the confirmatory script draws it from the same code the calibration certifies (findings RI3, P1, P8, P9, P10; CP1 audit)
+
+**Blind.** Treatment-side geometry; no outcome read. The scheme was adopted on
+2026-09-12 (`event_study.placebo_starts_circular`) and is disclosed here on
+2026-09-13, which is later than it should have been: §16 above and
+`PRE_ANALYSIS_NOTE.md` §7 still describe the version it replaced.
+
+**What §16 pre-specified, and why it was replaced.** §16 says C1's placebo
+dates are drawn by a circular shift over the stratum's admissible days taken as
+one sequence. Measured (finding RI3): C1 really has ten episodes in its 2015–16
+block and five in its 2021 block, and a shift through the concatenated
+sequence — block 1 being 520 of 641 admissible days — put a mean of 12.1
+episodes in block 1, reproducing the real 10/5 split on 12.4% of draws. The
+placebo designs were structurally unlike the design under test, which is why
+C1's null p-values were non-uniform. **The scheme now in force draws one
+uniform shift per window and wraps inside it**, so the number of episodes in
+each window is preserved on every draw and clustering inside a window survives.
+On a single-window stratum it is arithmetically identical to the anchor-shift
+null, so discovery and C2 are untouched. It is named `circular_within_block`,
+and `S.ri_scheme_certified` requires C1's certificate to name it.
+
+**Two consequences for what §16 and the note say.**
+
+1. *Sampled, not exact.* §16 and the note say C1's test is exact because the
+   685 admissible shifts are fewer than 2,000 draws. Under the within-block
+   scheme there are 520 × 121 = 62,920 distinct placebo designs, so the 2,000
+   pre-specified draws are a sample of them; `ri_exact` is 0 for every cell.
+2. *One implementation.* The sealed script had kept its own copy of the
+   seam-crossing shift and would have drawn C1's null with it while gating on
+   a certificate for the within-block null — the certificate would have
+   described a null the run did not draw. The copy is removed: the script calls
+   `event_study.randomization_p` with the stratum's windows, and the scheme is
+   chosen by `event_study.draw_scheme_for` from the geometry, exactly as the
+   calibration does. The regression suite requires that the script carries no
+   randomization arithmetic of its own.
+
+**Also fixed in the script before any run, each disclosed here because the
+script is the specification:** episodes are selected by the first-week
+containment rule of §17 through the same function the calibration uses
+(previously by start-in-stratum, which agreed only by measurement); every cell
+seeds its draws from its own identity and banks them in a per-cell ledger
+whose sidecar fingerprints the design, so a run interrupted by a container
+restart resumes exactly and a ledger from a different panel or episode list is
+quarantined rather than pooled; cells may be distributed across processes
+without changing any number; the coverage-clean (§18) and spliced (§20)
+sensitivities are estimated as `sens_coverage_clean` and `sens_spliced_wiki`
+in the `sensitivity` family; and a defect that would have crashed the run
+after all estimation and before writing its result (a stale dictionary key)
+is corrected. A synthetic dry run proceeds without calibration certificates so
+the machinery can be proven on a fresh clone; the real run still refuses.
 
 ---
 

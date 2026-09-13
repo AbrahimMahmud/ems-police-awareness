@@ -55,9 +55,15 @@ _ap = _ap_mod.ArgumentParser()
 _ap.add_argument("--basket", default=None,
                  help="which basket's components to build the index from; default "
                       "config.CAI_D_BASKET. Outputs are suffixed so the primary and "
-                      "sensitivity arms cannot overwrite each other.")
+                      "sensitivity arms cannot overwrite each other. A basket name is "
+                      "an arm name; prefer --arm.")
+_ap.add_argument("--arm", default=None,
+                 help="which sensitivity arm (config.ARMS) to build the index for; the "
+                      "arm's own components file supplies wiki_ext, everything else is shared")
 _args = _ap.parse_args()
-BASKET = _args.basket
+if _args.arm and _args.basket and _args.arm != _args.basket:
+    raise SystemExit("--arm and --basket disagree; pass one")
+BASKET = _args.arm or _args.basket      # an ARM name; None is the primary
 # ONLY wiki_ext DEPENDS ON THE BASKET. gdelt_tv, gdelt_news and the Trends
 # series are properties of a query, not of which victims' articles are summed,
 # so a basket arm re-fetching them would be wasted network and a second copy of

@@ -36,9 +36,15 @@ import argparse as _ap_mod
 _ap = _ap_mod.ArgumentParser()
 _ap.add_argument("--basket", default=None,
                  help="which basket's index to detect episodes in; default "
-                      "config.CAI_D_BASKET. The output is suffixed so the broad "
-                      "sensitivity arm cannot overwrite the primary episode list.")
-BASKET = _ap.parse_args().basket
+                      "config.CAI_D_BASKET. The output is suffixed so a sensitivity "
+                      "arm cannot overwrite the primary episode list. A basket name "
+                      "is an arm name; prefer --arm.")
+_ap.add_argument("--arm", default=None,
+                 help="which sensitivity arm's index (config.ARMS) to detect episodes in")
+_a13 = _ap.parse_args()
+if _a13.arm and _a13.basket and _a13.arm != _a13.basket:
+    raise SystemExit("--arm and --basket disagree; pass one")
+BASKET = _a13.arm or _a13.basket        # an ARM name; None is the primary
 cai = pd.read_parquet(DATA_PROCESSED / basket_artifact("cai_daily.parquet", BASKET))
 cai = cai.dropna(subset=["cai_d"]).sort_values("date").reset_index(drop=True)
 cai["year"] = cai["date"].dt.year

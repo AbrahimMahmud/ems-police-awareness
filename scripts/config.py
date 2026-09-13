@@ -355,6 +355,49 @@ CAI_D_COMPONENTS = ("wiki_ext", "trends_us")
 CAI_D_BASKET = "strict"
 
 
+# ARMS: the sensitivity variants of the treatment index, each a named deviation
+# from the primary in exactly one respect. "broad" changes the article basket
+# (CAI_D_BASKET above); "spliced" changes the Wikipedia AGENT CLASSES summed -
+# `user + automated` against the primary's `user` - to undo the April 2020
+# agent-class break (finding L7, CONFIRMATION_PLAN addendum 20). Both flow
+# through 11 -> 12 -> 13 -> 30 under one suffix rule, so no arm can overwrite
+# the primary's artifacts or provenance rows (the P3 lesson), and each arm's
+# episode list is read by the confirmatory script as its own sensitivity.
+ARMS = {
+    "strict":  dict(basket="strict", agents=("user",)),              # the primary
+    "broad":   dict(basket="broad",  agents=("user",)),
+    "spliced": dict(basket="strict", agents=("user", "automated")),
+}
+PRIMARY_ARM = "strict"
+
+
+def arm_basket(arm=None):
+    """Which article basket an arm sums wiki_ext over."""
+    return ARMS[arm or PRIMARY_ARM]["basket"]
+
+
+def arm_agents(arm=None):
+    """Which Wikimedia agent classes an arm sums."""
+    return ARMS[arm or PRIMARY_ARM]["agents"]
+
+
+def arm_artifact(name, arm=None):
+    """Suffix a derived artifact with its arm; the primary keeps the bare name."""
+    arm = arm or PRIMARY_ARM
+    if arm not in ARMS:
+        raise ValueError(f"unknown arm {arm!r}; declared arms: {sorted(ARMS)}")
+    if arm == PRIMARY_ARM:
+        return name
+    stem, _, ext = name.rpartition(".")
+    return f"{stem}_{arm}.{ext}"
+
+
+def arm_source_id(source_id, arm=None):
+    """Suffix a provenance id with its arm, for the same reason as the file."""
+    arm = arm or PRIMARY_ARM
+    return source_id if arm == PRIMARY_ARM else f"{source_id}_{arm}"
+
+
 def basket_articles_file(basket=None):
     """The article list wiki_ext is summed over, for a given basket."""
     basket = basket or CAI_D_BASKET
@@ -365,42 +408,14 @@ def basket_articles_file(basket=None):
 
 
 def basket_artifact(name, basket=None):
-    """Suffix a derived artifact with its basket, so arms cannot overwrite each other.
-
-    The broad basket is a PRE-REGISTERED SENSITIVITY, which means it has to be
-    estimable — and it is not, if building it overwrites the primary arm's index
-    and episode list on the way. One naming rule applied at every step (11 -> 12
-    -> 13) keeps both arms on disk at once and keeps a single implementation of
-    each step, rather than a second copy of the pipeline that drifts.
-
-    strict keeps the historical names; anything else gets `_<basket>` before the
-    extension.
-    """
-    basket = basket or CAI_D_BASKET
-    if basket == "strict":
-        return name
-    stem, _, ext = name.rpartition(".")
-    return f"{stem}_{basket}.{ext}"
+    """Alias of arm_artifact: a basket name is an arm name. Kept for existing callers."""
+    return arm_artifact(name, basket)
 
 
 def basket_source_id(source_id, basket=None):
-    """Suffix a PROVENANCE id with its basket, for the same reason as the file.
+    """Alias of arm_source_id. Kept for existing callers."""
+    return arm_source_id(source_id, basket)
 
-    basket_artifact kept the two arms' artifacts apart on disk but nothing kept
-    their provenance rows apart, and data_sources.csv is defined as current
-    state: exactly one row per source_id. So running the broad arm rewrote D1
-    and S11 in place, repointing them at the broad files. The strict episode
-    list and the strict component series — the PRIMARY arm, the one the paper
-    reports — then had no provenance row at all, and no check noticed, because
-    V.artifacts_current verifies the generator behind each row that exists and
-    never asks whether a row that should exist is missing.
-
-    That is the register losing an artifact silently, which is the one failure
-    it is supposed to make impossible. An id belongs to an artifact, so it gets
-    the artifact's suffix.
-    """
-    basket = basket or CAI_D_BASKET
-    return source_id if basket == "strict" else f"{source_id}_{basket}"
 
 
 # WHICH COMPONENTS A BASKET ARM IS ALLOWED TO CHANGE. Exactly one.
@@ -526,7 +541,8 @@ BHEARD_PRIMARY_BOUND = "early"
 #       E.frozen_list_untouched. It is evidence of what was pre-specified, not an
 #       input to anything.
 #
-#   confirmation_episodes_rebuilt.csv  75 episodes, the ADOPTED list. Built under
+#   confirmation_episodes_rebuilt.csv  74 episodes (strict arm; 75 in the broad
+#                                       arm), the ADOPTED list. Built under
 #       the shock rule with a within-year quantile threshold, so stringency is
 #       constant across years instead of drifting with the index's own scale. The
 #       construct change is a disclosed deviation.

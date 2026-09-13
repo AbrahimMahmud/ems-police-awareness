@@ -46,6 +46,17 @@ Usage:
     python 18_null_calibration.py [--sims 200] [--draws 200] [--rho 0.6]
 """
 
+# One BLAS thread per process, set BEFORE numpy loads. Two reasons, both measured
+# on 2026-09-13: OpenBLAS starts a thread pool on first use and a process that
+# forks after that (ProcessPoolExecutor) inherits a locked pool - the workers
+# sat in futex_wait at 0% CPU for good - and three workers each running an
+# 8-thread BLAS on a 4-core box gave a load average of 14, which is slower than
+# one thread each. The estimator's fits are small; parallelism belongs at the
+# cell or sim level, not inside the matrix library.
+import os
+for _v in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
+    os.environ.setdefault(_v, "1")
+
 import argparse
 import os
 from concurrent.futures import ProcessPoolExecutor

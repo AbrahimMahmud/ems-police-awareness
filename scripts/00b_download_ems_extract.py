@@ -122,16 +122,14 @@ g1 = (win.groupby(["incident_date", "communitydistrict", "final_call_type"], dro
       .size().rename("n_calls").reset_index())
 
 miss = g1["communitydistrict"].isna()
-miss_share = float(g1.loc[miss, "n_calls"].sum() / max(g1["n_calls"].sum(), 1))
+# This script PRODUCES the extract and examines nothing. It used to print the
+# missing-district share by year for 2014-2024 here - half of the O2 coverage
+# diagnostic, over confirmation years, from a script whose exemption asserts it
+# examines nothing (CP1 audit, 2026-09-13). That table now exists exactly once,
+# under the declared access in 35_coverage_breaks.py. Only counts are printed.
 print(f"  missing community district: {int(g1.loc[miss, 'n_calls'].sum()):,} calls "
-      f"({miss_share:.2%} of in-window volume) — retained as NaN, not dropped")
-by_year = (g1.assign(year=g1["incident_date"].dt.year)
-             .groupby(["year", g1["communitydistrict"].isna()])["n_calls"].sum()
-             .unstack(fill_value=0))
-if True in by_year.columns:
-    rate = (by_year[True] / by_year.sum(axis=1)).round(4)
-    print("  missing-CD share by year:")
-    print(rate.to_string())
+      f"retained as NaN rows, not dropped (rate by year: 35_coverage_breaks.py, "
+      "declared access O2_coverage_breaks)")
 out1 = DATA_PROCESSED / "ems_cd_day_calltype.parquet"
 g1.to_parquet(out1, index=False)
 
