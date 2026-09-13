@@ -7,8 +7,11 @@
 # cleared except (a) the raw page cache ems_pages/, so 00b rebuilds the extract
 # from cached pages without a network fetch, and (b) the products of 18 and 19,
 # which are not run_all stages (hours of resumable compute) and enter the model
-# stages as certified inputs, and (c) the synthetic dry run of 30, which is the
-# machinery proof and refuses to run once the freeze is lifted. Fetch stages other than 00b are excluded: upstream
+# stages as certified inputs, (c) the synthetic dry run of 30, which is the
+# machinery proof and refuses to run once the freeze is lifted, and (d) the
+# randomization ledgers: seeded, identity-keyed checkpoints of a deterministic
+# computation, so keeping them changes no number and saves hours; a cold pass
+# still recomputes every artifact from inputs plus these checkpoints. Fetch stages other than 00b are excluded: upstream
 # mutates and the treatment inputs are frozen.
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 ST="$REPO/ops/state"; mkdir -p "$ST"
@@ -22,7 +25,7 @@ say "rebuild done; cold runs begin"
 clear_cold(){
   find outputs/tables -maxdepth 1 -type f \( -name '*.csv' -o -name '*.txt' -o -name '*.json' \) \
     ! -name 'null_calibration*' ! -name 'power_analysis*' \
-    ! -name 'confirmatory_results_dryrun*' ! -name 'ri_ledger_confirmatory_SYNTHETIC*' -delete
+    ! -name 'confirmatory_results_dryrun*' ! -name 'ri_ledger_*' -delete
   find outputs/figures -maxdepth 1 -type f \( -name '*.png' -o -name '*.pdf' \) -delete 2>/dev/null
   rm -f outputs/run_manifest.json
   find data/processed -maxdepth 1 -type f \( -name '*.parquet' -o -name '*.csv' \) -delete

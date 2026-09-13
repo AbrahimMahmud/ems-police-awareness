@@ -160,7 +160,12 @@ STAGES = [
     dict(script="17_stacked_event_study.py", kind="model",
          needs=["data/processed/panel_cd_day.parquet",
                 "data/reference/confirmation_episodes_rebuilt.csv"],
-         writes=['outputs/tables/event_study_results.csv', 'outputs/tables/event_study_path.csv'], note="the primary estimator"),
+         writes=['outputs/tables/event_study_results.csv', 'outputs/tables/event_study_path.csv'],
+         # 12 cells x 2,000 draws is about three hours on this machine; the
+         # 90-minute default killed it on the first cold pass (2026-09-13). Its
+         # ledgers make a resumed run finish where it stopped.
+         timeout=6 * 3600,
+         note="the primary estimator"),
     dict(script="03_main_model.py", kind="model",
          needs=["data/processed/panel_cd_day.parquet"], writes=['outputs/tables/irf_main.csv', 'outputs/tables/joint_tests.csv'],
          note="distributed lag, secondary"),
@@ -278,7 +283,7 @@ def run_stage(st, timeout):
     t0 = time.time()
     try:
         proc = subprocess.run(cmd, cwd=SCRIPTS, capture_output=True, text=True,
-                              timeout=timeout)
+                              timeout=max(timeout, int(st.get("timeout", 0))))
         rc, tail = proc.returncode, (proc.stdout or "")[-1200:] + (proc.stderr or "")[-1200:]
     except subprocess.TimeoutExpired:
         rc, tail = -1, f"TIMEOUT after {timeout}s"

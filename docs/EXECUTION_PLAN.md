@@ -843,7 +843,11 @@ All must hold **before** `FREEZE_ACTIVE = False`.
       (`ems_pages/`, so 00b rebuilds from cached pages) and the
       calibration/power products of 18 and 19, which are not run_all stages —
       they cost hours, are resumable through their ledgers, and enter the
-      model stages as certified inputs recorded in the manifest. Fetch stages
+      model stages as certified inputs recorded in the manifest. The
+      randomization ledgers are kept too: seeded, identity-keyed checkpoints of
+      a deterministic computation, so keeping them changes no number (the first
+      cold pass lost 17 to run_all's 90-minute default timeout at 2,000 draws;
+      17 now carries a six-hour stage timeout). Fetch stages
       are excluded: upstream mutates (28/29 moved on 2026-09-13), and the
       treatment inputs are frozen. `--kind build --kind check --kind model`,
       twice; the second run's manifest must hash-match the first. 17 runs at
