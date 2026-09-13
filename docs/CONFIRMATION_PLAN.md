@@ -90,6 +90,7 @@ confirmation-period outcomes**.
 | 26 | After the lift only the sealed script reads the confirmation sample; every exploratory script pins the discovery window by name | yes |
 | 27 | The anchor-shift null is a gap-permuted placement, not a rigid shift; the record's descriptions corrected, §21's identity claim withdrawn | yes |
 | 28 | The inferential structure — two strata, the eight-test BH family, the both-arms rule, the second outcome and the joint statistic — numbered as a deviation | strata, family and both-arms rule yes; second outcome and joint statistic no (§14) |
+| 29 | The sealed script estimates the 28/60-day windows and the dose arm it had promised; its docstring is the executed specification | yes |
 
 ---
 
@@ -670,7 +671,7 @@ stratum whose cells reject in one arm only, or with opposite signs across arms,
 is read by 23.3 and does not count as a rejection in §9.4.
 
 **23.1a One-arm movements, and when the bounded-null sentence may be said**
-(second CP2 audit pass, 2026-09-13, before the lift). A stratum in which one arm
+(second CP2 audit pass, 2026-09-13, before the lift; finding P20). A stratum in which one arm
 rejects and the other does not is reported as *a movement in one arm only*: a
 share-only movement is read through 23.3 (denominator-driven or not); a
 count-only movement is a count the share did not follow and is not claimed as a
@@ -682,7 +683,7 @@ detected" are not used. Both arms rejecting with opposite signs is 23.2's case
 (a rejection without a consistent direction), not a null: where 23.1 above says
 such a stratum "is read by 23.3", 23.2 governs.
 
-**23.1b Row 1 of §9.4 requires a common outcome.** "Confirmed" (both strata
+**23.1b Row 1 of §9.4 requires a common outcome (finding P25).** "Confirmed" (both strata
 reject in the predicted direction) is said only when the two strata reject on at
 least one common primary outcome. Rejections in the same direction on different
 outcomes only are row 2 — confirmed in the clean stratum — with C2's rejection
@@ -706,7 +707,7 @@ reported as *denominator-driven* when the total-dispatch diagnostic has
 randomization p ≤ 0.05 and the raw-count diagnostic does not; it is then not
 claimed as a change in demand.
 
-**23.3a The diagnostic is read per outcome.** A denominator-driven rejection is
+**23.3a The diagnostic is read per outcome (finding P22).** A denominator-driven rejection is
 discounted on the outcome it concerns and does not veto a rejection on the other
 primary outcome that passes the diagnostic: the stratum rejects (23.1) when at
 least one outcome rejects on both arms, in the same direction, and is not
@@ -859,7 +860,7 @@ applies. If it returns NOT CALIBRATED:
    day-by-day paths are reported in full: the clean years are still described,
    they are not confirmed.
    *3a (second CP2 audit pass, 2026-09-13, before any verdict on the sealed
-   data).* The asymptotic reading is mechanical: a cell of an uncertified
+   data; finding P21).* The asymptotic reading is mechanical: a cell of an uncertified
    stratum rejects when its date-clustered joint-Wald p is below 0.05,
    unadjusted and labelled asymptotic; the both-arms and direction rules of
    23.1–23.2 then apply as written, and the stratum's verdict carries the words
@@ -913,7 +914,7 @@ not re-estimated, re-specified or re-read because of this; it changes only which
 sample a script sees after the lift, so that the lift opens one door rather than
 every door.
 
-## 27. The anchor-shift null permutes the gaps; the record described a rigid shift (second CP2 audit pass)
+## 27. The anchor-shift null permutes the gaps; the record described a rigid shift (second CP2 audit pass, finding P23)
 
 **Blind. Written 2026-09-13 before the lift; treatment-side geometry only.**
 
@@ -940,7 +941,7 @@ here rather than edited in place. The C1-versus-C2 comparison therefore rests on
 two differently constructed nulls — each certified on its own stratum's
 geometry — and the paper says so.
 
-## 28. The inferential structure is a deviation from the frozen text, and is numbered here
+## 28. The inferential structure is a deviation from the frozen text, and is numbered here (finding P24)
 
 **Blind. Written 2026-09-13 before the lift.**
 
@@ -958,6 +959,29 @@ the family and the both-arms requirement were decided blind (2026-09-12); the
 second outcome and the joint statistic were not, and are discounted as §14 says.
 The note's ledger (§11.2–11.4) is corrected to point at this table rather than
 at counts that were true on 2026-09-12.
+
+## 29. The sealed script after the second CP2 audit pass (findings P19, P26)
+
+**Blind. Written 2026-09-13 before the lift.**
+
+Two of the eight findings of the second audit pass concern the sealed script
+itself. **P19**: §3 names 28- and 60-day post windows as pre-specified
+sensitivities and §17 relies on them to report the tail truncation of C1's two
+edge episodes, and §9 pre-specifies a dose-response arm as secondary — and no
+cell of `30_confirmatory_run.py` estimated any of them, so after the lift (§26)
+they could not have been added without a second, unsealed read. The script now
+estimates `sens_post28` and `sens_post60` (the same first-week statistic on the
+longer estimation window; both H1 outcomes, both arms, every stratum; read
+beside the 14-day certificates, never instead) and `dose_response` (the day 0–7
+effect per SD of peak episode intensity on the share arm, asymptotic p only, as
+17 reports it). **P26**: the script's module docstring — which the audit
+instructions call the specification — described the family column of
+2026-09-12 (four values), an output under `outputs/tables`, an unconditional
+calibration refusal and three sensitivities; the code writes six family values
+to `data/reference`, proceeds under §25 and runs six sensitivities. The
+docstring is rewritten to the executed specification and
+`S.confirmatory_spec_audit` holds it there together with the new cells. The
+synthetic dry run was re-stamped with 137 rows.
 
 ## What has NOT changed
 
