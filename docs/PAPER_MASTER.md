@@ -1237,20 +1237,23 @@ corrected code):
 |---|---|---|---|---|---|---|
 | discovery | anchor shift | contiguous | 29 | 0.05 | 0.7516 | CALIBRATED |
 | C2 | anchor shift | contiguous | 30 | 0.05 | 0.4838 | CALIBRATED |
-| C1 | circular, within block | gapped | 15 | 0.04 | 0.1229 | CALIBRATED |
-| pooled | circular, within block | gapped | 45 | 0.03 | 0.5127 | CALIBRATED |
+| C1 | circular, within block (fw7) | gapped | 15 | 0.035 | 0.0455 | **NOT CALIBRATED** at 200 |
+| pooled | circular, within block | gapped | 45 | 0.03 | 0.5127 | CALIBRATED (superseded drawer; re-certifying) |
 
-*The C1 and pooled rows above certify the drawer as it stood before addendum §24
-(placebo admissibility by the full window, which snapped C1's two edge episodes
-onto consecutive placebo days). Both strata are being re-certified under
-`circular_within_block_fw7`; the rows are replaced from the new certificates when
-they land and are kept here until then because a blank is not more honest than a
-superseded number with its supersession stated.*
+*C1's row is the 200-simulation run under the corrected drawer (addendum §24):
+the rejection rate sits inside its band and the lattice uniformity test fails.
+The 1,000-simulation run decides, and addendum §25 pre-registers what happens if
+it also fails — C1's cells are reported with their randomization p flagged
+uncertified and excluded from the family decision, and its primary inference is
+the asymptotic p, labelled. The pooled row still describes the snapping drawer
+and is being re-issued.*
 
-C1's certificate under the within-block scheme landed on **2026-09-13**, 200
-simulations × 200 draws: rejection rate **0.04** against the band
-[0.0198, 0.0802], KS statistic **0.083**, lattice p = **0.1229**, median
-p-value **0.4776**. The verdict that certified the seam-crossing scheme was moved
+C1's certificate under the within-block scheme landed on **2026-09-13** and was
+withdrawn the same day: the drawer it certified snapped the two edge episodes
+onto consecutive placebo days (addendum §24). Under the corrected drawer, 200
+simulations × 200 draws give a rejection rate of **0.035** against the band
+[0.0198, 0.0802], KS statistic **0.097**, lattice p = **0.0455**, median
+p-value **0.4328** — **not calibrated**. The verdict that certified the seam-crossing scheme was moved
 aside rather than left in place to be misread: a calibration certifies one
 scheme; when the scheme is replaced the certificate does not carry over, and an
 artifact that says CALIBRATED about a null nobody draws from any more is worse

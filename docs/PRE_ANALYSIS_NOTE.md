@@ -329,7 +329,8 @@ AR(1) rho                 0.0482   estimated from the real (discovery) panel
 n sims                    200      minimum required 200
 ```
 
-**Each stratum has its own certificate.** The confirmatory script gates on
+**Each stratum has its own certificate** (and addendum §25 pre-registers what
+happens if one cannot be issued). The confirmatory script gates on
 `null_calibration_C1.csv` and `null_calibration_C2.csv`, not on discovery's
 artifact (finding P7), and C1's certificate must name the within-block scheme
 (addendum §21). This paragraph used to describe a single gate on discovery's

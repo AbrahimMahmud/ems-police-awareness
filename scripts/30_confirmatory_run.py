@@ -530,7 +530,24 @@ def check_calibration():
                 raise Uncalibrated(
                     f"{stratum}: certificate rests on {n_done} simulations; the sealed "
                     f"run requires >= {LIFT_MIN_SIMS} (config.LIFT_MIN_SIMS, CP2 line 2)")
+            out[stratum]["certified"] = True
         except Uncalibrated as e:
+            # ADDENDUM 25, pre-registered before any 1,000-sim verdict existed: a
+            # stratum whose null FAILS calibration at >= LIFT_MIN_SIMS under the
+            # scheme it requires is not a reason to refuse the run. Its cells are
+            # estimated and its randomization p-values written, flagged
+            # UNCERTIFIED; they are excluded from the family decision (their p
+            # enters BH as 1) and its primary inference is the asymptotic
+            # joint-Wald p, labelled as such. A stratum with NO verdict at that
+            # size, or a verdict for another scheme, still refuses.
+            unc = _uncertified_certificate(stratum) if not SYNTHETIC else None
+            if unc is not None:
+                print(f"[calibration] {stratum}: UNCERTIFIED — {unc['n_sims_completed']} sims, "
+                      f"VERDICT={unc['VERDICT']}, KS p={unc.get('ks_p_uniform')}; proceeding "
+                      "under addendum 25 (cells flagged, excluded from the family decision)")
+                unc["certified"] = False
+                out[stratum] = unc
+                continue
             if SYNTHETIC:
                 # The dry run proves the MACHINERY, on fabricated outcomes, and
                 # has to be runnable on a fresh clone before any certificate
@@ -542,6 +559,27 @@ def check_calibration():
                 continue
             raise SealBroken(str(e)) from e
     return out
+
+
+def _uncertified_certificate(stratum):
+    """The certificate of a stratum whose null failed calibration at the lift
+    size under the scheme its geometry requires (addendum 25), else None."""
+    path = OUTPUTS_TABLES / f"null_calibration_{stratum}.csv"
+    if not path.exists():
+        return None
+    a = pd.read_csv(path).set_index("metric")["value"]
+    n_done = int(float(a.get("n_sims_completed", 0)))
+    need = LIFT_MIN_SIMS if stratum in ("C1", "C2") else int(float(a.get("min_sims_required", 0)))
+    if str(a.get("VERDICT", "")).strip() != "NOT CALIBRATED" or n_done < need:
+        return None
+    from event_study import draw_scheme_for as _dsf, stratum_episodes as _se
+    ep = pd.read_csv(DATA_REFERENCE / EPISODE_LIST_PRIMARY, parse_dates=["start"])
+    wins = {"C1": C1_WINDOWS, "C2": C2_WINDOWS, "pooled": C1_WINDOWS + C2_WINDOWS}[stratum]
+    kept, _ = _se(ep["start"], wins, EVENT_WINDOW_PRE, EVENT_WINDOW_POST)
+    need_scheme, _why = _dsf(wins, [k["start"] for k in kept], EVENT_WINDOW_PRE, EVENT_WINDOW_POST)
+    if str(a.get("draw_scheme", "")) != need_scheme:
+        return None
+    return a
 
 
 def check_freeze_state():
@@ -1324,6 +1362,18 @@ def main():
     res = pd.DataFrame(rows)
 
     # -- multiple testing across the pre-specified family -------------------
+    # Addendum 25: a stratum whose null is UNCERTIFIED keeps its randomization
+    # p-values in the table, flagged, but enters the family decision as p = 1.
+    stratum_cert = {"C1_clean": "C1", "C2_exposed": "C2", "pooled": "pooled"}
+    res["null_certified"] = res["stratum"].map(
+        lambda s: bool(cal.get(stratum_cert.get(s, ""), {}).get("certified", True))
+        if stratum_cert.get(s, "") in cal else np.nan)
+    unc_rows = res["null_certified"] == False  # noqa: E712
+    if unc_rows.any():
+        res.loc[unc_rows & res["p_randomization"].notna(), "status"] = (
+            res.loc[unc_rows & res["p_randomization"].notna(), "status"].astype(str)
+            + "; UNCERTIFIED_NULL (addendum 25): randomization p reported, not used in the "
+              "family decision; asymptotic p is the primary inference for this stratum")
     fam = (res["family"] == "primary_H1") & res["p_randomization"].notna()
     n_family = int((res["family"] == "primary_H1").sum())
     if not SYNTHETIC and n_family != 8:
@@ -1331,8 +1381,9 @@ def main():
     if fam.any():
         # m = 8 ALWAYS. A cell that produced no p-value counts as a non-rejection
         # in the family, not as a smaller family (CP2 audit, 2026-09-13).
-        res.loc[fam, "p_bh_adjusted"] = benjamini_hochberg(
-            res.loc[fam, "p_randomization"].to_numpy(), m=n_family)
+        p_in = res.loc[fam, "p_randomization"].to_numpy().copy()
+        p_in[res.loc[fam, "null_certified"].to_numpy() == False] = 1.0  # noqa: E712
+        res.loc[fam, "p_bh_adjusted"] = benjamini_hochberg(p_in, m=n_family)
         print(f"\n[BH] Benjamini-Hochberg at q={BH_Q} over the pre-specified "
               f"family of {n_family} test(s), {int(fam.sum())} with a p-value "
               f"(2 outcomes x 2 arms x 2 strata)")

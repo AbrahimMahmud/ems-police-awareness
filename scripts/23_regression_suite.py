@@ -439,8 +439,15 @@ def s_lift_requires_1000_sims():
             continue
         a = pd.read_csv(art).set_index("metric")["value"]
         state[name] = (int(float(a.get("n_sims_completed", 0))), str(a.get("VERDICT", "")).strip())
-    short = [f"{k}: {n} sims, {v}" for k, (n, v) in state.items()
-             if v != "CALIBRATED" or (k in inferential and n < LIFT_MIN_SIMS)]
+    # A >= LIFT_MIN_SIMS "NOT CALIBRATED" verdict on an inferential stratum is
+    # the addendum-25 case: the lift may proceed with that stratum flagged
+    # uncertified. Discovery must be CALIBRATED; the pooled certificate must exist.
+    def _short(k, n, v):
+        if k in inferential:
+            return not (n >= LIFT_MIN_SIMS and v in ("CALIBRATED", "NOT CALIBRATED")) \
+                or (k == "discovery" and v != "CALIBRATED")
+        return v not in ("CALIBRATED", "NOT CALIBRATED")
+    short = [f"{k}: {n} sims, {v}" for k, (n, v) in state.items() if _short(k, n, v)]
     summary = ", ".join(f"{k}={n}/{v or 'absent'}" for k, (n, v) in state.items())
     if not FREEZE_ACTIVE and short:
         return "FAIL", (f"FREEZE_ACTIVE is False but {len(short)} stratum/strata lack a "
@@ -517,11 +524,19 @@ def s_ri_scheme_certified():
         verdict = str(a.get("VERDICT", "")).strip()
         n_done = int(float(a.get("n_sims_completed", 0)))
         n_need = int(float(a.get("min_sims_required", 0)))
+        got = str(a["draw_scheme"])
+        # Addendum 25: a null that FAILS calibration at the lift size under the
+        # scheme the geometry requires is a verdict, not a gap. The sealed
+        # script flags that stratum uncertified and excludes it from the
+        # family decision; this check reports it rather than blocking on it.
+        lift_need = LIFT_MIN_SIMS if name in ("C1", "C2") else n_need
+        if verdict == "NOT CALIBRATED" and n_done >= lift_need and got == need:
+            ok.append(f"{name}={got}@{n_done} UNCERTIFIED (addendum 25)")
+            continue
         if verdict != "CALIBRATED" or n_done < n_need:
             missing.append(f"{name} ({fname}: {n_done}/{n_need} sims, "
                            f"VERDICT={verdict or 'absent'})")
             continue
-        got = str(a["draw_scheme"])
         if got != need:
             wrong.append(f"{name}: requires '{need}', calibration certifies '{got}'")
         else:

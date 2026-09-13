@@ -86,6 +86,7 @@ confirmation-period outcomes**.
 | 22 | The pooled stratum's null is calibrated on its own three-window geometry | yes |
 | 23 | CP2 specification audit: reading rules made mechanical, denominator diagnostic, sealed run fixed to its draw count and committed, EDPT/EDPE in the EDP family, full-span panel | yes |
 | 24 | Placebo admissibility follows first-week containment; scheme renamed `circular_within_block_fw7`; C1 and pooled recalibrated | yes |
+| 25 | Pre-registered fallback for a stratum whose null fails calibration at 1,000 simulations | yes |
 
 ---
 
@@ -781,6 +782,48 @@ certificates issued under the snapping drawer stop satisfying
 `S.ri_scheme_certified`; both strata are recalibrated at 200 and then 1,000
 simulations before the lift. Discovery and C2 use the anchor shift and are
 untouched.
+
+---
+
+## 25. If a stratum's null cannot be certified at 1,000 simulations
+
+**Blind. Written 2026-09-13 at 18:00Z, after C1's 200-simulation run under
+`circular_within_block_fw7` returned NOT CALIBRATED (rejection 0.035 inside
+the band; lattice KS D = 0.097, p = 0.0455; median simulated p 0.433) and
+before any 1,000-simulation verdict existed.** No outcome value has been read.
+
+C1's null has been the least uniform of the four at every stage — p = 0.066
+under the seam-crossing shift, 0.123 under the snapping drawer, 0.0455 under
+the corrected one — and its geometry explains why: five episodes spanning 139
+of the 2021 block's 143 admissible days leave a circular shift four days of
+slack, so most placebo designs carry a 4-day gap the real design does not
+(§24). The 1,000-simulation run decides. If it certifies C1, nothing here
+applies. If it returns NOT CALIBRATED:
+
+1. **The sealed run proceeds.** C1's cells are estimated exactly as specified;
+   their randomization p-values are written and flagged `UNCERTIFIED_NULL`.
+2. **C1's cells are excluded from the family decision**: they enter the
+   Benjamini–Hochberg step as p = 1, so the family stays eight and the
+   correction is unchanged for C2's four cells.
+3. **C1's primary inference is the asymptotic joint-Wald p** (date-clustered),
+   labelled asymptotic. On discovery that p was anti-conservative (0.019
+   clustered against 0.26 by permutation), so a C1 rejection on it is reported
+   as *not certified* and cannot count as confirmation under §9.4; a C1
+   non-rejection is read by §19 rule 2 unchanged. C1's estimates, intervals and
+   day-by-day paths are reported in full: the clean years are still described,
+   they are not confirmed.
+4. **The same rule applies to C2 and to the pooled stratum** at their own
+   sizes (1,000 and 200), and to no other case: a certificate that is absent,
+   below size, or issued for another scheme still refuses the run.
+5. **What is not done.** The stratum is not redefined (dropping the 2021 block
+   would discard 5 of 15 clean episodes, including the Chauvin-verdict weeks),
+   the draw scheme is not changed again, and no alternative null is tried on
+   the sealed data. Any of those after the verdict would be a choice made in
+   view of the result.
+
+`S.ri_scheme_certified` and `S.lift_requires_1000_sims` treat a ≥1,000-sim
+NOT CALIBRATED verdict under the required scheme as this case rather than as a
+missing certificate; `30_confirmatory_run.py` implements items 1–3.
 
 ---
 
