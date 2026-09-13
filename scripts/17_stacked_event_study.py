@@ -64,6 +64,8 @@ from config import (
     EPISODE_LIST_PRIMARY,
     ANALYSIS_END,
     ANALYSIS_START,
+    DISCOVERY_END,
+    DISCOVERY_START,
     DATA_PROCESSED,
     DATA_REFERENCE,
     EVENT_WINDOW_POST,
@@ -194,6 +196,29 @@ print(f"episodes in scope: {len(ep)}  ({'discovery only' if FREEZE_ACTIVE else '
 lo_d, hi_d = panel["incident_date"].min(), panel["incident_date"].max()
 gaps = np.diff([d.toordinal() for d in real_starts]) if len(real_starts) > 1 else np.array([30])
 
+# THE RANDOMIZATION GEOMETRY IS THE CERTIFIED ONE, NOT THE PANEL'S EXTENT. The
+# calibration that licenses these p-values was run on the fixed discovery window
+# (18_null_calibration.py, STRATUM_WINDOWS["discovery"]); randomization_p, left
+# without `windows=`, takes the panel's own min..max after the MIN_TOTAL_CALLS
+# filter, and the two coincide only while the panel has rows on both boundary
+# dates. So the window is passed explicitly, and the coincidence is asserted
+# rather than relied on: a panel that lost an edge day would otherwise draw its
+# null from a geometry the calibration never tested.
+RI_WINDOWS = [(pd.Timestamp(DISCOVERY_START), pd.Timestamp(DISCOVERY_END))]
+if (lo_d, hi_d) != (RI_WINDOWS[0][0], RI_WINDOWS[0][1]):
+    raise SystemExit(
+        f"the discovery panel spans {lo_d.date()}..{hi_d.date()} after the sample "
+        f"rules, not {DISCOVERY_START}..{DISCOVERY_END}; the certified anchor-shift "
+        "geometry would not be the one drawn. Refusing rather than estimating on an "
+        "uncertified null.")
+
+# The B-HEARD control is IN THE FORMULA, not merely attached to the panel. It was
+# attached above and estimated by nothing: event_study's estimator had no way to
+# take a covariate, so the control lived in a column no model read while 30 kept
+# its own formula with it. Identically zero on discovery, pyfixest drops it as
+# collinear and every coefficient is unchanged - which X.bheard_wired asserts.
+COVARIATES = ("bheard_exposure",)
+
 outcomes = [args.outcome] if args.outcome else list(H1_OUTCOMES)
 rows, path_rows = [], []
 
@@ -202,14 +227,14 @@ for outcome in outcomes:
         stack = build_stack(panel, real_starts, EVENT_WINDOW_PRE, post)
         if stack.empty:
             continue
-        obs = first_week_effect(stack, outcome)
+        obs = first_week_effect(stack, outcome, extra=COVARIATES)
         if obs is None:
             print(f"  {outcome} post={post}: not estimable")
             continue
 
         # -- event-time path (only for the primary window) --
         if post == args.post:
-            m = fit_event_study(stack, outcome)
+            m = fit_event_study(stack, outcome, extra=COVARIATES)
             if m is not None:
                 names = _rel_day_coefs(m)
                 epc = episode_day_counts(stack)
@@ -226,6 +251,7 @@ for outcome in outcomes:
         # -- randomization inference (primary p-value) --
         obs, p_ri, draws = randomization_p(
             panel, real_starts, outcome, EVENT_WINDOW_PRE, post, args.draws, rng,
+            windows=RI_WINDOWS, extra=COVARIATES,
             ledger=_ri_ledger(outcome, post, "ols"),
             seed=_ri_seed(outcome, post, "ols"))
 
@@ -240,14 +266,16 @@ for outcome in outcomes:
         if cnt in stack.columns:
             c_obs, c_p, c_draws = randomization_p(
                 panel, real_starts, cnt, EVENT_WINDOW_PRE, post, args.draws, rng,
-                counts=True, ledger=_ri_ledger(cnt, post, "ppml"),
+                counts=True, windows=RI_WINDOWS, extra=COVARIATES,
+                ledger=_ri_ledger(cnt, post, "ppml"),
                 seed=_ri_seed(cnt, post, "ppml"))
             if c_obs is not None:
                 rows.append({"outcome": cnt, "post_window": post,
                              "estimator": "PPML_count_offset",
                              "first_week_chi2": c_obs,
                              "first_week_mean_coef": first_week_mean(stack, cnt,
-                                                                     counts=True),
+                                                                     counts=True,
+                                                                     extra=COVARIATES),
                              "p_randomization": c_p, "n_draws": len(c_draws),
                              "null_sd": float(c_draws.std()) if len(c_draws) else np.nan,
                              "n_episodes": len(real_starts), "n_obs": len(stack)})
@@ -296,7 +324,7 @@ for outcome in outcomes:
 
         rows.append({"outcome": outcome, "post_window": post, "estimator": "OLS_share",
                      "first_week_chi2": obs,
-                     "first_week_mean_coef": first_week_mean(stack, outcome),
+                     "first_week_mean_coef": first_week_mean(stack, outcome, extra=COVARIATES),
                      "p_randomization": p_ri,
                      "n_draws": len(draws), "null_sd": float(draws.std()) if len(draws) else np.nan,
                      "n_episodes": len(real_starts), "n_obs": len(stack)})
@@ -348,4 +376,10 @@ else:
     print(f"Its record is in event_study_results_d{_draws_here}.csv. "
           "event_study_results.csv is unchanged.")
     print("=" * 70)
-print(f"\nwrote event_study_results.csv ({len(rows)} rows) and event_study_path.csv")
+# The closing line says what HAPPENED, not what was intended: it used to claim
+# the main file was written even after the branch above had refused to.
+if _draws_here >= _prior:
+    print(f"\nwrote event_study_results.csv ({len(rows)} rows) and event_study_path.csv")
+else:
+    print(f"\nwrote event_study_results_d{_draws_here}.csv only ({len(rows)} rows); "
+          "the main artifact was left untouched")

@@ -30,6 +30,8 @@ version of this file, all found by the audit and each independently fatal:
 from functools import lru_cache
 from pathlib import Path
 
+import warnings
+
 import numpy as np
 import pandas as pd
 import pyfixest as pf
@@ -118,7 +120,7 @@ def _rel_day_coefs(model):
 
 
 def fit_event_study(stack, outcome, fe="ep_cd + dow", counts=False,
-                    cluster=CLUSTER_VAR):
+                    cluster=CLUSTER_VAR, extra=()):
     """Fit the event-time model. Returns the pyfixest model, or None.
 
     Day EVENT_REFERENCE_DAY stays IN the estimation sample and is named as the
@@ -127,14 +129,43 @@ def fit_event_study(stack, outcome, fe="ep_cd + dow", counts=False,
 
     Standard errors are clustered on the date, because treatment is citywide and
     assigned at the date level (S6).
+
+    `extra` names covariates added to the right-hand side - the B-HEARD exposure
+    control (X6) is the one that exists. It is HERE, in the one estimator, rather
+    than in a second copy of the formula in the confirmatory script: 30 carried
+    its own `fit()` with the control while this function had no way to take one,
+    so "17 has B-HEARD in the model" was true of the panel it attached the column
+    to and false of the formula it estimated. A covariate that is identically
+    zero (B-HEARD on discovery) is dropped by pyfixest as collinear, which is
+    what keeps the discovery numbers bit-identical and what
+    X.bheard_wired asserts.
     """
     d = stack.dropna(subset=[outcome])
     if d.empty or d["episode"].nunique() < 2 or len(d) < 200:
         return None
     if EVENT_REFERENCE_DAY not in set(d["rel_day"]):
         return None
+    missing = [x for x in extra if x not in d.columns]
+    if missing:
+        raise ValueError(f"fit_event_study: covariate(s) {missing} are not in the "
+                         "stack; attach them before estimating rather than dropping "
+                         "them silently")
     vcov = {"CRV1": cluster} if cluster and cluster in d.columns else "hetero"
-    fml = f"{outcome} ~ i(rel_day, ref={EVENT_REFERENCE_DAY}) | {fe}"
+    rhs = f"i(rel_day, ref={EVENT_REFERENCE_DAY})" + "".join(f" + {x}" for x in extra)
+    fml = f"{outcome} ~ {rhs} | {fe}"
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            model = _fit(fml, d, counts, vcov, outcome)
+        for w in caught:
+            _note_warning(w)
+        return model
+    except Exception as e:
+        _note_fit_failure(outcome, counts, e)
+        return None
+
+
+def _fit(fml, d, counts, vcov, outcome):
     try:
         if counts:
             # PPML on the count with a log total-calls OFFSET, so a coefficient
@@ -154,9 +185,8 @@ def fit_event_study(stack, outcome, fe="ep_cd + dow", counts=False,
             d["log_total"] = np.log(d["total_calls"])
             return pf.fepois(fml, d, vcov=vcov, offset="log_total")
         return pf.feols(fml, d, vcov=vcov)
-    except Exception as e:
-        _note_fit_failure(outcome, counts, e)
-        return None
+    except Exception:
+        raise
 
 
 def fit_dose_response(stack, outcome, intensity, fe="ep_cd + dow", counts=False,
@@ -246,6 +276,26 @@ MIN_FIRST_WEEK_DAYS = 6
 _SEEN_FAILURES = set()
 
 
+_SEEN_WARNINGS = set()
+
+
+def _note_warning(w):
+    """Print each distinct fit warning ONCE per process.
+
+    pyfixest warns on every fit that drops a collinear column, and the B-HEARD
+    control is identically zero on discovery, so a 500-draw run would print the
+    same four lines a thousand times and bury anything that mattered. Shown
+    once, never suppressed: a collinearity message that stopped appearing would
+    hide a genuinely degenerate specification.
+    """
+    text = " ".join(str(w.message).split())
+    key = (w.category.__name__, text[:120])
+    if key in _SEEN_WARNINGS:
+        return
+    _SEEN_WARNINGS.add(key)
+    print(f"[event_study] {w.category.__name__} (shown once): {text[:200]}")
+
+
 def _note_fit_failure(outcome, counts, exc):
     key = (outcome, bool(counts), type(exc).__name__, str(exc)[:80])
     if key in _SEEN_FAILURES:
@@ -257,7 +307,8 @@ def _note_fit_failure(outcome, counts, exc):
 
 
 def first_week_effect(stack, outcome, fe="ep_cd + dow", counts=False, days=range(0, 8),
-                      min_days=MIN_FIRST_WEEK_DAYS, return_n=False, cluster=CLUSTER_VAR):
+                      min_days=MIN_FIRST_WEEK_DAYS, return_n=False, cluster=CLUSTER_VAR,
+                      extra=()):
     """Test statistic for H1: the JOINT Wald statistic on the day 0..7 coefficients.
 
     H1 is that attention changes first-week demand — a joint claim that the
@@ -275,7 +326,7 @@ def first_week_effect(stack, outcome, fe="ep_cd + dow", counts=False, days=range
     draw with a degenerate design is discarded rather than contributing a
     statistic built from a different set of days than the observed one.
     """
-    m = fit_event_study(stack, outcome, fe=fe, counts=counts, cluster=cluster)
+    m = fit_event_study(stack, outcome, fe=fe, counts=counts, cluster=cluster, extra=extra)
     if m is None:
         return (None, 0) if return_n else None
     names = _rel_day_coefs(m)
@@ -309,9 +360,9 @@ def joint_p(model, wanted):
 
 
 def first_week_mean(stack, outcome, fe="ep_cd + dow", counts=False, days=range(0, 8),
-                    cluster=CLUSTER_VAR):
+                    cluster=CLUSTER_VAR, extra=()):
     """Reportable effect size: the mean day 0..7 coefficient. NOT the test statistic."""
-    m = fit_event_study(stack, outcome, fe=fe, counts=counts, cluster=cluster)
+    m = fit_event_study(stack, outcome, fe=fe, counts=counts, cluster=cluster, extra=extra)
     if m is None:
         return None
     names = _rel_day_coefs(m)
@@ -626,6 +677,146 @@ def require_calibrated(stratum):
     return cal
 
 
+def design_fingerprint(design):
+    """sha256 of a JSON-serialised design dict, sorted keys, so two runs agree
+    on identity iff they agree on every field."""
+    import hashlib
+    import json
+    return hashlib.sha256(json.dumps(design, sort_keys=True, default=str).encode()).hexdigest()
+
+
+def frame_hash(frame, columns):
+    """Order-independent 64-bit hash of the named columns' VALUES.
+
+    Summing per-row hashes is commutative, so the same rows in any order give
+    the same number; a rebuilt panel with one value changed gives a different
+    one. It says nothing about what the values are, which is why it can be
+    written into a sidecar beside a confirmation-window ledger.
+    """
+    cols = [c for c in columns if c in frame.columns]
+    h = pd.util.hash_pandas_object(frame[cols], index=False).to_numpy(dtype="uint64")
+    return int(h.sum(dtype="uint64"))
+
+
+def open_ledger(path, design, header):
+    """Open a checkpoint ledger whose IDENTITY is verified, not assumed.
+
+    A ledger banks results keyed by index so a run can resume. That is only
+    correct if the banked results were produced by the SAME design: the same
+    panel values, episode dates, windows, scheme, estimator and seed root. The
+    first versions of both ledgers in this project (finding N4 for the
+    calibration, N6 for randomization inference) keyed the file on a name alone
+    - stratum and draw count, or outcome and window - so a ledger left behind by
+    an earlier panel or episode list would be resumed as if nothing had changed,
+    pairing an observed statistic from the new design with null draws from the
+    old one. Nothing would have said so; the p-value would simply have been
+    wrong.
+
+    So every ledger carries a sidecar `<name>.meta.json` holding a fingerprint
+    of the design that produced it, written when the ledger is created. On
+    resume the fingerprint must match. If it does not - or the ledger has no
+    sidecar, or cannot be parsed - the file is QUARANTINED under a name that
+    says why (`.stale-<fp8>`, `.unverified`, `.corrupt`) and a fresh ledger is
+    started. Compute is lost; a pooled null is never produced. Adopting a
+    sidecar-less ledger is a deliberate act done by the owning script, never a
+    default here.
+
+    Returns (banked_rows, meta_path). `banked_rows` is the parsed DataFrame of
+    an identity-verified ledger, or an empty frame.
+    """
+    import json
+    from datetime import datetime, timezone
+    path = Path(path)
+    meta = path.with_suffix(".meta.json")
+    fp = design_fingerprint(design)
+    banked = pd.DataFrame(columns=header)
+
+    def quarantine(reason):
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        dest = path.with_name(f"{path.stem}.{reason}-{stamp}{path.suffix}")
+        path.rename(dest)
+        if meta.exists():
+            meta.rename(meta.with_name(f"{meta.stem}.{reason}-{stamp}{meta.suffix}"))
+        print(f"[ledger] {path.name}: {reason.upper()} - moved aside to {dest.name}; "
+              "starting a fresh ledger. Nothing from it is pooled with this run.")
+
+    if path.exists():
+        reason = None
+        if not meta.exists():
+            reason = "unverified"
+        else:
+            try:
+                recorded = json.loads(meta.read_text()).get("fingerprint")
+            except Exception:
+                recorded = None
+            if recorded != fp:
+                reason = f"stale-{str(recorded or 'none')[:8]}"
+        if reason is None:
+            try:
+                # Field counts are checked line by line BEFORE pandas sees the
+                # file: given a header of two names and a row of three fields,
+                # read_csv quietly promotes the extra field to an index and
+                # returns a well-formed frame - the partial-write corruption a
+                # killed run leaves behind, parsed as if it were data.
+                lines = [ln for ln in path.read_text().splitlines() if ln.strip()]
+                if not lines or lines[0].split(",") != list(header):
+                    raise ValueError(f"header {lines[:1]} != {list(header)}")
+                bad = [i for i, ln in enumerate(lines[1:], 2)
+                       if len(ln.split(",")) != len(header)]
+                if bad:
+                    raise ValueError(f"{len(bad)} row(s) with the wrong field count, "
+                                     f"first at line {bad[0]}")
+                banked = pd.read_csv(path)
+                if list(banked.columns) != list(header):
+                    raise ValueError(f"columns {list(banked.columns)} != {list(header)}")
+                for c in header[1:]:
+                    pd.to_numeric(banked[c], errors="raise")
+            except Exception as e:
+                print(f"[ledger] {path.name} unreadable ({type(e).__name__}: {e})")
+                reason = "corrupt"
+                banked = pd.DataFrame(columns=header)
+        if reason is not None:
+            quarantine(reason)
+
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(",".join(header) + "\n")
+        meta.write_text(json.dumps({
+            "fingerprint": fp,
+            "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "design": design,
+        }, indent=1, sort_keys=True, default=str))
+    return banked, meta
+
+
+def adopt_ledger(path, design):
+    """Write the identity sidecar for a ledger that predates sidecars.
+
+    DELIBERATE, and only for a ledger the caller knows was produced by exactly
+    this design. The alternative - silently trusting any sidecar-less ledger -
+    is the defect open_ledger exists to remove, so this is a separate call that
+    a script exposes behind an explicit flag and prints when it runs.
+    """
+    import json
+    from datetime import datetime, timezone
+    path = Path(path)
+    meta = path.with_suffix(".meta.json")
+    if not path.exists():
+        raise FileNotFoundError(f"{path} does not exist; nothing to adopt")
+    if meta.exists():
+        raise FileExistsError(f"{meta} already exists; refusing to overwrite an identity")
+    pd.read_csv(path)                       # must at least parse
+    meta.write_text(json.dumps({
+        "fingerprint": design_fingerprint(design),
+        "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "adopted": True,
+        "design": design,
+    }, indent=1, sort_keys=True, default=str))
+    print(f"[ledger] ADOPTED {path.name}: identity written to {meta.name} from the "
+          "current design, on the caller's assertion that this ledger was produced by it")
+    return meta
+
+
 def draw_scheme_for(windows, real_starts, pre, post):
     """Which draw scheme a stratum requires, and why. Never guessed at runtime.
 
@@ -663,7 +854,8 @@ def draw_scheme_for(windows, real_starts, pre, post):
 
 def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
                     fe="ep_cd + dow", counts=False, date_col="incident_date",
-                    cluster=CLUSTER_VAR, windows=None, ledger=None, seed=None):
+                    cluster=CLUSTER_VAR, windows=None, ledger=None, seed=None,
+                    extra=()):
     """Episode-level randomization inference. Returns (observed, p, null draws).
 
     The statistic is the joint chi-square, which is non-negative and increasing
@@ -680,7 +872,8 @@ def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
     the whole budget is spent (finding P1).
     """
     obs_stack = build_stack(panel, real_starts, pre, post, date_col)
-    obs = first_week_effect(obs_stack, outcome, fe=fe, counts=counts, cluster=cluster)
+    obs = first_week_effect(obs_stack, outcome, fe=fe, counts=counts, cluster=cluster,
+                            extra=extra)
     if obs is None:
         return None, np.nan, np.array([])
     if windows is None:
@@ -709,14 +902,33 @@ def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
     root = seed if seed is not None else int(rng.integers(0, 2**31 - 1))
     seeds = np.random.SeedSequence(root).spawn(int(draws))
 
+    # THE LEDGER IS KEYED TO THE DESIGN, NOT TO A FILENAME. Everything that
+    # determines a draw's statistic is in the fingerprint: the panel's values on
+    # the columns the estimator reads, the episode dates, the windows and hence
+    # the scheme, the estimator's own settings, and the seed root. `draws` is
+    # deliberately NOT in it - SeedSequence gives draw i the same seed whatever
+    # the total, which is what lets a 500-draw ledger be extended to 2,000. A
+    # ledger whose design differs is quarantined by open_ledger, never pooled.
     done = {}
     led = Path(ledger) if ledger else None
-    if led is not None and led.exists():
-        try:
-            _d = pd.read_csv(led)
-            done = {int(r["draw_index"]): float(r["stat"]) for _, r in _d.iterrows()}
-        except Exception:
-            done = {}
+    if led is not None:
+        design = {
+            "kind": "randomization_p", "outcome": outcome, "pre": int(pre),
+            "post": int(post), "counts": bool(counts), "fe": fe, "cluster": cluster,
+            "extra": list(extra), "scheme": scheme,
+            "windows": [[str(pd.Timestamp(a).date()), str(pd.Timestamp(b).date())]
+                        for a, b in windows],
+            "starts": sorted(str(pd.Timestamp(s).date()) for s in real_starts),
+            "seed_root": int(root), "panel_rows": int(len(panel)),
+            "panel_span": [str(panel[date_col].min().date()),
+                           str(panel[date_col].max().date())],
+            "panel_hash": frame_hash(panel, [date_col, "communitydistrict", outcome,
+                                             "total_calls", *extra]),
+        }
+        banked, _meta = open_ledger(led, design, ["draw_index", "stat"])
+        done = {int(r["draw_index"]): float(r["stat"]) for _, r in banked.iterrows()}
+        if done:
+            print(f"[RI] {led.name}: resuming {len(done)} banked draw(s), identity verified")
 
     stats_ = []
     # EXHAUSTIVE DISPATCH, AND NO SILENT DEFAULT.
@@ -735,11 +947,17 @@ def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
     # caller's rng would make draw i depend on how many draws ran before it,
     # which is exactly what stops a resumed run from reproducing the run it
     # resumed.
+    # Each drawer returns (starts, snapped): the within-block shift relocates a
+    # real start that is not itself an admissible day (finding P2's two edge
+    # episodes) and COUNTS the relocations; the anchor shift never does. The
+    # count used to be discarded with a `[0]` here, against the drawer's own
+    # docstring, so no caller could see that every placebo design differed from
+    # the observed one in where two episodes sat. It is now summed and reported.
     DRAWERS = {
         "circular_within_block":
-            lambda r: placebo_starts_circular(r, real_starts, windows, pre, post)[0],
+            lambda r: placebo_starts_circular(r, real_starts, windows, pre, post),
         "anchor_shift":
-            lambda r: placebo_starts(r, real_starts, lo, hi, pre, post),
+            lambda r: (placebo_starts(r, real_starts, lo, hi, pre, post), 0),
     }
     if scheme not in DRAWERS:
         raise ValueError(
@@ -749,30 +967,37 @@ def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
     draw_placebo = DRAWERS[scheme]
 
     n_real = len(list(real_starts))
-    fh = None
-    if led is not None:
-        led.parent.mkdir(parents=True, exist_ok=True)
-        if not led.exists():
-            led.write_text("draw_index,stat\n")
-        fh = led.open("a")
+    fh = led.open("a") if led is not None else None
+    n_new, n_short, n_unfit, snapped_total = 0, 0, 0, 0
     try:
         for i in range(int(draws)):
             if i in done:
                 continue                          # already banked by an earlier run
-            ps = draw_placebo(np.random.default_rng(seeds[i]))
+            ps, snapped = draw_placebo(np.random.default_rng(seeds[i]))
             if len(ps) != n_real:
+                n_short += 1
                 continue                          # never let a short draw in
             b = first_week_effect(build_stack(panel, ps, pre, post, date_col),
-                                  outcome, fe=fe, counts=counts, cluster=cluster)
-            if b is not None:
-                done[i] = float(b)
-                if fh is not None:
-                    # Flushed per draw: a kill costs at most one.
-                    fh.write(f"{i},{b!r}\n")
-                    fh.flush()
+                                  outcome, fe=fe, counts=counts, cluster=cluster,
+                                  extra=extra)
+            if b is None:
+                n_unfit += 1
+                continue
+            done[i] = float(b)
+            n_new += 1
+            snapped_total += int(snapped)
+            if fh is not None:
+                # Flushed per draw: a kill costs at most one.
+                fh.write(f"{i},{b!r}\n")
+                fh.flush()
     finally:
         if fh is not None:
             fh.close()
+    if n_short or n_unfit or snapped_total:
+        print(f"[RI] {outcome}: {n_new} new draw(s); {n_short} short draw(s) and "
+              f"{n_unfit} unfit draw(s) discarded; {snapped_total} episode "
+              f"relocation(s) onto an admissible day across the new draws"
+              + (f" ({snapped_total / max(n_new, 1):.2f} per draw)" if n_new else ""))
     # Ordered by draw index so the result never depends on which draws a
     # particular run happened to compute.
     stats_ = [done[i] for i in sorted(done)]

@@ -514,6 +514,15 @@ def s_estimators_gate_on_calibration():
     if f17.exists() and "ledger=" not in f17.read_text():
         missing.append("17 calls randomization_p without a ledger, so the discovery "
                        "run cannot survive a restart")
+    # N10: the geometry the null is drawn on must be the certified one, passed
+    # explicitly, not the panel's own extent after the sample rules.
+    if f17.exists():
+        t17 = _ast.parse(f17.read_text())
+        rp_calls = [n for n in _ast.walk(t17) if isinstance(n, _ast.Call)
+                    and isinstance(n.func, _ast.Name) and n.func.id == "randomization_p"]
+        if rp_calls and not all(any(k.arg == "windows" for k in c.keywords) for c in rp_calls):
+            missing.append("17 calls randomization_p without windows=, so the anchor "
+                           "geometry is the panel's extent rather than the certified window")
 
     # The no-downgrade rule in 17: the published write must be guarded by a
     # comparison against the draws already on disk.
@@ -2490,13 +2499,56 @@ def x_bheard_wired_and_inert():
     except Exception as e:
         return "FAIL", f"bheard module missing or broken: {type(e).__name__}: {e}"
 
+    # WIRED means IN THE FORMULA, decided by AST. The first version scanned file
+    # text for "attach_bheard" or "from bheard import", which the import line
+    # alone satisfies - and it did: 17 attached the column to the panel and
+    # estimated a formula that never read it (finding X17). Now a script counts
+    # as wired only if it passes a covariate list containing bheard_exposure to
+    # the estimator (a Call with keyword extra=..., or a function whose default
+    # extra names it), and the estimator itself builds its right-hand side from
+    # that list.
+    import ast as _ast
+
+    def _passes_bheard(path):
+        tree = _ast.parse(path.read_text())
+        # A covariate list passed by NAME resolves to its module-level assignment,
+        # so `extra=COVARIATES` counts iff COVARIATES is assigned a literal that
+        # names bheard_exposure.
+        assigned = {}
+        for n in tree.body:
+            if isinstance(n, _ast.Assign) and len(n.targets) == 1 and isinstance(n.targets[0], _ast.Name):
+                assigned[n.targets[0].id] = _ast.unparse(n.value)
+        def _names(v):
+            s = _ast.unparse(v)
+            return assigned.get(s, s) if isinstance(v, _ast.Name) else s
+        for n in _ast.walk(tree):
+            if isinstance(n, _ast.Call):
+                for kw in n.keywords:
+                    if kw.arg == "extra" and "bheard_exposure" in _names(kw.value):
+                        return True
+            if isinstance(n, _ast.FunctionDef):
+                for a, dflt in zip(reversed(n.args.args), reversed(n.args.defaults)):
+                    if a.arg == "extra" and dflt is not None and "bheard_exposure" in _ast.unparse(dflt):
+                        return True
+        return False
+
     readers = [f.name for f in sorted(SCRIPTS.glob("*.py"))
                if f.name not in ("bheard.py", "16_bheard_exposure.py",
                                  "23_regression_suite.py", "20_data_audit.py",
-                                 "run_all.py", "22_pipeline_check.py")
-               and ("attach_bheard" in f.read_text() or "from bheard import" in f.read_text())]
+                                 "run_all.py", "22_pipeline_check.py", "event_study.py")
+               and _passes_bheard(f)]
     if not readers:
-        return "FAIL", "no model reads the B-HEARD exposure control"
+        return "FAIL", "no model passes the B-HEARD exposure control into its formula"
+    es_tree = _ast.parse((SCRIPTS / "event_study.py").read_text())
+    fes = next((n for n in _ast.walk(es_tree) if isinstance(n, _ast.FunctionDef)
+                and n.name == "fit_event_study"), None)
+    if fes is None or "extra" not in [a.arg for a in fes.args.args]:
+        return "FAIL", "event_study.fit_event_study takes no covariate list"
+    joins = [n for n in _ast.walk(fes) if isinstance(n, _ast.Call)
+             and isinstance(n.func, _ast.Attribute) and n.func.attr == "join"
+             and "extra" in _ast.unparse(n)]
+    if not joins:
+        return "FAIL", "fit_event_study does not build its right-hand side from `extra`"
 
     from config import (BHEARD_BOUND_PRIMARY, EVENT_WINDOW_POST, EVENT_WINDOW_PRE,
                         MIN_TOTAL_CALLS_FOR_SHARE)
@@ -3629,6 +3681,113 @@ def m_register_sync():
 
 
 # ===========================================================================
+def s_ledger_identity():
+    """N7, N8: a checkpoint ledger is keyed to the DESIGN that produced it, and a
+    ledger from any other design is quarantined rather than pooled.
+
+    Both ledgers (18's per-sim calibration ledger, randomization_p's per-draw RI
+    ledger) were keyed on a filename - stratum and draw count, or outcome and
+    window. A ledger left behind by an earlier panel, episode list, day-shock
+    setting or scheme would be resumed as if nothing had changed, pairing new
+    observed statistics with old null draws. Nothing would have said so.
+
+    Now every ledger is opened through event_study.open_ledger with a design
+    dict; a sidecar carries its fingerprint; a mismatch, a missing sidecar or an
+    unparseable file moves the ledger aside under a name that says why. Adoption
+    of a sidecar-less ledger exists only behind an explicit flag in 18.
+
+    Asserted three ways. By AST: both writers call open_ledger, and 18's
+    adopt_ledger call sits behind its flag. By running: on a temporary ledger,
+    resume works with the same design, and a changed design, a removed sidecar
+    and a corrupt file each quarantine. And 18 records a failed sim as a row
+    (finding N8) instead of dropping it: the write call carries `nan,nan` and the
+    verdict carries n_sims_failed.
+    """
+    import ast as _ast
+    import importlib
+    import tempfile
+    sys.path.insert(0, str(SCRIPTS))
+    es = importlib.import_module("event_study")
+    problems = []
+
+    def _calls(tree, name):
+        return [n for n in _ast.walk(tree) if isinstance(n, _ast.Call)
+                and isinstance(n.func, _ast.Name) and n.func.id == name]
+
+    t18 = _ast.parse((SCRIPTS / "18_null_calibration.py").read_text())
+    tes = _ast.parse((SCRIPTS / "event_study.py").read_text())
+    if not _calls(t18, "open_ledger"):
+        problems.append("18_null_calibration.py opens its ledger without open_ledger")
+    rp = next((n for n in _ast.walk(tes) if isinstance(n, _ast.FunctionDef)
+               and n.name == "randomization_p"), None)
+    if rp is None or not _calls(rp, "open_ledger"):
+        problems.append("event_study.randomization_p opens its ledger without open_ledger")
+    guarded = any(isinstance(n, _ast.If) and "adopt_ledger_without_identity" in _ast.unparse(n.test)
+                  and _calls(n, "adopt_ledger") for n in _ast.walk(t18))
+    if _calls(t18, "adopt_ledger") and not guarded:
+        problems.append("18 adopts a sidecar-less ledger outside its explicit flag")
+    writes_nan = any(isinstance(n, _ast.Call) and isinstance(n.func, _ast.Attribute)
+                     and n.func.attr == "write" and "nan,nan" in _ast.unparse(n)
+                     for n in _ast.walk(t18))
+    if not writes_nan or "n_sims_failed" not in _ast.unparse(t18):
+        problems.append("18 does not record failed sims as ledger rows with n_sims_failed")
+
+    with tempfile.TemporaryDirectory() as td:
+        led = Path(td) / "ledger.csv"
+        d1, d2 = {"kind": "selftest", "x": 1}, {"kind": "selftest", "x": 2}
+        banked, meta = es.open_ledger(led, d1, ["i", "v"])
+        with led.open("a") as fh:
+            fh.write("0,1.5\n")
+        banked, _ = es.open_ledger(led, d1, ["i", "v"])
+        if len(banked) != 1:
+            problems.append("same design did not resume the banked row")
+        banked, _ = es.open_ledger(led, d2, ["i", "v"])
+        if len(banked) != 0 or not any("stale" in q.name for q in Path(td).iterdir()):
+            problems.append("a changed design was pooled instead of quarantined")
+        led.with_suffix(".meta.json").unlink()
+        banked, _ = es.open_ledger(led, d2, ["i", "v"])
+        if not any("unverified" in q.name for q in Path(td).iterdir()):
+            problems.append("a sidecar-less ledger was resumed instead of quarantined")
+        led.write_text("i,v\n0,1,2\n")
+        banked, _ = es.open_ledger(led, d2, ["i", "v"])
+        if not any("corrupt" in q.name for q in Path(td).iterdir()) or len(banked):
+            problems.append("a corrupt ledger was not quarantined")
+    return ("PASS" if not problems else "FAIL",
+            "both ledgers open through open_ledger; resume, stale, unverified and corrupt "
+            "cases behave on a temporary ledger; 18 records failed sims"
+            if not problems else "; ".join(problems))
+
+
+def s_placebo_relocations_reported():
+    """N9: the within-block shift's relocation count reaches the caller.
+
+    placebo_starts_circular snaps a real start that is not itself an admissible
+    day onto the nearest one and returns the count, so a caller can see that its
+    placebo designs differ from the observed one in where two episodes sit
+    (finding P2's edge episodes). randomization_p discarded it with a `[0]`, so
+    the count reached nobody. Asserted by AST: the drawer's result is unpacked
+    into a tuple that names `snapped`, and the total is reported.
+    """
+    import ast as _ast
+    tree = _ast.parse((SCRIPTS / "event_study.py").read_text())
+    rp = next((n for n in _ast.walk(tree) if isinstance(n, _ast.FunctionDef)
+               and n.name == "randomization_p"), None)
+    if rp is None:
+        return "FAIL", "event_study.py has no randomization_p"
+    unpacked = any(isinstance(n, _ast.Assign) and isinstance(n.targets[0], _ast.Tuple)
+                   and any(isinstance(e, _ast.Name) and e.id == "snapped" for e in n.targets[0].elts)
+                   and "draw_placebo" in _ast.unparse(n.value)
+                   for n in _ast.walk(rp))
+    reported = "snapped_total" in _ast.unparse(rp) and any(
+        isinstance(n, _ast.Call) and isinstance(n.func, _ast.Name) and n.func.id == "print"
+        and "snapped_total" in _ast.unparse(n) for n in _ast.walk(rp))
+    if not unpacked:
+        return "FAIL", "randomization_p discards the drawer's relocation count"
+    if not reported:
+        return "FAIL", "randomization_p counts relocations but never reports them"
+    return "PASS", "randomization_p unpacks and reports the relocation count per run"
+
+
 CHECKS = [
     ("T.anchor_monthly", "X1,T4,T5,L4", "Trends anchor rescales all days, not just 1-7", t_anchor_monthly),
     ("T.title_agg_no_trend", "T12", "title aggregation is not measuring accumulation", t_title_agg_no_trend),
@@ -3671,13 +3830,15 @@ CHECKS = [
     ("S.draw_scheme_total", "N5", "every draw scheme is dispatched explicitly, none by fallback", s_draw_scheme_total),
     ("S.ri_pvalue_form", "RI1", "randomization p-values use the (1+k)/(1+n) form", s_ri_pvalue_form),
     ("S.calibration_writes_stratified", "P5,D1,N4", "every calibration output names the stratum it describes", s_calibration_writes_stratified),
-    ("S.estimators_gate_on_calibration", "P7,D1,N6", "estimators certify their own null and cannot be downgraded by a cheap run", s_estimators_gate_on_calibration),
+    ("S.estimators_gate_on_calibration", "P7,D1,N6,N10", "estimators certify their own null and cannot be downgraded by a cheap run", s_estimators_gate_on_calibration),
     ("S.ppml_wired", "X5,R8", "counts/PPML arm actually called", s_ppml_wired),
     ("S.dose_arm_wired", "D6", "dose-response arm has a caller and recovers a planted effect", s_dose_arm_wired),
+    ("S.ledger_identity", "N7,N8", "checkpoint ledgers are keyed to their design and quarantined when it differs", s_ledger_identity),
+    ("S.placebo_relocations_reported", "N9", "the within-block shift's relocation count reaches the caller", s_placebo_relocations_reported),
     ("D.freeze_not_tautological", "D3", "freeze guard is not a tautology", d_freeze_not_tautological),
     ("D.freeze_disjoint", "D3", "confirmation sample disjoint from discovery", d_freeze_enforces_disjoint),
     ("D.guard_coverage", "D3,X11,X9", "every outcome-artifact reader calls the guard", d_guard_coverage),
-    ("X.bheard_wired", "X6", "B-HEARD control is in a model and inert on discovery", x_bheard_wired_and_inert),
+    ("X.bheard_wired", "X6,X17", "B-HEARD control is in a model and inert on discovery", x_bheard_wired_and_inert),
     ("D.soda_guarded", "F2", "the source API is guarded, not only the artifacts", d_soda_source_guarded),
     ("D.outcome_list_complete", "O1,X11", "every processed artifact is classified as outcome or not", d_outcome_list_complete),
     ("D.incident_disclosed", "F1", "freeze incident stays in the record", d_incident_disclosed),
@@ -3742,16 +3903,30 @@ def main():
                    if base.get(r["check"]) == "PASS" and r["state"] != "PASS"]
     fixed = [r for r in results
              if base.get(r["check"]) in ("FAIL", "BLOCKED") and r["state"] == "PASS"]
+    # A CHECK WITH NO BASELINE ROW CANNOT REGRESS, which made the gate blind to it.
+    # The baseline was last refreshed at 59 checks while the suite grew to 76,
+    # so 16 checks - the RI p-value form, the scheme dispatch, the calibration
+    # gate, the register-honesty checks - could FAIL and the suite still exit 0
+    # printing "no regressions". That is a gate that cannot fail for a fifth of
+    # its checks. Unbaselined is now a reported condition and a non-zero exit.
+    unbaselined = [r for r in results if r["check"] not in base]
+    retired = [c for c in base if c not in {r["check"] for r in results}]
 
     for r in fixed:
         print(f"  FIXED      {r['check']} ({r['findings']})")
     for r in regressions:
         print(f"  REGRESSION {r['check']} was PASS, now {r['state']}: {r['detail']}")
+    for r in unbaselined:
+        print(f"  UNBASELINED {r['check']} ({r['state']}): no baseline row, so this "
+              "check cannot regress — refresh the baseline in the commit that adds it")
+    for c in retired:
+        print(f"  RETIRED    {c}: in the baseline, not in the suite")
 
-    if regressions:
-        print(f"\n{len(regressions)} REGRESSION(S) — a change broke something that previously held.")
+    if regressions or unbaselined or retired:
+        print(f"\n{len(regressions)} REGRESSION(S), {len(unbaselined)} UNBASELINED, "
+              f"{len(retired)} RETIRED — the gate is not clean.")
         return 1
-    print("\nno regressions.")
+    print("\nno regressions; every check has a baseline row.")
     return 0
 
 

@@ -68,7 +68,7 @@ from config import (
     OUTPUTS_TABLES,
     VALID_CDS,
 )
-from event_study import (draw_scheme_for, randomization_p,
+from event_study import (adopt_ledger, draw_scheme_for, open_ledger, randomization_p,
                          stratum_episodes)
 from freeze_guard import select_sample
 
@@ -87,6 +87,10 @@ parser.add_argument("--stratum", default="discovery",
                          "(finding P1); it does not transfer between them.")
 parser.add_argument("--jobs", type=int, default=0,
                     help="parallel workers; 0 = cpu_count()-1")
+parser.add_argument("--adopt-ledger-without-identity", action="store_true",
+                    help="write the identity sidecar for an existing ledger that predates "
+                         "sidecars, asserting it was produced by exactly this design, and "
+                         "exit. Deliberate and printed; never the default.")
 args = parser.parse_args()
 
 OUTPUTS_TABLES.mkdir(parents=True, exist_ok=True)
@@ -270,27 +274,52 @@ def one_sim(seed):
 # draw count is a different quantity — pooling those would be the "second source
 # of truth" defect this project keeps finding, in its most damaging form.
 LEDGER = _strat(f"null_calibration_ledger_d{args.draws}")
-prior_rows = {}
-if LEDGER.exists():
-    try:
-        _led = pd.read_csv(LEDGER)
-        prior_rows = {int(r["sim_index"]): (float(r["obs"]), float(r["p"]))
-                      for _, r in _led.iterrows()}
-    except Exception as e:
-        print(f"ledger unreadable ({e}); starting fresh")
-        prior_rows = {}
 
-todo = [i for i in range(args.sims) if i not in prior_rows]
-if prior_rows:
-    print(f"resuming: {len(prior_rows)} sim(s) already in "
-          f"{LEDGER.name}, {len(todo)} to run")
+# THE LEDGER'S IDENTITY IS THE GENERATOR, NOT THE FILENAME. The name carries the
+# stratum and the draw count; it does not carry the AR(1) and component scales
+# estimated from the panel, the --day-shock override, the episode dates, the
+# draw scheme or the seed root - and a sim generated under any other value of
+# those is a draw from a different null. Pooling it would issue a verdict on a
+# mixture (a --day-shock 0 sensitivity resumed by the measured-shock run, or a
+# ledger left by an earlier panel). open_ledger quarantines a ledger whose
+# fingerprint differs, or that has none, rather than resume it; the one legacy
+# ledger is adopted explicitly below, on the record.
+DESIGN = {
+    "kind": "null_calibration", "stratum": args.stratum,
+    "windows": [[str(a), str(b)] for a, b in STRATUM_WINDOWS],
+    "starts": [str(pd.Timestamp(s).date()) for s in starts],
+    "draws": int(args.draws), "scheme": DRAW_SCHEME,
+    "rho": float(rho), "sigma": float(sigma), "mu": float(mu),
+    "cd_scale": float(cd_scale), "dow_scale": float(dow_scale),
+    "day_scale": float(day_scale), "day_shock_override": args.day_shock,
+    "seed_root": 18_20260908, "n_cds": len(cds), "n_days": int(len(dates)),
+    "estimator": {"outcome": "edp_share", "pre": int(EVENT_WINDOW_PRE),
+                  "post": int(EVENT_WINDOW_POST)},
+}
+if args.adopt_ledger_without_identity:
+    adopt_ledger(LEDGER, DESIGN)
+    raise SystemExit(0)
+
+_banked, _meta = open_ledger(LEDGER, DESIGN, ["sim_index", "obs", "p"])
+prior_rows, failed = {}, set()
+for _, r in _banked.iterrows():
+    i = int(r["sim_index"])
+    if pd.isna(r["p"]):
+        # A sim recorded as FAILED (finding: None results used to vanish). It is
+        # deterministic - the same seed fails the same way - so it is not
+        # re-attempted, and it is counted into the verdict as n_sims_failed.
+        failed.add(i)
+    else:
+        prior_rows[i] = (float(r["obs"]), float(r["p"]))
+
+todo = [i for i in range(args.sims) if i not in prior_rows and i not in failed]
+if prior_rows or failed:
+    print(f"resuming: {len(prior_rows)} sim(s) already in {LEDGER.name} "
+          f"({len(failed)} recorded as failed), {len(todo)} to run; identity verified")
 
 jobs = args.jobs or max(1, (os.cpu_count() or 2) - 1)
 print(f"running {len(todo)} of {args.sims} sims x {args.draws} draws on {jobs} workers")
 done = 0
-LEDGER.parent.mkdir(parents=True, exist_ok=True)
-if not LEDGER.exists():
-    LEDGER.write_text("sim_index,obs,p\n")
 with ProcessPoolExecutor(max_workers=jobs) as ex, LEDGER.open("a") as fh:
     for idx, res in zip(todo, ex.map(one_sim, [SEEDS[i] for i in todo], chunksize=1)):
         done += 1
@@ -298,7 +327,17 @@ with ProcessPoolExecutor(max_workers=jobs) as ex, LEDGER.open("a") as fh:
             prior_rows[idx] = (res[0], res[1])
             # Flushed per sim: a run killed between two sims loses at most one.
             fh.write(f"{idx},{res[0]!r},{res[1]!r}\n")
-            fh.flush()
+        else:
+            # Recorded, not dropped. A sim on which the estimator yields no
+            # statistic used to disappear: n_sims_completed fell short of --sims
+            # with nothing saying why, and every resumed run re-attempted the
+            # same deterministic failure. Now it is a row with NaN, skipped on
+            # resume, and reported as n_sims_failed beside the verdict.
+            failed.add(idx)
+            fh.write(f"{idx},nan,nan\n")
+            print(f"  sim {idx}: estimator returned no statistic; recorded as failed",
+                  flush=True)
+        fh.flush()
         if done % 25 == 0 and prior_rows:
             cur = np.mean(np.array([v[1] for v in prior_rows.values()]) < args.alpha)
             print(f"  {done}/{len(todo)} new sims — rejection rate so far {cur:.3f}",
@@ -371,6 +410,7 @@ calibrated = enough and rate_ok and uniform_ok
 
 out = pd.DataFrame([
     {"metric": "n_sims_completed", "value": len(pvals)},
+    {"metric": "n_sims_failed", "value": len(failed)},
     {"metric": "ri_draws_per_sim", "value": args.draws},
     # WHICH NULL THIS VERDICT CERTIFIES (finding P1).
     #

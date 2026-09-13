@@ -9,6 +9,10 @@ T.no_redirect_candidates,T18,no basket candidate is a redirect,PASS,"511 candida
 T.exclusion_reasons_true,"N1,N3",no basket exclusion states a reason the scope file contradicts,PASS,"16 'no date' exclusion(s), all backed by an empty scope date; 0 percent-encoded keys; 0 scope row(s) not among the decided candidates"
 T.scope_covers_candidates,N2,every basket candidate was actually asked about,PASS,all 174 candidates carry a scope row; 0 resolved to no Wikidata item (a recorded absence)
 T.basket_is_police_violence,B1,every basket article has evidence police were the actor,PASS,all 109 published articles classified for the 'strict' basket; 109 rest on a police-action category or the MPV registry; 0 anti-police
+D.edp_family_justified,O3,the EDP grouping does not rest on a justification known to be false,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+T.trends_precision_stable,T6,the live Trends component keeps its resolution over the decade,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+T.agent_class_break_bounded,L7,the April 2020 agent-class break is measured and bounded,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+T.basket_evidence_not_namesake,"T13,B3",no basket article rests on an exact-name registry match alone,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 T.basket_country_evidence,B2,no basket article admitted without US evidence,PASS,"all 109 published articles carry US evidence (65 from Wikidata, 109 from a category); 0 carry non-US evidence"
 T.no_duplicate_person,T17,no basket article duplicates another person,PASS,"107 usable articles, none is a title of another"
 S.did_no_shared_days,S7,no district-day is treated and control at once,PASS,"0 district-day(s) appear in two episode windows in the stack 07 builds (24,780 rows, 30 episodes); 07's old construction would have double-counted 28 calendar day(s)"
@@ -32,8 +36,15 @@ S.prewindow_truncation,"S5,E4","contested district-days reassigned, not deleted"
 S.calibration_can_fail,"S4,X3,R3",calibration verdict can fail,PASS,min-n enforced + uniformity test
 S.no_stale_calibration,R3,no stale low-n calibration artifact,PASS,"n_sims=200, VERDICT=CALIBRATED"
 S.calibration_on_residual,S8,"synthetic null has this design's dependence, not a harder one",PASS,"ar1_rho=0.0482 matches the residual 0.0482 (gap 0.0000) and not the level 0.1851, which is the S8 defect the null used to carry"
+S.ri_scheme_certified,"P1,P5,RI3",the randomization null used is the one the calibration certifies,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+S.draw_scheme_total,N5,"every draw scheme is dispatched explicitly, none by fallback",PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+S.ri_pvalue_form,RI1,randomization p-values use the (1+k)/(1+n) form,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+S.calibration_writes_stratified,"P5,D1,N4",every calibration output names the stratum it describes,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+S.estimators_gate_on_calibration,"P7,D1,N6,N10",estimators certify their own null and cannot be downgraded by a cheap run,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 S.ppml_wired,"X5,R8",counts/PPML arm actually called,PASS,PPML recovers planted rate change: -0.1446 vs log(0.85)=-0.1625
 S.dose_arm_wired,D6,dose-response arm has a caller and recovers a planted effect,PASS,called by ['17_stacked_event_study.py']; recovers planted dose effect +0.01001 per SD against a planted +0.01000
+S.ledger_identity,"N7,N8",checkpoint ledgers are keyed to their design and quarantined when it differs,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+S.placebo_relocations_reported,N9,the within-block shift's relocation count reaches the caller,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 D.freeze_not_tautological,D3,freeze guard is not a tautology,PASS,guard is independent
 D.freeze_disjoint,D3,confirmation sample disjoint from discovery,PASS,explicit confirmation window
 D.guard_coverage,"D3,X11,X9",every outcome-artifact reader calls the guard,PASS,all readers of 4 outcome artifacts guarded (5 documented exemptions)
@@ -44,9 +55,11 @@ D.incident_disclosed,F1,freeze incident stays in the record,PASS,"2 incident(s) 
 D.addendum_complete,"E5,E6,F2",pre-registration text untouched and its addendum exists,PASS,"pre-specified text byte-identical (2554 bytes); addendum present (266 lines); 2 finding(s) promising disclosure all named in it ['E6', 'F2']"
 D.guard_can_fire,"D3,D4",freeze guard actually rejects things,PASS,guard fires on all 4 rejection cases
 D.declared_access_scoped,O2,"every read of confirmation outcomes is declared, scoped, logged and disclosed",PASS,"1 declared access(es), 1 caller(s), 3 output(s) with exactly the declared columns, each disclosed and logged; guard refuses all 4 self-test cases"
+E.episodes_labelled,"E7,E8","every episode says what drove it, from the treatment series",PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 E.threshold_stringency,"D5,L5,E6",episode threshold is constant stringency,PASS,stringency 10.1%-10.3% by year (spread 0.2%); all 74 peaks clear their year's cut
 E.no_mega_episode,"E3,D7,E6",no episode exceeds its analysis window,PASS,"74 episodes, span median 3 max 14 (cap 14)"
 E.frozen_list_untouched,D3,frozen episode list unmodified,PASS,byte-identical to HEAD
+E.stratum_windows_fit,P2,every episode's reported statistic fits inside its stratum,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 E.estimators_use_adopted_list,"D3,E6","estimators read the adopted episode list, not the frozen record",PASS,9 estimator script(s) checked; none names confirmation_episodes.csv in code — all route through EPISODE_LIST_PRIMARY (confirmation_episodes_rebuilt.csv)
 E.labels_live_source,"E5,L6,R2",episode labels not from retired Twitter,PASS,0/74 labels match the file-order default (0%); 33 windows left unlabelled
 E.attribution_lookback,E2,attribution lookback >= 60 days,PASS,ATTRIBUTION_LOOKBACK_DAYS=60 (needs >=60)
@@ -56,6 +69,11 @@ O.dropna_groupby,O4,missing-district rows not silently dropped,PASS,dropna=False
 V.artifacts_current,T14,no artifact predates the script that writes it,PASS,"9 artifact(s) match their generating script's code; 5 predate fingerprinting (['S10', 'S12', 'S13', 'S7', 'S8'])"
 V.sources_verified,"X8,X14",every source verified after its last write,PASS,"26 artifacts, all verified after their last write"
 V.no_duplicate_source_ids,"X8,X13","one row per source id, no collisions",PASS,"14 rows, 14 ids, no collisions"
+V.source_id_per_artifact,"P3,P4",a source id never gets repointed at a different artifact,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 V.claims_reproduce,X14,every claimed number recomputes from its artifact,PASS,49 claims recomputed and found verbatim in the document
+V.claims_cover_exhibits,P6,no number enters a paper table without a claim behind it,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 V.links_resolve,X14,every endpoint has a dated result,PASS,"15 endpoints, last result recorded"
+X.run_all_stages_declared,X10,every pipeline stage exists and declares its outputs,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+M.status_honest,O5,no finding is recorded fixed without a passing check,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+M.finding_ids_unique,RI4,every finding id addresses exactly one row,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
 M.register_sync,O5,register and suite have not drifted apart,PASS,69/77 findings tagged; all 43 blocking covered
