@@ -368,17 +368,32 @@ def joint_p(model, wanted):
 
 
 def first_week_mean(stack, outcome, fe="ep_cd + dow", counts=False, days=range(0, 8),
-                    cluster=CLUSTER_VAR, extra=(), offset=True):
-    """Reportable effect size: the mean day 0..7 coefficient. NOT the test statistic."""
+                    cluster=CLUSTER_VAR, extra=(), offset=True, return_se=False):
+    """Reportable effect size: the mean day 0..7 coefficient. NOT the test statistic.
+
+    With `return_se=True` returns `(mean, se)`, where `se` is the asymptotic
+    date-clustered standard error of that mean — sqrt(a'Va) with a = 1/k on the
+    k first-week coefficients. Addendum 23.2 reads a rejection's direction off
+    the sign of this mean and calls it inconsistent when the mean is within one
+    standard error of zero in either arm, so the sealed script writes both.
+    """
     m = fit_event_study(stack, outcome, fe=fe, counts=counts, cluster=cluster, extra=extra,
                         offset=offset)
     if m is None:
-        return None
+        return (None, None) if return_se else None
     names = _rel_day_coefs(m)
     wanted = [names[k] for k in days if k in names]
     if not wanted:
-        return None
-    return float(m.coef().loc[wanted].mean())
+        return (None, None) if return_se else None
+    mean = float(m.coef().loc[wanted].mean())
+    if not return_se:
+        return mean
+    allnames = [str(n) for n in m._coefnames]
+    V = np.asarray(m._vcov, dtype=float)
+    a = np.zeros(len(allnames))
+    for w in wanted:
+        a[allnames.index(str(w))] = 1.0 / len(wanted)
+    return mean, float(np.sqrt(max(float(a @ V @ a), 0.0)))
 
 
 def placebo_starts(rng, real_starts, lo, hi, pre, post):

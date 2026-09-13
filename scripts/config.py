@@ -576,6 +576,9 @@ EVENT_WINDOW_POST = 14                 # primary post-window
 EVENT_WINDOW_POST_SENSITIVITY = (28, 60)   # U2: Desmond et al. find year-long effects
 EVENT_REFERENCE_DAY = -1               # omitted category in event-time dummies
 RANDOMIZATION_DRAWS = 2000             # episode-level RI; primary p-value
+BH_Q = 0.05                            # Benjamini-Hochberg level over the pre-specified
+                                       # family of eight (PRE_ANALYSIS_NOTE 10; addendum 23.1);
+                                       # read by 30 (the seal) and 34 (the reading), defined once
 # Rule E1.6: a calibration or power run that completes fewer simulations than
 # this issues no verdict at all (UNDETERMINED, exit 2), never a pass. It lived
 # as a private constant in both 18 and 19, so the two could drift apart

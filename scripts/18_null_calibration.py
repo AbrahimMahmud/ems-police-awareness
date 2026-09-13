@@ -100,6 +100,10 @@ parser.add_argument("--stratum", default="discovery",
                          "(finding P1); it does not transfer between them.")
 parser.add_argument("--jobs", type=int, default=0,
                     help="parallel workers; 0 = cpu_count()-1")
+parser.add_argument("--allow-assumed-noise", action="store_true",
+                    help="run on the assumed fallback noise parameters when the panel is "
+                         "absent. Smoke tests only: the certificate then records "
+                         "noise_source=assumed and certifies nothing about the data.")
 parser.add_argument("--adopt-ledger-without-identity", action="store_true",
                     help="write the identity sidecar for an existing ledger that predates "
                          "sidecars, asserting it was produced by exactly this design, and "
@@ -194,7 +198,25 @@ if panel_path.exists():
         print(f"  implied total sd {np.sqrt(sigma**2 * (1 + cd_scale**2 + dow_scale**2 + day_scale**2)):.4f} "
               f"against the panel's {total_sd:.4f}")
 else:
-    print(f"real panel not built yet — using assumed rho={rho}, sigma={sigma}")
+    # NO SILENT FALLBACK (finding N11, 2026-09-13 21:08Z). The discovery
+    # 1,000-sim run started in the twelve seconds between a cold run clearing
+    # data/processed and 01 rebuilding the panel, took this branch, and began
+    # calibrating a null with rho=0.6 and mu=0.10 — parameters unrelated to
+    # the data, under a certificate that would have been read as the panel's.
+    # The ledger identity check (N7) is what surfaced it: the fingerprint no
+    # longer matched the 200-sim ledger. A calibration whose noise structure is
+    # an assumption certifies nothing about this design, so it refuses unless
+    # asked for a smoke test by name, and exits with a code the runners do not
+    # treat as a verdict (0 and 1 are verdicts; 3 is "not run").
+    if not args.allow_assumed_noise:
+        print(f"REFUSED: {panel_path} is absent, so the noise parameters cannot be "
+              f"measured; a null on assumed rho={rho}, sigma={sigma} would certify nothing "
+              "about this design. Build the panel (01_build_panel.py) or pass "
+              "--allow-assumed-noise for a smoke test.")
+        raise SystemExit(3)
+    print(f"real panel not built yet — using ASSUMED rho={rho}, sigma={sigma} "
+          "(--allow-assumed-noise: smoke test, certifies nothing)")
+NOISE_SOURCE = "panel" if panel_path.exists() else "assumed"
 
 ep = pd.read_csv(DATA_REFERENCE / EPISODE_LIST_PRIMARY, parse_dates=["start"])
 # stratum_episodes applies first-week containment (finding P2) rather than the
@@ -448,6 +470,12 @@ out = pd.DataFrame([
      "value": "contiguous" if len(STRATUM_WINDOWS) == 1 else "gapped"},
     {"metric": "n_episodes", "value": len(starts)},
     {"metric": "ar1_rho", "value": round(rho, 4)},
+    # Where the noise parameters came from (N11): "panel" means measured from
+    # the discovery rows of panel_cd_day.parquet through select_sample;
+    # "assumed" means the fallback constants, and the certificate is a smoke test.
+    {"metric": "noise_source", "value": NOISE_SOURCE},
+    {"metric": "noise_mu", "value": round(mu, 6)},
+    {"metric": "noise_sigma", "value": round(sigma, 6)},
     {"metric": "nominal_alpha", "value": args.alpha},
     {"metric": "empirical_rejection_rate", "value": round(rej, 4)},
     {"metric": "acceptable_range_lo", "value": round(lo, 4)},

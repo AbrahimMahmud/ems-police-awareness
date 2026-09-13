@@ -104,7 +104,7 @@ interface begins on 1 July 2015.
 
 The confirmation strata were protected by a code-level freeze: every analysis
 script draws its sample through one guard function whose active window is derived
-from a single flag, and a regression suite of automated checks (83 at the time of
+from a single flag, and a regression suite of automated checks (85 at the time of
 writing) verifies that no script can read confirmation-period outcome values
 without passing through it. The hypotheses, the estimator, the primary inference,
 the calibration precondition, the sensitivity battery, the multiple-testing family
@@ -329,7 +329,12 @@ the minimum effect of interest is not excluded; a transient effect of that size
 is disfavoured. Rejections are read by the pre-specified rules, which are
 asymmetric across strata: a rejection in C1 alone is confirmation in the clean
 stratum; a rejection in C2 alone is not confirmation, because B-HEARD moves the
-outcome in the hypothesised direction.
+outcome in the hypothesised direction. A stratum rejects on an outcome only when
+both arms reject with the same sign; a share-arm rejection accompanied by a
+movement in total dispatches but not in the raw count is denominator-driven; any
+placebo rejection within a stratum voids its primary rejections. These rules are
+implemented as code that reads only the sealed result table, so that no judgement
+intervenes between the sealed numbers and the sentences reported below.
 
 **Exploratory analyses.** Discovery-period estimates, an outcome decomposition
 across eight dispatch families and three post-episode windows (65 tests under a

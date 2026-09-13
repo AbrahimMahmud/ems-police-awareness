@@ -1246,7 +1246,18 @@ it had failed uniformity (D 0.097, p 0.0455) and addendum §25 was written on th
 result, before this one existed, to fix what a second failure would mean; at
 1,000 simulations the null is uniform (D 0.0155) and the fallback is not
 invoked. The pooled row is the corrected drawer's 200-simulation certificate
-(19:00Z).*
+(19:00Z). Every certificate's synthetic null is built on noise parameters
+measured from the discovery rows of the panel — level, AR(1) coefficient,
+idiosyncratic SD and the district, day-of-week and day-shock scales — and
+`S.calibration_noise_measured` holds each certificate's ledger sidecar to the
+values the power analysis measured from the same panel. That check exists
+because the discovery 1,000-simulation run started in the twelve seconds
+between a cold run clearing the processed data and the panel being rebuilt,
+fell back to assumed constants (AR(1) 0.6 against a measured 0.048) with a
+printed note and nothing else, and would have issued a certificate
+indistinguishable from a real one; the ledger identity check (N7) caught it
+twelve minutes in, the run was restarted on the panel, and the fallback now
+refuses to run unless a smoke test asks for it by name (N11).*
 
 C1's certificate under the within-block scheme landed on **2026-09-13** and was
 withdrawn the same day: the drawer it certified snapped the two edge episodes
@@ -1438,7 +1449,7 @@ MDE, and none of them is available here.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **83 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **85 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
@@ -1475,11 +1486,11 @@ not what was. A register full of prescriptions reads like a register full of
 completions, and whether anything had actually been fixed was recoverable only by
 reading the check suite and matching tags by eye.
 
-Each of the 114 findings now carries a status — `fixed`, `open`, or `unverified` —
+Each of the 115 findings now carries a status — `fixed`, `open`, or `unverified` —
 and the check that guards it asserts one direction only: **nothing may say
 `fixed` while a check tagged to it is not passing.** `unverified` means nothing
 checks it, which is a statement of work remaining and not a synonym for fine.
-Current state: **114 fixed, 0 open, 0 unverified**. P1, P5, RI3, P12 and P13 closed on 2026-09-13 at 20:56Z, when C1's 1,000-simulation certificate under the renamed scheme `circular_within_block_fw7` landed and `S.ri_scheme_certified` passed with every stratum certified under the scheme its geometry requires (§7.4). They had closed once that morning on the old scheme's certificates and reopened when the CP2 audit found the drawer had been snapping C1's two edge episodes onto consecutive placebo days (addendum §24); the corrected drawer's C1 null then failed uniformity at 200 simulations and calibrated at 1,000, so the addendum-§25 fallback written between those two verdicts is not invoked. A failing check is not evidence, and neither is a certificate for a null nobody draws from any more.
+Current state: **115 fixed, 0 open, 0 unverified**. P1, P5, RI3, P12 and P13 closed on 2026-09-13 at 20:56Z, when C1's 1,000-simulation certificate under the renamed scheme `circular_within_block_fw7` landed and `S.ri_scheme_certified` passed with every stratum certified under the scheme its geometry requires (§7.4). They had closed once that morning on the old scheme's certificates and reopened when the CP2 audit found the drawer had been snapping C1's two edge episodes onto consecutive placebo days (addendum §24); the corrected drawer's C1 null then failed uniformity at 200 simulations and calibrated at 1,000, so the addendum-§25 fallback written between those two verdicts is not invoked. A failing check is not evidence, and neither is a certificate for a null nobody draws from any more.
 
 Writing that check taught two things worth keeping, both of which are the same
 defect it exists to prevent, committed inside it:

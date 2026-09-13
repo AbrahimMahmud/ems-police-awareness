@@ -18,7 +18,10 @@ resume scripts that no longer existed.
     bash ops/calib1000.sh    # after rebuild: 1000-sim calibrations, all strata
     bash ops/coldrun.sh      # after rebuild: run_all twice from cold (definition in
                              # the script header) and compare the two manifests
+    bash ops/phase_i.sh      # after the lift commit only: the sealed one-shot run
+                             # (30, resumable per cell) then its mechanical reading
+                             # (34 -> data/reference/confirmatory_reading.csv)
 
-Both write a PID file, a state file of completed steps, and a log under
+Each writes a PID file, a state file of completed steps, and a log under
 `ops/state/` (gitignored). Poll them by PID file or sentinel — never `pgrep -f`,
 which matches the shell whose command line contains the pattern.

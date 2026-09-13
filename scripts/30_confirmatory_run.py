@@ -330,6 +330,7 @@ from concurrent.futures import ProcessPoolExecutor
 from config import (
     BHEARD_BOUND_PRIMARY,
     BHEARD_BOUND_SENSITIVITY,
+    BH_Q,
     CAI_D_BASKET,
     CONFIRMATION_ANALYSIS_WINDOWS,
     CONFIRMATION_WINDOWS,
@@ -397,7 +398,7 @@ NO_TREATMENT_WINDOW = ("2015-01-01", "2015-06-30")
 DALLAS_ATTACK_DATE = "2016-07-08"
 
 PLACEBO_OUTCOMES = ("cardiac_share", "injury_share", "asthma_share")
-BH_Q = 0.05
+# BH_Q is config.BH_Q: defined once, read by the seal and by the reading (34).
 
 # The broad-basket episode list, derived from the primary list's name rather than
 # spelled out, so the two cannot drift apart if EPISODE_LIST_PRIMARY changes.
@@ -879,14 +880,16 @@ def randomization(panel, real_starts, outcome, pre, post, draws, windows, cell,
     with collected_warnings():
         obs, k = first_week_effect(obs_stack, outcome, counts=counts, extra=extra,
                                    return_n=True, offset=offset)
-        mean_coef = (first_week_mean(obs_stack, outcome, counts=counts, extra=extra,
-                                     offset=offset)
-                     if obs is not None else None)
+        # The mean and its date-clustered SE: addendum 23.2 reads direction off
+        # the sign of the mean and calls it inconsistent within one SE of zero.
+        mean_coef, mean_se = (first_week_mean(obs_stack, outcome, counts=counts, extra=extra,
+                                              offset=offset, return_se=True)
+                              if obs is not None else (None, None))
     # The asymptotic joint-Wald p, promised "beside the randomization p-value,
     # never instead of it" (note 7) and until 2026-09-13 computed for no cell.
     p_asym = float(chi2_dist.sf(obs, k)) if obs is not None and k else np.nan
     res = {"first_week_chi2": obs, "first_week_mean_coef": mean_coef,
-           "n_first_week_coefs": k, "n_obs": len(obs_stack), "p_asymptotic": p_asym,
+           "first_week_mean_se": mean_se, "n_first_week_coefs": k, "n_obs": len(obs_stack), "p_asymptotic": p_asym,
            "p_randomization": np.nan, "n_draws": 0, "null_sd": np.nan,
            "ri_scheme": None, "ri_exact": 0,
            "n_admissible_starts": len(admissible_days(windows, pre, post))}
@@ -1049,6 +1052,7 @@ def _row(stratum, outcome, arm_counts, spec, family, bound, episode_set,
         "post_window": EVENT_WINDOW_POST,
         "first_week_chi2": np.nan,
         "first_week_mean_coef": np.nan,
+        "first_week_mean_se": np.nan,
         "n_first_week_coefs": np.nan,
         "p_randomization": np.nan,
         "p_asymptotic": np.nan,

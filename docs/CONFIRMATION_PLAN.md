@@ -688,6 +688,14 @@ rejects, every primary rejection in that stratum is reported as not supporting
 H1. Placebo p-values are uncorrected on purpose — a correction would make the
 falsification easier to pass.
 
+**23.4a The reading is code.** Rules 23.1–23.4, §19 rule 2 and §25 are
+implemented by `34_confirmatory_reading.py`, a pure function of the sealed table
+and the pre-freeze power table that writes `data/reference/confirmatory_reading.csv`;
+the paper quotes that file, so no judgement is exercised between the seal and the
+sentence. `S.confirmatory_reading_rules` feeds the function planted tables, one
+per rule and per row of §9.4, and requires the verdict this text fixes for each.
+Written 2026-09-13 before the lift.
+
 **23.5 The sealed run takes no draw count.** `--draws` other than the
 pre-specified `RANDOMIZATION_DRAWS` is refused in real mode (the docstring said
 so; the code only printed a note). The sealed result is written to a

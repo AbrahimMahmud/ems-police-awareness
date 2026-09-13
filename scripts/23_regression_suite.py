@@ -458,6 +458,240 @@ def s_lift_requires_1000_sims():
     return "PASS", f"freeze lifted on certificates {summary}, all >= {LIFT_MIN_SIMS} sims"
 
 
+def s_calibration_noise_measured():
+    """N11: every certificate's synthetic null takes its noise from the measured panel.
+
+    18 estimates the null's noise structure — level, AR(1) rho, idiosyncratic
+    sigma and the district, day-of-week and day-shock scales — from the
+    discovery rows of the panel, and fell back to assumed constants (rho 0.6,
+    mu 0.10) when the panel was absent, with a printed note and nothing else.
+    On 2026-09-13 at 20:56Z the discovery 1,000-sim run started in the twelve
+    seconds between a cold run clearing data/processed and 01 rebuilding the
+    panel, took that branch, and began certifying a null unrelated to the data
+    under the file name the lift reads. The ledger identity check (N7) is what
+    surfaced it, twelve minutes in: the fingerprint no longer matched the
+    200-sim ledger. Nothing else would have — the certificate would have said
+    CALIBRATED at 1,000 with a scheme and a stratum, and S.ri_scheme_certified
+    and S.lift_requires_1000_sims would both have passed on it.
+
+    Two halves. Source: the fallback branch of 18 refuses unless a smoke test
+    asks for it by name. Artifacts: for every stratum certificate on disk, the
+    design in its ledger sidecar carries the noise parameters 19 measured from
+    the same panel (power_analysis.csv, noise.*) to 1e-5 — which also catches
+    the two copies of the estimation procedure drifting apart — none of them
+    is a fallback constant, the certificate's ar1_rho is the sidecar's, and a
+    certificate that carries noise_source reads "panel". Sidecars and 19's
+    artifact carry no outcome row.
+    """
+    import ast as _ast
+    problems, seen = [], []
+    tree = _ast.parse(src("18_null_calibration.py"))
+    branch = [n for n in tree.body if isinstance(n, _ast.If)
+              and _ast.unparse(n.test) == "panel_path.exists()"]
+    if not branch:
+        problems.append("18 has no `if panel_path.exists()` branch")
+    else:
+        orelse = _ast.unparse(_ast.Module(body=branch[0].orelse, type_ignores=[]))
+        raises = any(isinstance(n, _ast.Raise) for b in branch[0].orelse for n in _ast.walk(b))
+        if not raises or "allow_assumed_noise" not in orelse:
+            problems.append("18's no-panel branch does not refuse: the assumed noise "
+                            "parameters can be used without --allow-assumed-noise")
+    fallback = {"rho": 0.6, "sigma": 0.03, "mu": 0.10, "cd_scale": 0.5,
+                "dow_scale": 0.15, "day_scale": 0.35}
+    power = OUTPUTS_TABLES / "power_analysis.csv"
+    measured = None
+    if power.exists():
+        pw = pd.read_csv(power).set_index("metric")["value"]
+        try:
+            measured = {k: float(pw[f"noise.{k}"]) for k in fallback}
+        except KeyError as e:
+            problems.append(f"power_analysis.csv lacks {e}")
+    files = {"discovery": "null_calibration.csv", "C1": "null_calibration_C1.csv",
+             "C2": "null_calibration_C2.csv", "pooled": "null_calibration_pooled.csv"}
+    for name, fname in files.items():
+        art = OUTPUTS_TABLES / fname
+        if not art.exists():
+            continue
+        a = pd.read_csv(art).set_index("metric")["value"]
+        draws = int(float(a.get("ri_draws_per_sim", 0)))
+        tag = "" if name == "discovery" else f"_{name}"
+        meta = OUTPUTS_TABLES / f"null_calibration_ledger_d{draws}{tag}.meta.json"
+        if not meta.exists():
+            problems.append(f"{name}: {fname} has no ledger sidecar {meta.name}")
+            continue
+        design = json.loads(meta.read_text()).get("design", {})
+        got = {k: float(design.get(k, float("nan"))) for k in fallback}
+        if all(abs(got[k] - fallback[k]) < 1e-9 for k in fallback):
+            problems.append(f"{name}: certified on the ASSUMED fallback noise "
+                            f"(rho={got['rho']}, mu={got['mu']}), not the panel's")
+            continue
+        if measured is not None:
+            off = [f"{k} {got[k]:.6g} vs measured {measured[k]:.6g}"
+                   for k in fallback if not abs(got[k] - measured[k]) <= 1e-5]
+            if off:
+                problems.append(f"{name}: sidecar noise differs from 19's measurement: "
+                                + "; ".join(off))
+        if abs(float(a.get("ar1_rho", float("nan"))) - round(got["rho"], 4)) > 1e-9:
+            problems.append(f"{name}: certificate ar1_rho {a.get('ar1_rho')} is not the "
+                            f"sidecar's {round(got['rho'], 4)}")
+        if "noise_source" in a.index and str(a["noise_source"]).strip() != "panel":
+            problems.append(f"{name}: noise_source={a['noise_source']!r}")
+        seen.append(f"{name}(rho={got['rho']:.4f}, mu={got['mu']:.4f})")
+    if problems:
+        return "FAIL", "; ".join(problems)
+    if not seen:
+        return "BLOCKED", "no stratum certificate on disk — run 18_null_calibration.py"
+    if measured is None:
+        return "BLOCKED", (f"{len(seen)} certificate(s) carry non-fallback noise but "
+                           "power_analysis.csv is absent, so they cannot be compared "
+                           "with the measured panel — run 19_power.py")
+    return "PASS", (f"18 refuses without the panel; {len(seen)} certificate(s) carry the "
+                    f"panel's noise (matches 19 to 1e-5): " + ", ".join(seen))
+
+
+def s_confirmatory_reading_rules():
+    """P14: the pre-registered reading is mechanical, and the mechanism is held to its text.
+
+    Addendum 23 made "rejects", direction, the denominator diagnostic and the
+    placebo override mechanical; addendum 19 fixed what a non-rejection means;
+    note 9.4 fixes how C1 and C2 combine. `34_confirmatory_reading.py`
+    implements them as a pure function of the sealed table, so that no judgement
+    is exercised between 30's output and the sentence in the paper. This check
+    feeds that function planted tables — one per rule, each with the verdict the
+    text requires — and fails on the first that reads differently. It also holds
+    34 to reading nothing but the sealed table and the pre-freeze power table: no
+    parquet, no panel, no episode list.
+    """
+    import importlib.util
+    import sys as _sys
+    _sys.path.insert(0, str(SCRIPTS))
+    from event_study import count_outcome
+    text = src("34_confirmatory_reading.py")
+    problems = []
+    for bad in ("read_parquet", "panel_cd_day", "EPISODE_LIST", "select_sample"):
+        if bad in text:
+            problems.append(f"34 mentions {bad}: it may read only the sealed table and the power table")
+    spec = importlib.util.spec_from_file_location("_m34", SCRIPTS / "34_confirmatory_reading.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    S1, S2 = "C1_clean", "C2_exposed"
+    ARM = {"share": "OLS_share", "count": "PPML_count_offset"}
+
+    def base():
+        rows = []
+        for s_ in (S1, S2):
+            for o in ("edp_share", "mh_narrow_share"):
+                for arm, est in ARM.items():
+                    col = o if arm == "share" else count_outcome(o)
+                    rows.append(dict(key=f"{s_}:{o}:{arm}", stratum=s_, outcome=col, estimator=est,
+                                     spec="primary", family="primary_H1", p_randomization=0.5,
+                                     p_asymptotic=0.5, p_bh_adjusted=0.7, first_week_mean_coef=-0.0005,
+                                     first_week_mean_se=0.001, n_episodes=15, status="OK",
+                                     null_certified=True))
+            for col in ("edp", "mh_narrow"):
+                rows.append(dict(key=f"{s_}:diag_raw:{col}", stratum=s_, outcome=col,
+                                 estimator="PPML_count_no_offset", spec="diag_raw_count",
+                                 family="diagnostic", p_randomization=0.5, p_asymptotic=0.5,
+                                 p_bh_adjusted=np.nan, first_week_mean_coef=0.0, first_week_mean_se=0.01,
+                                 n_episodes=15, status="OK", null_certified=True))
+            rows.append(dict(key=f"{s_}:diag_total", stratum=s_, outcome="total_calls",
+                             estimator="PPML_count_no_offset", spec="diag_total_dispatches",
+                             family="diagnostic", p_randomization=0.5, p_asymptotic=0.5,
+                             p_bh_adjusted=np.nan, first_week_mean_coef=0.0, first_week_mean_se=0.01,
+                             n_episodes=15, status="OK", null_certified=True))
+            for po in ("cardiac_share", "injury_share", "asthma_share"):
+                for arm, est in ARM.items():
+                    col = po if arm == "share" else count_outcome(po)
+                    rows.append(dict(key=f"{s_}:placebo:{po}:{arm}", stratum=s_, outcome=col,
+                                     estimator=est, spec="placebo", family="placebo",
+                                     p_randomization=0.5, p_asymptotic=0.5, p_bh_adjusted=np.nan,
+                                     first_week_mean_coef=0.0, first_week_mean_se=0.001,
+                                     n_episodes=15, status="OK", null_certified=True))
+            rows.append(dict(key=f"{s_}:sens", stratum=s_, outcome="edp_share", estimator="OLS_share",
+                             spec="sens_drop_jul2016", family="sensitivity", p_randomization=0.5,
+                             p_asymptotic=0.5, p_bh_adjusted=np.nan, first_week_mean_coef=-0.0005,
+                             first_week_mean_se=0.001, n_episodes=14, status="OK", null_certified=True))
+        return pd.DataFrame(rows)
+
+    def scenario(over):
+        d = base()
+        for k, fields in over.items():
+            idx = d.index[d["key"] == k]
+            if len(idx) != 1:
+                raise RuntimeError(f"scenario key {k} matches {len(idx)} rows")
+            for fld, v in fields.items():
+                d.loc[idx, fld] = v
+        return d
+
+    def rej(s_, o, mean=-0.003, se=0.0005, p_bh=0.01):
+        return {f"{s_}:{o}:share": dict(p_bh_adjusted=p_bh, p_randomization=0.001,
+                                        first_week_mean_coef=mean, first_week_mean_se=se),
+                f"{s_}:{o}:count": dict(p_bh_adjusted=p_bh, p_randomization=0.001,
+                                        first_week_mean_coef=mean * 10, first_week_mean_se=se * 10)}
+
+    mde = {S1: {"level": 0.0116, "dip_rebound": 0.0038, "verdict": "UNDERPOWERED", "freeze_active": 1},
+           S2: {"level": 0.0087, "dip_rebound": 0.0029, "verdict": "UNDERPOWERED", "freeze_active": 1}}
+    uncert = {k: dict(null_certified=False) for k in base().loc[base()["stratum"] == S1, "key"]}
+    cases = [
+        ("both null", {}, ("does not reject", "does not reject"), "THE PRE-SPECIFIED NULL"),
+        ("C1 predicted, C2 null", rej(S1, "edp_share"),
+         ("rejects, predicted direction", "does not reject"), "CONFIRMED IN THE CLEAN STRATUM ONLY"),
+        ("both predicted", {**rej(S1, "edp_share"), **rej(S2, "mh_narrow_share")},
+         ("rejects, predicted direction", "rejects, predicted direction"), "CONFIRMED: C1 and C2"),
+        ("C2 only", rej(S2, "edp_share"),
+         ("does not reject", "rejects, predicted direction"), "NOT CONFIRMATION (9.4 row 3)"),
+        ("strata disagree in sign", {**rej(S1, "edp_share"), **rej(S2, "edp_share", mean=0.003)},
+         ("rejects, predicted direction", "rejects, opposite direction"), "THE CONFIRMATION HAS FAILED"),
+        ("C1 increase", rej(S1, "edp_share", mean=0.003),
+         ("rejects, opposite direction", "does not reject"), "NOT SUPPORT FOR H1"),
+        ("one arm only (23.1)", {f"{S1}:edp_share:share": dict(p_bh_adjusted=0.01, first_week_mean_coef=-0.003)},
+         ("does not reject", "does not reject"), "THE PRE-SPECIFIED NULL"),
+        ("arms disagree in sign (23.1)", {**rej(S1, "edp_share"),
+                                           f"{S1}:edp_share:count": dict(p_bh_adjusted=0.01, first_week_mean_coef=0.03,
+                                                                         first_week_mean_se=0.005)},
+         ("does not reject", "does not reject"), "THE PRE-SPECIFIED NULL"),
+        ("mean within one SE (23.2)", {**rej(S1, "edp_share"),
+                                        f"{S1}:edp_share:count": dict(p_bh_adjusted=0.01, first_week_mean_coef=-0.001,
+                                                                      first_week_mean_se=0.005)},
+         ("rejects without a consistent direction", "does not reject"), "NOT SUPPORT FOR H1"),
+        ("placebo override (23.4)", {**rej(S1, "edp_share"),
+                                      f"{S1}:placebo:cardiac_share:share": dict(p_randomization=0.01)},
+         ("rejects, predicted direction; PLACEBO OVERRIDE", "does not reject"), "NOT SUPPORT FOR H1"),
+        ("denominator-driven (23.3)", {**rej(S1, "edp_share"), f"{S1}:diag_total": dict(p_randomization=0.01)},
+         ("rejects, denominator-driven", "does not reject"), "NOT SUPPORT FOR H1"),
+        ("BH boundary is strict (23.1)", rej(S1, "edp_share", p_bh=0.05),
+         ("does not reject", "does not reject"), "THE PRE-SPECIFIED NULL"),
+        ("uncertified null cannot reject (25)", {**uncert, **{k: {**v, "null_certified": False} for k, v in rej(S1, "edp_share").items()}},
+         ("does not reject", "does not reject"), "THE PRE-SPECIFIED NULL"),
+    ]
+    passed = 0
+    for name, over, (v1, v2), concl in cases:
+        try:
+            res, verdicts, conclusion = m.evaluate(scenario(over), mde)
+        except Exception as e:  # noqa: BLE001
+            problems.append(f"{name}: evaluate raised {type(e).__name__}: {e}")
+            continue
+        got1, got2 = verdicts[S1], verdicts[S2]
+        if not got1.startswith(v1) or not got2.startswith(v2):
+            problems.append(f"{name}: C1 read {got1!r}, C2 read {got2!r}; expected {v1!r} / {v2!r}")
+        elif concl not in conclusion:
+            problems.append(f"{name}: conclusion {conclusion!r} lacks {concl!r}")
+        else:
+            passed += 1
+        if name.startswith("placebo override"):
+            row = res[(res["stratum"] == S1) & (res["item"] == "placebo_rejects_any")]
+            if row.empty or int(float(row["value"].iloc[0])) != 1:
+                problems.append("placebo override: placebo_rejects_any not recorded as 1")
+        if name.startswith("uncertified"):
+            row = res[(res["stratum"] == S1) & (res["item"] == "null_certified")]
+            if row.empty or int(float(row["value"].iloc[0])) != 0:
+                problems.append("uncertified: null_certified not recorded as 0")
+    if problems:
+        return "FAIL", "; ".join(problems)
+    return "PASS", (f"{passed} planted tables read as the pre-registration requires (23.1–23.4, "
+                    "19.2, 25, note 9.4); 34 reads only the sealed table and the power table")
+
+
 def s_ri_scheme_certified():
     """P1: every stratum's randomization null is the one its calibration certifies.
 
@@ -4308,7 +4542,9 @@ CHECKS = [
     ("S.calibration_on_residual", "S8", "synthetic null has this design's dependence, not a harder one", s_calibration_on_residual),
     ("S.ri_scheme_certified", "P1,P5,RI3,P12,P13", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
     ("S.lift_requires_1000_sims", "P11", "the freeze lifts only on 1000-sim certificates for every stratum", s_lift_requires_1000_sims),
+    ("S.calibration_noise_measured", "N11", "every certificate's null takes its noise from the measured panel, never the assumed fallback", s_calibration_noise_measured),
     ("S.confirmatory_spec_audit", "P14,P15,P16,P18", "the sealed script implements addendum 23 (draws, seal, BH family, asymptotic p, diagnostics, C2-only interaction)", s_confirmatory_spec_audit),
+    ("S.confirmatory_reading_rules", "P14", "the pre-registered reading of the sealed result is mechanical and reads as its text requires", s_confirmatory_reading_rules),
     ("S.draw_scheme_total", "N5", "every draw scheme is dispatched explicitly, none by fallback", s_draw_scheme_total),
     ("S.ri_pvalue_form", "RI1", "randomization p-values use the (1+k)/(1+n) form", s_ri_pvalue_form),
     ("S.calibration_writes_stratified", "P5,D1,N4", "every calibration output names the stratum it describes", s_calibration_writes_stratified),

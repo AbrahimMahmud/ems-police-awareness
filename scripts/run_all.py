@@ -139,6 +139,31 @@ STAGES = [
          needs=["data/processed/cai_daily.parquet"],
          writes=["data/reference/confirmation_episodes_rebuilt.csv"],
          note="episode list under the shock rule"),
+    # The two pre-registered basket arms (CONFIRMATION_PLAN addendum 16 and 20).
+    # Their fetch (11 --arm) is excluded like every other fetch; the derivations
+    # from the committed component files are build stages, so a cold run
+    # rebuilds the arm indexes and episode lists the sealed script reads and the
+    # gate's T.spliced_arm_prebreak_identical is not left BLOCKED. Until
+    # 2026-09-13 these were run by hand and a cold pass deleted their products
+    # without replacing them.
+    dict(script="12_build_cai.py", args=["--arm", "broad"], kind="build",
+         needs=["data/reference/cai_components_daily_broad.csv",
+                "data/reference/cai_trends_daily.csv"],
+         writes=["data/processed/cai_daily_broad.parquet"],
+         note="the attention index on the broad basket (sensitivity arm)"),
+    dict(script="12_build_cai.py", args=["--arm", "spliced"], kind="build",
+         needs=["data/reference/cai_components_daily_spliced.csv",
+                "data/reference/cai_trends_daily.csv"],
+         writes=["data/processed/cai_daily_spliced.parquet"],
+         note="the attention index on the user+automated Wikipedia series (sensitivity arm)"),
+    dict(script="13_extension_episodes.py", args=["--arm", "broad"], kind="build",
+         needs=["data/processed/cai_daily_broad.parquet"],
+         writes=["data/reference/confirmation_episodes_rebuilt_broad.csv"],
+         note="episode list on the broad-basket index"),
+    dict(script="13_extension_episodes.py", args=["--arm", "spliced"], kind="build",
+         needs=["data/processed/cai_daily_spliced.parquet"],
+         writes=["data/reference/confirmation_episodes_rebuilt_spliced.csv"],
+         note="episode list on the spliced index"),
 
     # --- check: verify before estimating -----------------------------------
     # Structural invariants run BEFORE the models, so a corrupt artifact is caught
@@ -306,7 +331,8 @@ def run_stage(st, timeout):
         state, detail = "PASS", ""
     else:
         state, detail = "FAIL", f"exit {rc}"
-    return {"script": name, "kind": st["kind"], "state": state, "detail": detail,
+    return {"script": name, "args": list(st.get("args", [])), "kind": st["kind"],
+            "state": state, "detail": detail,
             "seconds": round(dt, 1), "inputs": inputs, "outputs": outputs,
             "tail": tail if state != "PASS" else ""}
 
