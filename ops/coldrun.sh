@@ -27,7 +27,7 @@ say "rebuild done; cold runs begin"
 clear_cold(){
   find outputs/tables -maxdepth 1 -type f \( -name '*.csv' -o -name '*.txt' -o -name '*.json' \) \
     ! -name 'null_calibration*' ! -name 'power_analysis*' \
-    ! -name 'confirmatory_results_dryrun*' ! -name 'ri_ledger_*' -delete
+    ! -name 'confirmatory_results_dryrun*' ! -name 'confirmatory_reading_dryrun*' ! -name 'ri_ledger_*' -delete
   find outputs/figures -maxdepth 1 -type f \( -name '*.png' -o -name '*.pdf' \) -delete 2>/dev/null
   rm -f outputs/run_manifest.json
   find data/processed -maxdepth 1 -type f \( -name '*.parquet' -o -name '*.csv' \) -delete

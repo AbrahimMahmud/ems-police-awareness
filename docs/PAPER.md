@@ -302,10 +302,19 @@ episode, which contains the killings of Alton Sterling and Philando Castile and
 the Dallas attack on police officers; (ii) the broad basket; (iii) the spliced
 Wikipedia series; (iv) the late B-HEARD bound; (v) coverage-clean estimates that
 drop every episode whose window contains a dispatch code born or retired inside
-the stratum, or the geocoding step at 1 January 2016 at which the share of
-dispatches with no district fell by two thirds — a demonstration rather than a
+a confirmation window, or the geocoding step at 1 January 2016 at which the share
+of dispatches with no district fell by two thirds — a demonstration rather than a
 correction, chosen over month-year fixed effects because it changes the sample
-and not the estimator, so it stays comparable with the calibrated null.
+and not the estimator, so it stays comparable with the calibrated null — and (vi)
+a geocoding-clean estimate that drops only the episodes containing that step;
+(vii) the 28- and 60-day post windows, whose placebo draws keep the certified
+14-day geometry; (viii) the outcomes with cancelled and other never-sent
+dispositions restored to numerator and denominator; (ix) EDP without the EDPM
+code, the one code whose inclusion was decided on confirmation-period counts.
+Every sensitivity runs on both arms. Robust means a rejection survives every
+applicable sensitivity at unadjusted randomization *p* ≤ 0.05, fragile that it
+survives none; the set is enumerated in the reader and held equal to what the
+sealed run writes.
 Falsification: cardiac and asthma shares and counts in every stratum; a placebo
 cell with unadjusted randomization *p* ≤ 0.05 overrides every primary rejection
 in its stratum, which is then reported as not supporting the hypothesis. Injury
@@ -334,9 +343,21 @@ stratum; a rejection in C2 alone is not confirmation, because B-HEARD moves the
 outcome in the hypothesised direction. A stratum rejects on an outcome only when
 both arms reject with the same sign; a share-arm rejection accompanied by a
 movement in total dispatches but not in the raw count is denominator-driven; any
-placebo rejection within a stratum voids its primary rejections. These rules are
-implemented as code that reads only the sealed result table, so that no judgement
-intervenes between the sealed numbers and the sentences reported below.
+placebo rejection within a stratum voids its primary rejections, and a placebo
+cell that produced no *p*-value is reported as an incomplete check rather than a
+passed one. The pooled stratum is read descriptively (both arms at unadjusted
+*p* ≤ 0.05 with the same sign) and overturns nothing; the two secondary arms are
+read against the directions the plan fixes and never enter the conclusion. These
+rules are implemented as code that reads only the sealed result table and the
+tracked pre-freeze power table, seals its own output against the table it read,
+and is held to its text by planted tables in the regression suite, so that no
+judgement intervenes between the sealed numbers and the sentences reported
+below; the sentences in the confirmatory Results are the reader's own, quoted
+verbatim and each held to the reading file by a registered claim. The sealed run
+keeps a tracked log of every start and seal, refuses to run without the fixed
+hash seed the byte-reproducible pipeline requires, and writes each cell's
+day-by-day coefficient path so a rejection without a consistent direction can be
+shown without a second read.
 
 **Exploratory analyses.** Discovery-period estimates, an outcome decomposition
 across eight dispatch families and three post-episode windows (65 tests under a

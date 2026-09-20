@@ -1,11 +1,11 @@
 {
   "git": {
-    "commit": "84411f69cd41e03785f565724fb49581dac1a38d",
+    "commit": "0eaf45de8f03fe8d9c644700167e5434f79ab59e",
     "dirty": true,
-    "dirty_files": 9
+    "dirty_files": 10
   },
   "freeze_active": true,
-  "wall_seconds": 247.5,
+  "wall_seconds": 261.4,
   "stages": [
     {
       "script": "10d_parse_cd_demographics.py",
@@ -13,7 +13,7 @@
       "kind": "build",
       "state": "PASS",
       "detail": "",
-      "seconds": 2.1,
+      "seconds": 2.0,
       "inputs": [],
       "outputs": [
         {
@@ -21,7 +21,7 @@
           "exists": true,
           "bytes": 10837,
           "sha256": "229a114344c6bf496277d78e8618813750b18daf71cd7a73fb1cca54d34a3bfa",
-          "mtime": 1789879901.7973797,
+          "mtime": 1789884346.1725276,
           "rows": 59
         }
       ],
@@ -33,14 +33,14 @@
       "kind": "build",
       "state": "PASS",
       "detail": "",
-      "seconds": 5.7,
+      "seconds": 5.1,
       "inputs": [
         {
           "path": "data/processed/ems_cd_day_calltype.parquet",
           "exists": true,
           "bytes": 7249638,
           "sha256": "6247a7239559f930bb6e1706106ff2020054b126583571f3035f20afa08a95dc",
-          "mtime": 1789879883.3576574,
+          "mtime": 1789884328.9218054,
           "rows": 4876509
         }
       ],
@@ -48,9 +48,9 @@
         {
           "path": "data/processed/panel_cd_day.parquet",
           "exists": true,
-          "bytes": 4085140,
-          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
-          "mtime": 1789879907.6496582,
+          "bytes": 5724345,
+          "sha256": "01e46a3c112a8d6bbc8a1b2236b47618f4cd6637cffd48baf122644cc3a4ffa0",
+          "mtime": 1789884351.4378061,
           "rows": 217356
         }
       ],
@@ -69,7 +69,7 @@
           "exists": true,
           "bytes": 7249638,
           "sha256": "6247a7239559f930bb6e1706106ff2020054b126583571f3035f20afa08a95dc",
-          "mtime": 1789879883.3576574,
+          "mtime": 1789884328.9218054,
           "rows": 4876509
         }
       ],
@@ -79,7 +79,7 @@
           "exists": true,
           "bytes": 5913,
           "sha256": "35c76e96682f189aed8d512937cfa592f005d53e14131bec2e927ff8f7a46e8c",
-          "mtime": 1789879909.2946146,
+          "mtime": 1789884353.093806,
           "rows": 206
         },
         {
@@ -87,7 +87,7 @@
           "exists": true,
           "bytes": 179,
           "sha256": "1dde8fe3fdde0c7dab571b26139548f3bcbaefbb9810c98ae2f9122d3277fa54",
-          "mtime": 1789879909.510086,
+          "mtime": 1789884353.317417,
           "rows": 11
         },
         {
@@ -95,7 +95,7 @@
           "exists": true,
           "bytes": 933,
           "sha256": "ca4731402e14683d9d0c456a202de06b261edb9ede261cafb1be26c49ee07b4d",
-          "mtime": 1789879909.520372,
+          "mtime": 1789884353.327929,
           "rows": 23
         }
       ],
@@ -132,7 +132,7 @@
           "exists": true,
           "bytes": 199923,
           "sha256": "a2b4d9ea6241b20d8fa3944b8cede82c78173edfd2edb9e50eaab60a9c509402",
-          "mtime": 1789879910.3027837,
+          "mtime": 1789884354.0386007,
           "rows": 3653
         }
       ],
@@ -144,14 +144,14 @@
       "kind": "build",
       "state": "PASS",
       "detail": "",
-      "seconds": 0.7,
+      "seconds": 0.6,
       "inputs": [
         {
           "path": "data/processed/cai_daily.parquet",
           "exists": true,
           "bytes": 199923,
           "sha256": "a2b4d9ea6241b20d8fa3944b8cede82c78173edfd2edb9e50eaab60a9c509402",
-          "mtime": 1789879910.3027837,
+          "mtime": 1789884354.0386007,
           "rows": 3653
         }
       ],
@@ -161,7 +161,7 @@
           "exists": true,
           "bytes": 3183668,
           "sha256": "8f51b2d8f3d88ea8e5f4f58fb7335bc5679d45bc73e3682f7a73bc95d8d39e0a",
-          "mtime": 1789879911.4696584,
+          "mtime": 1789884355.161806,
           "rows": 3684
         }
       ],
@@ -173,14 +173,14 @@
       "kind": "build",
       "state": "PASS",
       "detail": "",
-      "seconds": 2.4,
+      "seconds": 2.1,
       "inputs": [
         {
           "path": "data/processed/cai_daily.parquet",
           "exists": true,
           "bytes": 199923,
           "sha256": "a2b4d9ea6241b20d8fa3944b8cede82c78173edfd2edb9e50eaab60a9c509402",
-          "mtime": 1789879910.3027837,
+          "mtime": 1789884354.0386007,
           "rows": 3653
         }
       ],
@@ -190,7 +190,7 @@
           "exists": true,
           "bytes": 9780,
           "sha256": "30f1f24059809b12b6b66956ac94e4490ebb2b4523cb1d876ea4a53efd1d93bb",
-          "mtime": 1789879913.8616583,
+          "mtime": 1789884357.2991607,
           "rows": 74
         }
       ],
@@ -230,7 +230,7 @@
           "exists": true,
           "bytes": 199995,
           "sha256": "2177465413222969debc8ba5ce5bfbcf7f6de82a20a86c3b7f26be62df367c67",
-          "mtime": 1789879914.6296585,
+          "mtime": 1789884358.0501444,
           "rows": 3653
         }
       ],
@@ -270,7 +270,7 @@
           "exists": true,
           "bytes": 200139,
           "sha256": "841490f9a3a198926f7031befdca1bd8c8d0b12d3fefb5cc05b6d6d01459aef2",
-          "mtime": 1789879915.8317912,
+          "mtime": 1789884359.2610033,
           "rows": 3653
         }
       ],
@@ -285,14 +285,14 @@
       "kind": "build",
       "state": "PASS",
       "detail": "",
-      "seconds": 2.2,
+      "seconds": 2.1,
       "inputs": [
         {
           "path": "data/processed/cai_daily_broad.parquet",
           "exists": true,
           "bytes": 199995,
           "sha256": "2177465413222969debc8ba5ce5bfbcf7f6de82a20a86c3b7f26be62df367c67",
-          "mtime": 1789879914.6296585,
+          "mtime": 1789884358.0501444,
           "rows": 3653
         }
       ],
@@ -302,7 +302,7 @@
           "exists": true,
           "bytes": 9894,
           "sha256": "3311b71d7afbd5579a8ec97f244d2a93e3655b1dc7c7ba33d72a24cc6ab5134d",
-          "mtime": 1789879918.5081375,
+          "mtime": 1789884361.795581,
           "rows": 75
         }
       ],
@@ -324,7 +324,7 @@
           "exists": true,
           "bytes": 200139,
           "sha256": "841490f9a3a198926f7031befdca1bd8c8d0b12d3fefb5cc05b6d6d01459aef2",
-          "mtime": 1789879915.8317912,
+          "mtime": 1789884359.2610033,
           "rows": 3653
         }
       ],
@@ -334,7 +334,7 @@
           "exists": true,
           "bytes": 9766,
           "sha256": "a6b3f0a8d53a3b0e4206adca7b7076fe5be980ddb2bbd8259d41e47ce68a912c",
-          "mtime": 1789879920.6456585,
+          "mtime": 1789884363.9000945,
           "rows": 74
         }
       ],
@@ -355,14 +355,14 @@
       "kind": "check",
       "state": "PASS",
       "detail": "",
-      "seconds": 1.4,
+      "seconds": 1.1,
       "inputs": [
         {
           "path": "data/processed/panel_cd_day.parquet",
           "exists": true,
-          "bytes": 4085140,
-          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
-          "mtime": 1789879907.6496582,
+          "bytes": 5724345,
+          "sha256": "01e46a3c112a8d6bbc8a1b2236b47618f4cd6637cffd48baf122644cc3a4ffa0",
+          "mtime": 1789884351.4378061,
           "rows": 217356
         }
       ],
@@ -370,9 +370,9 @@
         {
           "path": "outputs/tables/pipeline_check.csv",
           "exists": true,
-          "bytes": 1877,
-          "sha256": "af882e420af9c952fd8000e35aabc67e218ee58c3e7b09d78680179818d34a7e",
-          "mtime": 1789879922.142029,
+          "bytes": 1878,
+          "sha256": "81e75bad2dcfc061bcfb166ef85913c7c8c9c421ab683a415f506842aab22875",
+          "mtime": 1789884365.1126544,
           "rows": 27
         }
       ],
@@ -384,7 +384,7 @@
       "kind": "check",
       "state": "PASS",
       "detail": "",
-      "seconds": 1.4,
+      "seconds": 1.3,
       "inputs": [],
       "outputs": [
         {
@@ -392,7 +392,7 @@
           "exists": true,
           "bytes": 3563,
           "sha256": "a62bb37806d87f22929b85da9069b69eb55ddd3d4fb2ec83a5c5699083a61d3a",
-          "mtime": 1789879923.4846952,
+          "mtime": 1789884366.4058065,
           "rows": 42
         }
       ],
@@ -404,14 +404,14 @@
       "kind": "model",
       "state": "PASS",
       "detail": "",
-      "seconds": 28.9,
+      "seconds": 28.7,
       "inputs": [
         {
           "path": "data/processed/panel_cd_day.parquet",
           "exists": true,
-          "bytes": 4085140,
-          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
-          "mtime": 1789879907.6496582,
+          "bytes": 5724345,
+          "sha256": "01e46a3c112a8d6bbc8a1b2236b47618f4cd6637cffd48baf122644cc3a4ffa0",
+          "mtime": 1789884351.4378061,
           "rows": 217356
         },
         {
@@ -419,7 +419,7 @@
           "exists": true,
           "bytes": 9780,
           "sha256": "30f1f24059809b12b6b66956ac94e4490ebb2b4523cb1d876ea4a53efd1d93bb",
-          "mtime": 1789879913.8616583,
+          "mtime": 1789884357.2991607,
           "rows": 74
         }
       ],
@@ -429,7 +429,7 @@
           "exists": true,
           "bytes": 1809,
           "sha256": "ac0828e322763f88dfe599f77ee65a90f24c0ac4df87fc93cb0613a0f9cf3f7b",
-          "mtime": 1789879951.9240155,
+          "mtime": 1789884394.7960742,
           "rows": 14
         },
         {
@@ -437,7 +437,7 @@
           "exists": true,
           "bytes": 3560,
           "sha256": "1970fd180370cf1dee804378e1ac92b1cdb496008974c415d1c6cf8ee58db78f",
-          "mtime": 1789879951.9254837,
+          "mtime": 1789884394.7975454,
           "rows": 56
         }
       ],
@@ -449,14 +449,14 @@
       "kind": "model",
       "state": "PASS",
       "detail": "",
-      "seconds": 16.0,
+      "seconds": 15.4,
       "inputs": [
         {
           "path": "data/processed/panel_cd_day.parquet",
           "exists": true,
-          "bytes": 4085140,
-          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
-          "mtime": 1789879907.6496582,
+          "bytes": 5724345,
+          "sha256": "01e46a3c112a8d6bbc8a1b2236b47618f4cd6637cffd48baf122644cc3a4ffa0",
+          "mtime": 1789884351.4378061,
           "rows": 217356
         }
       ],
@@ -466,7 +466,7 @@
           "exists": true,
           "bytes": 8905,
           "sha256": "214d00b28cf3494a98896820c0cadca7ac36a3c0f8e6a742b6522a1b6e667344",
-          "mtime": 1789879964.4594734,
+          "mtime": 1789884406.1515944,
           "rows": 43
         },
         {
@@ -474,7 +474,7 @@
           "exists": true,
           "bytes": 1370,
           "sha256": "798f36bb04d26c19b9f2382cc65ec966a9531701d9624c43a68a9610a24bdb3c",
-          "mtime": 1789879964.5338204,
+          "mtime": 1789884406.225808,
           "rows": 16
         }
       ],
@@ -486,14 +486,14 @@
       "kind": "model",
       "state": "PASS",
       "detail": "",
-      "seconds": 26.3,
+      "seconds": 29.6,
       "inputs": [
         {
           "path": "data/processed/panel_cd_day.parquet",
           "exists": true,
-          "bytes": 4085140,
-          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
-          "mtime": 1789879907.6496582,
+          "bytes": 5724345,
+          "sha256": "01e46a3c112a8d6bbc8a1b2236b47618f4cd6637cffd48baf122644cc3a4ffa0",
+          "mtime": 1789884351.4378061,
           "rows": 217356
         }
       ],
@@ -503,7 +503,7 @@
           "exists": true,
           "bytes": 694,
           "sha256": "fe05d4f4653bc13df2a0c24a9bceca5be3ce8fa54dc22a06afb7f9b203051ca8",
-          "mtime": 1789879994.2544072,
+          "mtime": 1789884439.7326517,
           "rows": 5
         }
       ],
@@ -515,14 +515,14 @@
       "kind": "model",
       "state": "PASS",
       "detail": "",
-      "seconds": 70.4,
+      "seconds": 76.8,
       "inputs": [
         {
           "path": "data/processed/panel_cd_day.parquet",
           "exists": true,
-          "bytes": 4085140,
-          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
-          "mtime": 1789879907.6496582,
+          "bytes": 5724345,
+          "sha256": "01e46a3c112a8d6bbc8a1b2236b47618f4cd6637cffd48baf122644cc3a4ffa0",
+          "mtime": 1789884351.4378061,
           "rows": 217356
         }
       ],
@@ -532,7 +532,7 @@
           "exists": true,
           "bytes": 10774,
           "sha256": "23bda7a0010b37dad34974276b973731fddcb703e94886503895121af2487cc3",
-          "mtime": 1789880064.6496634,
+          "mtime": 1789884516.4721253,
           "rows": 65
         }
       ],
@@ -544,14 +544,14 @@
       "kind": "model",
       "state": "PASS",
       "detail": "",
-      "seconds": 6.8,
+      "seconds": 7.0,
       "inputs": [
         {
           "path": "data/processed/panel_cd_day.parquet",
           "exists": true,
-          "bytes": 4085140,
-          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
-          "mtime": 1789879907.6496582,
+          "bytes": 5724345,
+          "sha256": "01e46a3c112a8d6bbc8a1b2236b47618f4cd6637cffd48baf122644cc3a4ffa0",
+          "mtime": 1789884351.4378061,
           "rows": 217356
         }
       ],
@@ -561,7 +561,7 @@
           "exists": true,
           "bytes": 2540,
           "sha256": "3a7aa314afcc10d2140b713561445942e51169a6fdda5cc60c784ca7d0501e0d",
-          "mtime": 1789880071.5303743,
+          "mtime": 1789884523.5921206,
           "rows": 20
         }
       ],
@@ -573,14 +573,14 @@
       "kind": "model",
       "state": "PASS",
       "detail": "",
-      "seconds": 4.1,
+      "seconds": 4.0,
       "inputs": [
         {
           "path": "data/processed/panel_cd_day.parquet",
           "exists": true,
-          "bytes": 4085140,
-          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
-          "mtime": 1789879907.6496582,
+          "bytes": 5724345,
+          "sha256": "01e46a3c112a8d6bbc8a1b2236b47618f4cd6637cffd48baf122644cc3a4ffa0",
+          "mtime": 1789884351.4378061,
           "rows": 217356
         }
       ],
@@ -590,7 +590,7 @@
           "exists": true,
           "bytes": 1532,
           "sha256": "315b7d6675c49dc704f7701b937351c463bdaab4e3f511d5095b7727adc1844c",
-          "mtime": 1789880075.6376638,
+          "mtime": 1789884527.685812,
           "rows": 12
         }
       ],
@@ -602,14 +602,14 @@
       "kind": "model",
       "state": "PASS",
       "detail": "",
-      "seconds": 3.7,
+      "seconds": 3.8,
       "inputs": [
         {
           "path": "data/processed/panel_cd_day.parquet",
           "exists": true,
-          "bytes": 4085140,
-          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
-          "mtime": 1789879907.6496582,
+          "bytes": 5724345,
+          "sha256": "01e46a3c112a8d6bbc8a1b2236b47618f4cd6637cffd48baf122644cc3a4ffa0",
+          "mtime": 1789884351.4378061,
           "rows": 217356
         }
       ],
@@ -619,7 +619,7 @@
           "exists": true,
           "bytes": 415633,
           "sha256": "87f8ff24d57e7d42eb7d30e4dd5e3c1f67bd7af0d0f6d6bba78f4c0a2fd882e1",
-          "mtime": 1789880077.873664,
+          "mtime": 1789884529.961812,
           "rows": 1660
         }
       ],
@@ -638,7 +638,7 @@
           "exists": true,
           "bytes": 199923,
           "sha256": "a2b4d9ea6241b20d8fa3944b8cede82c78173edfd2edb9e50eaab60a9c509402",
-          "mtime": 1789879910.3027837,
+          "mtime": 1789884354.0386007,
           "rows": 3653
         },
         {
@@ -656,7 +656,7 @@
           "exists": true,
           "bytes": 1130,
           "sha256": "5cc8c0d23090566a224f82ed26ee5b987415501434dc691a3905de7744ec1567",
-          "mtime": 1789880080.4997323,
+          "mtime": 1789884532.5865853,
           "rows": 31
         }
       ],
@@ -668,14 +668,14 @@
       "kind": "model",
       "state": "PASS",
       "detail": "",
-      "seconds": 45.2,
+      "seconds": 48.8,
       "inputs": [
         {
           "path": "data/processed/cai_daily.parquet",
           "exists": true,
           "bytes": 199923,
           "sha256": "a2b4d9ea6241b20d8fa3944b8cede82c78173edfd2edb9e50eaab60a9c509402",
-          "mtime": 1789879910.3027837,
+          "mtime": 1789884354.0386007,
           "rows": 3653
         },
         {
@@ -683,7 +683,7 @@
           "exists": true,
           "bytes": 9780,
           "sha256": "30f1f24059809b12b6b66956ac94e4490ebb2b4523cb1d876ea4a53efd1d93bb",
-          "mtime": 1789879913.8616583,
+          "mtime": 1789884357.2991607,
           "rows": 74
         }
       ],
@@ -693,7 +693,7 @@
           "exists": true,
           "bytes": 14707,
           "sha256": "c1a5c1ba783cf3de55b189ec1b1e583e278eec219bc2c4c5b562338a5903f6cd",
-          "mtime": 1789880124.131733,
+          "mtime": 1789884579.5990534,
           "rows": 56
         },
         {
@@ -701,7 +701,7 @@
           "exists": true,
           "bytes": 1393,
           "sha256": "8139c8890ce5147df1836d68e80abdaac2923864b43508d61f6d4c40ed801b02",
-          "mtime": 1789880124.1329625,
+          "mtime": 1789884579.600321,
           "rows": 20
         }
       ],
@@ -715,23 +715,23 @@
       "kind": "check",
       "state": "PASS",
       "detail": "",
-      "seconds": 5.2,
+      "seconds": 5.5,
       "inputs": [],
       "outputs": [
         {
           "path": "data/reference/source_verification_log.csv",
           "exists": true,
-          "bytes": 2525456,
-          "sha256": "2916179e228581c16551039359d8793156ad309b3ddf4a2e51449f88f158be36",
-          "mtime": 1789880128.3816655,
-          "rows": 20891
+          "bytes": 2590764,
+          "sha256": "6b2ba22bced28e1298295065e90dc0618d0acbc4e24fe79cc463680dea5912aa",
+          "mtime": 1789884584.2778137,
+          "rows": 21405
         },
         {
           "path": "docs/SOURCE_REGISTER.md",
           "exists": true,
           "bytes": 24595,
-          "sha256": "bbcb94f77a97e54c71df3d70bdbbc04445887e515212e3bcca359d5e9dc21d05",
-          "mtime": 1789880130.8979247,
+          "sha256": "8b51bd32762acfc8bbbf435c531e6257accad1970603e9654bc455d58fb15ba0",
+          "mtime": 1789884586.878454,
           "rows": 290
         }
       ],
@@ -743,16 +743,16 @@
       "kind": "check",
       "state": "PASS",
       "detail": "",
-      "seconds": 15.9,
+      "seconds": 18.2,
       "inputs": [],
       "outputs": [
         {
           "path": "outputs/tables/regression_suite.csv",
           "exists": true,
-          "bytes": 16463,
-          "sha256": "49f338ba21eceb1f2df1c4467825d820d57bab76f355f4bdac7191643cf6efd1",
-          "mtime": 1789880146.3024766,
-          "rows": 89
+          "bytes": 17319,
+          "sha256": "7a15dba9c9fae26c24466a39c4ba8d5df9777b15caba5ee7518e8604df9bc179",
+          "mtime": 1789884604.6498144,
+          "rows": 90
         }
       ],
       "tail": ""
@@ -771,10 +771,10 @@
         {
           "path": "outputs/tables/regression_suite.csv",
           "exists": true,
-          "bytes": 16463,
-          "sha256": "49f338ba21eceb1f2df1c4467825d820d57bab76f355f4bdac7191643cf6efd1",
-          "mtime": 1789880146.3024766,
-          "rows": 89
+          "bytes": 17319,
+          "sha256": "7a15dba9c9fae26c24466a39c4ba8d5df9777b15caba5ee7518e8604df9bc179",
+          "mtime": 1789884604.6498144,
+          "rows": 90
         }
       ],
       "outputs": [
@@ -782,8 +782,8 @@
           "path": "outputs/tables/pipeline_check.csv",
           "exists": true,
           "bytes": 105,
-          "sha256": "fa7cc7c9a378a5b283eb5281850e5c73d7f80bd5e4de7a2c62775cc11ddc8648",
-          "mtime": 1789880147.3201423,
+          "sha256": "ff10d854c3f5bc361abdd61c6c0e1d78a06887457536ff21869df238e70d04d7",
+          "mtime": 1789884605.621707,
           "rows": 2
         }
       ],

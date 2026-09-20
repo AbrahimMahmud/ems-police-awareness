@@ -33,7 +33,11 @@ which matches the shell whose command line contains the pattern.
     graph-memory export docs/graph/graph_memory.jsonl   # the git-tracked record; import on another machine
     python3 ops/ems_duckdb.py "SELECT ..."     # read-only, aggregate-only SQL over the sources (freeze-aware)
     python3 ops/paper_table1.py                # Table 1 (docs/tables/TABLE1_episodes.md), held by V.table1_regenerates
-    python3 ops/phase_i_tables.py --out DIR    # after Phase I: the 8b tables and one claim per cell
+    python3 ops/phase_i_tables.py --out DIR [--docs docs/PAPER_MASTER.md docs/PAPER.md]
+                                               # after Phase I: tables.md (the 8b tables, one claim per cell),
+                                               # prose.md (the reader's sentences quoted verbatim, one claim per
+                                               # sentence, anchored on its own prefix) and claims.csv; --synthetic
+                                               # renders the dry run and its reading, and must not be pasted
 
 `ops/graph_memory/seed.py` seeds the graph with the project's standing knowledge; `docs/LOCAL_SETUP.md`
 describes the setup and how to mirror it on the Mac.

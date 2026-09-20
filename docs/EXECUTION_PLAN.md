@@ -37,7 +37,7 @@ that the design cannot deliver one. Both are publishable; neither is a failure.
 
 ---
 
-## Status (2026-09-20 ~05:55Z) — third specification audit remediated (P27–P58, addendum §30), gate clean at 90 checks, discovery certified at 1,000; C2's 1,000-sim run in progress; cold passes to relaunch before the lift
+## Status (2026-09-20 ~06:15Z) — third specification audit remediated (P27–P58, addendum §30), gate clean at 90 checks, discovery certified at 1,000, two cold passes byte-identical on the eight-column panel (06:10Z); C2's 1,000-sim run in progress; the lift waits on it alone
 
 **Read this block first; everything below it under "Status (2026-09-12…)" is the
 historical record of the previous session and is kept for its reasoning.**
@@ -827,10 +827,11 @@ All must hold **before** `FREEZE_ACTIVE = False`.
 
 *Status column added 2026-09-13; each tick names the evidence.*
 
-- [ ] Every check PASS. No FAIL, no BLOCKED, no ERROR. Baseline refreshed.
-      *(85 checks at 21:30Z 2026-09-13: 83 PASS, 2 FAIL, both artifact-pending —
-      `V.claims_reproduce` on the model artifacts the cold pass is regenerating
-      and `M.status_honest` following it. Re-run after cold pass 2.)*
+- [x] Every check PASS. No FAIL, no BLOCKED, no ERROR. Baseline refreshed.
+      *(90 checks, 90/90 PASS twice at 05:52Z 2026-09-20 after the third
+      specification audit's remediation, baseline refreshed in the same commit
+      (`0eaf45d`); every check added since 2026-09-13 defeat-tested. Re-run once
+      more on C2's 1,000-sim certificate, immediately before the lift commit.)*
 - [ ] Calibration passes KS uniformity at ≥1000 sims **on all three strata**,
       against the **lattice** rather than a continuous uniform, after C1's scheme
       is replaced with the within-block shift. *(C1: CALIBRATED at 1,000 under
@@ -1047,6 +1048,49 @@ non-human-subjects determination in writing; OSF deposit with timestamp.
 ---
 
 ## Session log — where execution stopped
+
+**2026-09-20 ~06:20Z — CP2's last two lines are compute; the specification is closed. See the Status block at the top.**
+
+What happened since the week-long suspension lifted at 03:42Z, in order: the
+runners were relaunched from `ops/`; the discovery certificate reached 1,000
+simulations (05:10Z: rejection 0.045, KS p 0.2944, CALIBRATED) and the §7.4
+numbers moved through the claims; two cold passes were byte-identical on every
+build and model output (04:55Z; the manifest is committed at `fa4656f`); the
+third adversarial audit of the specification completed (wf_f524dc75: 8 finders,
+57 raw findings, 3-lens refuters on the ten highest, a completeness critic) and
+every surviving item was fixed blind as P27–P58 (addendum §30; rules 23.1c/d/e;
+the sealed run's run log, hash-seed requirement, certificate-vs-design gate,
+14-day draw geometry for the window cells, unfiltered diagnostics, cross-window
+coverage-clean and geocoding-only cell, cancelled-inclusive and no-EDPM cells on
+both arms, day-by-day path columns, pinned sidecars; the reader sealed, on the
+tracked pre-freeze power table, with the sensitivity set enumerated, the pooled
+and secondary arms read and the placebo check unable to fail open; the record
+corrected where it contradicted the code); the panel gained eight columns with
+every existing column byte-identical; the dry run was re-stamped on the final
+code (166 cells; sidecar hashes match every source); the gate ran clean twice at
+90 checks with every new check defeat-tested; `ops/phase_i_tables.py` now also
+renders the confirmatory Results prose as the reader's own sentences, each held
+by a claim (`prose.md`; 18 quoted sentences verify on the synthetic reading).
+Committed and pushed at `0eaf45d`.
+
+- **In flight** (relaunch from `ops/` after any restart): `calib1000.sh` (C2 at
+  1,000 since 05:15Z, ~3 sims/min under contention); `coldrun.sh` (two passes
+  relaunched 05:57Z because the build changed; the manifest and the registers it
+  rewrites are committed when the passes agree).
+- **Then, in order**: C2's certificate → §7.4's C2 row and the "discharged at"
+  sentence, PAPER.md's calibration prose → gate clean, baseline → the lift commit
+  (`FREEZE_ACTIVE = False`, one line; PAPER_MASTER §5.3 already says what it
+  forecloses) → `ops/phase_i.sh` (30 at 2,000 draws with the run log, then 34
+  once) → `ops/phase_i_tables.py --docs docs/PAPER_MASTER.md docs/PAPER.md` →
+  PAPER_MASTER §8b and PAPER.md's confirmatory Results (the quoted reading and
+  the tables), Discussion and Abstract → CP3 → HANDOFF.
+- **Cold passes on the eight-column panel**: two passes 05:57–06:10Z, every
+  build and model output byte-identical (COLD IDENTITY OK; the three differing
+  files are the check stages' timestamped reports). `coldrun.sh`'s clear now
+  also keeps the reader's dry run (`confirmatory_reading_dryrun*`), which it had
+  been deleting; `34 --synthetic` regenerates it in seconds.
+- **Untouched**: `FREEZE_ACTIVE` is True. No confirmation outcome has entered a
+  model or test.
 
 **2026-09-13 ~21:50Z — CP2 in its last stretch; compute is the clock. See the Status block at the top.**
 

@@ -20890,3 +20890,517 @@ run_utc,run_id,kind,source_id,target,status,detail
 2026-09-20T04:55:26+00:00,c40bab8e,claim,S11,C207_calib_c2_prose_rejection,verified,computed 0.05; document agrees
 2026-09-20T04:55:26+00:00,c40bab8e,claim,S1,C208_disc_window_rows,verified,"computed 86,199; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
 2026-09-20T04:55:26+00:00,c40bab8e,claim,S1,C209_paper_disc_window_rows,verified,"computed 86,199; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:03:29+00:00,4ad4a866,link,S1,https://data.cityofnewyork.us/resource/76xm-jjuj.csv,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S1b,https://data.cityofnewyork.us/resource/76xm-jjuj.csv,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S2,(none),unverifiable,no endpoint: not obtained over the network
+2026-09-20T06:03:29+00:00,4ad4a866,link,S3,(none),unverifiable,no endpoint: not obtained over the network
+2026-09-20T06:03:29+00:00,4ad4a866,link,S4,https://github.com/washingtonpost/data-police-shootings,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S5,(none),template,no endpoint: not obtained over the network
+2026-09-20T06:03:29+00:00,4ad4a866,link,S6,(none),template,no endpoint: not obtained over the network
+2026-09-20T06:03:29+00:00,4ad4a866,link,S7,https://s-media.nyc.gov/agencies/dcp/assets/files/excel/data-tools/census/acs/demo_2019_acs5yr_nta.xlsx,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S8,https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S9,https://en.wikipedia.org/api/rest_v1/page/summary/,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S10,https://mappingpoliceviolence.us/s/MPVDatasetDownload.xlsx,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S11,https://api.gdeltproject.org/api/v2/doc/doc,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S11,https://api.gdeltproject.org/api/v2/tv/tv,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S11,https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S12,https://trends.google.com,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S13,https://trends.google.com,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S14,https://data.cityofnewyork.us/resource/76xm-jjuj.json,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S15,https://mentalhealth.cityofnewyork.us/b-heard,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S16,https://query.wikidata.org/sparql,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S17,https://en.wikipedia.org/w/api.php,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S18,https://en.wikipedia.org/w/api.php,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,link,S18,https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/,skipped,--offline
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S1,data/processed/ems_cd_day_calltype.parquet,verified,"sha256 6247a7239559f930, 4,876,509 rows, 2014-12-01..2024-12-31; matches the provenance register"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S1,data/processed/ems_citywide_day_trends.parquet,verified,"sha256 33c8850350f90ab3, 39,037 rows, 2005-01-01..2026-06-30; matches the provenance register"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S1,data/processed/ems_cd_day_calltype_excluded.parquet,verified,"sha256 9de95e3e1929c03a, 443,719 rows, 2014-12-01..2024-12-31; matches the provenance register"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S1b,data/processed/ems_cd_day_calltype.parquet,verified,"sha256 6247a7239559f930, 4,876,509 rows, 2014-12-01..2024-12-31; matches the provenance register"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S2,data/raw/211118_tweet_count_name_date.csv,unverifiable,"artifact absent, and the source is unverifiable"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S3,data/raw/220126_final_daily_tweet_count.csv,unverifiable,"artifact absent, and the source is unverifiable"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S4,data/raw/fatalpoliceshootingsCLEANED.csv,unverifiable,"artifact absent, and the source is retired"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S5,data/raw/sf1_dp_cd_demoprofile.xlsx,verified,"sha256 20459df2681c751b, unreadable: UnicodeDecodeError; no provenance row and none can be made — accepted 2026-09-13: A committed input workbook (NYC DCP Census 2010 SF1 profile), not a fetch output: no script writes it, so no provenance row can be made by re-running anything. Retired source kept for the heterogeneity robustness check. Bytes pinned exactly (CP1 audit #58, 2026-09-13)."
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S6,data/reference/victim_curation_table.csv,verified,"sha256 75e6bea4243eebe7, 101 rows, 2013-05-24..2020-10-20; no provenance row and none can be made — accepted 2026-09-13: A hand-built committed table (retired with the Twitter measure): no script writes it, so no provenance row can be made. Bytes pinned exactly (CP1 audit #58, 2026-09-13)."
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S7,data/reference/acs_2019_cd_demographics.csv,verified,"sha256 210ec18a067b7f5d, 59 rows; register holds a payload hash only"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S8,data/reference/wikipedia_pageviews_victims.csv,verified,"sha256 e1e88d7d93c69631, 25,211 rows, 2017-01-01..2020-12-31; provenance register is stale and cannot be refreshed — accepted 2026-09-10: Neither registered hash matches this file, and it cannot be re-registered by re-running its fetch: 09_fetch_public_data.py selects this basket from the retired Twitter per-victim file (S2), which is not in the repository and cannot be reconstructed. The bytes ac"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S9,data/reference/wikipedia_article_resolution_legacy.csv,verified,"sha256 154d296f9c560c7e, 150 rows; no provenance row and none can be made — accepted 2026-09-13: The Twitter-era name-to-article table written by 09_fetch_public_data.py. It has no provenance row and cannot get one: 09 selects its names from the retired per-victim Twitter file (S2), which is not in the repository. Until 2026-09-13 this table and the PUBLISHED BASKET shared the filename wikipedia_a"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S10,data/reference/victim_registry.csv,verified,"sha256 13f3fbcfe5298589, 13,241 rows, 2013-01-01..2024-12-31; register holds a payload hash only"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S11,data/reference/cai_components_daily.csv,verified,"sha256 f747bc27b7beada3, 9,232 rows, 2015-01-01..2024-12-31; matches the provenance register"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S11,data/reference/wiki_ext_basket_used.csv,verified,"sha256 97140b683f5a6506, 109 rows; matches the provenance register"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S11,data/reference/wiki_ext_aggregation_diagnostic.csv,verified,"sha256 2d37c4ad5d1c0c3d, 3,472 rows, 2015-07-01..2024-12-31; matches the provenance register"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S11,data/reference/wiki_pageviews_by_article.csv,verified,"sha256 7cdf66711622c6b3, 231,503 rows, 2015-07-01..2024-12-31; matches the provenance register"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S12,data/reference/cai_trends_daily.csv,verified,"sha256 f18c11eb209350bd, 7,306 rows, 2015-01-01..2024-12-31; matches the provenance register"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S12,data/reference/cai_trends_stitch_diagnostics.csv,verified,"sha256 a79bdc97be843bd6, 58 rows; no provenance row and none can be made — accepted 2026-09-13: Written by 11b_fetch_trends.py beside cai_trends_daily.csv but never registered. Google Trends is sampled and re-fetching does not reproduce the file, so the current bytes are pinned; 11b now registers it as S12b on its next run and this pin then stops being needed (CP1 audit #58, 2026-09-13)."
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S13,data/reference/cai_trends_anchored.csv,unverifiable,"artifact absent, and the source is retired"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S14,data/reference/precinct_cd_crosswalk.csv,verified,"sha256 4c519dc6e115d562, 131 rows; matches the provenance register"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S15,data/reference/bheard_precinct_adoption.csv,verified,"sha256 b7627d01221e5159, 31 rows; matches the provenance register"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S15,data/reference/bheard_cd_exposure.csv,verified,"sha256 c387a640fc425626, 74 rows; matches the provenance register"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S16,data/reference/basket_decisions.csv,verified,"sha256 cabfa4ca663e133c, 174 rows, 1958-04-25..2026-07-07; matches the provenance register"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S17,data/reference/article_title_map.csv,verified,"sha256 b1be98f09b916a90, 530 rows; matches the provenance register"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S17,data/reference/rename_recovery.csv,verified,"sha256 1657e5eb79e396c3, 116 rows; no provenance row and none can be made — accepted 2026-09-13: 29_resolve_article_titles.py wrote this beside article_title_map.csv and registered only the latter; it now registers this as S17b, but that needs a live MediaWiki re-fetch. Until that run, the current bytes are pinned exactly (CP1 audit #58, 2026-09-13)."
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S18,data/reference/wiki_nyc_articles.csv,verified,"sha256 a50359145a74a954, 543 rows; no provenance row and none can be made — accepted 2026-09-13: 28_build_nyc_attention.py registered only wiki_nyc_daily.csv; it now registers this as S18a on its next live run. Bytes pinned exactly until then (CP1 audit #58, 2026-09-13)."
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S18,data/reference/wiki_nyc_daily.csv,verified,"sha256 66321420e2ed9675, 6,944 rows, 2015-07-01..2024-12-31; matches the provenance register"
+2026-09-20T06:03:29+00:00,4ad4a866,artifact,S18,data/reference/wiki_nyc_per_article.csv,verified,"sha256 5b8fffc41defa7b1, 55,552 rows, 2015-07-01..2024-12-31; no provenance row and none can be made — accepted 2026-09-13: 28_build_nyc_attention.py registered only wiki_nyc_daily.csv; it now registers this as S18b on its next live run. Bytes pinned exactly until then (CP1 audit #58, 2026-09-13)."
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1,C01_ems_source_rows,verified,"computed 29,978,154; document agrees"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S10,C02_registry_rows,verified,"computed 13,241; document agrees"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C03_wiki_start,verified,computed 2015-07-01; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S16,C04_basket_articles,verified,computed 120; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S16,C05_basket_people,verified,computed 119; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S16,C06_basket_after_2020,verified,computed 27; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C07_scored_days,verified,"computed 3,472; document agrees"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C08_cai_ref_mean,verified,computed 0.000000; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C09_cai_ref_sd,verified,computed 1.000000; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1,C10_panel_rows,verified,"computed 217,356; document agrees"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1,C11_panel_districts,verified,"computed 59; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1,C12_mean_edp_share,verified,"computed 0.0856; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1,C13_mean_total_calls,verified,"computed 66.1; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S12,C14_trends_nyc_zero_all,verified,computed 42.6%; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S12,C15_trends_nyc_zero_2020,verified,computed 26%; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S12,C16_trends_nyc_zero_2024,verified,computed 71%; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S17,C17_rename_views_recovered,verified,"computed 79,439,814; document agrees"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S17,C18_rename_articles,verified,computed 112; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S17,C19_rename_articles_total,verified,computed 116; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C20_episodes_frozen,verified,computed 70; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C21_episodes_rebuilt,verified,computed 74; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C22_episode_max_days,verified,computed 14; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C23_basket_usable,verified,computed 107; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S15,C24_bheard_precincts,verified,computed 31; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S15,C25_bheard_low_conf,verified,computed 17; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,-,C26_suite_checks,verified,computed 90; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,-,C28_audit_checks,verified,computed 42; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,-,C29_audit_flags,verified,computed 2; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,-,C30_sources_registered,verified,computed 19; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S17,C31_start_lag_max,verified,computed 3; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S17,C32_start_lag_articles,verified,computed 107; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S17,C33_titles_dated,verified,computed 530; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S18,C37_national_corr,verified,computed 0.9695; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S18,C34_nyc_corr_ext,verified,computed 0.54; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S18,C35_nyc_corr_us,verified,computed 0.62; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S18,C36_nyc_articles,verified,computed 11; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S18,C38_nyc_overlap,verified,computed 59%; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S18,C40_nyc_garner,verified,computed 53%; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S18,C41_nyc_disjoint,verified,computed 8; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S18,C42_nyc_r2,verified,computed 0.454; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S18,C43_nyc_resid,verified,computed 6; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S18,C44_national_corr,verified,computed 0.9695; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S18,C45_nyc_disjoint_year,verified,computed 2012; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C46_antipolice_peak_published,verified,computed 12.5693; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C47_antipolice_peak_counterfactual,verified,computed 13.1356; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C48_antipolice_views_on_peak,verified,"computed 205,332; document agrees"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C49_antipolice_max_change,verified,computed 1.03; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C50_antipolice_days_touched,verified,"computed 3,105; document agrees"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S16,C51_published_basket,verified,computed 109; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C52_calib_rejection,verified,computed 0.045; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C53_calib_rho,verified,computed 0.0482; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C54_calib_ks,verified,computed 0.2944; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C56_episodes_rebuilt_count,verified,computed 74; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C57_episodes_clustered,verified,computed 36; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C58_calib_rejection_prose,verified,computed 4.5; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C59_broad_articles,verified,computed 118; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C60_broad_episodes,verified,computed 75; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C61_broad_corr,verified,computed 0.9975; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C62_broad_meandiff,verified,computed 0.051; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C63_broad_shared_starts,verified,computed 71; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C64_broad_maxdiff,verified,computed 2.79; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C68_calib_c2_ks,verified,computed 0.4838; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C69_calib_c2_episodes,verified,computed 30; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C70_calib_disc_table_ks,verified,computed 0.2944; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C71_calib_disc_table_episodes,verified,computed 29; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C72_ep_unlabelled_share,verified,computed 33; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C73_ep_median_share,verified,computed 37; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C74_ep_blake_share,verified,computed 47; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C75_ep_above_half,verified,computed 11; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C67_calib_c1_episodes,verified,computed 15; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S19,C76_agent_share_discovery,verified,computed 0.10; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S19,C77_agent_shift_discovery,verified,computed 0.0009; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S19,C78_agent_shift_extension,verified,computed 0.0856; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S19,C79_agent_max_2024,verified,computed 1.58; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S20,C80_trends_step_early,verified,computed 0.0020; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S20,C81_trends_step_late,verified,computed 0.0016; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S20,C82_trends_ratio,verified,computed 0.82; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C83_es_edp_share_coef,verified,computed -0.00123; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C84_es_edp_share_p,verified,computed 0.697; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C85_es_edp_count_coef,verified,computed -0.01084; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C86_es_edp_count_p,verified,computed 0.527; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C87_es_mh_share_coef,verified,computed -0.00103; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C88_es_mh_share_p,verified,computed 0.886; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C89_es_mh_count_coef,verified,computed -0.00615; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C90_es_mh_count_p,verified,computed 0.822; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C91_dc_injury_w02_coef,verified,computed +0.00159; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C92_dc_injury_w02_p,verified,computed 0.00004; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C93_dc_injury_w1214_coef,verified,computed +0.00104; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C94_dc_injury_w1214_p,verified,computed 0.00172; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C95_dc_loginjury_w02_coef,verified,computed +0.01048; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C96_dc_loginjury_w02_p,verified,computed 0.00008; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C97_mde_disc_worst,verified,computed 0.00950; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C98_mde_disc_best,verified,computed 0.00291; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C99_mde_disc_ratio,verified,computed 1.901; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C100_mde_c1_worst,verified,computed 0.01156; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C101_mde_c1_best,verified,computed 0.00382; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C102_mde_c1_ratio,verified,computed 2.312; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C103_mde_c2_worst,verified,computed 0.00875; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C104_mde_c2_best,verified,computed 0.00290; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C105_mde_c2_ratio,verified,computed 1.750; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C106_mde_ri_disc,verified,computed 0.01023; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D6,C107_o2_breaks_total,verified,computed 22; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D6,C108_o2_breaks_c1a,verified,computed 1; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D6,C109_o2_breaks_c1b,verified,computed 2; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D6,C110_o2_breaks_c2,verified,computed 19; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D5,C111_o2_missing_2015,verified,computed 2.97; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D5,C112_o2_missing_2016,verified,computed 0.91; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D5,C113_o2_missing_ratio,verified,computed 0.31; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D6,C114_o2_c2_variants,verified,computed 15; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D2,C115_scope_articles_table,verified,computed 120; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D3,C116_strict_articles_table,verified,computed 109; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,-,C117_findings_total,verified,computed 158; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,-,C118_findings_fixed,verified,computed 158; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,-,C119_findings_open,verified,computed 0; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,-,C120_findings_unverified,verified,computed 0; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C121_calib_disc_table_rejection,verified,computed 0.045; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D1_spliced,C122_spliced_days,verified,"computed 3,472; document agrees"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D1_spliced,C123_spliced_identical_prebreak,verified,computed 100; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D1_spliced,C124_spliced_corr,verified,computed 0.9996; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D1_spliced,C125_spliced_shift_2124,verified,computed +0.0660; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D1_spliced,C126_spliced_max_shift,verified,computed 0.9758; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D1_spliced,C127_spliced_shared_starts,verified,computed 72; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C65_calib_c1_ks,verified,computed 0.9930; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C66_calib_c1_rejection,verified,computed 0.049; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C128_calib_c1_rejection_prose,verified,computed 0.049; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C129_calib_c1_ks_stat,verified,computed 0.0155; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C130_calib_c1_ks_prose,verified,computed 0.9930; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C131_calib_c1_median_p,verified,computed 0.4975; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S7,C132_panel_districts,verified,computed 59; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C133_antipolice_peak_published,verified,computed 12.5693; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C134_antipolice_rank_published,verified,computed 1; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C135_antipolice_index_days,verified,"computed 3,472; document agrees"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C136_antipolice_rank_counterfactual,verified,computed 1; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C137_antipolice_index_days_cf,verified,"computed 3,472; document agrees"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C138_strict_articles,verified,computed 109; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C139_strict_episodes,verified,computed 74; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C140_coverage_codes_c1a,verified,computed 1; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C141_coverage_codes_c1b,verified,computed 2; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C142_coverage_codes_c2,verified,computed 19; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C143_calib_c2_table_rejection,verified,computed 0.05; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C144_zscore_len_short,verified,computed 2.203; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C145_zscore_len_long,verified,computed 2.092; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C146_zscore_len_ratio,verified,computed 1.05; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C147_zscore_comp_low,verified,computed 1.104; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C148_zscore_comp_high,verified,computed 3.515; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C149_zscore_comp_ratio,verified,computed 3.18; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,-,C150_paper_checks,verified,computed 90; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1,C151_paper_ems_rows,verified,"computed 29,978,154; document agrees"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1,C152_paper_districts,verified,"computed 59; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C153_paper_strict_articles,verified,computed 109; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C154_paper_broad_articles,verified,computed 118; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C155_paper_frozen_episodes,verified,computed 70; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C156_paper_adopted_episodes,verified,computed 74; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C157_paper_disc_episodes,verified,computed 29; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C158_paper_c1_episodes,verified,computed 15; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C159_paper_c2_episodes,verified,computed 30; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C160_paper_broad_episodes,verified,computed 75; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S15,C161_paper_bheard_precincts,verified,computed 31; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S15,C162_paper_bheard_lowconf,verified,computed 17; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1,C163_paper_panel_rows,verified,"computed 217,356; document agrees"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1,C164_paper_mean_edp,verified,"computed 0.0856; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1,C165_paper_mean_calls,verified,"computed 66.1; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C166_paper_es_edp_share_coef,verified,computed -0.00123; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C167_paper_es_edp_share_p,verified,computed 0.697; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C168_paper_es_edp_count_coef,verified,computed -0.01084; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C169_paper_es_edp_count_p,verified,computed 0.527; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C170_paper_es_mh_share_coef,verified,computed -0.00103; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C171_paper_es_mh_share_p,verified,computed 0.886; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C172_paper_es_mh_count_coef,verified,computed -0.00615; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C173_paper_es_mh_count_p,verified,computed 0.822; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C174_paper_dc_injury_w02_coef,verified,computed +0.00159; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C175_paper_dc_injury_w02_p,verified,computed 0.00004; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C176_paper_dc_injury_w1214_coef,verified,computed +0.00104; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C177_paper_dc_injury_w1214_p,verified,computed 0.00172; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C178_paper_dc_loginjury_coef,verified,computed +0.01048; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C179_paper_dc_loginjury_p,verified,computed 0.00008; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C180_paper_mde_ratio_low,verified,computed 1.75; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C181_paper_mde_ratio_high,verified,computed 2.31; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1,C182_paper_mei_share_of_mean,verified,"computed 6; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,D6,C183_paper_coverage_codes,verified,computed 22; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S15,C184_paper_bheard_lowconf_lim,verified,computed 17; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C185_paper_lim_disc_episodes,verified,computed 29; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C186_paper_lim_c1_episodes,verified,computed 15; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C187_paper_lim_c2_episodes,verified,computed 30; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C188_dc_n_tests,verified,computed 65; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C189_dc_bonferroni,verified,computed 0.000769; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C190_dc_survivors,verified,computed 2; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C191_dc_mh_min_p,verified,computed 0.044; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C192_dc_cardiac_min_p,verified,computed 0.082; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C193_dc_asthma_min_p,verified,computed 0.076; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C194_paper_dc_n_tests,verified,computed 65; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C195_paper_dc_bonferroni,verified,computed 0.000769; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C196_paper_dc_survivors,verified,computed 2; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C197_paper_dc_mh_min_p,verified,computed 0.044; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C198_paper_dc_cardiac_min_p,verified,computed 0.082; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C199_paper_dc_asthma_min_p,verified,computed 0.076; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C200_calib_pooled_episodes,verified,computed 45; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C201_calib_pooled_rejection,verified,computed 0.04; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C202_calib_pooled_ks,verified,computed 0.5492; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C203_lim11_w1214_coef,verified,computed +0.00104; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C204_lim11_w1214_p,verified,computed 0.0017; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1b,C205_alt_w1214_p,verified,computed 0.0017; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C206_calib_c2_prose_old_ks,verified,computed 0.4838; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S11,C207_calib_c2_prose_rejection,verified,computed 0.05; document agrees
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1,C208_disc_window_rows,verified,"computed 86,199; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:03:29+00:00,4ad4a866,claim,S1,C209_paper_disc_window_rows,verified,"computed 86,199; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:09:41+00:00,3f277fce,link,S1,https://data.cityofnewyork.us/resource/76xm-jjuj.csv,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S1b,https://data.cityofnewyork.us/resource/76xm-jjuj.csv,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S2,(none),unverifiable,no endpoint: not obtained over the network
+2026-09-20T06:09:41+00:00,3f277fce,link,S3,(none),unverifiable,no endpoint: not obtained over the network
+2026-09-20T06:09:41+00:00,3f277fce,link,S4,https://github.com/washingtonpost/data-police-shootings,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S5,(none),template,no endpoint: not obtained over the network
+2026-09-20T06:09:41+00:00,3f277fce,link,S6,(none),template,no endpoint: not obtained over the network
+2026-09-20T06:09:41+00:00,3f277fce,link,S7,https://s-media.nyc.gov/agencies/dcp/assets/files/excel/data-tools/census/acs/demo_2019_acs5yr_nta.xlsx,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S8,https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S9,https://en.wikipedia.org/api/rest_v1/page/summary/,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S10,https://mappingpoliceviolence.us/s/MPVDatasetDownload.xlsx,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S11,https://api.gdeltproject.org/api/v2/doc/doc,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S11,https://api.gdeltproject.org/api/v2/tv/tv,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S11,https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S12,https://trends.google.com,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S13,https://trends.google.com,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S14,https://data.cityofnewyork.us/resource/76xm-jjuj.json,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S15,https://mentalhealth.cityofnewyork.us/b-heard,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S16,https://query.wikidata.org/sparql,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S17,https://en.wikipedia.org/w/api.php,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S18,https://en.wikipedia.org/w/api.php,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,link,S18,https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/,skipped,--offline
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S1,data/processed/ems_cd_day_calltype.parquet,verified,"sha256 6247a7239559f930, 4,876,509 rows, 2014-12-01..2024-12-31; matches the provenance register"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S1,data/processed/ems_citywide_day_trends.parquet,verified,"sha256 33c8850350f90ab3, 39,037 rows, 2005-01-01..2026-06-30; matches the provenance register"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S1,data/processed/ems_cd_day_calltype_excluded.parquet,verified,"sha256 9de95e3e1929c03a, 443,719 rows, 2014-12-01..2024-12-31; matches the provenance register"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S1b,data/processed/ems_cd_day_calltype.parquet,verified,"sha256 6247a7239559f930, 4,876,509 rows, 2014-12-01..2024-12-31; matches the provenance register"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S2,data/raw/211118_tweet_count_name_date.csv,unverifiable,"artifact absent, and the source is unverifiable"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S3,data/raw/220126_final_daily_tweet_count.csv,unverifiable,"artifact absent, and the source is unverifiable"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S4,data/raw/fatalpoliceshootingsCLEANED.csv,unverifiable,"artifact absent, and the source is retired"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S5,data/raw/sf1_dp_cd_demoprofile.xlsx,verified,"sha256 20459df2681c751b, unreadable: UnicodeDecodeError; no provenance row and none can be made — accepted 2026-09-13: A committed input workbook (NYC DCP Census 2010 SF1 profile), not a fetch output: no script writes it, so no provenance row can be made by re-running anything. Retired source kept for the heterogeneity robustness check. Bytes pinned exactly (CP1 audit #58, 2026-09-13)."
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S6,data/reference/victim_curation_table.csv,verified,"sha256 75e6bea4243eebe7, 101 rows, 2013-05-24..2020-10-20; no provenance row and none can be made — accepted 2026-09-13: A hand-built committed table (retired with the Twitter measure): no script writes it, so no provenance row can be made. Bytes pinned exactly (CP1 audit #58, 2026-09-13)."
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S7,data/reference/acs_2019_cd_demographics.csv,verified,"sha256 210ec18a067b7f5d, 59 rows; register holds a payload hash only"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S8,data/reference/wikipedia_pageviews_victims.csv,verified,"sha256 e1e88d7d93c69631, 25,211 rows, 2017-01-01..2020-12-31; provenance register is stale and cannot be refreshed — accepted 2026-09-10: Neither registered hash matches this file, and it cannot be re-registered by re-running its fetch: 09_fetch_public_data.py selects this basket from the retired Twitter per-victim file (S2), which is not in the repository and cannot be reconstructed. The bytes ac"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S9,data/reference/wikipedia_article_resolution_legacy.csv,verified,"sha256 154d296f9c560c7e, 150 rows; no provenance row and none can be made — accepted 2026-09-13: The Twitter-era name-to-article table written by 09_fetch_public_data.py. It has no provenance row and cannot get one: 09 selects its names from the retired per-victim Twitter file (S2), which is not in the repository. Until 2026-09-13 this table and the PUBLISHED BASKET shared the filename wikipedia_a"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S10,data/reference/victim_registry.csv,verified,"sha256 13f3fbcfe5298589, 13,241 rows, 2013-01-01..2024-12-31; register holds a payload hash only"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S11,data/reference/cai_components_daily.csv,verified,"sha256 f747bc27b7beada3, 9,232 rows, 2015-01-01..2024-12-31; matches the provenance register"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S11,data/reference/wiki_ext_basket_used.csv,verified,"sha256 97140b683f5a6506, 109 rows; matches the provenance register"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S11,data/reference/wiki_ext_aggregation_diagnostic.csv,verified,"sha256 2d37c4ad5d1c0c3d, 3,472 rows, 2015-07-01..2024-12-31; matches the provenance register"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S11,data/reference/wiki_pageviews_by_article.csv,verified,"sha256 7cdf66711622c6b3, 231,503 rows, 2015-07-01..2024-12-31; matches the provenance register"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S12,data/reference/cai_trends_daily.csv,verified,"sha256 f18c11eb209350bd, 7,306 rows, 2015-01-01..2024-12-31; matches the provenance register"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S12,data/reference/cai_trends_stitch_diagnostics.csv,verified,"sha256 a79bdc97be843bd6, 58 rows; no provenance row and none can be made — accepted 2026-09-13: Written by 11b_fetch_trends.py beside cai_trends_daily.csv but never registered. Google Trends is sampled and re-fetching does not reproduce the file, so the current bytes are pinned; 11b now registers it as S12b on its next run and this pin then stops being needed (CP1 audit #58, 2026-09-13)."
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S13,data/reference/cai_trends_anchored.csv,unverifiable,"artifact absent, and the source is retired"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S14,data/reference/precinct_cd_crosswalk.csv,verified,"sha256 4c519dc6e115d562, 131 rows; matches the provenance register"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S15,data/reference/bheard_precinct_adoption.csv,verified,"sha256 b7627d01221e5159, 31 rows; matches the provenance register"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S15,data/reference/bheard_cd_exposure.csv,verified,"sha256 c387a640fc425626, 74 rows; matches the provenance register"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S16,data/reference/basket_decisions.csv,verified,"sha256 cabfa4ca663e133c, 174 rows, 1958-04-25..2026-07-07; matches the provenance register"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S17,data/reference/article_title_map.csv,verified,"sha256 b1be98f09b916a90, 530 rows; matches the provenance register"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S17,data/reference/rename_recovery.csv,verified,"sha256 1657e5eb79e396c3, 116 rows; no provenance row and none can be made — accepted 2026-09-13: 29_resolve_article_titles.py wrote this beside article_title_map.csv and registered only the latter; it now registers this as S17b, but that needs a live MediaWiki re-fetch. Until that run, the current bytes are pinned exactly (CP1 audit #58, 2026-09-13)."
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S18,data/reference/wiki_nyc_articles.csv,verified,"sha256 a50359145a74a954, 543 rows; no provenance row and none can be made — accepted 2026-09-13: 28_build_nyc_attention.py registered only wiki_nyc_daily.csv; it now registers this as S18a on its next live run. Bytes pinned exactly until then (CP1 audit #58, 2026-09-13)."
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S18,data/reference/wiki_nyc_daily.csv,verified,"sha256 66321420e2ed9675, 6,944 rows, 2015-07-01..2024-12-31; matches the provenance register"
+2026-09-20T06:09:41+00:00,3f277fce,artifact,S18,data/reference/wiki_nyc_per_article.csv,verified,"sha256 5b8fffc41defa7b1, 55,552 rows, 2015-07-01..2024-12-31; no provenance row and none can be made — accepted 2026-09-13: 28_build_nyc_attention.py registered only wiki_nyc_daily.csv; it now registers this as S18b on its next live run. Bytes pinned exactly until then (CP1 audit #58, 2026-09-13)."
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1,C01_ems_source_rows,verified,"computed 29,978,154; document agrees"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S10,C02_registry_rows,verified,"computed 13,241; document agrees"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C03_wiki_start,verified,computed 2015-07-01; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S16,C04_basket_articles,verified,computed 120; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S16,C05_basket_people,verified,computed 119; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S16,C06_basket_after_2020,verified,computed 27; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C07_scored_days,verified,"computed 3,472; document agrees"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C08_cai_ref_mean,verified,computed 0.000000; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C09_cai_ref_sd,verified,computed 1.000000; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1,C10_panel_rows,verified,"computed 217,356; document agrees"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1,C11_panel_districts,verified,"computed 59; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1,C12_mean_edp_share,verified,"computed 0.0856; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1,C13_mean_total_calls,verified,"computed 66.1; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S12,C14_trends_nyc_zero_all,verified,computed 42.6%; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S12,C15_trends_nyc_zero_2020,verified,computed 26%; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S12,C16_trends_nyc_zero_2024,verified,computed 71%; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S17,C17_rename_views_recovered,verified,"computed 79,439,814; document agrees"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S17,C18_rename_articles,verified,computed 112; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S17,C19_rename_articles_total,verified,computed 116; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C20_episodes_frozen,verified,computed 70; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C21_episodes_rebuilt,verified,computed 74; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C22_episode_max_days,verified,computed 14; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C23_basket_usable,verified,computed 107; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S15,C24_bheard_precincts,verified,computed 31; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S15,C25_bheard_low_conf,verified,computed 17; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,-,C26_suite_checks,verified,computed 90; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,-,C28_audit_checks,verified,computed 42; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,-,C29_audit_flags,verified,computed 2; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,-,C30_sources_registered,verified,computed 19; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S17,C31_start_lag_max,verified,computed 3; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S17,C32_start_lag_articles,verified,computed 107; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S17,C33_titles_dated,verified,computed 530; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S18,C37_national_corr,verified,computed 0.9695; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S18,C34_nyc_corr_ext,verified,computed 0.54; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S18,C35_nyc_corr_us,verified,computed 0.62; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S18,C36_nyc_articles,verified,computed 11; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S18,C38_nyc_overlap,verified,computed 59%; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S18,C40_nyc_garner,verified,computed 53%; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S18,C41_nyc_disjoint,verified,computed 8; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S18,C42_nyc_r2,verified,computed 0.454; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S18,C43_nyc_resid,verified,computed 6; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S18,C44_national_corr,verified,computed 0.9695; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S18,C45_nyc_disjoint_year,verified,computed 2012; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C46_antipolice_peak_published,verified,computed 12.5693; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C47_antipolice_peak_counterfactual,verified,computed 13.1356; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C48_antipolice_views_on_peak,verified,"computed 205,332; document agrees"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C49_antipolice_max_change,verified,computed 1.03; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C50_antipolice_days_touched,verified,"computed 3,105; document agrees"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S16,C51_published_basket,verified,computed 109; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C52_calib_rejection,verified,computed 0.045; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C53_calib_rho,verified,computed 0.0482; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C54_calib_ks,verified,computed 0.2944; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C56_episodes_rebuilt_count,verified,computed 74; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C57_episodes_clustered,verified,computed 36; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C58_calib_rejection_prose,verified,computed 4.5; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C59_broad_articles,verified,computed 118; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C60_broad_episodes,verified,computed 75; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C61_broad_corr,verified,computed 0.9975; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C62_broad_meandiff,verified,computed 0.051; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C63_broad_shared_starts,verified,computed 71; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C64_broad_maxdiff,verified,computed 2.79; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C68_calib_c2_ks,verified,computed 0.4838; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C69_calib_c2_episodes,verified,computed 30; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C70_calib_disc_table_ks,verified,computed 0.2944; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C71_calib_disc_table_episodes,verified,computed 29; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C72_ep_unlabelled_share,verified,computed 33; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C73_ep_median_share,verified,computed 37; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C74_ep_blake_share,verified,computed 47; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C75_ep_above_half,verified,computed 11; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C67_calib_c1_episodes,verified,computed 15; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S19,C76_agent_share_discovery,verified,computed 0.10; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S19,C77_agent_shift_discovery,verified,computed 0.0009; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S19,C78_agent_shift_extension,verified,computed 0.0856; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S19,C79_agent_max_2024,verified,computed 1.58; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S20,C80_trends_step_early,verified,computed 0.0020; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S20,C81_trends_step_late,verified,computed 0.0016; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S20,C82_trends_ratio,verified,computed 0.82; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C83_es_edp_share_coef,verified,computed -0.00123; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C84_es_edp_share_p,verified,computed 0.697; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C85_es_edp_count_coef,verified,computed -0.01084; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C86_es_edp_count_p,verified,computed 0.527; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C87_es_mh_share_coef,verified,computed -0.00103; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C88_es_mh_share_p,verified,computed 0.886; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C89_es_mh_count_coef,verified,computed -0.00615; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C90_es_mh_count_p,verified,computed 0.822; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C91_dc_injury_w02_coef,verified,computed +0.00159; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C92_dc_injury_w02_p,verified,computed 0.00004; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C93_dc_injury_w1214_coef,verified,computed +0.00104; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C94_dc_injury_w1214_p,verified,computed 0.00172; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C95_dc_loginjury_w02_coef,verified,computed +0.01048; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C96_dc_loginjury_w02_p,verified,computed 0.00008; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C97_mde_disc_worst,verified,computed 0.00950; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C98_mde_disc_best,verified,computed 0.00291; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C99_mde_disc_ratio,verified,computed 1.901; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C100_mde_c1_worst,verified,computed 0.01156; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C101_mde_c1_best,verified,computed 0.00382; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C102_mde_c1_ratio,verified,computed 2.312; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C103_mde_c2_worst,verified,computed 0.00875; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C104_mde_c2_best,verified,computed 0.00290; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C105_mde_c2_ratio,verified,computed 1.750; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C106_mde_ri_disc,verified,computed 0.01023; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,D6,C107_o2_breaks_total,verified,computed 22; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,D6,C108_o2_breaks_c1a,verified,computed 1; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,D6,C109_o2_breaks_c1b,verified,computed 2; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,D6,C110_o2_breaks_c2,verified,computed 19; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,D5,C111_o2_missing_2015,verified,computed 2.97; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,D5,C112_o2_missing_2016,verified,computed 0.91; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,D5,C113_o2_missing_ratio,verified,computed 0.31; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,D6,C114_o2_c2_variants,verified,computed 15; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,D2,C115_scope_articles_table,verified,computed 120; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,D3,C116_strict_articles_table,verified,computed 109; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,-,C117_findings_total,verified,computed 158; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,-,C118_findings_fixed,verified,computed 158; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,-,C119_findings_open,verified,computed 0; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,-,C120_findings_unverified,verified,computed 0; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C121_calib_disc_table_rejection,verified,computed 0.045; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,D1_spliced,C122_spliced_days,verified,"computed 3,472; document agrees"
+2026-09-20T06:09:41+00:00,3f277fce,claim,D1_spliced,C123_spliced_identical_prebreak,verified,computed 100; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,D1_spliced,C124_spliced_corr,verified,computed 0.9996; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,D1_spliced,C125_spliced_shift_2124,verified,computed +0.0660; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,D1_spliced,C126_spliced_max_shift,verified,computed 0.9758; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,D1_spliced,C127_spliced_shared_starts,verified,computed 72; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C65_calib_c1_ks,verified,computed 0.9930; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C66_calib_c1_rejection,verified,computed 0.049; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C128_calib_c1_rejection_prose,verified,computed 0.049; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C129_calib_c1_ks_stat,verified,computed 0.0155; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C130_calib_c1_ks_prose,verified,computed 0.9930; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C131_calib_c1_median_p,verified,computed 0.4975; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S7,C132_panel_districts,verified,computed 59; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C133_antipolice_peak_published,verified,computed 12.5693; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C134_antipolice_rank_published,verified,computed 1; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C135_antipolice_index_days,verified,"computed 3,472; document agrees"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C136_antipolice_rank_counterfactual,verified,computed 1; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C137_antipolice_index_days_cf,verified,"computed 3,472; document agrees"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C138_strict_articles,verified,computed 109; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C139_strict_episodes,verified,computed 74; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C140_coverage_codes_c1a,verified,computed 1; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C141_coverage_codes_c1b,verified,computed 2; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C142_coverage_codes_c2,verified,computed 19; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C143_calib_c2_table_rejection,verified,computed 0.05; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C144_zscore_len_short,verified,computed 2.203; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C145_zscore_len_long,verified,computed 2.092; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C146_zscore_len_ratio,verified,computed 1.05; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C147_zscore_comp_low,verified,computed 1.104; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C148_zscore_comp_high,verified,computed 3.515; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C149_zscore_comp_ratio,verified,computed 3.18; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,-,C150_paper_checks,verified,computed 90; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1,C151_paper_ems_rows,verified,"computed 29,978,154; document agrees"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1,C152_paper_districts,verified,"computed 59; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C153_paper_strict_articles,verified,computed 109; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C154_paper_broad_articles,verified,computed 118; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C155_paper_frozen_episodes,verified,computed 70; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C156_paper_adopted_episodes,verified,computed 74; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C157_paper_disc_episodes,verified,computed 29; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C158_paper_c1_episodes,verified,computed 15; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C159_paper_c2_episodes,verified,computed 30; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C160_paper_broad_episodes,verified,computed 75; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S15,C161_paper_bheard_precincts,verified,computed 31; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S15,C162_paper_bheard_lowconf,verified,computed 17; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1,C163_paper_panel_rows,verified,"computed 217,356; document agrees"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1,C164_paper_mean_edp,verified,"computed 0.0856; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1,C165_paper_mean_calls,verified,"computed 66.1; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C166_paper_es_edp_share_coef,verified,computed -0.00123; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C167_paper_es_edp_share_p,verified,computed 0.697; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C168_paper_es_edp_count_coef,verified,computed -0.01084; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C169_paper_es_edp_count_p,verified,computed 0.527; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C170_paper_es_mh_share_coef,verified,computed -0.00103; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C171_paper_es_mh_share_p,verified,computed 0.886; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C172_paper_es_mh_count_coef,verified,computed -0.00615; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C173_paper_es_mh_count_p,verified,computed 0.822; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C174_paper_dc_injury_w02_coef,verified,computed +0.00159; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C175_paper_dc_injury_w02_p,verified,computed 0.00004; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C176_paper_dc_injury_w1214_coef,verified,computed +0.00104; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C177_paper_dc_injury_w1214_p,verified,computed 0.00172; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C178_paper_dc_loginjury_coef,verified,computed +0.01048; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C179_paper_dc_loginjury_p,verified,computed 0.00008; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C180_paper_mde_ratio_low,verified,computed 1.75; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C181_paper_mde_ratio_high,verified,computed 2.31; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1,C182_paper_mei_share_of_mean,verified,"computed 6; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:09:41+00:00,3f277fce,claim,D6,C183_paper_coverage_codes,verified,computed 22; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S15,C184_paper_bheard_lowconf_lim,verified,computed 17; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C185_paper_lim_disc_episodes,verified,computed 29; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C186_paper_lim_c1_episodes,verified,computed 15; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C187_paper_lim_c2_episodes,verified,computed 30; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C188_dc_n_tests,verified,computed 65; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C189_dc_bonferroni,verified,computed 0.000769; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C190_dc_survivors,verified,computed 2; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C191_dc_mh_min_p,verified,computed 0.044; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C192_dc_cardiac_min_p,verified,computed 0.082; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C193_dc_asthma_min_p,verified,computed 0.076; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C194_paper_dc_n_tests,verified,computed 65; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C195_paper_dc_bonferroni,verified,computed 0.000769; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C196_paper_dc_survivors,verified,computed 2; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C197_paper_dc_mh_min_p,verified,computed 0.044; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C198_paper_dc_cardiac_min_p,verified,computed 0.082; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C199_paper_dc_asthma_min_p,verified,computed 0.076; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C200_calib_pooled_episodes,verified,computed 45; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C201_calib_pooled_rejection,verified,computed 0.04; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C202_calib_pooled_ks,verified,computed 0.5492; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C203_lim11_w1214_coef,verified,computed +0.00104; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C204_lim11_w1214_p,verified,computed 0.0017; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1b,C205_alt_w1214_p,verified,computed 0.0017; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C206_calib_c2_prose_old_ks,verified,computed 0.4838; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S11,C207_calib_c2_prose_rejection,verified,computed 0.05; document agrees
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1,C208_disc_window_rows,verified,"computed 86,199; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
+2026-09-20T06:09:41+00:00,3f277fce,claim,S1,C209_paper_disc_window_rows,verified,"computed 86,199; document agrees [outcome artifact: 131,157 non-discovery rows excluded before eval]"
