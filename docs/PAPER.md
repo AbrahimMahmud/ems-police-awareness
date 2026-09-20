@@ -96,9 +96,10 @@ of New York City emergency medical dispatches by community district and day. The
 decade was divided into a **discovery** period (1 January 2017 to 31 December
 2020), used to build the pipeline and explore the data, and two **confirmation**
 strata never used for any specification choice: **C1**, 1 July 2015 to 31 December
-2016 together with 1 January to 31 May 2021 — the months free of both COVID-19
-and the B-HEARD mental-health response programme — and **C2**, 1 June 2021 to
-31 December 2024, in which B-HEARD was rolling out precinct by precinct. The
+2016 together with 1 January to 31 May 2021 — every confirmation month before the
+B-HEARD mental-health response programme launched; the 2015–16 block is also free
+of COVID-19, the 2021 block is not — and **C2**, 1 June 2021 to 31 December 2024,
+in which B-HEARD was rolling out precinct by precinct. The
 lower bound of C1 is a data constraint, not a choice: Wikimedia's pageview
 interface begins on 1 July 2015.
 
@@ -429,15 +430,65 @@ B-HEARD interaction. Read by PRE_ANALYSIS_NOTE.md §9 and CONFIRMATION_PLAN.md �
 
 ---
 
-## Discussion **[PHASE I PENDING]**
+## Discussion **[PHASE I PENDING — the mechanism and implications paragraphs are written from the sealed reading]**
 
-*Five moves: (1) restatement opening with the design — daily resolution inside the
-first week; a verifiable multi-source attention index replacing a non-reproducible
-social-media measure; EMS activation as the help-seeking decision; a genuine
-discovery/confirmation split with a frozen episode list; (2) mechanism; (3)
-comparison to prior work including Ang et al. (comparable declines across
-majority-White, -Black and -Hispanic neighbourhoods) and Packard et al.; (4)
-Limitations below; (5) implications.*
+This study asked a narrow question with an unusually strict design: whether the
+share of New York City emergency medical dispatches coded as mental-health crises
+moves in the week after public attention to police violence rises. Three features
+distinguish it from the prior literature. The exposure is attention itself,
+measured daily from what the public looked up, so that verdicts, anniversaries
+and video releases count when they draw attention and killings do not when they
+draw none. The outcome sits at the help-seeking decision, observed by community
+district and day — fine enough to see the shape of a response inside the first
+week rather than a monthly average of it. And the inference is confirmatory in
+the literal sense: the hypotheses, the estimator, the null the p-values rest on,
+the sensitivities and the sentence to be written for every possible result were
+committed before any confirmation-period outcome was seen, and the confirmatory
+table was produced by one sealed script run once. The Results section reports the
+pre-registered reading of that table verbatim; nothing in this section adds to
+it or subtracts from it.
+
+*[PHASE I PENDING — what the reading says about the mechanism: written from the
+sealed table and its reading only, in the terms the pre-analysis note fixed for
+each row of its interpretation table.]*
+
+**Relation to prior work.** The closest antecedents measured incidents rather
+than attention and outcomes at the county-month or coarser. Das and colleagues
+found depression-related emergency department visits among African Americans
+rising by about 11% in the months around police killings of unarmed African
+Americans;⁷ Desmond, Papachristos and Kirk documented a year-long fall in
+police-related 911 calls in Milwaukee's Black neighbourhoods after one publicised
+beating;⁵ Ang and colleagues found 911 call volume falling by roughly a quarter
+across thirteen cities after the murder of George Floyd, with comparable declines
+across majority-White, majority-Black and majority-Hispanic neighbourhoods, and
+attributed the size of that response to salience.⁶ Our design speaks to the same
+channel — whether publicised police violence changes the decision to summon
+help — but at the day rather than the month, with the attention that those
+authors invoke as the mechanism measured directly, and with dispatch codes that
+should not respond to news (cardiac, asthma) carried as falsification outcomes
+through every stratum. Two features of the setting matter for the comparison.
+First, the outcome is a medical dispatch, not a police-related call: New York's
+mental-health 911 calls dispatched an ambulance and, until B-HEARD, the police, so
+an avoidance response would run through the anticipated presence of officers at
+a medical call rather than through crime reporting. Second, the discovery period
+contains the 2020 episodes on which the earlier evidence rests, and in it the
+EDP share moved in the predicted direction after the murder of George Floyd while
+the count did not — a compositional movement carried by a rise in injury calls
+that the decomposition attributes to street activity rather than to withdrawal
+from care, and that no mental-health outcome survives the corrected threshold
+(Results). The confirmatory strata are the test of whether anything of that kind
+holds outside the year the hypothesis was formed in.
+
+**What the design cannot say.** The limitations below are ordered as a referee
+would raise them. Two bear directly on how the confirmatory reading should be
+carried into policy: the attention index is national, so the estimand is the
+effect of national attention on New York help-seeking and not of New Yorkers'
+own attention; and the confirmation strata hold few independent episodes, so a
+non-rejection bounds a sustained shift at the pre-freeze minimum detectable
+effect and no smaller, while a transient dip-and-rebound of the size the study
+declared it cares about is the shape the design was powered for.
+
+*[PHASE I PENDING — implications, written after the reading.]*
 
 ### Limitations
 

@@ -965,7 +965,8 @@ def s_third_pass_record_consistency():
     execp = (PROJECT_ROOT / "docs" / "EXECUTION_PLAN.md").read_text()
     if "| 3 | Test window: days 0–5 → days 0–7, joint | no (§14) |" not in plan:
         problems.append("summary row 3 does not mark the joint days 0-7 window as decided after discovery (§14)")
-    if "No COVID" in note or "No COVID" in master:
+    paper = (PROJECT_ROOT / "docs" / "PAPER.md").read_text()
+    if "No COVID" in note or "No COVID" in master or "free of both COVID" in paper:
         problems.append("C1 is still described as having no COVID exposure (its 2021 block is inside the pandemic)")
     if "2015-07-01 → 2016-12-31 and 2021-01-01 → 2021-05-31" not in master:
         problems.append("PAPER_MASTER §6 does not describe Confirmation A as the two C1 blocks the code estimates")
