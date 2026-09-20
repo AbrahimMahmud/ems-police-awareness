@@ -10,7 +10,7 @@
   C2's 1,000-sim run started 05:15Z (~3 h; 200-sim certificate CALIBRATED meanwhile); pooled at 200 (descriptive).
 - **Panel**: rebuilt with eight new columns (EDPM, EDP-ex-EDPM, cancelled-inclusive totals/counts/shares); every existing
   column byte-identical. Coverage-break table unchanged under the inclusive boundary rule.
-- **Cold runs**: relaunched 05:58Z (two passes from cold; the manifest and registers are committed when they agree).
+- **Cold runs**: two passes on the eight-column panel byte-identical on every build and model output (COLD IDENTITY OK, 06:10Z); manifest and registers committed at `eaa7d5d`.
 - **Dry run**: 166 cells at 20 draws on the final code, sidecar hashes match every source; the reader reads it (175 rows).
 - **Next**: [[Next actions]]. Plan of record: `docs/EXECUTION_PLAN.md` (Status block at the top).
 
