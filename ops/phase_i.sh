@@ -1,4 +1,6 @@
 #!/bin/bash
+# Deterministic to the byte (finding X20): a fixed hash seed and one BLAS thread per process.
+export PYTHONHASHSEED=0 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1
 # Phase I: the sealed one-shot confirmatory run, then its mechanical reading.
 #
 # Preconditions are CHECKED, not assumed: config.FREEZE_ACTIVE must be False

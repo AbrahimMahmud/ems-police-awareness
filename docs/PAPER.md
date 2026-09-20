@@ -104,7 +104,7 @@ interface begins on 1 July 2015.
 
 The confirmation strata were protected by a code-level freeze: every analysis
 script draws its sample through one guard function whose active window is derived
-from a single flag, and a regression suite of automated checks (87 at the time of
+from a single flag, and a regression suite of automated checks (88 at the time of
 writing) verifies that no script can read confirmation-period outcome values
 without passing through it. The hypotheses, the estimator, the primary inference,
 the calibration precondition, the sensitivity battery, the multiple-testing family

@@ -858,6 +858,55 @@ def d_discovery_scripts_pinned():
                     "the confirmation sample under the freeze and keeps discovery pinned when lifted")
 
 
+def x_run_all_deterministic_env():
+    """X20: run_all runs every stage under a fixed Python hash seed and one BLAS thread.
+
+    Two cold passes of 2026-09-20, every randomization ledger banked, produced
+    different bytes for 17's and 25's tables: coefficients at 1e-16, clustered
+    standard errors at 1e-11, the joint statistic at 1e-7 — nothing a reader
+    would see, everything a hash would. Single-threaded BLAS did not remove it;
+    PYTHONHASHSEED=0 did, twice over, so an iteration order over names was the
+    source. The CP2 line "run_all clean twice from cold; the second manifest
+    hash-matches the first" is only meaningful if the run is deterministic to
+    the byte, so run_all passes that environment to every stage and the
+    runners export it. This check reads run_all's stage launch by AST: the
+    subprocess call carries env=STAGE_ENV and STAGE_ENV sets PYTHONHASHSEED to
+    "0" and every BLAS thread variable to "1".
+    """
+    import ast as _ast
+    tree = _ast.parse(src("run_all.py"))
+    problems = []
+    env_assign = next((n for n in tree.body if isinstance(n, _ast.Assign)
+                       and any(isinstance(t, _ast.Name) and t.id == "STAGE_ENV" for t in n.targets)), None)
+    if env_assign is None:
+        problems.append("run_all.py defines no STAGE_ENV")
+    else:
+        text = _ast.unparse(env_assign.value)
+        for k, v in (("PYTHONHASHSEED", "0"), ("OPENBLAS_NUM_THREADS", "1"), ("OMP_NUM_THREADS", "1"),
+                     ("MKL_NUM_THREADS", "1")):
+            if f"'{k}': '{v}'" not in text and f'"{k}": "{v}"' not in text:
+                problems.append(f"STAGE_ENV does not set {k}={v}")
+    # The stage launch is the subprocess.run whose command is `cmd`; run_all's
+    # git lookups (rev-parse, status) are subprocess.run calls too and need no env.
+    runs = [n for n in _ast.walk(tree) if isinstance(n, _ast.Call)
+            and _ast.unparse(n.func) == "subprocess.run" and n.args
+            and _ast.unparse(n.args[0]) == "cmd"]
+    if not runs:
+        problems.append("run_all.py has no stage launch (subprocess.run(cmd, ...))")
+    for n in runs:
+        env = next((kw for kw in n.keywords if kw.arg == "env"), None)
+        if env is None or _ast.unparse(env.value) != "STAGE_ENV":
+            problems.append(f"subprocess.run at line {n.lineno} does not pass env=STAGE_ENV")
+    for runner in ("coldrun.sh", "calib1000.sh", "phase_i.sh", "rebuild.sh"):
+        f = PROJECT_ROOT / "ops" / runner
+        if f.exists() and "PYTHONHASHSEED=0" not in f.read_text():
+            problems.append(f"ops/{runner} does not export PYTHONHASHSEED=0")
+    if problems:
+        return "FAIL", "; ".join(problems)
+    return "PASS", ("every stage runs with PYTHONHASHSEED=0 and one BLAS thread; the runners export the same; "
+                    "two cold passes are byte-identical on every build and model output")
+
+
 def s_ri_scheme_certified():
     """P1: every stratum's randomization null is the one its calibration certifies.
 
@@ -4752,6 +4801,7 @@ CHECKS = [
     ("V.links_resolve", "X14", "every endpoint has a dated result", v_links_resolve),
     ("X.run_all_stages_declared", "X10,P17,X19", "every pipeline stage exists and declares its outputs", x_run_all_stages_declared),
     ("X.run_all_refresh_guard", "X18", "a stage that leaves its outputs unrefreshed fails", x_run_all_refresh_guard),
+    ("X.run_all_deterministic_env", "X20", "run_all runs every stage under a fixed hash seed and one BLAS thread, so cold passes are byte-identical", x_run_all_deterministic_env),
     ("M.status_honest", "O5", "no finding is recorded fixed without a passing check", m_status_honest),
     ("M.finding_ids_unique", "RI4", "every finding id addresses exactly one row", m_finding_ids_unique),
     ("M.register_sync", "O5", "register and suite have not drifted apart", m_register_sync),

@@ -1,4 +1,6 @@
 #!/bin/bash
+# Deterministic to the byte (finding X20): a fixed hash seed and one BLAS thread per process.
+export PYTHONHASHSEED=0 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1
 # Restart-tolerant rebuild of every outcome-side artifact, in dependency order.
 # Relaunch after any restart: completed steps are skipped; 17 and 18 resume
 # from their identity-verified ledgers.

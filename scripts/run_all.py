@@ -39,6 +39,7 @@ pipeline.
 """
 
 import argparse
+import os
 import hashlib
 import json
 import subprocess
@@ -294,6 +295,20 @@ def git_commit():
         return {"commit": None, "error": str(e)}
 
 
+# DETERMINISM (finding X20, 2026-09-20). Two cold passes with every randomization
+# ledger banked still produced different bytes for 17's and 25's tables: the
+# coefficients differed at 1e-16 and the clustered standard errors at 1e-11,
+# far below anything reported, but a manifest that must hash-match cannot tell
+# noise from a change. Single-threaded BLAS did not remove it; a fixed Python
+# hash seed did (two runs byte-identical), so the order in which some set or
+# dict of names is iterated — and with it the column order of a design matrix
+# and the summation order behind it — was the source. Every stage therefore
+# runs with PYTHONHASHSEED=0 and one BLAS thread. The numbers are the same to
+# every reported digit either way; this makes them the same to the byte.
+STAGE_ENV = {**os.environ, "PYTHONHASHSEED": "0", "OPENBLAS_NUM_THREADS": "1",
+             "OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1"}
+
+
 def run_stage(st, timeout):
     """Run one stage. Returns a manifest entry. Never raises on stage failure."""
     name = st["script"]
@@ -307,7 +322,7 @@ def run_stage(st, timeout):
     cmd = [sys.executable, name] + list(st.get("args", []))
     t0 = time.time()
     try:
-        proc = subprocess.run(cmd, cwd=SCRIPTS, capture_output=True, text=True,
+        proc = subprocess.run(cmd, cwd=SCRIPTS, capture_output=True, text=True, env=STAGE_ENV,
                               timeout=max(timeout, int(st.get("timeout", 0))))
         rc, tail = proc.returncode, (proc.stdout or "")[-1200:] + (proc.stderr or "")[-1200:]
     except subprocess.TimeoutExpired:

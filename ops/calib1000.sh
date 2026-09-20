@@ -1,4 +1,6 @@
 #!/bin/bash
+# Deterministic to the byte (finding X20): a fixed hash seed and one BLAS thread per process.
+export PYTHONHASHSEED=0 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1
 # CP2 line: 1000-sim calibration on all three strata, extending the 200-sim
 # ledgers (same seeds per index; identity verified by the sidecar).
 # Exit codes 0 and 1 are verdicts (CALIBRATED / NOT CALIBRATED); 3 is 18 refusing

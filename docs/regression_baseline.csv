@@ -86,3 +86,4 @@ X.run_all_refresh_guard,X18,a stage that leaves its outputs unrefreshed fails,PA
 M.status_honest,O5,no finding is recorded fixed without a passing check,PASS,124 findings: fixed=124; 124 carry a check
 M.finding_ids_unique,RI4,every finding id addresses exactly one row,PASS,all 124 findings carry a distinct id
 M.register_sync,O5,register and suite have not drifted apart,PASS,124/124 findings tagged; all 78 blocking covered; register and suite agree on every finding
+X.run_all_deterministic_env,X20,"run_all runs every stage under a fixed hash seed and one BLAS thread, so cold passes are byte-identical",PASS,every stage runs with PYTHONHASHSEED=0 and one BLAS thread; the runners export the same; two cold passes are byte-identical on every build and model output
