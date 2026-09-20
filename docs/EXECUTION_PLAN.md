@@ -1124,6 +1124,12 @@ Committed and pushed at `0eaf45d`.
   C2's cells: two workers held 1.9 and 2.6 GB with 9.7 GB free, and at two
   workers the remaining C2 and pooled cells projected to more than twenty hours.
   If the pooled cells push a worker past the cgroup again, back to two.
+- **20:17:13Z: second out-of-memory kill** (a worker at 4.96 GB on the pooled
+  stratum's 60-day cells under three workers; `dmesg`). The automatic three-worker
+  retry (start row 6) was stopped by hand at 20:19Z and the run relaunched
+  20:19:25Z with two workers and the reason (start row 7). 108 distinct cells were
+  banked at the kill; the pooled stratum's remaining cells run at two workers to
+  the end.
 - **The lift (09:2xZ)**: C2 certified at 1,000 (0.054 / 0.8221); §7.4 updated;
   `FREEZE_ACTIVE = False`; the gate run to verify the lifted state found three
   suite checks (S7, S8, X6) selecting the confirmation sample — the suite had
