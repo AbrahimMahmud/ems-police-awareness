@@ -104,7 +104,7 @@ interface begins on 1 July 2015.
 
 The confirmation strata were protected by a code-level freeze: every analysis
 script draws its sample through one guard function whose active window is derived
-from a single flag, and a regression suite of automated checks (88 at the time of
+from a single flag, and a regression suite of automated checks (89 at the time of
 writing) verifies that no script can read confirmation-period outcome values
 without passing through it. The hypotheses, the estimator, the primary inference,
 the calibration precondition, the sensitivity battery, the multiple-testing family
@@ -489,11 +489,14 @@ likely understate the response they measure.
 
 1. **Figure 1.** Daily citywide mental-health dispatch share with the attention
    index beneath, attention episodes marked (solid), COVID emergency and B-HEARD
-   launch dashed, discovery and confirmation periods shaded. `08_figures.py`.
+   launch dashed, discovery and confirmation periods shaded. `08_figures.py`;
+   tracked copy `docs/figures/fig1_raw_series.png`.
 2. **Figure 2.** Stacked event-study coefficients by relative day, reference day
    −1 dotted, null line drawn, 95% intervals; both primary outcomes.
+   `docs/figures/fig2_irf_primary.png`; the 14/28/60-day windows in `fig3_windows.png`.
 3. **Figure 3.** Outcome decomposition forest plot across the eight dispatch
    families with falsification outcomes blocked visually — *carries the argument*.
+   `docs/figures/fig4_decomposition.png`.
 4. **Table 1.** The episode list: start, end, peak, registry label, driver label
    with share, stratum, and the frozen-versus-adopted difference. Generated from
    the two episode lists by `ops/paper_table1.py` as `docs/tables/TABLE1_episodes.md`
@@ -501,7 +504,7 @@ likely understate the response they measure.
    identical bytes.
 
 Supplement: randomization histograms per stratum; the calibration certificates;
-the power table; the z-scoring simulation; the basket with every include/exclude
+the power table; the z-scoring simulation (`docs/figures/zscore_simulation.png`); the basket with every include/exclude
 reason; the full dispatch-code list with years of validity (RECORD 7.1); the
 linkage flow (RECORD 6.3); the crosswalk validation (RECORD 12.3); the
 sensitivity grid; the audit register.
