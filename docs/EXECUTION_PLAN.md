@@ -1093,6 +1093,16 @@ Committed and pushed at `0eaf45d`.
   sealed table; every cell resumed from its identity-keyed ledger (2,000, 2,000,
   1,183, 1,194, 62, 62 banked draws verified), so no number depends on the
   restart. The run is now babysat from an active session (Monitor cycles).
+- **13:48:00Z: the process pool was killed by the memory cgroup** (OOM: one of
+  four workers reached 3.9 GB on the pooled stratum's cells; `dmesg` records the
+  kill). The runner's automatic retry (run-log start row 3, 13:48:34Z, four
+  workers again) was stopped by hand at 13:49Z and the run relaunched at
+  13:50:30Z with `PHASE_I_JOBS=2` and the reason (start row 4): parallelism
+  changes no number, every cell being seeded from its own identity and banked in
+  its own ledger. Slower, but within memory. Lesson filed in the handoff: the
+  stop command greps for the worker processes by a bracketed pattern; a grep for
+  the script's own name in a command whose text contains it kills the shell
+  running it (the `pgrep -f` lesson in another form).
 - **The lift (09:2xZ)**: C2 certified at 1,000 (0.054 / 0.8221); §7.4 updated;
   `FREEZE_ACTIVE = False`; the gate run to verify the lifted state found three
   suite checks (S7, S8, X6) selecting the confirmation sample — the suite had
