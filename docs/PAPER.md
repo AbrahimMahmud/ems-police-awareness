@@ -537,15 +537,22 @@ remains valid for.
    2020 with a shift that is negligible in discovery and material in 2021–2024,
    which the spliced sensitivity series addresses; Google Trends returns a
    sample, not a census.
-9. **The freeze was breached four times before it lifted,** each disclosed: two
-   undeclared metadata reads during automated audits, one of which informed a
-   specification decision about the EDPM code, one record-level read of
-   2015–16 coverage statistics made while refuting an audit finding, and a
-   precinct-to-district crosswalk counted over every year. A fourth,
-   declared and logged read of coverage — first and last dates per code and the
-   yearly missing-district rate, no outcome value — produced the coverage
-   sensitivities. None entered a model or a test of the hypothesis; their
-   materiality is for the reader to judge and the record is complete.
+9. **The freeze was breached five times, four before it lifted and one at the
+   lift,** each disclosed: two undeclared metadata reads during automated
+   audits, one of which informed a specification decision about the EDPM code;
+   one record-level read of 2015–16 coverage statistics made while refuting an
+   audit finding; a precinct-to-district crosswalk counted over every year; and,
+   in the gate run made to verify the lifted state before it was committed, three
+   regression checks that had derived their sample from the freeze flag selected
+   the confirmation sample once — one of them fitted the primary specification
+   with and without the B-HEARD covariate on it and printed only the largest
+   difference between the two coefficient vectors, the others a shared-days count
+   and a residual autocorrelation. A separate, declared and logged read of
+   coverage — first and last dates per code and the yearly missing-district rate,
+   no outcome value — produced the coverage sensitivities. No test of the
+   hypothesis was read from any of them and no number from them was kept; their
+   materiality is for the reader to judge and the record is complete
+   (`CONFIRMATION_PLAN.md` §15, `PAPER_MASTER.md` §5.3).
 10. **The episode construct and the test window changed after the original
     freeze**, while blind to outcomes; original wording is preserved and the
     frozen list is committed byte-identical.

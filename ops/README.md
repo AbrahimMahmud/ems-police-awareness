@@ -19,6 +19,9 @@ resume scripts that no longer existed.
     bash ops/coldrun.sh      # after rebuild: run_all twice from cold (definition in
                              # the script header) and compare the two manifests
     bash ops/phase_i.sh      # after the lift commit only: the sealed one-shot run
+    PHASE_I_RESUME_REASON="why" bash ops/phase_i.sh   # relaunch after a container restart: the reason is
+                                                    # a second real start's --overwrite-sealed-result and is
+                                                    # written into the run log and every row of the sealed table
                              # (30, resumable per cell) then its mechanical reading
                              # (34 -> data/reference/confirmatory_reading.csv)
 

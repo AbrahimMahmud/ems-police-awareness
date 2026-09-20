@@ -966,6 +966,8 @@ def s_third_pass_record_consistency():
     if "| 3 | Test window: days 0–5 → days 0–7, joint | no (§14) |" not in plan:
         problems.append("summary row 3 does not mark the joint days 0-7 window as decided after discovery (§14)")
     paper = (PROJECT_ROOT / "docs" / "PAPER.md").read_text()
+    if "breached four times" in paper or "Four freeze incidents" in master:
+        problems.append("the paper or the master still counts four freeze incidents; the record has five (F5 at the lift)")
     if "No COVID" in note or "No COVID" in master or "free of both COVID" in paper:
         problems.append("C1 is still described as having no COVID exposure (its 2021 block is inside the pandemic)")
     if "2015-07-01 → 2016-12-31 and 2021-01-01 → 2021-05-31" not in master:
