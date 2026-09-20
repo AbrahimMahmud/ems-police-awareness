@@ -141,7 +141,7 @@ ax.set_xticks(x, [wlabel[w] for w in wn["window"]])
 ax.set_ylabel("Effect on narrow mental-health call share")
 ax.set_xlabel("Awareness window (days before outcome)")
 ax.legend(frameon=False, fontsize=9)
-ax.set_title("Early-week decline in mental-health call share after awareness\n"
+ax.set_title("Narrow mental-health call share by awareness window, discovery period\n"
              "(windows correlate ρ≈0.8; both views shown; 95% CI, date-clustered)")
 save(fig, "fig3_windows")
 
@@ -172,7 +172,7 @@ for y_pos, (col, label) in zip(ys, order):
                     fontsize=8, color=color)
 ax.set_yticks(ys, [label for _, label in order])
 ax.set_xlabel("Effect of awareness (days 3–5 window) on call-type share")
-ax.set_title("The decline is specific to police-adjacent mental-health calls\n"
+ax.set_title("Outcome decomposition, days 3–5 window: effect of awareness by call type\n"
              "(each outcome estimated separately; 95% CI, date-clustered)")
 save(fig, "fig4_decomposition")
 

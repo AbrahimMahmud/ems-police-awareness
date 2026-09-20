@@ -1103,6 +1103,23 @@ Committed and pushed at `0eaf45d`.
   stop command greps for the worker processes by a bracketed pattern; a grep for
   the script's own name in a command whose text contains it kills the shell
   running it (the `pgrep -f` lesson in another form).
+- **CP3, blind half (wf_f6cc235c, 15:24–16:35Z)**: five finders on the parts of
+  the manuscript that do not depend on the confirmatory result, three-lens
+  refuters, a critic; 38 raw, 9 confirmed (all in PAPER.md's account of the
+  record: the Methods counted three freeze breaches and said none entered a model;
+  Limitation 10 called the test-window change blind; the anchor-shift null was
+  described as a rigid shift and the two schemes as identical on one block; the
+  calibration paragraph said "the full estimator" was certified; the family and
+  the Introduction called everything pre-specified without the §14 exceptions), 8
+  critic items (fig3/fig4 titles asserting a decline the discovery result does
+  not show; Figure 1–3 captions describing other figures; the decomposition's
+  dimensions misstated; heterogeneity called pre-specified and announced as
+  reported; RECORD 6.2 and reference 13 resting on unread sources; six references
+  uncited; the main text over the venue's word budget). Every item but the word
+  budget fixed in PAPER.md and 08_figures.py (titles neutralised, tracked
+  figures refreshed) with the gate clean; the word budget (about 6,200 words
+  before the references, Methods about 3,200) is left for the author's editorial
+  pass after the Results and Discussion are written.
 - **15:23:54Z: relaunched with three workers** (start row 5) while the run is on
   C2's cells: two workers held 1.9 and 2.6 GB with 9.7 GB free, and at two
   workers the remaining C2 and pooled cells projected to more than twenty hours.

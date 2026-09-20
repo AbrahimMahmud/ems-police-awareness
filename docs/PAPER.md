@@ -31,7 +31,8 @@ arrested or killed to the communities that watch, read and hear about them. A bo
 of population research links exposure to police violence with worse self-reported
 mental health, higher psychological distress and higher psychiatric service use,
 concentrated among Black Americans and in the neighbourhoods policed most
-intensively.¹⁻⁴ The exposure in that literature is almost always an *incident* —
+intensively,¹⁻⁴ and with worse school outcomes for the young people who live
+there.¹⁴ ¹⁵ The exposure in that literature is almost always an *incident* —
 a killing in the respondent's state in the preceding months, a policing rate in the
 respondent's neighbourhood — and the outcome is almost always measured after a
 person has already sought care.
@@ -49,12 +50,17 @@ thirteen cities after the murder of George Floyd while gunshots detected by
 acoustic sensors rose, and attributed the gap between that response and the
 smaller responses to lower-profile killings to salience and media attention.⁶
 Attention, not incidence, is the mechanism those results point at, and neither
-study measured it.
+study measured it. Attention has been measured on its own terms — Wikipedia
+pageviews for earlier victims of police violence surged collectively after the
+murder of George Floyd⁹ — but not, to our knowledge, carried to a health outcome
+at the resolution of a day.
 
 The closest quantified antecedent on the health side is Das and colleagues, who
 found depression-related emergency department visits among African Americans
 rose by about 11% in the month of a police killing of an unarmed African American
-and the three months following, across 75 counties.⁷ Their design, like every
+and the three months following, across 75 counties⁷ — a class of finding whose
+sensitivity to how victims' armed status is coded has since been contested.⁸ Their
+design, like every
 administrative-outcome study we know of, works at the county-month. It therefore
 cannot say whether the response peaks on the first day or the twentieth, whether
 it is a sustained shift or a dip that rebounds, or whether what changed was
@@ -82,8 +88,12 @@ sample was examined, predicted a decline; the test is two-sided, so a rise is a
 rejection of the null in the direction opposite to prediction and is reported as
 such. The design splits the decade into an exploratory period, examined freely,
 and two sealed confirmatory periods on which every specification, hypothesis,
-sensitivity and interpretation rule was written down before any outcome value was
-seen.
+sensitivity and interpretation rule was written down before any confirmation-period
+outcome value was seen — with the exceptions the record numbers and this paper
+discloses: the second primary outcome and the joint first-week statistic were
+adopted after discovery results had been seen, and one code in the primary
+outcome's family was retained on the strength of confirmation-period counts read
+in a disclosed breach of the freeze (Methods, Limitations).
 
 ---
 
@@ -112,9 +122,15 @@ the calibration precondition, the sensitivity battery, the multiple-testing fami
 and the rules for reading every possible result were committed to the repository
 in dated documents before the freeze was lifted (`docs/CONFIRMATION_PLAN.md`,
 `docs/PRE_ANALYSIS_NOTE.md`); every deviation from the originally frozen text is
-listed there and summarised below. Three occasions on which confirmation-period
-outcome data were touched before the freeze lifted are disclosed in *Limitations*
-and in the plan; none entered a model or a test of the hypothesis.
+listed there and summarised below. Five occasions on which confirmation-period
+outcome data were touched — four before the freeze lifted and one in the gate run
+that verified the lifted state — are disclosed in *Limitations* and in the plan.
+Two of them shaped the analysis: the EDPM code's membership of the primary
+outcome's family was retained on confirmation-period precinct counts read in one
+of them, and the district weights behind the B-HEARD covariate were counted from
+confirmation-period dispatches in another; one fitted the primary specification
+on the confirmation sample once and printed only the largest difference between
+two coefficient vectors. No test of the hypothesis was read from any of them.
 
 ### Setting
 
@@ -149,14 +165,15 @@ a sample rescaled to each request window; the stitching diagnostics are committe
 
 **Demographics.** American Community Survey 2015–2019 five-year estimates by
 community district (New York City Department of City Planning), used only to
-describe the setting and to classify districts for the pre-specified heterogeneity
-analysis.
+describe the setting and to classify districts for an exploratory heterogeneity
+analysis by racial composition (not pre-specified; its hypothesis was formed from
+discovery results).
 
 **B-HEARD adoption.** The precinct-by-precinct rollout dates of New York City's
 Behavioral Health Emergency Assistance Response Division, which from 1 June 2021
 diverts some mental-health 911 calls from a police response, compiled from
 Mayor's Office announcements and validated against the Independent Budget Office's
-2026 precinct-level report (31 precincts; adoption dates carried as an earliest
+2026 precinct-level report¹² (31 precincts; adoption dates carried as an earliest
 and a latest bound because 17 of 31 rest on low-confidence evidence), mapped to
 community districts through a crosswalk built from the dispatch data's own
 precinct and district fields.
@@ -263,22 +280,28 @@ inference: the episode start dates are relocated to placebo dates that preserve
 the real episodes' spacing, the estimator is re-run, and the p-value is
 (1 + *k*)/(1 + *n*) where *k* is the number of *n* = 2,000 placebo statistics at
 least as large as the observed one. Where a stratum is a single contiguous
-calendar block (discovery, C2) the whole sequence is shifted by one uniformly
-drawn anchor; where it is two blocks (C1) one circular shift is drawn within each
-block so that the number of episodes per block is preserved on every draw. On a
-single block the two schemes are identical. The asymptotic joint-Wald p-value is
+calendar block (discovery, C2) one anchor is drawn uniformly and the real
+episodes' inter-episode gaps are laid down from it in a random order, so the
+multiset of gaps — and with it the clustering — is preserved on every draw while
+their sequence is not; where a stratum is two blocks (C1) one circular shift is
+drawn within each block so that the number of episodes per block is preserved on
+every draw. The two schemes are differently constructed nulls, each certified on
+its own geometry. The asymptotic joint-Wald p-value is
 reported beside the randomization p-value and never instead of it, because on
 these data formula-based inference has proved anti-conservative. The run draws
 exactly the pre-specified 2,000 placebos and writes its result to a tracked
 file once.
 
 **Calibration precondition.** Before any p-value is reported for a stratum, the
-full estimator and randomization procedure is run on 1,000 synthetic panels (200
-for the descriptive pooled sample) built
-to contain no effect but carrying the real panel's serial dependence, district
-levels, day-of-week pattern and a citywide day shock, on that stratum's own
+share-arm estimator (without the B-HEARD covariate) and the randomization
+procedure are run, at 200 placebo draws per simulation, on 1,000 synthetic panels
+(200 for the descriptive pooled sample) built to contain no effect but carrying
+the serial dependence, district levels, day-of-week pattern and citywide day
+shock measured on the discovery rows of the real panel, on that stratum's own
 episode geometry and draw scheme — separately for C1, C2 and the pooled sample,
-whose three-window geometry is its own null. The stratum's p-values are reported only if
+whose three-window geometry is its own null. The count arm, the narrow
+mental-health outcome, the covariate and the sealed run's 2,000-draw resolution
+are not separately certified; the plan states this as a limitation. The stratum's p-values are reported only if
 the empirical rejection rate at α = 0.05 lies inside its binomial band and the
 p-values are uniform against the exact discrete lattice of (1 + *k*)/(1 + *n*)
 by a Kolmogorov–Smirnov test with a simulated null. The confirmatory script
@@ -289,9 +312,11 @@ randomization p-values flagged uncertified and excluded from the family
 decision; its primary inference is then the asymptotic p, labelled, and a
 rejection on it cannot count as confirmation.
 
-**Multiple testing.** The pre-specified primary family is two outcomes (EDP
-share, narrow mental-health share) × two arms (share, count) × two strata (C1,
-C2) = eight tests, controlled by Benjamini–Hochberg at *q* = 0.05. The pooled
+**Multiple testing.** The primary family — fixed before the freeze lifted, though
+its second outcome and its joint statistic were adopted after discovery results
+had been seen (Deviations) — is two outcomes (EDP share, narrow mental-health
+share) × two arms (share, count) × two strata (C1, C2) = eight tests, controlled
+by Benjamini–Hochberg at *q* = 0.05. The pooled
 estimate (a re-description of the same eight), the sensitivities (robustness
 readings of tests already in the family), the B-HEARD interaction (secondary,
 asymptotic p-value only) and the falsification outcomes are outside the family,
@@ -361,11 +386,14 @@ hash seed the byte-reproducible pipeline requires, and writes each cell's
 day-by-day coefficient path so a rejection without a consistent direction can be
 shown without a second read.
 
-**Exploratory analyses.** Discovery-period estimates, an outcome decomposition
-across eight dispatch families and three post-episode windows (65 tests under a
-Bonferroni threshold), heterogeneity by district racial composition, and a
-distributed-lag specification are reported as exploratory and are not tests of
-the hypothesis.
+**Exploratory analyses.** Discovery-period estimates and an outcome
+decomposition across thirteen outcomes in four dispatch families and five
+three-day windows (65 tests under a Bonferroni threshold) are reported as
+exploratory and are not tests of the hypothesis. A heterogeneity analysis by
+district racial composition, whose hypothesis was formed from discovery results,
+and a distributed-lag specification of the continuous attention index were also
+estimated on the discovery period; their tables are in the repository and, apart
+from the impulse-response figure, they are not reported here.
 
 **Software and reproducibility.** Python 3.11 with pyfixest; every table and
 figure regenerates from the committed repository by one driver script that
@@ -377,8 +405,13 @@ artifact.
 
 Disclosed in full, with dates and original wording, in `docs/CONFIRMATION_PLAN.md`.
 The material ones: the episode construct changed from a regime rule to a shock
-rule with a within-year threshold (blind to outcomes); the test window moved from
-days 0–5 to days 0–7 when the estimator was rebuilt; the attention index lost its
+rule with a within-year threshold (blind to outcomes); the frozen one-sided test
+of the EDP share on days 0–5 became a two-sided joint statistic on days 0–7 with
+a second primary outcome, the narrow mental-health share — both adopted after
+discovery-period results had been seen and therefore not blind, which the plan
+records and discounts (its §14); the stratification into C1 and C2, the eight-test
+family, the both-arms rule and the B-HEARD covariate in every specification were
+decided blind before the lift; the attention index lost its
 Twitter component (undocumented collection, not reproducible) and its New York
 Trends component (censored); the randomization null on C1 was redefined twice,
 finally as a within-block circular shift, because the frozen scheme is undefined
@@ -461,8 +494,9 @@ police-related 911 calls in Milwaukee's Black neighbourhoods after one publicise
 beating;⁵ Ang and colleagues found 911 call volume falling by roughly a quarter
 across thirteen cities after the murder of George Floyd, with comparable declines
 across majority-White, majority-Black and majority-Hispanic neighbourhoods, and
-attributed the size of that response to salience.⁶ Our design speaks to the same
-channel — whether publicised police violence changes the decision to summon
+attributed the size of that response to salience.⁶ Outside policing, the use of crisis services after a publicised mass shooting
+has been studied with a comparable event-study design.¹⁰ Our design speaks to the
+same channel — whether publicised police violence changes the decision to summon
 help — but at the day rather than the month, with the attention that those
 authors invoke as the mechanism measured directly, and with dispatch codes that
 should not respond to news (cardiac, asthma) carried as falsification outcomes
@@ -536,7 +570,7 @@ remains valid for.
    1 July 2015; the `agent=user` definition changed non-retroactively in April
    2020 with a shift that is negligible in discovery and material in 2021–2024,
    which the spliced sensitivity series addresses; Google Trends returns a
-   sample, not a census.
+   sample, not a census, and its reliability across studies is itself contested.¹³
 9. **The freeze was breached five times, four before it lifted and one at the
    lift,** each disclosed: two undeclared metadata reads during automated
    audits, one of which informed a specification decision about the EDPM code;
@@ -553,9 +587,11 @@ remains valid for.
    hypothesis was read from any of them and no number from them was kept; their
    materiality is for the reader to judge and the record is complete
    (`CONFIRMATION_PLAN.md` §15, `PAPER_MASTER.md` §5.3).
-10. **The episode construct and the test window changed after the original
-    freeze**, while blind to outcomes; original wording is preserved and the
-    frozen list is committed byte-identical.
+10. **The episode construct changed after the original freeze** while blind to
+    outcomes; **the test window and the second primary outcome changed after
+    discovery results had been seen** and are not blind — the plan marks them so
+    and discounts them (its §14). Original wording is preserved and the frozen
+    list is committed byte-identical.
 11. **Generalisability.** New York City's density, its unified EMS system and the
     B-HEARD programme are distinctive; the estimates describe this city.
 
@@ -567,16 +603,18 @@ likely understate the response they measure.
 
 ## Display items
 
-1. **Figure 1.** Daily citywide mental-health dispatch share with the attention
-   index beneath, attention episodes marked (solid), COVID emergency and B-HEARD
-   launch dashed, discovery and confirmation periods shaded. `08_figures.py`;
-   tracked copy `docs/figures/fig1_raw_series.png`.
-2. **Figure 2.** Stacked event-study coefficients by relative day, reference day
-   −1 dotted, null line drawn, 95% intervals; both primary outcomes.
-   `docs/figures/fig2_irf_primary.png`; the 14/28/60-day windows in `fig3_windows.png`.
-3. **Figure 3.** Outcome decomposition forest plot across the eight dispatch
-   families with falsification outcomes blocked visually — *carries the argument*.
-   `docs/figures/fig4_decomposition.png`.
+1. **Figure 1.** Daily citywide narrow mental-health dispatch share with the
+   attention index beneath over the discovery period (2017–2020), attention
+   episodes shaded and the COVID emergency marked. `08_figures.py`; tracked copy
+   `docs/figures/fig1_raw_series.png`.
+2. **Figure 2.** Impulse response of the narrow mental-health share to the
+   continuous attention index by relative day, leads shown as a pre-trend check,
+   95% intervals (distributed-lag specification, exploratory; discovery period).
+   `docs/figures/fig2_irf_primary.png`. `fig3_windows.png` shows the same share by
+   three-day awareness window, each window entered alone and all jointly.
+3. **Figure 3.** Outcome decomposition: the days 3–5 window's coefficient for
+   each of seven dispatch shares, falsification outcomes in grey (discovery
+   period, each outcome estimated separately). `docs/figures/fig4_decomposition.png`.
 4. **Table 1.** The episode list: start, end, peak, registry label, driver label
    with share, stratum, and the frozen-versus-adopted difference. Generated from
    the two episode lists by `ops/paper_table1.py` as `docs/tables/TABLE1_episodes.md`
@@ -597,7 +635,7 @@ sensitivity grid; the audit register.
 |---|---|---|
 | RECORD 1.1–1.3 | Data type, database name, geography, timeframe, linkage in title and abstract | Title; Abstract (names NYC EMS Incident Dispatch Data, New York City, 2015–2024, linkage to community districts and to the attention index) |
 | RECORD 6.1 | Codes/algorithms used to identify the population | Methods, *Outcome*: the EDP family and the narrow mental-health family, code by code |
-| RECORD 6.2 | Validation of those codes | Kang, Lu & Pang (2026, *Psychiatric Services*) classify mental-health EMS calls on this dataset; we differ by disaggregating call families and by handling the mid-2018 EDPC recode explicitly |
+| RECORD 6.2 | Validation of those codes | No external validation of the dispatch codes exists yet: Kang, Lu & Pang (2026, *Psychiatric Services*)¹¹ work on the same dataset, and a comparison of their classification with ours (which disaggregates call families and handles the mid-2018 EDPC recode explicitly) is pending |
 | RECORD 6.3 | Linkage flow | Supplement figure: dispatch → district; precinct → district crosswalk |
 | RECORD 7.1 | Complete code list | Supplement table: every code, family, first and last date |
 | RECORD 12.1 | Data cleaning | Methods, *Outcome*; disposition filter (finding O1) in the plan |
@@ -623,6 +661,6 @@ sensitivity grid; the audit register.
 10. Weitzel KJ, Chew RF, Miller AB, Oppenheimer CW, Lowe A, Yaros A. The use of crisis services following the mass school shooting in Uvalde, Texas: quasi-experimental event study. *JMIR Public Health Surveill*. 2023;9:e42811.
 11. Kang, Lu, Pang. An EMS-based crisis response model for mental health-related EMS calls: a quasi-experimental study. *Psychiatr Serv*. 2026. doi:10.1176/appi.ps.20250528.
 12. New York City Independent Budget Office. *B-HEARD: a look at precinct level data*. 2026.
-13. Hölzl, Keusch, Sajons. [Google Trends reliability across 360 studies.] *Soc Sci Res*. 2025;126:103099.
+13. Hölzl, Keusch, Sajons. [Systematic review of Google Trends use across 360 studies; title to be confirmed against the source before submission.] *Soc Sci Res*. 2025;126:103099.
 14. Ang D. The effects of police violence on inner-city students. *Q J Econ*. 2021;136(1):115-168.
 15. Legewie J, Fagan J. Aggressive policing and the educational performance of minority youth. *Am Sociol Rev*. 2019;84(2):220-247.
