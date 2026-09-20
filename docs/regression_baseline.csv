@@ -1,7 +1,7 @@
 check,findings,description,state,detail
 T.anchor_monthly,"X1,T4,T5,L4","Trends anchor rescales all days, not just 1-7",PASS,within-month step (SD units): trends_us 0.023 — worst 0.023
 T.title_agg_no_trend,T12,title aggregation is not measuring accumulation,PASS,"sum vs max: mean |diff| 0.048 SD, drift 0.061 SD (+0.011 early, +0.071 late)"
-T.realised_coverage,T7,register asserts no span the data lacks,PASS,14 registered artifacts; no asserted span exceeds the realised one
+T.realised_coverage,T7,register asserts no span the data lacks,PASS,36 registered artifacts; no asserted span exceeds the realised one
 X.csv_reproducible,X15,derived weights round-trip exactly,PASS,"w_cd_calls_from_precinct is stored at 12 dp and equals the recomputation exactly, so a re-run is byte-identical"
 X.no_stale_attribution,X7,DATA_AUDIT no longer misattributes 378->630,PASS,"the 378/630 comparison carries its correction, including the 377 counterfactual that shows the component moved one day"
 T.wiki_fetch_complete,T15,no basket article lost a title to a failed fetch,PASS,"109 articles, 474 titles offered, 2 with no data, 0 failed"
@@ -9,11 +9,11 @@ T.no_redirect_candidates,T18,no basket candidate is a redirect,PASS,"511 candida
 T.exclusion_reasons_true,"N1,N3",no basket exclusion states a reason the scope file contradicts,PASS,"16 'no date' exclusion(s), all backed by an empty scope date; 0 percent-encoded keys; 0 scope row(s) not among the decided candidates"
 T.scope_covers_candidates,N2,every basket candidate was actually asked about,PASS,all 174 candidates carry a scope row; 0 resolved to no Wikidata item (a recorded absence)
 T.basket_is_police_violence,B1,every basket article has evidence police were the actor,PASS,all 109 published articles classified for the 'strict' basket; 109 rest on a police-action category or the MPV registry; 0 anti-police
-D.edp_family_justified,O3,the EDP grouping does not rest on a justification known to be false,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
-T.trends_precision_stable,T6,the live Trends component keeps its resolution over the decade,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
-T.spliced_arm_prebreak_identical,L7,the spliced Wikipedia arm equals the primary before the agent class existed,PASS,baseline row added 2026-09-13; contract state
-T.agent_class_break_bounded,L7,the April 2020 agent-class break is measured and bounded,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
-T.basket_evidence_not_namesake,"T13,B3",no basket article rests on an exact-name registry match alone,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+D.edp_family_justified,O3,the EDP grouping does not rest on a justification known to be false,PASS,"the EDP grouping records that its codes are undocumented and that the 'stable ~125k/yr' justification is false, with the measured range cited rather than re-derived"
+T.trends_precision_stable,T6,the live Trends component keeps its resolution over the decade,PASS,"live Trends component(s) ['trends_us'] keep their resolution: quantization step ratio 0.82x late-to-early, no year more than half zero"
+T.spliced_arm_prebreak_identical,L7,the spliced Wikipedia arm equals the primary before the agent class existed,PASS,"identical on all 1,764 pre-break days; differs on 1,708 of 1,708 post-break days (mean shift +0.0583 SD)"
+T.agent_class_break_bounded,L7,the April 2020 agent-class break is measured and bounded,PASS,agent=automated is exactly 0 before 2020; the break shifts the discovery index by 0.0009 SD and the 2021-2024 index by 0.0856 SD
+T.basket_evidence_not_namesake,"T13,B3",no basket article rests on an exact-name registry match alone,PASS,none of 118 published basket articles rests on a name lookup alone; 3 are established from the article's own lead sentence
 T.basket_country_evidence,B2,no basket article admitted without US evidence,PASS,"all 109 published articles carry US evidence (65 from Wikidata, 109 from a category); 0 carry non-US evidence"
 T.no_duplicate_person,T17,no basket article duplicates another person,PASS,"107 usable articles, none is a title of another"
 S.did_no_shared_days,S7,no district-day is treated and control at once,PASS,"0 district-day(s) appear in two episode windows in the stack 07 builds (24,780 rows, 30 episodes); 07's old construction would have double-counted 28 calendar day(s)"
@@ -34,55 +34,55 @@ S.placebo_count,"S1,E1,L1,X4,D2",placebo draws keep the real episode count,PASS,
 S.joint_test,"S3,R7",statistic sees a dip-then-rebound,PASS,"dip-then-rebound: statistic=1527.3, mean coef=+0.00122 (detected)"
 S.cluster_by_date,S6,"SEs clustered by date, not hetero",PASS,vcov=CRV1
 S.prewindow_truncation,"S5,E4","contested district-days reassigned, not deleted",PASS,0 dup district-days; 30/30 episodes keep day -1; 100% of window days retained
-S.calibration_can_fail,"S4,X3,R3",calibration verdict can fail,PASS,min-n enforced + uniformity test
+S.calibration_can_fail,"S4,X3,R3,RI2",calibration verdict can fail,PASS,MIN_SIMS enforced; lattice KS with a Monte-Carlo null; verdict = enough and rate_ok and uniform_ok
 S.no_stale_calibration,R3,no stale low-n calibration artifact,PASS,"n_sims=200, VERDICT=CALIBRATED"
 S.calibration_on_residual,S8,"synthetic null has this design's dependence, not a harder one",PASS,"ar1_rho=0.0482 matches the residual 0.0482 (gap 0.0000) and not the level 0.1851, which is the S8 defect the null used to carry"
-S.ri_scheme_certified,"P1,P5,RI3,P12,P13",the randomization null used is the one the calibration certifies,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
-S.draw_scheme_total,N5,"every draw scheme is dispatched explicitly, none by fallback",PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
-S.ri_pvalue_form,RI1,randomization p-values use the (1+k)/(1+n) form,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
-S.calibration_writes_stratified,"P5,D1,N4",every calibration output names the stratum it describes,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
-S.estimators_gate_on_calibration,"P7,D1,N6,N10",estimators certify their own null and cannot be downgraded by a cheap run,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+S.ri_scheme_certified,"P1,P5,RI3,P12,P13",the randomization null used is the one the calibration certifies,PASS,"all 4 strata certified on the scheme they require: discovery=anchor_shift@200, C1=circular_within_block_fw7@1000, C2=anchor_shift@200, pooled=circular_within_block_fw7@200"
+S.lift_requires_1000_sims,P11,the freeze lifts only on 1000-sim certificates for every stratum,PASS,"freeze on; certificates discovery=200/CALIBRATED, C1=1000/CALIBRATED, C2=200/CALIBRATED, pooled=200/CALIBRATED; lift requires >= 1000 sims on all three (2 short)"
+D.discovery_scripts_pinned,D8,lifting the freeze cannot move the exploratory scripts onto the sealed sample,PASS,13 scripts pin the discovery window by name; the guard refuses the confirmation sample under the freeze and keeps discovery pinned when lifted
+S.calibration_noise_measured,N11,"every certificate's null takes its noise from the measured panel, never the assumed fallback",PASS,"18 refuses without the panel; 4 certificate(s) carry the panel's noise (matches 19 to 1e-5): discovery(rho=0.0482, mu=0.0856), C1(rho=0.0482, mu=0.0856), C2(rho=0.0482, mu=0.0856), pooled(rho=0.0482, mu=0.0856)"
+S.confirmatory_spec_audit,"P14,P15,P16,P18,P19,P26","the sealed script implements addendum 23 (draws, seal, BH family, asymptotic p, diagnostics, C2-only interaction, the 28/60-day windows and dose arm; docstring matches code)",PASS,real mode fixed to RANDOMIZATION_DRAWS; sealed result tracked; BH over a fixed family; asymptotic p beside every RI p; denominator diagnostics; interaction C2-only; 28/60-day windows and the dose arm estimated; docstring names the six families and the tracked output
+S.confirmatory_reading_rules,"P14,P20,P21,P22,P25",the pre-registered reading of the sealed result is mechanical and reads as its text requires,PASS,"17 planted tables read as the pre-registration requires (23.1–23.4, 19.2, 25, note 9.4); 34 reads only the sealed table and the power table"
+S.draw_scheme_total,N5,"every draw scheme is dispatched explicitly, none by fallback",PASS,randomization_p names every scheme draw_scheme_for can return (['anchor_shift']) and raises on anything else
+S.ri_pvalue_form,RI1,randomization p-values use the (1+k)/(1+n) form,PASS,"one RI p-value implementation, (1+k)/(1+n), called by 17 and 30; no stored p-value is zero"
+S.calibration_writes_stratified,"P5,D1,N4",every calibration output names the stratum it describes,PASS,"every calibration output is named through _strat, which appends the stratum"
+S.estimators_gate_on_calibration,"P7,D1,N6,N10",estimators certify their own null and cannot be downgraded by a cheap run,PASS,"17 and 30 both certify their stratum's null before reporting, and 17 refuses to publish fewer draws than the result on disk"
 S.ppml_wired,"X5,R8",counts/PPML arm actually called,PASS,PPML recovers planted rate change: -0.1446 vs log(0.85)=-0.1625
-S.dose_arm_wired,D6,dose-response arm has a caller and recovers a planted effect,PASS,called by ['17_stacked_event_study.py']; recovers planted dose effect +0.01001 per SD against a planted +0.01000
-S.ledger_identity,"N7,N8",checkpoint ledgers are keyed to their design and quarantined when it differs,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
-S.placebo_relocations_reported,N9,the within-block shift's relocation count reaches the caller,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
-S.confirmatory_uses_certified_machinery,"P8,P9,P10",the sealed script estimates with the certified machinery and its dry run is current,PASS,baseline row added 2026-09-13; contract state
+S.dose_arm_wired,D6,dose-response arm has a caller and recovers a planted effect,PASS,"called by ['17_stacked_event_study.py', '30_confirmatory_run.py']; recovers planted dose effect +0.01001 per SD against a planted +0.01000"
+S.ledger_identity,"N7,N8",checkpoint ledgers are keyed to their design and quarantined when it differs,PASS,"both ledgers open through open_ledger; resume, stale, unverified and corrupt cases behave on a temporary ledger; 18 records failed sims"
+S.placebo_relocations_reported,N9,the within-block shift's relocation count reaches the caller,PASS,randomization_p unpacks and reports the relocation count per run
+S.confirmatory_uses_certified_machinery,"P8,P9,P10",the sealed script estimates with the certified machinery and its dry run is current,PASS,"30 draws through event_study (1 call site(s), windows/ledger/seed passed), defines no machinery of its own; dry run current: 137 rows, 133 OK, at 20 draws on 2 worker(s)"
 D.freeze_not_tautological,D3,freeze guard is not a tautology,PASS,guard is independent
 D.freeze_disjoint,D3,confirmation sample disjoint from discovery,PASS,explicit confirmation window
-D.guard_coverage,"D3,X11,X9",every outcome-artifact reader calls the guard,PASS,all readers of 4 outcome artifacts guarded (5 documented exemptions)
-X.bheard_wired,X6,B-HEARD control is in a model and inert on discovery,PASS,read by ['17_stacked_event_study.py']; exposure max 0 on the active sample; max |coef difference| over 28 coefficients = 0.000e+00
+D.guard_coverage,"D3,X11,X9",every outcome-artifact reader calls the guard,PASS,all readers of 4 outcome artifacts and 1 raw directory guarded by a call (5 documented exemptions)
+X.bheard_wired,"X6,X17",B-HEARD control is in a model and inert on discovery,PASS,"read by ['17_stacked_event_study.py', '30_confirmatory_run.py']; exposure max 0 on the active sample; max |coef difference| over 28 coefficients = 0.000e+00"
 D.soda_guarded,F2,"the source API is guarded, not only the artifacts",PASS,"5 declared producer(s), each with a recorded reason; no other script queries 76xm-jjuj unguarded"
-D.outcome_list_complete,"O1,X11",every processed artifact is classified as outcome or not,PASS,"6 parquet(s) on disk, all classified (4 outcome, 2 not); 0 listed artifact(s) not built yet"
-D.incident_disclosed,"F1,F2,F3,F4",freeze incident stays in the record,PASS,"2 incident(s) recorded and named in the disclosure section, dated: ['F1', 'F2']"
-D.addendum_complete,"E5,E6,F2,P23,P24",pre-registration text untouched and its addendum exists,PASS,"pre-specified text byte-identical (2554 bytes); addendum present (266 lines); 2 finding(s) promising disclosure all named in it ['E6', 'F2']"
+D.outcome_list_complete,"O1,X11",every processed artifact is classified as outcome or not,PASS,"10 file(s) on disk (8 distinct base artifacts), all classified (4 outcome, 4 not); 0 listed artifact(s) not built yet"
+D.incident_disclosed,"F1,F2,F3,F4",every freeze incident stays in the record,PASS,"4 incident(s) recorded and named in the disclosure section, dated: ['F1', 'F2', 'F3', 'F4']"
+D.addendum_complete,"E5,E6,F2,P23,P24",pre-registration text untouched and its addendum exists,PASS,"pre-specified text byte-identical (2554 bytes); addendum present (948 lines); 22 finding(s) promising disclosure all named in it ['O2', 'E6', 'F2', 'P8', 'P10', 'F3', 'P12', 'P13', 'P14', 'O6', 'P17', 'P18', 'F4', 'D8', 'P19', 'P20', 'P21', 'P22', 'P23', 'P24', 'P25', 'P26']"
 D.guard_can_fire,"D3,D4",freeze guard actually rejects things,PASS,guard fires on all 4 rejection cases
-D.declared_access_scoped,O2,"every read of confirmation outcomes is declared, scoped, logged and disclosed",PASS,"1 declared access(es), 1 caller(s), 3 output(s) with exactly the declared columns, each disclosed and logged; guard refuses all 4 self-test cases"
-E.episodes_labelled,"E7,E8","every episode says what drove it, from the treatment series",PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+D.declared_access_scoped,"O2,F3","every read of confirmation outcomes is declared, scoped, logged and disclosed",PASS,"1 declared access(es), 1 caller(s), 3 output(s) with exactly the declared columns, each disclosed and logged; guard refuses all 4 self-test cases"
+E.episodes_labelled,"E7,E8","every episode says what drove it, from the treatment series",PASS,"every episode carries a driver label (strict=74, broad=75); median top-driver share on discovery 37%, 11 of 29 above half"
 E.threshold_stringency,"D5,L5,E6",episode threshold is constant stringency,PASS,stringency 10.1%-10.3% by year (spread 0.2%); all 74 peaks clear their year's cut
 E.no_mega_episode,"E3,D7,E6",no episode exceeds its analysis window,PASS,"74 episodes, span median 3 max 14 (cap 14)"
 E.frozen_list_untouched,D3,frozen episode list unmodified,PASS,byte-identical to HEAD
-E.stratum_windows_fit,P2,every episode's reported statistic fits inside its stratum,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
+E.stratum_windows_fit,P2,every episode's reported statistic fits inside its stratum,PASS,"74 episode(s) across 3 strata, every first week inside its own stratum; 2 carry a truncated tail, counted: ['C1 2021-01-05 loses 10/29', 'C1 2021-05-24 loses 7/29']"
 E.estimators_use_adopted_list,"D3,E6","estimators read the adopted episode list, not the frozen record",PASS,9 estimator script(s) checked; none names confirmation_episodes.csv in code — all route through EPISODE_LIST_PRIMARY (confirmation_episodes_rebuilt.csv)
 E.labels_live_source,"E5,L6,R2",episode labels not from retired Twitter,PASS,0/74 labels match the file-order default (0%); 33 windows left unlabelled
 E.attribution_lookback,E2,attribution lookback >= 60 days,PASS,ATTRIBUTION_LOOKBACK_DAYS=60 (needs >=60)
 O.ems_complete,"O5,O6",EMS extract covers the full source,PASS,"60 pages, last ends 2026-06-30, complete"
 O.panel_exists,O5,panel_cd_day.parquet exists,PASS,present
 O.dropna_groupby,O4,missing-district rows not silently dropped,PASS,dropna=False
-V.artifacts_current,T14,no artifact predates the script that writes it,PASS,"9 artifact(s) match their generating script's code; 5 predate fingerprinting (['S10', 'S12', 'S13', 'S7', 'S8'])"
-V.sources_verified,"X8,X14",every source verified after its last write,PASS,"26 artifacts, all verified after their last write"
-V.no_duplicate_source_ids,"X8,X13","one row per source id, no collisions",PASS,"14 rows, 14 ids, no collisions"
-V.source_id_per_artifact,"P3,P4",a source id never gets repointed at a different artifact,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
-V.claims_reproduce,X14,every claimed number recomputes from its artifact,PASS,49 claims recomputed and found verbatim in the document
-V.claims_cover_exhibits,P6,no number enters a paper table without a claim behind it,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
-V.links_resolve,X14,every endpoint has a dated result,PASS,"15 endpoints, last result recorded"
-X.run_all_stages_declared,"X10,P17,X19",every pipeline stage exists and declares its outputs,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
-M.status_honest,O5,no finding is recorded fixed without a passing check,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
-M.finding_ids_unique,RI4,every finding id addresses exactly one row,PASS,baseline row added 2026-09-13 (check predates the last refresh); contract state
-M.register_sync,O5,register and suite have not drifted apart,PASS,69/77 findings tagged; all 43 blocking covered
-S.lift_requires_1000_sims,P11,the freeze lifts only on 1000-sim certificates for every stratum,PASS,"freeze on; certificates discovery=200/CALIBRATED, C1=200/CALIBRATED, C2=0/absent; lift requires >= 1000 sims on all three (3 short)"
-X.run_all_refresh_guard,X18,a stage that leaves its outputs unrefreshed fails,PASS,run_stage fails a stage whose declared outputs predate its start; a leftover from an earlier run cannot be recorded as this run's product
-S.confirmatory_spec_audit,"P14,P15,P16,P18,P19,P26","the sealed script implements addendum 23 (draws, seal, BH family, asymptotic p, diagnostics, C2-only interaction, the 28/60-day windows and dose arm; docstring matches code)",PASS,real mode fixed to RANDOMIZATION_DRAWS; sealed result tracked; BH over a fixed family; asymptotic p beside every RI p; denominator diagnostics; interaction C2-only; 28/60-day windows and the dose arm estimated; docstring names the six families and the tracked output
-S.calibration_noise_measured,N11,"every certificate's null takes its noise from the measured panel, never the assumed fallback",PASS,"18 refuses without the panel; 4 certificate(s) carry the panel's noise (matches 19 to 1e-5): discovery(rho=0.0482, mu=0.0856), C1(rho=0.0482, mu=0.0856), C2(rho=0.0482, mu=0.0856), pooled(rho=0.0482, mu=0.0856)"
-S.confirmatory_reading_rules,"P14,P20,P21,P22,P25",the pre-registered reading of the sealed result is mechanical and reads as its text requires,PASS,"17 planted tables read as the pre-registration requires (23.1–23.4, 19.2, 25, note 9.4); 34 reads only the sealed table and the power table"
+V.artifacts_current,T14,no artifact predates the script that writes it,PASS,"31 artifact(s) match their generating script's code; 5 predate fingerprinting (['S10', 'S12', 'S13', 'S7', 'S8'])"
+V.sources_verified,"X8,X14,X16",every source verified after its last write,PASS,"30 artifacts, all verified after their last write"
+V.no_duplicate_source_ids,"X8,X13","one row per source id, no collisions",PASS,"36 rows, 36 ids, no collisions"
+V.source_id_per_artifact,"P3,P4",a source id never gets repointed at a different artifact,PASS,36 source_id(s) each name exactly one artifact across 136 current and historical rows
+V.claims_reproduce,X14,every claimed number recomputes from its artifact,PASS,206 claims recomputed and found verbatim in the document
+V.claims_cover_exhibits,P6,no number enters a paper table without a claim behind it,PASS,"every one of 58 numbers in 53 numeric table cells of PAPER_MASTER.md, PAPER.md is reproduced by one of 205 claims, or exempt with a reason (0)"
 V.table1_regenerates,P6,the generated episode table re-renders byte-identical from its artifacts,PASS,"110 table rows re-render byte-identical from confirmation_episodes_rebuilt.csv, the frozen list and stratum_episodes"
-D.discovery_scripts_pinned,D8,lifting the freeze cannot move the exploratory scripts onto the sealed sample,PASS,13 scripts pin the discovery window by name; the guard refuses the confirmation sample under the freeze and keeps discovery pinned when lifted
+V.links_resolve,X14,every endpoint has a dated result,PASS,"15 endpoints, last result recorded"
+X.run_all_stages_declared,"X10,P17,X19",every pipeline stage exists and declares its outputs,PASS,"36 stages; every script exists and every one declares at least one output, so the empty-run guard covers the whole pipeline"
+X.run_all_refresh_guard,X18,a stage that leaves its outputs unrefreshed fails,PASS,run_stage fails a stage whose declared outputs predate its start; a leftover from an earlier run cannot be recorded as this run's product
+M.status_honest,O5,no finding is recorded fixed without a passing check,PASS,124 findings: fixed=124; 124 carry a check
+M.finding_ids_unique,RI4,every finding id addresses exactly one row,PASS,all 124 findings carry a distinct id
+M.register_sync,O5,register and suite have not drifted apart,PASS,124/124 findings tagged; all 78 blocking covered; register and suite agree on every finding

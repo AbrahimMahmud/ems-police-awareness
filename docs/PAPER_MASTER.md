@@ -1633,7 +1633,9 @@ confirmation sample has entered no model and no test of H1; the accesses that
 have touched it are disclosed in §5.3 and §5.1d. Nothing below tests H1 in the sense
 the design reserves that word for; it describes what the explorable half of the
 data looks like once the pipeline is repaired. The randomization p-values use
-**500 draws**, not the 2,000 pre-specified for the confirmatory run.
+the pre-specified **2,000 draws**, the same count the confirmatory run uses; the
+first analytic pass (2026-09-12) used 500, and moving to 2,000 changed each
+p-value only in its third decimal.
 
 ### 8.1 The mental-health share does not move
 
@@ -1642,10 +1644,10 @@ joint test taken over days 0–7.
 
 | outcome | arm | first-week coefficient | randomization p |
 |---|---|---|---|
-| EDP share | OLS on shares | −0.00123 | 0.695 |
-| EDP count | PPML with offset | −0.01084 | 0.519 |
-| Narrow MH share | OLS on shares | −0.00103 | 0.880 |
-| Narrow MH count | PPML with offset | −0.00615 | 0.826 |
+| EDP share | OLS on shares | −0.00123 | 0.697 |
+| EDP count | PPML with offset | −0.01084 | 0.527 |
+| Narrow MH share | OLS on shares | −0.00103 | 0.886 |
+| Narrow MH count | PPML with offset | −0.00615 | 0.822 |
 
 Both arms point the same way — down — and neither comes close to conventional
 significance. **That the two arms agree is worth stating**, because this project

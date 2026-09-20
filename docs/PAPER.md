@@ -373,7 +373,7 @@ MIT COUHES non-human-subjects determination: pending — Abrahim.]**
 
 ## Results
 
-### Discovery period (exploratory) **[numbers re-verify when the 500-draw estimator lands]**
+### Discovery period (exploratory)
 
 *Sample, raw pattern, primary estimates, decomposition, heterogeneity,
 sensitivities — in that order, no interpretation. Drafted from PAPER_MASTER.md
@@ -385,9 +385,9 @@ them. In that window the mean EDP share is 0.0856 and the mean district-day
 carries 66.1 dispatches. Twenty-nine attention episodes begin inside the discovery window.
 
 Stacked over those 29 episodes with day −1 as reference, the first-week
-coefficient on the EDP share is −0.00123 (randomization *p* = 0.695, 500 draws)
-and on the EDP count −0.01084 (*p* = 0.519); on the narrow mental-health share
-−0.00103 (*p* = 0.880) and count −0.00615 (*p* = 0.826). Share and count arms
+coefficient on the EDP share is −0.00123 (randomization *p* = 0.697, 2,000 draws)
+and on the EDP count −0.01084 (*p* = 0.527); on the narrow mental-health share
+−0.00103 (*p* = 0.886) and count −0.00615 (*p* = 0.822). Share and count arms
 agree in sign in every case. The estimates move in the fourth decimal across the
 14-, 28- and 60-day post windows. Read against the minimum effect of interest of
 −0.005, the EDP share estimate is about a quarter of it.
