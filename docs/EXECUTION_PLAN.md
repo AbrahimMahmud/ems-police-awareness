@@ -847,8 +847,11 @@ All must hold **before** `FREEZE_ACTIVE = False`.
 - [x] 17 refuses to report an RI p-value on an uncalibrated null, per stratum,
       and a cheap run cannot overwrite an expensive result *(done, `5fd53f3`;
       `S.estimators_gate_on_calibration`, `S.no_downgrade`)*.
-- [ ] `run_all.py` clean twice from cold; manifest committed; model stages
-      declare their outputs so the empty-run guard is live. *(Guard live and now
+- [x] `run_all.py` clean twice from cold; manifest committed; model stages
+      declare their outputs so the empty-run guard is live. *(Done 2026-09-20
+      04:55Z: two passes of 24 stages, every build and model output byte-identical
+      under the fixed hash seed — X20 — the check stages' reports differing only by
+      timestamp; `outputs/run_manifest.json` committed from pass 2.)* *(Guard live and now
       also fails a stage that leaves its outputs unrefreshed. **Cold is defined**:
       every file under `outputs/tables` that a run_all stage writes is deleted
       first, and `data/processed` is cleared except the raw page cache

@@ -1,24 +1,46 @@
 {
   "git": {
-    "commit": "d096fd7a4e7bbb5db7c6da5c6f364ac74983238e",
+    "commit": "84411f69cd41e03785f565724fb49581dac1a38d",
     "dirty": true,
-    "dirty_files": 7
+    "dirty_files": 9
   },
   "freeze_active": true,
-  "wall_seconds": 20.3,
+  "wall_seconds": 247.5,
   "stages": [
     {
-      "script": "01_build_panel.py",
+      "script": "10d_parse_cd_demographics.py",
+      "args": [],
       "kind": "build",
       "state": "PASS",
       "detail": "",
-      "seconds": 3.4,
+      "seconds": 2.1,
+      "inputs": [],
+      "outputs": [
+        {
+          "path": "data/processed/cd_demographics_clean.parquet",
+          "exists": true,
+          "bytes": 10837,
+          "sha256": "229a114344c6bf496277d78e8618813750b18daf71cd7a73fb1cca54d34a3bfa",
+          "mtime": 1789879901.7973797,
+          "rows": 59
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "01_build_panel.py",
+      "args": [],
+      "kind": "build",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 5.7,
       "inputs": [
         {
           "path": "data/processed/ems_cd_day_calltype.parquet",
           "exists": true,
           "bytes": 7249638,
           "sha256": "6247a7239559f930bb6e1706106ff2020054b126583571f3035f20afa08a95dc",
+          "mtime": 1789879883.3576574,
           "rows": 4876509
         }
       ],
@@ -26,25 +48,73 @@
         {
           "path": "data/processed/panel_cd_day.parquet",
           "exists": true,
-          "bytes": 1721190,
-          "sha256": "368ef577520149caacbb61da51afd12fc587ab024ce976639eff489313641739",
-          "rows": 89857
+          "bytes": 4085140,
+          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
+          "mtime": 1789879907.6496582,
+          "rows": 217356
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "35_coverage_breaks.py",
+      "args": [],
+      "kind": "build",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 1.8,
+      "inputs": [
+        {
+          "path": "data/processed/ems_cd_day_calltype.parquet",
+          "exists": true,
+          "bytes": 7249638,
+          "sha256": "6247a7239559f930bb6e1706106ff2020054b126583571f3035f20afa08a95dc",
+          "mtime": 1789879883.3576574,
+          "rows": 4876509
+        }
+      ],
+      "outputs": [
+        {
+          "path": "data/reference/ems_call_code_span.csv",
+          "exists": true,
+          "bytes": 5913,
+          "sha256": "35c76e96682f189aed8d512937cfa592f005d53e14131bec2e927ff8f7a46e8c",
+          "mtime": 1789879909.2946146,
+          "rows": 206
+        },
+        {
+          "path": "data/reference/ems_missing_district_rate_by_year.csv",
+          "exists": true,
+          "bytes": 179,
+          "sha256": "1dde8fe3fdde0c7dab571b26139548f3bcbaefbb9810c98ae2f9122d3277fa54",
+          "mtime": 1789879909.510086,
+          "rows": 11
+        },
+        {
+          "path": "data/reference/ems_coverage_breaks.csv",
+          "exists": true,
+          "bytes": 933,
+          "sha256": "ca4731402e14683d9d0c456a202de06b261edb9ede261cafb1be26c49ee07b4d",
+          "mtime": 1789879909.520372,
+          "rows": 23
         }
       ],
       "tail": ""
     },
     {
       "script": "12_build_cai.py",
+      "args": [],
       "kind": "build",
       "state": "PASS",
       "detail": "",
-      "seconds": 1.0,
+      "seconds": 1.2,
       "inputs": [
         {
           "path": "data/reference/cai_components_daily.csv",
           "exists": true,
-          "bytes": 249454,
-          "sha256": "dbb89a5aa3380194da98ac3a075131b91014e3a9c649646c317e5a81f11ecfcf",
+          "bytes": 249558,
+          "sha256": "f747bc27b7beada3577bba6eca3e74ff6b8f786002cbdce60adc5a95448537dc",
+          "mtime": 1789288483.4192617,
           "rows": 9232
         },
         {
@@ -52,6 +122,7 @@
           "exists": true,
           "bytes": 264074,
           "sha256": "f18c11eb209350bd115e9c0436065a0984ce6bb1506a90452e66c7df26dd16e6",
+          "mtime": 1789262753.3065774,
           "rows": 7306
         }
       ],
@@ -59,8 +130,9 @@
         {
           "path": "data/processed/cai_daily.parquet",
           "exists": true,
-          "bytes": 199947,
-          "sha256": "a4287b0cd6b7a4508f466cdcc04e6295fa622d36d3eb383903b81275c38d020f",
+          "bytes": 199923,
+          "sha256": "a2b4d9ea6241b20d8fa3944b8cede82c78173edfd2edb9e50eaab60a9c509402",
+          "mtime": 1789879910.3027837,
           "rows": 3653
         }
       ],
@@ -68,16 +140,18 @@
     },
     {
       "script": "02b_build_cai_lags.py",
+      "args": [],
       "kind": "build",
       "state": "PASS",
       "detail": "",
-      "seconds": 0.5,
+      "seconds": 0.7,
       "inputs": [
         {
           "path": "data/processed/cai_daily.parquet",
           "exists": true,
-          "bytes": 199947,
-          "sha256": "a4287b0cd6b7a4508f466cdcc04e6295fa622d36d3eb383903b81275c38d020f",
+          "bytes": 199923,
+          "sha256": "a2b4d9ea6241b20d8fa3944b8cede82c78173edfd2edb9e50eaab60a9c509402",
+          "mtime": 1789879910.3027837,
           "rows": 3653
         }
       ],
@@ -85,25 +159,28 @@
         {
           "path": "data/processed/awareness_lags.parquet",
           "exists": true,
-          "bytes": 2072828,
-          "sha256": "b4af4f930b88bd25977478d543b13a260e575e128c6f8053e7094d37472f9cab",
-          "rows": 1523
+          "bytes": 3183668,
+          "sha256": "8f51b2d8f3d88ea8e5f4f58fb7335bc5679d45bc73e3682f7a73bc95d8d39e0a",
+          "mtime": 1789879911.4696584,
+          "rows": 3684
         }
       ],
       "tail": ""
     },
     {
       "script": "13_extension_episodes.py",
+      "args": [],
       "kind": "build",
       "state": "PASS",
       "detail": "",
-      "seconds": 1.5,
+      "seconds": 2.4,
       "inputs": [
         {
           "path": "data/processed/cai_daily.parquet",
           "exists": true,
-          "bytes": 199947,
-          "sha256": "a4287b0cd6b7a4508f466cdcc04e6295fa622d36d3eb383903b81275c38d020f",
+          "bytes": 199923,
+          "sha256": "a2b4d9ea6241b20d8fa3944b8cede82c78173edfd2edb9e50eaab60a9c509402",
+          "mtime": 1789879910.3027837,
           "rows": 3653
         }
       ],
@@ -111,79 +188,581 @@
         {
           "path": "data/reference/confirmation_episodes_rebuilt.csv",
           "exists": true,
-          "bytes": 4816,
-          "sha256": "2c881993aeb5c65722bac04064f8b2e2c88a0053e1e61b5db55a0f3d89fddf7b",
+          "bytes": 9780,
+          "sha256": "30f1f24059809b12b6b66956ac94e4490ebb2b4523cb1d876ea4a53efd1d93bb",
+          "mtime": 1789879913.8616583,
+          "rows": 74
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "12_build_cai.py",
+      "args": [
+        "--arm",
+        "broad"
+      ],
+      "kind": "build",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 1.2,
+      "inputs": [
+        {
+          "path": "data/reference/cai_components_daily_broad.csv",
+          "exists": true,
+          "bytes": 90102,
+          "sha256": "59a4b562c547597214f66ca46e885da2a5c2f423c3ec4b20e25cbab19e0db38b",
+          "mtime": 1789288501.0119915,
+          "rows": 3472
+        },
+        {
+          "path": "data/reference/cai_trends_daily.csv",
+          "exists": true,
+          "bytes": 264074,
+          "sha256": "f18c11eb209350bd115e9c0436065a0984ce6bb1506a90452e66c7df26dd16e6",
+          "mtime": 1789262753.3065774,
+          "rows": 7306
+        }
+      ],
+      "outputs": [
+        {
+          "path": "data/processed/cai_daily_broad.parquet",
+          "exists": true,
+          "bytes": 199995,
+          "sha256": "2177465413222969debc8ba5ce5bfbcf7f6de82a20a86c3b7f26be62df367c67",
+          "mtime": 1789879914.6296585,
+          "rows": 3653
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "12_build_cai.py",
+      "args": [
+        "--arm",
+        "spliced"
+      ],
+      "kind": "build",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 1.2,
+      "inputs": [
+        {
+          "path": "data/reference/cai_components_daily_spliced.csv",
+          "exists": true,
+          "bytes": 90088,
+          "sha256": "fa5ad36deef3b9400319f4e3770e162c967e3fd3726ffb9efc0dbc9a982b1114",
+          "mtime": 1789288505.4238822,
+          "rows": 3472
+        },
+        {
+          "path": "data/reference/cai_trends_daily.csv",
+          "exists": true,
+          "bytes": 264074,
+          "sha256": "f18c11eb209350bd115e9c0436065a0984ce6bb1506a90452e66c7df26dd16e6",
+          "mtime": 1789262753.3065774,
+          "rows": 7306
+        }
+      ],
+      "outputs": [
+        {
+          "path": "data/processed/cai_daily_spliced.parquet",
+          "exists": true,
+          "bytes": 200139,
+          "sha256": "841490f9a3a198926f7031befdca1bd8c8d0b12d3fefb5cc05b6d6d01459aef2",
+          "mtime": 1789879915.8317912,
+          "rows": 3653
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "13_extension_episodes.py",
+      "args": [
+        "--arm",
+        "broad"
+      ],
+      "kind": "build",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 2.2,
+      "inputs": [
+        {
+          "path": "data/processed/cai_daily_broad.parquet",
+          "exists": true,
+          "bytes": 199995,
+          "sha256": "2177465413222969debc8ba5ce5bfbcf7f6de82a20a86c3b7f26be62df367c67",
+          "mtime": 1789879914.6296585,
+          "rows": 3653
+        }
+      ],
+      "outputs": [
+        {
+          "path": "data/reference/confirmation_episodes_rebuilt_broad.csv",
+          "exists": true,
+          "bytes": 9894,
+          "sha256": "3311b71d7afbd5579a8ec97f244d2a93e3655b1dc7c7ba33d72a24cc6ab5134d",
+          "mtime": 1789879918.5081375,
           "rows": 75
         }
       ],
       "tail": ""
     },
     {
+      "script": "13_extension_episodes.py",
+      "args": [
+        "--arm",
+        "spliced"
+      ],
+      "kind": "build",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 2.1,
+      "inputs": [
+        {
+          "path": "data/processed/cai_daily_spliced.parquet",
+          "exists": true,
+          "bytes": 200139,
+          "sha256": "841490f9a3a198926f7031befdca1bd8c8d0b12d3fefb5cc05b6d6d01459aef2",
+          "mtime": 1789879915.8317912,
+          "rows": 3653
+        }
+      ],
+      "outputs": [
+        {
+          "path": "data/reference/confirmation_episodes_rebuilt_spliced.csv",
+          "exists": true,
+          "bytes": 9766,
+          "sha256": "a6b3f0a8d53a3b0e4206adca7b7076fe5be980ddb2bbd8259d41e47ce68a912c",
+          "mtime": 1789879920.6456585,
+          "rows": 74
+        }
+      ],
+      "tail": ""
+    },
+    {
       "script": "22_pipeline_check.py",
+      "args": [
+        "--stage",
+        "panel",
+        "--stage",
+        "treatment",
+        "--stage",
+        "episodes",
+        "--stage",
+        "bheard"
+      ],
       "kind": "check",
       "state": "PASS",
       "detail": "",
-      "seconds": 0.7,
+      "seconds": 1.4,
       "inputs": [
         {
           "path": "data/processed/panel_cd_day.parquet",
           "exists": true,
-          "bytes": 1721190,
-          "sha256": "368ef577520149caacbb61da51afd12fc587ab024ce976639eff489313641739",
-          "rows": 89857
+          "bytes": 4085140,
+          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
+          "mtime": 1789879907.6496582,
+          "rows": 217356
         }
       ],
-      "outputs": [],
+      "outputs": [
+        {
+          "path": "outputs/tables/pipeline_check.csv",
+          "exists": true,
+          "bytes": 1877,
+          "sha256": "af882e420af9c952fd8000e35aabc67e218ee58c3e7b09d78680179818d34a7e",
+          "mtime": 1789879922.142029,
+          "rows": 27
+        }
+      ],
       "tail": ""
     },
     {
       "script": "20_data_audit.py",
+      "args": [],
       "kind": "check",
       "state": "PASS",
       "detail": "",
-      "seconds": 1.1,
+      "seconds": 1.4,
       "inputs": [],
       "outputs": [
         {
           "path": "outputs/tables/data_audit.csv",
           "exists": true,
-          "bytes": 4036,
-          "sha256": "883fd40533d63455cbe7bf4eeb3095429df4f0b49c1dc47a1e2069230e3e5fe8",
-          "rows": 46
+          "bytes": 3563,
+          "sha256": "a62bb37806d87f22929b85da9069b69eb55ddd3d4fb2ec83a5c5699083a61d3a",
+          "mtime": 1789879923.4846952,
+          "rows": 42
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "17_stacked_event_study.py",
+      "args": [],
+      "kind": "model",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 28.9,
+      "inputs": [
+        {
+          "path": "data/processed/panel_cd_day.parquet",
+          "exists": true,
+          "bytes": 4085140,
+          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
+          "mtime": 1789879907.6496582,
+          "rows": 217356
+        },
+        {
+          "path": "data/reference/confirmation_episodes_rebuilt.csv",
+          "exists": true,
+          "bytes": 9780,
+          "sha256": "30f1f24059809b12b6b66956ac94e4490ebb2b4523cb1d876ea4a53efd1d93bb",
+          "mtime": 1789879913.8616583,
+          "rows": 74
+        }
+      ],
+      "outputs": [
+        {
+          "path": "outputs/tables/event_study_results.csv",
+          "exists": true,
+          "bytes": 1809,
+          "sha256": "ac0828e322763f88dfe599f77ee65a90f24c0ac4df87fc93cb0613a0f9cf3f7b",
+          "mtime": 1789879951.9240155,
+          "rows": 14
+        },
+        {
+          "path": "outputs/tables/event_study_path.csv",
+          "exists": true,
+          "bytes": 3560,
+          "sha256": "1970fd180370cf1dee804378e1ac92b1cdb496008974c415d1c6cf8ee58db78f",
+          "mtime": 1789879951.9254837,
+          "rows": 56
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "03_main_model.py",
+      "args": [],
+      "kind": "model",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 16.0,
+      "inputs": [
+        {
+          "path": "data/processed/panel_cd_day.parquet",
+          "exists": true,
+          "bytes": 4085140,
+          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
+          "mtime": 1789879907.6496582,
+          "rows": 217356
+        }
+      ],
+      "outputs": [
+        {
+          "path": "outputs/tables/irf_main.csv",
+          "exists": true,
+          "bytes": 8905,
+          "sha256": "214d00b28cf3494a98896820c0cadca7ac36a3c0f8e6a742b6522a1b6e667344",
+          "mtime": 1789879964.4594734,
+          "rows": 43
+        },
+        {
+          "path": "outputs/tables/joint_tests.csv",
+          "exists": true,
+          "bytes": 1370,
+          "sha256": "798f36bb04d26c19b9f2382cc65ec966a9531701d9624c43a68a9610a24bdb3c",
+          "mtime": 1789879964.5338204,
+          "rows": 16
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "04_robustness.py",
+      "args": [],
+      "kind": "model",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 26.3,
+      "inputs": [
+        {
+          "path": "data/processed/panel_cd_day.parquet",
+          "exists": true,
+          "bytes": 4085140,
+          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
+          "mtime": 1789879907.6496582,
+          "rows": 217356
+        }
+      ],
+      "outputs": [
+        {
+          "path": "outputs/tables/robustness_counts_permutation.csv",
+          "exists": true,
+          "bytes": 694,
+          "sha256": "fe05d4f4653bc13df2a0c24a9bceca5be3ce8fa54dc22a06afb7f9b203051ca8",
+          "mtime": 1789879994.2544072,
+          "rows": 5
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "05_placebo_and_calls.py",
+      "args": [],
+      "kind": "model",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 70.4,
+      "inputs": [
+        {
+          "path": "data/processed/panel_cd_day.parquet",
+          "exists": true,
+          "bytes": 4085140,
+          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
+          "mtime": 1789879907.6496582,
+          "rows": 217356
+        }
+      ],
+      "outputs": [
+        {
+          "path": "outputs/tables/decomposition_windows.csv",
+          "exists": true,
+          "bytes": 10774,
+          "sha256": "23bda7a0010b37dad34974276b973731fddcb703e94886503895121af2487cc3",
+          "mtime": 1789880064.6496634,
+          "rows": 65
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "06_heterogeneity.py",
+      "args": [],
+      "kind": "model",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 6.8,
+      "inputs": [
+        {
+          "path": "data/processed/panel_cd_day.parquet",
+          "exists": true,
+          "bytes": 4085140,
+          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
+          "mtime": 1789879907.6496582,
+          "rows": 217356
+        }
+      ],
+      "outputs": [
+        {
+          "path": "outputs/tables/heterogeneity_results.csv",
+          "exists": true,
+          "bytes": 2540,
+          "sha256": "3a7aa314afcc10d2140b713561445942e51169a6fdda5cc60c784ca7d0501e0d",
+          "mtime": 1789880071.5303743,
+          "rows": 20
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "07_did_exposure.py",
+      "args": [],
+      "kind": "model",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 4.1,
+      "inputs": [
+        {
+          "path": "data/processed/panel_cd_day.parquet",
+          "exists": true,
+          "bytes": 4085140,
+          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
+          "mtime": 1789879907.6496582,
+          "rows": 217356
+        }
+      ],
+      "outputs": [
+        {
+          "path": "outputs/tables/did_exposure_results.csv",
+          "exists": true,
+          "bytes": 1532,
+          "sha256": "315b7d6675c49dc704f7701b937351c463bdaab4e3f511d5095b7727adc1844c",
+          "mtime": 1789880075.6376638,
+          "rows": 12
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "08_figures.py",
+      "args": [],
+      "kind": "model",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 3.7,
+      "inputs": [
+        {
+          "path": "data/processed/panel_cd_day.parquet",
+          "exists": true,
+          "bytes": 4085140,
+          "sha256": "0c498ae68efd252b20d6b64749c0688eae94c4cc6e67fdd8d5d568e4ff219944",
+          "mtime": 1789879907.6496582,
+          "rows": 217356
+        }
+      ],
+      "outputs": [
+        {
+          "path": "outputs/figures/fig1_raw_series.png",
+          "exists": true,
+          "bytes": 415633,
+          "sha256": "87f8ff24d57e7d42eb7d30e4dd5e3c1f67bd7af0d0f6d6bba78f4c0a2fd882e1",
+          "mtime": 1789880077.873664,
+          "rows": 1660
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "33_antipolice_sensitivity.py",
+      "args": [],
+      "kind": "model",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 0.6,
+      "inputs": [
+        {
+          "path": "data/processed/cai_daily.parquet",
+          "exists": true,
+          "bytes": 199923,
+          "sha256": "a2b4d9ea6241b20d8fa3944b8cede82c78173edfd2edb9e50eaab60a9c509402",
+          "mtime": 1789879910.3027837,
+          "rows": 3653
+        },
+        {
+          "path": "data/reference/wiki_pageviews_by_article.csv",
+          "exists": true,
+          "bytes": 9176854,
+          "sha256": "7cdf66711622c6b34cae0c5a012371e4ef1dbb059e2021ed9ea35d2446bf4b07",
+          "mtime": 1789288483.3752618,
+          "rows": 231503
+        }
+      ],
+      "outputs": [
+        {
+          "path": "outputs/tables/antipolice_sensitivity.csv",
+          "exists": true,
+          "bytes": 1130,
+          "sha256": "5cc8c0d23090566a224f82ed26ee5b987415501434dc691a3905de7744ec1567",
+          "mtime": 1789880080.4997323,
+          "rows": 31
+        }
+      ],
+      "tail": ""
+    },
+    {
+      "script": "25_zscore_simulation.py",
+      "args": [],
+      "kind": "model",
+      "state": "PASS",
+      "detail": "",
+      "seconds": 45.2,
+      "inputs": [
+        {
+          "path": "data/processed/cai_daily.parquet",
+          "exists": true,
+          "bytes": 199923,
+          "sha256": "a2b4d9ea6241b20d8fa3944b8cede82c78173edfd2edb9e50eaab60a9c509402",
+          "mtime": 1789879910.3027837,
+          "rows": 3653
+        },
+        {
+          "path": "data/reference/confirmation_episodes_rebuilt.csv",
+          "exists": true,
+          "bytes": 9780,
+          "sha256": "30f1f24059809b12b6b66956ac94e4490ebb2b4523cb1d876ea4a53efd1d93bb",
+          "mtime": 1789879913.8616583,
+          "rows": 74
+        }
+      ],
+      "outputs": [
+        {
+          "path": "outputs/tables/zscore_simulation.csv",
+          "exists": true,
+          "bytes": 14707,
+          "sha256": "c1a5c1ba783cf3de55b189ec1b1e583e278eec219bc2c4c5b562338a5903f6cd",
+          "mtime": 1789880124.131733,
+          "rows": 56
+        },
+        {
+          "path": "outputs/tables/zscore_simulation_params.csv",
+          "exists": true,
+          "bytes": 1393,
+          "sha256": "8139c8890ce5147df1836d68e80abdaac2923864b43508d61f6d4c40ed801b02",
+          "mtime": 1789880124.1329625,
+          "rows": 20
         }
       ],
       "tail": ""
     },
     {
       "script": "31_verify_sources.py",
+      "args": [
+        "--offline"
+      ],
       "kind": "check",
       "state": "PASS",
       "detail": "",
-      "seconds": 4.2,
+      "seconds": 5.2,
       "inputs": [],
-      "outputs": [],
+      "outputs": [
+        {
+          "path": "data/reference/source_verification_log.csv",
+          "exists": true,
+          "bytes": 2525456,
+          "sha256": "2916179e228581c16551039359d8793156ad309b3ddf4a2e51449f88f158be36",
+          "mtime": 1789880128.3816655,
+          "rows": 20891
+        },
+        {
+          "path": "docs/SOURCE_REGISTER.md",
+          "exists": true,
+          "bytes": 24595,
+          "sha256": "bbcb94f77a97e54c71df3d70bdbbc04445887e515212e3bcca359d5e9dc21d05",
+          "mtime": 1789880130.8979247,
+          "rows": 290
+        }
+      ],
       "tail": ""
     },
     {
       "script": "23_regression_suite.py",
+      "args": [],
       "kind": "check",
       "state": "PASS",
       "detail": "",
-      "seconds": 7.2,
+      "seconds": 15.9,
       "inputs": [],
       "outputs": [
         {
           "path": "outputs/tables/regression_suite.csv",
           "exists": true,
-          "bytes": 6198,
-          "sha256": "94203097aa101ec9fecdf963d5416db3b6645b65a58a79141d582968e890d4a2",
-          "rows": 46
+          "bytes": 16463,
+          "sha256": "49f338ba21eceb1f2df1c4467825d820d57bab76f355f4bdac7191643cf6efd1",
+          "mtime": 1789880146.3024766,
+          "rows": 89
         }
       ],
       "tail": ""
     },
     {
       "script": "22_pipeline_check.py",
+      "args": [
+        "--stage",
+        "outputs"
+      ],
       "kind": "check",
       "state": "PASS",
       "detail": "",
@@ -192,17 +771,27 @@
         {
           "path": "outputs/tables/regression_suite.csv",
           "exists": true,
-          "bytes": 6198,
-          "sha256": "94203097aa101ec9fecdf963d5416db3b6645b65a58a79141d582968e890d4a2",
-          "rows": 46
+          "bytes": 16463,
+          "sha256": "49f338ba21eceb1f2df1c4467825d820d57bab76f355f4bdac7191643cf6efd1",
+          "mtime": 1789880146.3024766,
+          "rows": 89
         }
       ],
-      "outputs": [],
+      "outputs": [
+        {
+          "path": "outputs/tables/pipeline_check.csv",
+          "exists": true,
+          "bytes": 105,
+          "sha256": "fa7cc7c9a378a5b283eb5281850e5c73d7f80bd5e4de7a2c62775cc11ddc8648",
+          "mtime": 1789880147.3201423,
+          "rows": 2
+        }
+      ],
       "tail": ""
     }
   ],
   "summary": {
-    "PASS": 9,
+    "PASS": 24,
     "FAIL": 0,
     "BLOCKED": 0
   }

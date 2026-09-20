@@ -53,3 +53,5 @@ decisions as typed, cited nodes.*
   findings of the one completed finder were acted on; a run on the Opus model is in flight (2026-09-20).
 
 - **2026-09-20 04:18Z** — X20: cold passes differed at the byte level (1e-16 coefficients, 1e-11 SEs) from Python hash randomization; run_all and the runners now fix PYTHONHASHSEED=0 and one BLAS thread; the cold comparison requires identity for build/model outputs and lists the check stages' timestamped reports separately. No reported number changed.
+
+- **2026-09-20 04:39Z** — X21: the manuscript's figures are tracked copies in docs/figures held byte-for-byte to the pipeline output (V.paper_figures_current). Cold identity confirmed at 04:36Z: every build and model output byte-identical across two passes under the fixed seed; the check stages' reports differ only by timestamp.
