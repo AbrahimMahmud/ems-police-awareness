@@ -1103,6 +1103,10 @@ Committed and pushed at `0eaf45d`.
   stop command greps for the worker processes by a bracketed pattern; a grep for
   the script's own name in a command whose text contains it kills the shell
   running it (the `pgrep -f` lesson in another form).
+- **15:23:54Z: relaunched with three workers** (start row 5) while the run is on
+  C2's cells: two workers held 1.9 and 2.6 GB with 9.7 GB free, and at two
+  workers the remaining C2 and pooled cells projected to more than twenty hours.
+  If the pooled cells push a worker past the cgroup again, back to two.
 - **The lift (09:2xZ)**: C2 certified at 1,000 (0.054 / 0.8221); §7.4 updated;
   `FREEZE_ACTIVE = False`; the gate run to verify the lifted state found three
   suite checks (S7, S8, X6) selecting the confirmation sample — the suite had
