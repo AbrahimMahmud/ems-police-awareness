@@ -1,10 +1,9 @@
 # Next actions
 
-1. Cold passes match (COLD IDENTITY OK) → commit `outputs/run_manifest.json` and the registers the cold run rewrites.
-2. C2's 1,000-sim certificate lands → `S.lift_requires_1000_sims` satisfied → PAPER_MASTER §7.4 (all four rows, the
-   "discharged at" sentence) and PAPER.md's calibration prose updated through the claims → gate clean → baseline.
-3. The lift: `config.FREEZE_ACTIVE = False` in one greppable commit (`data/reference/power_analysis_prefreeze.csv` is
-   already tracked); `ops/phase_i.sh` (PYTHONHASHSEED=0; 30 at 2,000 draws, run log; then 34 once).
+1. Phase I is running (started 09:29Z, resumed 10:34Z with a recorded reason): keep the session active until
+   `ops/state/phase_i.done`; relaunch with `PHASE_I_RESUME_REASON` after any container restart.
+2. Commit the sealed table, sidecar, run-log `sealed` row and the reading the moment they exist.
+3. (done 2026-09-20: cold passes byte-identical `eaa7d5d`; C2 at 1,000 `294dd8c`; the lift `4e3dce1` with F5 disclosed.)
 4. `ops/phase_i_tables.py` → PAPER_MASTER §8b and PAPER.md Results/Discussion/Abstract with claims; CP3 audit;
    EXECUTION_PLAN session log; HANDOFF; reconcile this vault and graph with the Mac copies.
 
