@@ -1080,7 +1080,11 @@ def d_discovery_scripts_pinned():
     """
     import ast as _ast
     problems, callers = [], []
-    exempt = {"30_confirmatory_run.py", "freeze_guard.py", "23_regression_suite.py"}
+    # The suite was exempt until 2026-09-20, when the first gate run after the
+    # lift found three of its own checks (S7, S8, X6) deriving their sample from
+    # the flag — incident F5. It is scanned like any other script now; only the
+    # guard selftests on synthetic date frames (where="selftest") are skipped.
+    exempt = {"30_confirmatory_run.py", "freeze_guard.py"}
     for f in sorted(SCRIPTS.glob("*.py")):
         if f.name in exempt:
             continue
@@ -1089,11 +1093,20 @@ def d_discovery_scripts_pinned():
         except SyntaxError as e:
             problems.append(f"{f.name}: does not parse ({e})")
             continue
+        # This check's own body toggles the flag and calls the guard with names it
+        # must refuse; that selftest is not a reader and is skipped by name.
+        own = {id(x) for fn_ in _ast.walk(tree) if isinstance(fn_, _ast.FunctionDef)
+               and fn_.name == "d_discovery_scripts_pinned" for x in _ast.walk(fn_)}
         for n in _ast.walk(tree):
+            if id(n) in own:
+                continue
             if isinstance(n, _ast.Call):
                 fn = n.func
                 name = fn.id if isinstance(fn, _ast.Name) else getattr(fn, "attr", None)
                 if name in ("select_sample", "active_windows"):
+                    if any(kw.arg == "where" and isinstance(kw.value, _ast.Constant)
+                           and kw.value.value == "selftest" for kw in n.keywords):
+                        continue
                     win = None
                     if name == "active_windows" and n.args:
                         win = n.args[0]
@@ -1629,7 +1642,7 @@ def s_calibration_on_residual():
     import freeze_guard as fg
     panel = pd.read_parquet(panel_path)
     panel["incident_date"] = pd.to_datetime(panel["incident_date"])
-    panel = fg.select_sample(panel, where="23_regression_suite:S8")
+    panel = fg.select_sample(panel, where="23_regression_suite:S8", window="discovery")
     s = (panel.dropna(subset=["edp_share"])
          .sort_values(["communitydistrict", "incident_date"]))
 
@@ -2577,9 +2590,11 @@ def s_did_no_shared_days():
     pq = DATA_PROCESSED / "panel_cd_day.parquet"
     if not (f.exists() and pq.exists()):
         return "BLOCKED", "episode list or panel absent"
-    from config import FREEZE_ACTIVE
+    # Discovery episodes only, whatever the flag says (incident F5, 2026-09-20):
+    # the stack this check builds is an exploratory construction and may never be
+    # built on the confirmation episodes.
     ep = pd.read_csv(f, parse_dates=["start"])
-    if FREEZE_ACTIVE and "period" in ep.columns:
+    if "period" in ep.columns:
         ep = ep[ep["period"] == "discovery"]
     starts = sorted(ep["start"].tolist())
 
@@ -2597,7 +2612,7 @@ def s_did_no_shared_days():
     es = importlib.import_module("event_study")
     panel = pd.read_parquet(pq)
     fg = importlib.import_module("freeze_guard")
-    panel = fg.select_sample(panel, where="23_regression_suite:S7")
+    panel = fg.select_sample(panel, where="23_regression_suite:S7", window="discovery")
     stack = es.build_stack(panel, starts, pre=7, post=7)
     if stack.empty:
         return "BLOCKED", "build_stack returned nothing on this panel"
@@ -3567,19 +3582,22 @@ def x_bheard_wired_and_inert():
     fg = importlib.import_module("freeze_guard")
     panel = pd.read_parquet(pq)
     panel["incident_date"] = pd.to_datetime(panel["incident_date"])
-    panel = fg.select_sample(panel, where="23_regression_suite:X6")
+    # Pinned to the discovery window by name (incident F5, 2026-09-20): this check
+    # derived its sample from the flag, so the first gate run after the lift
+    # fitted the primary specification on the confirmation sample with every
+    # episode. It tests inertness ON DISCOVERY and may never read anything else.
+    panel = fg.select_sample(panel, where="23_regression_suite:X6", window="discovery")
     panel = panel[panel["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE].copy()
     panel["dow"] = panel["incident_date"].dt.dayofweek
 
     withb = bh.attach(panel, bound=BHEARD_BOUND_PRIMARY)
     inert, mx = bh.is_inert(withb)
-    from config import FREEZE_ACTIVE
-    if FREEZE_ACTIVE and not inert:
+    if not inert:
         return "FAIL", (f"B-HEARD exposure is non-zero (max {mx:.4g}) inside the "
                         "discovery sample — the crosswalk is wrong")
 
     ep = pd.read_csv(ep_f, parse_dates=["start"])
-    if FREEZE_ACTIVE and "period" in ep.columns:
+    if "period" in ep.columns:
         ep = ep[ep["period"] == "discovery"]
     starts = ep["start"].tolist()
     base = es.build_stack(panel, starts, EVENT_WINDOW_PRE, EVENT_WINDOW_POST)
@@ -3607,7 +3625,7 @@ def x_bheard_wired_and_inert():
         return "FAIL", "no shared coefficients between the two fits"
     diff = float(np.max(np.abs(c0[shared].values - c1[shared].values)))
     return ("PASS" if diff < 1e-10 else "FAIL",
-            f"read by {readers}; exposure max {mx:.4g} on the active sample; "
+            f"read by {readers}; exposure max {mx:.4g} on the discovery sample; "
             f"max |coef difference| over {len(shared)} coefficients = {diff:.3e}")
 
 
@@ -5067,7 +5085,7 @@ CHECKS = [
     ("S.calibration_on_residual", "S8", "synthetic null has this design's dependence, not a harder one", s_calibration_on_residual),
     ("S.ri_scheme_certified", "P1,P5,RI3,P12,P13", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
     ("S.lift_requires_1000_sims", "P11", "the freeze lifts only on 1000-sim certificates for every stratum", s_lift_requires_1000_sims),
-    ("D.discovery_scripts_pinned", "D8", "lifting the freeze cannot move the exploratory scripts onto the sealed sample", d_discovery_scripts_pinned),
+    ("D.discovery_scripts_pinned", "D8,F5", "lifting the freeze cannot move the exploratory scripts, or the suite's own checks, onto the sealed sample", d_discovery_scripts_pinned),
     ("S.calibration_noise_measured", "N11", "every certificate's null takes its noise from the measured panel, never the assumed fallback", s_calibration_noise_measured),
     ("S.confirmatory_spec_audit", "P14,P15,P16,P18,P19,P26,P27,P28,P29,P30,P31,P32,P33,P34,P35,P36,P56,P57", "the sealed script implements addenda 23, 29 and 30 (draws, seal and run log, BH family, asymptotic p, diagnostics on every district-day, C2-only interaction, the 28/60-day windows on the certified geometry, dose arm, geocoding-clean, cancelled-inclusive and no-EDPM cells; sidecar pins; docstring matches code)", s_confirmatory_spec_audit),
     ("S.confirmatory_reading_rules", "P14,P20,P21,P22,P25,P37,P38,P39,P40,P41,P42,P43,P44,P45,P54,P55", "the pre-registered reading of the sealed result is mechanical, sealed, and reads as its text requires (23.1-23.4, 23.1c/d, 19.2, 25, note 9.4)", s_confirmatory_reading_rules),
@@ -5087,7 +5105,7 @@ CHECKS = [
     ("X.bheard_wired", "X6,X17", "B-HEARD control is in a model and inert on discovery", x_bheard_wired_and_inert),
     ("D.soda_guarded", "F2", "the source API is guarded, not only the artifacts", d_soda_source_guarded),
     ("D.outcome_list_complete", "O1,X11", "every processed artifact is classified as outcome or not", d_outcome_list_complete),
-    ("D.incident_disclosed", "F1,F2,F3,F4", "every freeze incident stays in the record", d_incident_disclosed),
+    ("D.incident_disclosed", "F1,F2,F3,F4,F5", "every freeze incident stays in the record", d_incident_disclosed),
     ("D.addendum_complete", "E5,E6,F2,P23,P24", "pre-registration text untouched and its addendum exists", d_addendum_complete),
     ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),
     ("D.declared_access_scoped", "O2,F3", "every read of confirmation outcomes is declared, scoped, logged and disclosed", d_declared_access_scoped),

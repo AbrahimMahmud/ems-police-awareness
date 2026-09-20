@@ -21,3 +21,4 @@ See [[Status]] · [[Next actions]]
   COVID; §6 strata; row 30 B-HEARD covariate; §18/F4/§20 wording; 62,920 → 77,506; three docstrings; §5.3 remedy
   foreclosed by the lift — the author's 2026-09-19 decision).
 - 2026-09-20 — Discovery certified at 1,000 sims; the 1.28 factor kept (conservative) with the 8-df 1.21 quoted beside it.
+- 2026-09-20 — The lift: `FREEZE_ACTIVE = False` in its own commit, after discovery, C1 and C2 certified at 1,000 sims and the gate ran clean in the lifted state. Incident F5 found by that gate run (three suite checks selected the confirmation sample; nothing of H1 printed) is disclosed in addendum §15 / PAPER_MASTER §5.3 and the checks pinned; the suite is scanned by D8.

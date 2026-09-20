@@ -291,6 +291,8 @@ have not been used to choose any specification.
 
 ## 15. Freeze incidents
 
+*F5, found 2026-09-20 09:2xZ at the lift, before the lift commit: the regression suite was exempt from D8's scan (addendum §26), and three of its own checks derived their sample from the flag. The first gate run with `FREEZE_ACTIVE = False` — run to verify the lifted state before committing it — therefore selected the confirmation sample (129,328 district-days) in S.did_no_shared_days (built the event stack on all 74 episodes and printed the number of district-days in two windows: 0), S.calibration_on_residual (computed the residual AR(1) of the EDP share on the confirmation rows and printed it: 0.0622 against the certificate's 0.0482) and X.bheard_wired (fitted the primary event-study specification with and without the B-HEARD covariate on the confirmation sample with all 74 episodes and printed the maximum absolute coefficient difference, 6.117e-05, and the maximum exposure, 1). No coefficient, p-value, direction, outcome mean or share was printed or kept; the sealed run had not started and no reading was made. The three checks are pinned to the discovery window by name, the suite is no longer exempt from D8's scan, and the flag was not committed until the gate ran clean in the lifted state. See PAPER_MASTER §5.3.*
+
 *F4, found 2026-09-13 by the CP2 audit: the precinct–district crosswalk (S14) was built from a SODA server-side count of dispatches per precinct × district pooled over 2015–2024 — a geography weight with no call type and no date, but a read of confirmation-period dispatch counts that no exemption declared. See addendum §23.10 and PAPER_MASTER §5.3.*
 
 **F1** — a citywide annual aggregate of the mental-health call share was read
@@ -1283,7 +1285,9 @@ outcome in view.
 ## What has NOT changed
 
 - Discovery 2017-01-01 → 2020-12-31; confirmation 2015-01-01 → 2016-12-31 and
-  2021-01-01 → 2024-12-31. No confirmation-window outcome has entered any model.
+  2021-01-01 → 2024-12-31. No confirmation-window outcome had entered any model
+  before the lift of 2026-09-20, except as incident F5 records (§15); after it,
+  only the sealed run (§30) and the F5 gate run have.
 - H1's **direction** is still pre-specified: a decline in the days after a
   high-attention episode.
 - Randomization inference is still the primary p-value.

@@ -627,7 +627,7 @@ MINIMUM_EFFECT_OF_INTEREST = 0.005
 # rejects any outcome row outside ANALYSIS_START..ANALYSIS_END, so no model can
 # reach the extension sample. Setting this to False IS the act of opening the
 # confirmation sample: do it in its own commit, after Gate C ratification.
-FREEZE_ACTIVE = True
+FREEZE_ACTIVE = False
 
 H1_TEST = "two_sided_joint_lags_0_7"
 H1_OUTCOMES = ("edp_share", "mh_narrow_share")

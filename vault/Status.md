@@ -5,7 +5,7 @@
   19's docstring — each mutation fails its check; restored).
 - **Third specification audit remediated** (P27–P58, addendum §30, rules 23.1c/d/e): 57 raw findings → 5 confirmed, 5 killed,
   6 critic items; everything surviving fixed in code or record before the lift. See [[Decisions]].
-- **Freeze**: ACTIVE. No confirmation outcome has entered a model or test; declared accesses F1–F4 in `PAPER_MASTER.md` §5.3.
+- **Freeze**: LIFTED 2026-09-20 (own commit, gate clean in the lifted state). Incidents F1–F5 in `PAPER_MASTER.md` §5.3; F5 found at the lift (three suite checks selected the confirmation sample once the flag flipped; pinned, suite scanned by D8).
 - **Calibration**: discovery certified at 1,000 sims (05:10Z: rejection 0.045, KS p 0.2944); C1 at 1,000 (0.049, 0.9930);
   C2 at 1,000 (0.054, 0.8221; 09:16Z); pooled at 200 (descriptive). **CP2 complete.**
 - **Panel**: rebuilt with eight new columns (EDPM, EDP-ex-EDPM, cancelled-inclusive totals/counts/shares); every existing

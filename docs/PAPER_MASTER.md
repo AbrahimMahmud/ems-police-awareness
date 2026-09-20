@@ -1025,10 +1025,29 @@ denominator of the primary share, with no call type and no date — and it is a
 read of confirmation-period dispatch counts that no exemption declared; it is
 listed here for that reason (addendum §23.10, wording corrected in §30).
 
-Materiality for all four is for the supervisor to judge, not us. The gaps are
+**F5 (found 2026-09-20 at the lift, before the lift commit).** The regression
+suite had been exempted from the D8 scan that pins every exploratory reader to
+the discovery window (addendum §26), and three of its own checks derived their
+sample from the flag. The first gate run with `FREEZE_ACTIVE = False` — made to
+verify the lifted state before committing it — selected the confirmation sample
+in three checks: `S.did_no_shared_days` built the event stack on all 74 episodes
+and printed the count of district-days falling in two windows (0);
+`S.calibration_on_residual` computed the residual AR(1) coefficient of the EDP
+share on the confirmation rows and printed it (0.0622, against the certificate's
+0.0482); `X.bheard_wired` fitted the primary event-study specification with and
+without the B-HEARD covariate on the confirmation sample with every episode and
+printed the maximum absolute difference between the two coefficient vectors
+(6.117e-05) and the maximum exposure (1). No coefficient, p-value, direction,
+outcome mean or share was printed or stored; the sealed run had not started and
+no reading was made. The checks are pinned to the discovery window by name, the
+suite is scanned like every other script, and the flag was committed only after
+the gate ran clean in the lifted state (addendum §15).
+
+Materiality for all five is for the supervisor to judge, not us. The gaps are
 closed in code where code can close them: outcome artifacts outside the guard's
-coverage (F1), the source API that no artifact guard can see (F2), and a
-declared-access path with a log for the reads that must happen (F3).
+coverage (F1), the source API that no artifact guard can see (F2), a
+declared-access path with a log for the reads that must happen (F3), and the
+suite's own readers pinned by name and scanned (F5).
 
 **The posture taken from 2026-09-11, and it is reversible.** Three outcome-side
 questions remain open — the disposition filter (O1), two structural breaks that
@@ -1114,8 +1133,8 @@ a pattern found by looking.
 | | Window | Status |
 |---|---|---|
 | Discovery | 2017-01-01 → 2020-12-31 | explored |
-| Confirmation A (stratum C1, "clean") | 2015-07-01 → 2016-12-31 and 2021-01-01 → 2021-05-31 | **no outcome has entered a model or test** (accesses disclosed in §5.3 and §5.1d) — before the B-HEARD launch; the 2021 block is inside the pandemic |
-| Confirmation B (stratum C2, "exposed") | 2021-06-01 → 2024-12-31 | **no outcome has entered a model or test** (accesses disclosed in §5.3 and §5.1d) — B-HEARD control required |
+| Confirmation A (stratum C1, "clean") | 2015-07-01 → 2016-12-31 and 2021-01-01 → 2021-05-31 | **sealed until the lift of 2026-09-20**; opened to the one sealed run (§8b) and, for one gate run at the lift, to three regression checks (F5, §5.3); other accesses disclosed in §5.3 and §5.1d — before the B-HEARD launch; the 2021 block is inside the pandemic |
+| Confirmation B (stratum C2, "exposed") | 2021-06-01 → 2024-12-31 | **sealed until the lift of 2026-09-20**; opened to the one sealed run (§8b) and, for one gate run, to the same three checks (F5); other accesses disclosed in §5.3 and §5.1d — B-HEARD control required |
 
 The strata are `config.CONFIRMATION_ANALYSIS_WINDOWS`, the one definition the
 calibration, the power analysis and the sealed script read (the 181 days from
@@ -1513,11 +1532,11 @@ not what was. A register full of prescriptions reads like a register full of
 completions, and whether anything had actually been fixed was recoverable only by
 reading the check suite and matching tags by eye.
 
-Each of the 158 findings now carries a status — `fixed`, `open`, or `unverified` —
+Each of the 159 findings now carries a status — `fixed`, `open`, or `unverified` —
 and the check that guards it asserts one direction only: **nothing may say
 `fixed` while a check tagged to it is not passing.** `unverified` means nothing
 checks it, which is a statement of work remaining and not a synonym for fine.
-Current state: **158 fixed, 0 open, 0 unverified**. P1, P5, RI3, P12 and P13 closed on 2026-09-13 at 20:56Z, when C1's 1,000-simulation certificate under the renamed scheme `circular_within_block_fw7` landed and `S.ri_scheme_certified` passed with every stratum certified under the scheme its geometry requires (§7.4). They had closed once that morning on the old scheme's certificates and reopened when the CP2 audit found the drawer had been snapping C1's two edge episodes onto consecutive placebo days (addendum §24); the corrected drawer's C1 null then failed uniformity at 200 simulations and calibrated at 1,000, so the addendum-§25 fallback written between those two verdicts is not invoked. A failing check is not evidence, and neither is a certificate for a null nobody draws from any more.
+Current state: **159 fixed, 0 open, 0 unverified**. P1, P5, RI3, P12 and P13 closed on 2026-09-13 at 20:56Z, when C1's 1,000-simulation certificate under the renamed scheme `circular_within_block_fw7` landed and `S.ri_scheme_certified` passed with every stratum certified under the scheme its geometry requires (§7.4). They had closed once that morning on the old scheme's certificates and reopened when the CP2 audit found the drawer had been snapping C1's two edge episodes onto consecutive placebo days (addendum §24); the corrected drawer's C1 null then failed uniformity at 200 simulations and calibrated at 1,000, so the addendum-§25 fallback written between those two verdicts is not invoked. A failing check is not evidence, and neither is a certificate for a null nobody draws from any more.
 
 Writing that check taught two things worth keeping, both of which are the same
 defect it exists to prevent, committed inside it:
@@ -1791,10 +1810,13 @@ district-day standard deviation is 0.047.
 6. **The EDPC recode (mid-2018)** sits inside the discovery window.
 7. **The episode construct changed** after the original freeze, while blind to
    outcomes (§4.2) — disclosed, dated, with original wording preserved.
-8. **Four freeze incidents** (§5.3): two undeclared metadata reads, one of which
+8. **Five freeze incidents** (§5.3): two undeclared metadata reads, one of which
    carried a specification decision, one record-level read of 2015–16 outcome
-   statistics made while refuting an audit finding, and a geography-weight
-   crosswalk counted over every year (F4).
+   statistics made while refuting an audit finding, a geography-weight
+   crosswalk counted over every year (F4), and, at the lift, three regression
+   checks that selected the confirmation sample once the flag flipped and
+   printed a nuisance autocorrelation and a specification-difference statistic
+   (F5).
 9. **We do not use armed/unarmed status**, which is our protection against the Nix
    & Lozada critique of MPV coding — stated explicitly because a reader who knows
    that literature will ask.

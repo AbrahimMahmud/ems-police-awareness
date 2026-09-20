@@ -143,8 +143,8 @@ written down. The second was locked away and has not been looked at.
 | | Window | Status |
 |---|---|---|
 | **Discovery** | 2017-01-01 → 2020-12-31 | explored freely — this is the design working as intended |
-| **Confirmation C1 "clean"** | 2015-07-01 → 2016-12-31 **and** 2021-01-01 → 2021-05-31 | never examined |
-| **Confirmation C2 "exposed"** | 2021-06-01 → 2024-12-31 | never examined |
+| **Confirmation C1 "clean"** | 2015-07-01 → 2016-12-31 **and** 2021-01-01 → 2021-05-31 | never examined before the lift of 2026-09-20 (then: the sealed run; and, for one gate run at the lift, three regression checks — F5) |
+| **Confirmation C2 "exposed"** | 2021-06-01 → 2024-12-31 | never examined before the lift of 2026-09-20 (same) |
 
 **Why split at all.** A pattern found by looking at data is worth much less than a
 prediction that survives on data nobody has seen, because the first kind of
@@ -506,8 +506,11 @@ outcome and the joint statistic, §14).*
   confirmatory package.
 * **Row 15 — the freeze incidents.** These are accesses, not decisions, and are
   set out below because one of them carried a decision with it. Two were known
-  when this note was written; addendum §15 now lists four (F1–F4; F3 and F4 are
-  disclosed in `PAPER_MASTER.md` §5.3).
+  when this note was written; addendum §15 now lists five (F1–F5; F3, F4 and F5
+  are disclosed in `PAPER_MASTER.md` §5.3; F5 is the lift's own: three regression
+  checks that selected the confirmation sample once the flag flipped, printing a
+  residual autocorrelation and a coefficient-difference statistic and nothing of
+  H1).
 
 ### 11.4 The freeze incidents, and the one specification decision that is not blind
 
