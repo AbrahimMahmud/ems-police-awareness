@@ -18,9 +18,12 @@ This script is deliberately not importable as a library and not parameterised in
 any way that changes the specification. `--draws` lowers the number of
 randomization draws (for the synthetic dry run only; the pre-specified value is
 `config.RANDOMIZATION_DRAWS`), `--dry-run-synthetic` exercises the machinery on
-fabricated data, and that is the whole of the surface area. There is no
-`--outcome`, no `--window`, no `--stratum`: a flag that lets the operator run one
-cell is a flag that lets the operator run the cell that worked.
+fabricated data, `--jobs N` spreads the cells over N processes without changing
+a single number (RUNTIME, below), and `--overwrite-sealed-result REASON` is the
+only way a second real run can replace the first (refusal 3). That is the whole
+of the surface area. There is no `--outcome`, no `--window`, no `--stratum`: a
+flag that lets the operator run one cell is a flag that lets the operator run the
+cell that worked.
 
 WHAT IT REFUSES TO DO
 ---------------------
@@ -55,6 +58,23 @@ WHAT IT REFUSES TO DO
 4. **In synthetic mode it never writes `confirmatory_results.csv`** and never
    reads a single row of the real panel. Fabricated numbers landing in the
    sealed result file would be the D1 clobber with worse consequences.
+5. **It refuses to run for real unless `PYTHONHASHSEED=0`** (finding X20): the
+   cold passes are byte-identical only under a fixed hash seed and one BLAS
+   thread, and a sealed table that a re-run cannot reproduce to the byte is a
+   table nobody can check. `ops/phase_i.sh` exports the environment.
+6. **It refuses a second real start.** Every real invocation appends a `start`
+   row to `data/reference/confirmatory_run_log.csv` (tracked) before any cell is
+   estimated and a `sealed` row, with the table's sha256, after the file is
+   written; a real start while a prior `start` row exists is refused without
+   `--overwrite-sealed-result`, so a run that was killed after opening the
+   sample cannot be quietly repeated as if it were the first.
+7. **It refuses a certificate that describes a different design.** Beyond the
+   verdict and the simulation count, `check_calibration` compares each
+   stratum's certificate scheme with `draw_scheme_for` on this run's geometry
+   and the calibration ledger's recorded episode starts with the starts this
+   run keeps; a mismatch is a `SealBroken`, not a warning. It likewise refuses
+   if any real episode start is inadmissible under the circular scheme the
+   stratum draws from, because such a start would be absent from its own null.
 
 THE TWO STRATA (EXECUTION_PLAN.md Phase I)
 ------------------------------------------
@@ -155,8 +175,10 @@ column so no reader has to infer which null produced which p:
     that one). This script used to carry its OWN copy of the seam-crossing
     shift, so the certificate it gated on described a null it did not draw
     (CP1 audit, 2026-09-13). The copy is gone.
-  * The within-block scheme has 62,920 distinct designs on C1 against the 2,000
-    pre-specified draws, so the test is SAMPLED, not exact; `ri_exact` is 0.
+  * The within-block scheme (`circular_within_block_fw7`: the first week must
+    fall inside one window) has 542 x 143 = 77,506 distinct designs on C1
+    against the 2,000 pre-specified draws, so the test is SAMPLED, not exact;
+    `ri_exact` is 0.
   * Every cell's draws are seeded from the cell's own identity and banked in a
     per-cell ledger with a design fingerprint (`event_study.open_ledger`), so a
     run killed by a container restart resumes exactly, a ledger from a
@@ -224,9 +246,34 @@ PRE-SPECIFIED SENSITIVITIES
       like the broad basket and NOT_RUN if absent.
   (e) **Coverage-clean** (`sens_coverage_clean`, addendum 18): per outcome, the
       episodes whose window contains no recording break in that outcome's codes
-      and not the geocoding step; IDENTICAL_TO_PRIMARY when nothing is dropped.
+      and not the geocoding step, evaluated against EVERY break date in
+      `ems_coverage_breaks.csv` whatever window the table labels it with (a
+      break dated inside C1 also lands in the pooled stratum); IDENTICAL_TO_PRIMARY
+      when nothing is dropped. **Geocoding-clean** (`sens_geocoding_clean`)
+      drops only the episodes whose window contains the geocoding step, so the
+      two break kinds are not confounded in one cell.
   (f) **The 28- and 60-day post windows** (`sens_post28`, `sens_post60`,
       addendum 3): the same first-week statistic on a longer estimation window.
+      The placebo draws keep the PRIMARY's 14-day admissibility geometry
+      (`draw_post=EVENT_WINDOW_POST`, recorded in the ledger design), so the
+      longer window changes what is estimated, not which starts the null may
+      take; a 60-day post that redrew its own geometry would rest on a null no
+      certificate describes.
+  (g) **Cancelled-inclusive** (`sens_incl_cancelled`, both arms): the H1
+      outcomes with the cancelled and other excluded dispositions restored to
+      numerator and denominator (`01_build_panel.py` writes `*_incl_cancelled`
+      from `ems_cd_day_calltype_excluded.parquet`); the count arm offsets on the
+      cancelled-inclusive total, so the exclusion of cancelled calls is shown not
+      to carry the result on either arm.
+  (h) **EDP without EDPM** (`sens_no_edpm`, both arms): EDP excluding the EDPM
+      (emotionally disturbed person, medical) code; IDENTICAL_TO_PRIMARY when
+      the stratum has no EDPM dispatches, NOT_RUN when the panel predates the
+      column.
+
+The three DIAGNOSTIC cells per stratum run on the UNFILTERED panel (no 5-call
+minimum): a denominator diagnostic that dropped the lowest-volume district-days
+would be blind to exactly the days a denominator artefact lives on. The primary
+and every other cell keep the pre-registered >= 5 calls rule.
 
 A broad-basket or spliced cell whose episode starts in a stratum equal the
 primary's is recorded IDENTICAL_TO_PRIMARY rather than re-estimated under a new
@@ -258,7 +305,8 @@ column takes six values and only the first is corrected (addendum 23.6):
     primary_H1    the 8 corrected tests: H1 outcomes x both arms x C1 and C2
     descriptive   the pooled stratum's primary-bound H1 cells
     sensitivity   drop-July-2016, broad basket, spliced series, coverage-clean,
-                  the `late` B-HEARD bound, the 28- and 60-day windows
+                  geocoding-clean, the `late` B-HEARD bound, the 28- and 60-day
+                  windows, cancelled-inclusive, EDP without EDPM
     secondary     the B-HEARD interaction arm (C2) and the dose-response arm
     diagnostic    the no-offset counts behind the two-arms rule (addendum 23.3)
     placebo       cardiac, injury and asthma; falsification, never confirmation
@@ -278,12 +326,23 @@ OUTPUT
 `data/reference/confirmatory_results.csv` (real; TRACKED, so the one-shot is in
 the commit history — addendum 23.5) or
 `outputs/tables/confirmatory_results_dryrun_synthetic.csv` (dry run; gitignored).
-Each with a `.meta.json` sidecar naming the code that produced it. The
-pre-registered reading of the real table is `34_confirmatory_reading.py`.
+Every randomization cell also carries `path_coefs` and `path_ses`: the day 0..7
+coefficients and their date-clustered SEs as JSON, so the day-by-day path that
+23.2 requires for a rejection without a consistent direction is in the sealed
+table and needs no second read.
+Each with a `.meta.json` sidecar naming the code that produced it: the
+fingerprint and `source_sha256` of this file, `event_study.py`, `freeze_guard.py`,
+`config.py` and the B-HEARD builder, the `inputs_sha256` of the panel, episode
+lists, coverage table, exposure table and certificates, the git commit and the
+hash seed. The real run also appends to `data/reference/confirmatory_run_log.csv`
+(refusal 6). The pre-registered reading of the real table is
+`34_confirmatory_reading.py`, which seals its own output the same way.
 
 Usage:
-    python 30_confirmatory_run.py                       # after the freeze lifts
-    python 30_confirmatory_run.py --dry-run-synthetic --draws 20
+    PYTHONHASHSEED=0 python 30_confirmatory_run.py                # after the freeze lifts
+    PYTHONHASHSEED=0 python 30_confirmatory_run.py --jobs 4       # same numbers, faster
+    python 30_confirmatory_run.py --dry-run-synthetic --draws 20 --jobs 2
+    python 30_confirmatory_run.py --overwrite-sealed-result "REASON"  # never without one
 """
 
 # One BLAS thread per process, set BEFORE numpy loads. Two reasons, both measured
@@ -350,6 +409,8 @@ def _note_warning(w):
 
 import freeze_guard
 from bheard import attach as attach_bheard
+import hashlib
+import json
 import zlib
 from concurrent.futures import ProcessPoolExecutor
 
@@ -376,6 +437,8 @@ from config import (
     VALID_CDS,
 )
 from event_study import (
+    CIRCULAR_FIRST_WEEK,
+    CIRCULAR_SCHEME,
     admissible_days,
     build_stack,
     count_outcome,
@@ -453,6 +516,40 @@ SEED = 30_20260912
 # one-shot is only a one-shot if the record shows the file existed (CP2 audit,
 # 2026-09-13). data/reference is tracked; the sidecar sits beside it.
 OUT_REAL = DATA_REFERENCE / "confirmatory_results.csv"
+# THE RUN LOG (third CP2 audit pass, 2026-09-20). Append-only and TRACKED. A row is
+# written when a real run STARTS — before any outcome is estimated — and another
+# when it seals, so the record shows every real run there ever was, including one
+# whose output was later deleted. The one-shot used to be a file-existence test,
+# which `rm` defeats; now a prior "start" row without an overwrite reason refuses
+# a second run whether or not the result file is still there.
+RUN_LOG = DATA_REFERENCE / "confirmatory_run_log.csv"
+RUN_LOG_COLUMNS = ["utc", "event", "git_commit", "script_source_sha256", "event_study_source_sha256",
+                   "config_source_sha256", "panel_sha256", "draws", "jobs", "pythonhashseed",
+                   "overwrite_reason", "output_sha256", "rows"]
+
+
+def _sha256(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def run_log_rows():
+    if not RUN_LOG.exists():
+        return pd.DataFrame(columns=RUN_LOG_COLUMNS)
+    return pd.read_csv(RUN_LOG, dtype=str).fillna("")
+
+
+def append_run_log(event, panel_path=None, output_sha="", rows=""):
+    from datetime import datetime, timezone
+    row = {"utc": datetime.now(timezone.utc).isoformat(timespec="seconds"), "event": event,
+           "git_commit": freeze_guard._git_commit(),
+           "script_source_sha256": _sha256(Path(__file__)),
+           "event_study_source_sha256": _sha256(Path(__file__).with_name("event_study.py")),
+           "config_source_sha256": _sha256(Path(__file__).with_name("config.py")),
+           "panel_sha256": _sha256(panel_path) if panel_path else "",
+           "draws": ARGS.draws, "jobs": ARGS.jobs, "pythonhashseed": os.environ.get("PYTHONHASHSEED", ""),
+           "overwrite_reason": ARGS.overwrite_sealed_result or "", "output_sha256": output_sha, "rows": rows}
+    hdr = not RUN_LOG.exists()
+    pd.DataFrame([row], columns=RUN_LOG_COLUMNS).to_csv(RUN_LOG, mode="a", header=hdr, index=False)
 OUT_SYNTHETIC = OUTPUTS_TABLES / "confirmatory_results_dryrun_synthetic.csv"
 
 
@@ -527,8 +624,15 @@ def check_strata_partition():
           f"treatment ({NO_TREATMENT_WINDOW[0]}..{NO_TREATMENT_WINDOW[1]})")
 
 
-def check_calibration():
-    """Refuse to run unless EVERY stratum this script estimates is CALIBRATED.
+def check_calibration(ep=None):
+    """Refuse to run unless EVERY stratum this script estimates is CALIBRATED — on
+    the SCHEME this run will draw and the EPISODE SET this run will stack.
+
+    Third CP2 audit pass (2026-09-20): the gate read a verdict and a sim count;
+    the suite alone compared the certificate's scheme with the one the geometry
+    requires, and nothing compared the certificate's episode starts (in the
+    calibration ledger's sidecar) with the starts this run stacks. Both are
+    compared here, so a certificate for another design refuses the run.
 
     This is a precondition, not a robustness column (Gate C §6.3). If the
     estimator over-rejects on data built to contain no effect then the number
@@ -559,6 +663,8 @@ def check_calibration():
                 raise Uncalibrated(
                     f"{stratum}: certificate rests on {n_done} simulations; the sealed "
                     f"run requires >= {LIFT_MIN_SIMS} (config.LIFT_MIN_SIMS, CP2 line 2)")
+            if ep is not None:
+                _assert_certificate_matches_design(stratum, out[stratum], ep)
             out[stratum]["certified"] = True
         except Uncalibrated as e:
             # ADDENDUM 25, pre-registered before any 1,000-sim verdict existed: a
@@ -588,6 +694,35 @@ def check_calibration():
                 continue
             raise SealBroken(str(e)) from e
     return out
+
+
+def _assert_certificate_matches_design(stratum, cal, ep):
+    """The certificate must name the scheme this run draws and rest on a ledger
+    whose design carries exactly the episode starts this run stacks."""
+    import json
+    key = {"C1": "C1_clean", "C2": "C2_exposed", "pooled": "pooled"}[stratum]
+    windows = STRATUM_WINDOWS[key]
+    kept, _ = stratum_episodes(ep["start"], windows, EVENT_WINDOW_PRE, EVENT_WINDOW_POST)
+    starts = sorted(str(pd.Timestamp(k["start"]).date()) for k in kept)
+    need, _why = draw_scheme_for(windows, [k["start"] for k in kept], EVENT_WINDOW_PRE, EVENT_WINDOW_POST)
+    got = str(cal.get("draw_scheme", ""))
+    if got != need:
+        raise SealBroken(f"{stratum}: the certificate names scheme {got!r}; this run would draw {need!r}")
+    draws = int(float(cal.get("ri_draws_per_sim", 0)))
+    tag = "" if stratum == "discovery" else f"_{stratum}"
+    meta = OUTPUTS_TABLES / f"null_calibration_ledger_d{draws}{tag}.meta.json"
+    if not meta.exists():
+        raise SealBroken(f"{stratum}: the certificate's ledger sidecar {meta.name} is absent, so the "
+                         "design it certifies cannot be compared with this run's")
+    design = json.loads(meta.read_text()).get("design", {})
+    cert_starts = sorted(design.get("starts", []))
+    if cert_starts != starts:
+        raise SealBroken(f"{stratum}: the certificate rests on {len(cert_starts)} episode starts, this run "
+                         f"stacks {len(starts)}; they differ ({sorted(set(cert_starts) ^ set(starts))[:4]}...)")
+    if str(design.get("scheme", "")) != need:
+        raise SealBroken(f"{stratum}: the certificate's ledger was drawn with {design.get('scheme')!r}, not {need!r}")
+    print(f"[calibration] {stratum}: certificate matches this run's design — scheme {need}, "
+          f"{len(starts)} episode starts")
 
 
 def _uncertified_certificate(stratum):
@@ -625,6 +760,12 @@ def check_freeze_state():
             "--dry-run-synthetic requires FREEZE_ACTIVE=True. The freeze is "
             "lifted, so the dry run has no purpose and fabricated numbers beside "
             "a real result are a hazard, not a check.")
+    if not SYNTHETIC and os.environ.get("PYTHONHASHSEED") != "0":
+        # Every worker is a spawned interpreter; without a fixed seed each gets its
+        # own hash randomisation and the sealed table is not byte-reproducible
+        # (finding X20). ops/phase_i.sh exports it; a bare invocation refuses.
+        raise SealBroken("real mode requires PYTHONHASHSEED=0 in the environment so the sealed "
+                         "table is reproducible to the byte (finding X20; run through ops/phase_i.sh)")
     if not SYNTHETIC and FREEZE_ACTIVE:
         raise SealBroken(
             "FREEZE_ACTIVE is True. This script reads confirmation-window "
@@ -768,6 +909,18 @@ def synthetic_panel(rng):
     for c in ("edp", "altmen", "suicide_jump", "od_poison_drug", "mh_narrow",
               "mh_broad", "cardiac", "injury", "asthma"):
         out[f"{c}_share"] = out[c] / out["total_calls"]
+    # The third-audit-pass sensitivity columns, fabricated like the rest so the
+    # cells that read them are exercised: EDPM appears only from 2021-06-03.
+    born = pd.to_datetime(out["incident_date"]) >= pd.Timestamp("2021-06-03")
+    out["edpm"] = np.where(born, rng.binomial(out["edp"].to_numpy(), 0.15), 0)
+    out["edp_ex_edpm"] = out["edp"] - out["edpm"]
+    out["edp_ex_edpm_share"] = out["edp_ex_edpm"] / out["total_calls"]
+    extra_total = rng.binomial(out["total_calls"].to_numpy(), 0.08)
+    out["total_calls_incl_cancelled"] = out["total_calls"] + extra_total
+    out["edp_incl_cancelled"] = out["edp"] + rng.binomial(extra_total, 0.06)
+    out["mh_narrow_incl_cancelled"] = out["mh_narrow"] + rng.binomial(extra_total, 0.08)
+    for c in ("edp", "mh_narrow"):
+        out[f"{c}_share_incl_cancelled"] = out[f"{c}_incl_cancelled"] / out["total_calls_incl_cancelled"]
     out["dow"] = out["incident_date"].dt.dayofweek
     out["month"] = out["incident_date"].dt.month
     out["year"] = out["incident_date"].dt.year
@@ -801,9 +954,20 @@ def load_real_panel():
     return panel
 
 
-def prepare(panel):
-    """Sample rules and the B-HEARD control, applied once for every stratum."""
-    panel = panel[panel["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE].copy()
+def prepare(panel, apply_min_calls=True):
+    """Sample rules and the B-HEARD control, applied once for every stratum.
+
+    `apply_min_calls=False` keeps every district-day: the denominator diagnostic
+    of addendum 23.3 regresses total dispatches on event time, and a sample
+    truncated on total dispatches (< MIN_TOTAL_CALLS_FOR_SHARE dropped) is
+    truncated in the dependent variable exactly where a denominator movement would
+    show (third CP2 audit pass, 2026-09-20). The primary and sensitivity arms keep
+    the five-dispatch rule on both arms, as addendum 23.8 pre-specifies.
+    """
+    if apply_min_calls:
+        panel = panel[panel["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE].copy()
+    else:
+        panel = panel.copy()
     panel["dow"] = panel["incident_date"].dt.dayofweek
     return panel
 
@@ -895,7 +1059,8 @@ def assert_bheard_inert(stack, outcome, label):
             "crosswalk is wrong and the confirmatory estimate cannot be trusted.")
     return delta
 def randomization(panel, real_starts, outcome, pre, post, draws, windows, cell,
-                  extra=("bheard_exposure",), counts=False, label="", offset=True):
+                  extra=("bheard_exposure",), counts=False, label="", offset=True,
+                  draw_post=None):
     """Episode-level randomization inference through event_study.randomization_p.
 
     Returns a dict carrying the observed statistic, the p-value, and — the part
@@ -910,21 +1075,43 @@ def randomization(panel, real_starts, outcome, pre, post, draws, windows, cell,
                                    return_n=True, offset=offset)
         # The mean and its date-clustered SE: addendum 23.2 reads direction off
         # the sign of the mean and calls it inconsistent within one SE of zero.
-        mean_coef, mean_se = (first_week_mean(obs_stack, outcome, counts=counts, extra=extra,
-                                              offset=offset, return_se=True)
-                              if obs is not None else (None, None))
+        mean_coef, mean_se, path = (first_week_mean(obs_stack, outcome, counts=counts, extra=extra,
+                                                    offset=offset, return_path=True)
+                                    if obs is not None else (None, None, None))
     # The asymptotic joint-Wald p, promised "beside the randomization p-value,
     # never instead of it" (note 7) and until 2026-09-13 computed for no cell.
     p_asym = float(chi2_dist.sf(obs, k)) if obs is not None and k else np.nan
+    dpost = int(post if draw_post is None else draw_post)
+    scheme, why = draw_scheme_for(windows, real_starts, pre, dpost)
+    # The admissible-start count under the rule the DRAWER uses: first-week
+    # containment for the within-block shift (addendum 24), the full window for
+    # the anchor shift. It was computed under the full-window rule for both
+    # until the third CP2 audit pass.
+    adm = (admissible_days(windows, pre, dpost, first_week=CIRCULAR_FIRST_WEEK)
+           if scheme == CIRCULAR_SCHEME else admissible_days(windows, pre, dpost))
+    # The day-by-day path (day 0..7 coefficient and SE, JSON), so a rejection
+    # without a consistent direction can be reported as 23.2 requires from the
+    # sealed table alone (addendum 30).
+    path = path or {}
     res = {"first_week_chi2": obs, "first_week_mean_coef": mean_coef,
            "first_week_mean_se": mean_se, "n_first_week_coefs": k, "n_obs": len(obs_stack), "p_asymptotic": p_asym,
+           "path_coefs": json.dumps([path[dday][0] if dday in path else None for dday in range(0, 8)]),
+           "path_ses": json.dumps([path[dday][1] if dday in path else None for dday in range(0, 8)]),
            "p_randomization": np.nan, "n_draws": 0, "null_sd": np.nan,
-           "ri_scheme": None, "ri_exact": 0,
-           "n_admissible_starts": len(admissible_days(windows, pre, post))}
+           "ri_scheme": None, "ri_exact": 0, "draw_post_window": dpost,
+           "n_admissible_starts": len(adm)}
     if obs is None:
         res["status"] = "NOT_ESTIMABLE: the observed design yields no first-week statistic"
         return res
-    scheme, why = draw_scheme_for(windows, real_starts, pre, post)
+    if scheme == CIRCULAR_SCHEME:
+        # No silent relocation of a REAL start: every real start must be admissible
+        # in its own block, or the run refuses (P13's mechanism, refused rather
+        # than counted; third audit pass).
+        adm_set = set(pd.Timestamp(d) for d in adm)
+        bad = [pd.Timestamp(s0).date() for s0 in real_starts if pd.Timestamp(s0) not in adm_set]
+        if bad:
+            raise SealBroken(f"{label}: real episode start(s) {bad} are not admissible placebo days under "
+                             f"{scheme}; the drawer would relocate them. Refusing.")
     res["ri_scheme"] = scheme
     if scheme == "none":
         res["status"] = f"RI_NOT_RUN: {why}"
@@ -936,7 +1123,7 @@ def randomization(panel, real_starts, outcome, pre, post, draws, windows, cell,
         obs2, p, stats_ = randomization_p(
             panel, real_starts, outcome, pre, post, draws, np.random.default_rng(seed),
             counts=counts, windows=windows, ledger=ledger, seed=seed, extra=extra,
-            offset=offset)
+            offset=offset, draw_post=dpost)
     if obs2 is not None and abs(obs2 - obs) > 1e-9:
         raise SealBroken(f"{label}: the observed statistic differs between the two "
                          f"calls ({obs} vs {obs2}); the estimator is not deterministic")
@@ -1004,7 +1191,7 @@ def load_episodes(filename, require=True):
 
 def run_cell(rows, panel, ep, stratum, outcome, arm_counts, spec, family,
              extra, draws, bound, episode_set, windows, note="", offset=True,
-             post=EVENT_WINDOW_POST):
+             post=EVENT_WINDOW_POST, draw_post=None):
     """One reported number, with everything needed to read it beside it.
 
     `post` is the post-episode window in days: 14 for every family cell, 28 and
@@ -1029,7 +1216,7 @@ def run_cell(rows, panel, ep, stratum, outcome, arm_counts, spec, family,
         return
     res = randomization(panel, starts, col, EVENT_WINDOW_PRE, post,
                         draws, windows, cell, extra=extra, counts=arm_counts, label=label,
-                        offset=offset)
+                        offset=offset, draw_post=draw_post)
     rows.append(_row(stratum, col, arm_counts, spec, family, bound, episode_set,
                      len(ep), note=note, offset=offset, post_window=post,
                      n_districts=panel["communitydistrict"].nunique(), **res))
@@ -1047,7 +1234,7 @@ def execute_job(job):
              job["counts"], job["spec"], job["family"], ("bheard_exposure",),
              ARGS.draws, job["bound"], job["episode_set"], job["windows"],
              note=job.get("note", ""), offset=job.get("offset", True),
-             post=job.get("post", EVENT_WINDOW_POST))
+             post=job.get("post", EVENT_WINDOW_POST), draw_post=job.get("draw_post"))
     return rows[0]
 
 
@@ -1058,8 +1245,12 @@ def coverage_breaks_for(breaks, stratum, outcome):
     if breaks is None:
         return None
     groups = OUTCOME_GROUPS.get(outcome, set())
-    m = (breaks["window"].isin(STRATUM_BREAK_LABELS[stratum])
-         & (breaks["group"].isin(groups) | (breaks["group"] == "(geocoding)")))
+    # EVERY break date, whatever window it was recorded in: addendum 18 rule 1
+    # drops an episode whose +/-14-day window contains any break date, and an
+    # episode near a stratum edge has a window that reaches past it (the C1
+    # episode of 2021-05-24 reaches the EDPM birth of 2021-06-03). Until the
+    # third CP2 audit pass the rows were filtered by the stratum's own labels.
+    m = breaks["group"].isin(groups) | (breaks["group"] == "(geocoding)")
     return breaks[m]
 
 
@@ -1087,9 +1278,12 @@ def _row(stratum, outcome, arm_counts, spec, family, bound, episode_set,
         "n_episodes": n_episodes,
         "n_districts": n_districts,
         "post_window": post_window,
+        "draw_post_window": post_window,
         "first_week_chi2": np.nan,
         "first_week_mean_coef": np.nan,
         "first_week_mean_se": np.nan,
+        "path_coefs": "",
+        "path_ses": "",
         "n_first_week_coefs": np.nan,
         "p_randomization": np.nan,
         "p_asymptotic": np.nan,
@@ -1172,7 +1366,6 @@ def main():
 
     check_freeze_state()
     check_strata_partition()
-    cal = check_calibration()
     if CAI_D_BASKET != "strict":
         raise SealBroken(f"config.CAI_D_BASKET is {CAI_D_BASKET!r}; the primary "
                          "arm is the strict basket and broad is the sensitivity")
@@ -1203,12 +1396,26 @@ def main():
         with simulated_freeze_lift():
             raw = synthetic_panel(rng)
             panel = select_sample(raw, where="30:synthetic")
+        panel_all = prepare(panel, apply_min_calls=False)
         panel = prepare(panel)
     else:
-        panel = prepare(load_real_panel())
+        raw_panel = load_real_panel()
+        panel = prepare(raw_panel)
+        panel_all = prepare(raw_panel, apply_min_calls=False)
 
     strata = split_strata(panel)
+    strata_all = split_strata(panel_all)
     ep_primary = load_episodes(EPISODE_LIST_PRIMARY)
+    # The calibration gate compares each certificate's scheme and episode set with
+    # THIS run's, so it needs the episode list; it runs before any estimation.
+    cal = check_calibration(ep_primary)
+    if not SYNTHETIC:
+        prior = run_log_rows()
+        if len(prior[prior["event"] == "start"]) and not ARGS.overwrite_sealed_result:
+            raise SealBroken(f"{RUN_LOG.name} records {len(prior[prior['event'] == 'start'])} earlier real "
+                             "run(s); the one-shot has happened. A second run needs "
+                             "--overwrite-sealed-result 'the reason', which is written into the log.")
+        append_run_log("start", panel_path=DATA_PROCESSED / "panel_cd_day.parquet")
     ep_broad = load_episodes(EPISODE_LIST_BROAD, require=False)
     ep_spliced = load_episodes(EPISODE_LIST_SPLICED, require=False)
     breaks = (pd.read_csv(COVERAGE_BREAKS, dtype=str) if COVERAGE_BREAKS.exists() else None)
@@ -1227,10 +1434,11 @@ def main():
     rows, jobs = [], []
 
     def add(stratum, sp, ep, outcome, counts, spec, family, bound, episode_set, note="",
-            offset=True, post=EVENT_WINDOW_POST):
+            offset=True, post=EVENT_WINDOW_POST, draw_post=None):
         jobs.append(dict(stratum=stratum, panel=sp, ep=ep, outcome=outcome, counts=counts,
                          spec=spec, family=family, bound=bound, episode_set=episode_set,
-                         windows=STRATUM_WINDOWS[stratum], note=note, offset=offset, post=post))
+                         windows=STRATUM_WINDOWS[stratum], note=note, offset=offset, post=post,
+                         draw_post=draw_post))
 
     for stratum, spanel in strata.items():
         windows = STRATUM_WINDOWS[stratum]
@@ -1282,13 +1490,15 @@ def main():
             # so it cannot by itself tell a change in demand from a change in the
             # denominator. Two cells per stratum, outside every family: the raw
             # count of each H1 outcome with NO offset, and total dispatches.
+            sp_all = attach_bheard(strata_all[stratum], bound=bound)
             for outcome in list(H1_OUTCOMES):
-                add(stratum, sp, ep_here, outcome, True, "diag_raw_count", "diagnostic",
-                    bound, "primary", note="PPML on the count, no offset (addendum 23)",
-                    offset=False)
-            add(stratum, sp, ep_here, "total_calls", True, "diag_total_dispatches",
+                add(stratum, sp_all, ep_here, outcome, True, "diag_raw_count", "diagnostic",
+                    bound, "primary", note="PPML on the count, no offset, every district-day "
+                    "(addendum 23.3, 30)", offset=False)
+            add(stratum, sp_all, ep_here, "total_calls", True, "diag_total_dispatches",
                 "diagnostic", bound, "primary",
-                note="PPML on total dispatches, no offset (addendum 23)", offset=False)
+                note="PPML on total dispatches, no offset, every district-day (addendum 23.3, 30)",
+                offset=False)
 
             for outcome in PLACEBO_OUTCOMES:
                 for counts in (False, True):
@@ -1306,8 +1516,9 @@ def main():
                     for counts in (False, True):
                         add(stratum, sp, ep_here, outcome, counts, f"sens_post{post}",
                             "sensitivity", bound, "primary",
-                            note=f"{post}-day post window (addendum 3); tails truncate at "
-                                 "the stratum edge (addendum 17)", post=post)
+                            note=f"{post}-day post window (addendum 3); placebo starts drawn on the "
+                                 "certified 14-day geometry; tails truncate at the stratum edge "
+                                 "(addendum 17)", post=post, draw_post=EVENT_WINDOW_POST)
 
             # (f) the dose-response arm (addendum 9, finding D6): the day 0..7
             # effect per SD of episode intensity, SECONDARY, asymptotic p only —
@@ -1390,28 +1601,73 @@ def main():
             # whose window contains a recording break in that outcome's codes or
             # the geocoding step. One cell per outcome and arm; identical-to-
             # primary when nothing is dropped.
+            # Two cells per outcome: rule 1 + rule 2 together (sens_coverage_clean, as
+            # addendum 18 rule 1 reads) and rule 2 ALONE (sens_geocoding_clean), so the
+            # geocoding demonstration rule 2 promises can be read on its own. A cell
+            # with nothing to drop is recorded IDENTICAL_TO_PRIMARY, never omitted.
             for outcome in list(H1_OUTCOMES) + list(PLACEBO_OUTCOMES):
                 br = coverage_breaks_for(breaks, stratum, outcome)
-                if br is None:
-                    rows.append(_row(stratum, outcome, False, "sens_coverage_clean",
-                                     "sensitivity", bound, "primary", len(ep_here),
-                                     status=f"NOT_RUN: {COVERAGE_BREAKS.name} absent"))
-                    continue
-                if br.empty:
-                    continue
-                ep_c, n_drop = drop_break_windows(ep_here, br["date"].tolist())
-                desc = "; ".join(f"{r.final_call_type or r.group} {r.kind} {r.date}"
-                                 for r in br.itertuples())
-                if n_drop == 0:
-                    rows.append(_row(stratum, outcome, False, "sens_coverage_clean",
-                                     "sensitivity", bound, "primary", len(ep_here),
-                                     status="IDENTICAL_TO_PRIMARY: no episode window "
-                                            "contains a break", note=desc))
-                    continue
+                for spec_name, sel in (("sens_coverage_clean", None), ("sens_geocoding_clean", "(geocoding)")):
+                    if spec_name == "sens_geocoding_clean" and outcome not in H1_OUTCOMES:
+                        continue
+                    if br is None:
+                        rows.append(_row(stratum, outcome, False, spec_name,
+                                         "sensitivity", bound, "primary", len(ep_here),
+                                         status=f"NOT_RUN: {COVERAGE_BREAKS.name} absent"))
+                        continue
+                    brs = br if sel is None else br[br["group"] == sel]
+                    if brs.empty:
+                        rows.append(_row(stratum, outcome, False, spec_name,
+                                         "sensitivity", bound, "primary", len(ep_here),
+                                         status="IDENTICAL_TO_PRIMARY: no break bears on this outcome"))
+                        continue
+                    ep_c, n_drop = drop_break_windows(ep_here, brs["date"].tolist())
+                    desc = "; ".join(f"{r.final_call_type or r.group} {r.kind} {r.date}"
+                                     for r in brs.itertuples())
+                    if n_drop == 0:
+                        rows.append(_row(stratum, outcome, False, spec_name,
+                                         "sensitivity", bound, "primary", len(ep_here),
+                                         status="IDENTICAL_TO_PRIMARY: no episode window "
+                                                "contains a break", note=desc))
+                        continue
+                    for counts in (False, True):
+                        add(stratum, sp, ep_c, outcome, counts, spec_name,
+                            "sensitivity", bound, f"primary_minus_{n_drop}_break_window(s)",
+                            note=desc)
+
+            # (g) the cancelled-inclusive outcome (finding O1, addendum 11, 30): the
+            # share with never-sent dispositions restored to numerator and
+            # denominator, share arm (its denominator is its own). (h) EDP without
+            # EDPM (incident F2, addendum 30): the one outcome-definition decision
+            # taken on confirmation-period counts, reported without it; identical
+            # to the primary where EDPM is absent (before 2021-06-03).
+            # Both arms, like every other H1 cell (the both-arms rule is not
+            # suspended where the outcome definition is weakest): the count arm of
+            # (g) offsets on the cancelled-inclusive total, its own denominator.
+            for outcome in list(H1_OUTCOMES):
+                col = f"{outcome}_incl_cancelled"
                 for counts in (False, True):
-                    add(stratum, sp, ep_c, outcome, counts, "sens_coverage_clean",
-                        "sensitivity", bound, f"primary_minus_{n_drop}_break_window(s)",
-                        note=desc)
+                    need = (col, "total_calls_incl_cancelled") if counts else (col,)
+                    if any(c not in sp.columns for c in need):
+                        rows.append(_row(stratum, count_outcome(col) if counts else col, counts, "sens_incl_cancelled",
+                                         "sensitivity", bound, "primary", len(ep_here),
+                                         status="NOT_RUN: outcome column absent"))
+                    else:
+                        add(stratum, sp, ep_here, col, counts, "sens_incl_cancelled", "sensitivity", bound,
+                            "primary", note="cancelled/never-sent dispositions included, own denominator (O1)",
+                            offset="total_calls_incl_cancelled" if counts else True)
+            for counts in (False, True):
+                col = "edp_ex_edpm" if counts else "edp_ex_edpm_share"
+                if "edp_ex_edpm_share" not in sp.columns or "edpm" not in sp.columns:
+                    rows.append(_row(stratum, col, counts, "sens_no_edpm", "sensitivity", bound,
+                                     "primary", len(ep_here), status="NOT_RUN: outcome column absent"))
+                elif int((sp["edpm"] > 0).sum()) == 0:
+                    rows.append(_row(stratum, col, counts, "sens_no_edpm", "sensitivity", bound,
+                                     "primary", len(ep_here),
+                                     status="IDENTICAL_TO_PRIMARY: no EDPM dispatch in this stratum"))
+                else:
+                    add(stratum, sp, ep_here, "edp_ex_edpm_share", counts, "sens_no_edpm", "sensitivity", bound,
+                        "primary", note="EDP without EDPM (incident F2; addendum 30)")
 
     print(f"\n[seal] {len(jobs)} randomization cell(s) to estimate at {ARGS.draws} draws "
           f"on {max(1, ARGS.jobs)} worker(s); every cell seeds and ledgers itself")
@@ -1503,13 +1759,35 @@ def main():
     import json
     from datetime import datetime, timezone
     from provenance import code_fingerprint
+    here = Path(__file__)
+    def _opt_sha(p):
+        return _sha256(p) if Path(p).exists() else ""
     out_path.with_suffix(".meta.json").write_text(json.dumps({
-        "script_code_sha256": code_fingerprint(Path(__file__)),
-        "event_study_code_sha256": code_fingerprint(Path(__file__).with_name("event_study.py")),
+        "script_code_sha256": code_fingerprint(here),
+        "event_study_code_sha256": code_fingerprint(here.with_name("event_study.py")),
+        # RAW source hashes too: code_fingerprint strips docstrings, and the docstring
+        # of this file is declared to be the specification (third audit pass).
+        "source_sha256": {n: _sha256(here.with_name(n)) for n in
+                          ("30_confirmatory_run.py", "event_study.py", "freeze_guard.py", "config.py", "bheard.py")},
+        "git_commit": freeze_guard._git_commit(),
+        "pythonhashseed": os.environ.get("PYTHONHASHSEED", ""),
+        "inputs_sha256": {
+            "panel_cd_day.parquet": "" if SYNTHETIC else _opt_sha(DATA_PROCESSED / "panel_cd_day.parquet"),
+            EPISODE_LIST_PRIMARY: _opt_sha(DATA_REFERENCE / EPISODE_LIST_PRIMARY),
+            EPISODE_LIST_BROAD: _opt_sha(DATA_REFERENCE / EPISODE_LIST_BROAD),
+            EPISODE_LIST_SPLICED: _opt_sha(DATA_REFERENCE / EPISODE_LIST_SPLICED),
+            COVERAGE_BREAKS.name: _opt_sha(COVERAGE_BREAKS),
+            "bheard_cd_exposure.csv": _opt_sha(DATA_REFERENCE / "bheard_cd_exposure.csv"),
+            **{f"null_calibration_{k}.csv": _opt_sha(OUTPUTS_TABLES / f"null_calibration_{k}.csv")
+               for k in ("C1", "C2", "pooled")},
+        },
         "rows": int(len(res)), "draws": int(ARGS.draws), "jobs": int(ARGS.jobs),
         "data_source": DATA_TAG,
         "written_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }, indent=1))
+    if not SYNTHETIC:
+        append_run_log("sealed", panel_path=DATA_PROCESSED / "panel_cd_day.parquet",
+                       output_sha=_sha256(out_path), rows=int(len(res)))
 
     print("\n" + "=" * 78)
     print(f"wrote {out_path.name}: {len(res)} rows "

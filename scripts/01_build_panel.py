@@ -65,6 +65,15 @@ share_dropped = ext.loc[~ext["valid_cd"], "n_calls"].sum() / ext["n_calls"].sum(
 
 ems = ext[ext["valid_cd"]]
 
+# EDPM ALONE (third CP2 audit pass, 2026-09-20). EDPM's retention in the EDP
+# family is the one outcome-definition decision the record admits was taken on
+# confirmation-period counts (incident F2, addendum 15); the pre-registered
+# response is a sensitivity that reports the EDP outcome WITHOUT it. The count
+# is carried beside the family so the sealed script can form edp_ex_edpm.
+edpm_wide = (ems[ems["final_call_type"] == "EDPM"]
+             .groupby(["incident_date", "communitydistrict"])["n_calls"].sum()
+             .rename("edpm").reset_index())
+
 # --- pivot to CD x day with group counts ---
 wide = (
     ems.pivot_table(index=["incident_date", "communitydistrict"],
@@ -86,11 +95,52 @@ panel[group_cols] = panel[group_cols].fillna(0).astype(int)
 panel["total_calls"] = panel[group_cols].sum(axis=1)
 panel["mh_narrow"] = panel[list(MH_NARROW_GROUPS)].sum(axis=1)
 panel["mh_broad"] = panel[list(MH_BROAD_GROUPS)].sum(axis=1)
+panel = panel.merge(edpm_wide, on=["incident_date", "communitydistrict"], how="left")
+panel["edpm"] = panel["edpm"].fillna(0).astype(int)
+panel["edp_ex_edpm"] = panel["edp"] - panel["edpm"]
+
+# CANCELLED-INCLUSIVE OUTCOME (finding O1; PRE_ANALYSIS_NOTE 2; addendum 11). The
+# primary outcome excludes dispositions that never sent a unit; the excluded
+# dispatches are kept in their own artifact "so the cancelled-inclusive
+# sensitivity can be run rather than promised" — and until the third CP2 audit
+# pass (2026-09-20) no column carried them, so no cell could run it. The
+# inclusive counts and their own denominator are formed here; the sealed script
+# estimates the inclusive shares as a pre-specified sensitivity.
+excl_path = DATA_PROCESSED / "ems_cd_day_calltype_excluded.parquet"
+if excl_path.exists():
+    exc = pd.read_parquet(excl_path)
+    exc["incident_date"] = pd.to_datetime(exc["incident_date"])
+    exc = exc[exc["incident_date"].between(PANEL_BUFFER_START, PANEL_BUFFER_END)
+              & exc["communitydistrict"].isin(VALID_CDS)].copy()
+    exc["group"] = exc["final_call_type"].map(code_to_group).fillna("other")
+    exc_wide = (exc.pivot_table(index=["incident_date", "communitydistrict"], columns="group",
+                                values="n_calls", aggfunc="sum", fill_value=0).reset_index())
+    for g in group_cols:
+        if g not in exc_wide.columns:
+            exc_wide[g] = 0
+    exc_wide["excl_total"] = exc_wide[group_cols].sum(axis=1)
+    exc_wide["excl_edp"] = exc_wide["edp"]
+    exc_wide["excl_mh_narrow"] = exc_wide[list(MH_NARROW_GROUPS)].sum(axis=1)
+    panel = panel.merge(exc_wide[["incident_date", "communitydistrict", "excl_total", "excl_edp",
+                                  "excl_mh_narrow"]], on=["incident_date", "communitydistrict"], how="left")
+    for c in ("excl_total", "excl_edp", "excl_mh_narrow"):
+        panel[c] = panel[c].fillna(0).astype(int)
+    panel["total_calls_incl_cancelled"] = panel["total_calls"] + panel["excl_total"]
+    panel["edp_incl_cancelled"] = panel["edp"] + panel["excl_edp"]
+    panel["mh_narrow_incl_cancelled"] = panel["mh_narrow"] + panel["excl_mh_narrow"]
+    panel = panel.drop(columns=["excl_total", "excl_edp", "excl_mh_narrow"])
+    ok_incl = panel["total_calls_incl_cancelled"] >= MIN_TOTAL_CALLS_FOR_SHARE
+    for out in ("edp", "mh_narrow"):
+        panel[f"{out}_share_incl_cancelled"] = np.where(
+            ok_incl, panel[f"{out}_incl_cancelled"] / panel["total_calls_incl_cancelled"], np.nan)
+    print(f"cancelled-inclusive columns formed from {excl_path.name}")
+else:
+    print(f"WARNING: {excl_path.name} absent; cancelled-inclusive columns not formed")
 
 # --- shares (NA below the min-calls threshold) ---
 ok = panel["total_calls"] >= MIN_TOTAL_CALLS_FOR_SHARE
 for out in ["mh_narrow", "mh_broad", "edp", "altmen", "suicide_jump",
-            "od_poison_drug", "cardiac", "injury", "asthma"]:
+            "od_poison_drug", "cardiac", "injury", "asthma", "edp_ex_edpm"]:
     panel[f"{out}_share"] = np.where(ok, panel[out] / panel["total_calls"], np.nan)
 
 # --- calendar controls ---

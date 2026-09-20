@@ -64,7 +64,7 @@ confirmation-period outcomes**.
 |---|---|---|
 | 1 | Episode construct: regime → shock | yes |
 | 2 | Episode threshold: fixed level → within-year quantile | yes |
-| 3 | Test window: days 0–5 → days 0–7, joint | yes |
+| 3 | Test window: days 0–5 → days 0–7, joint | no (§14) |
 | 4 | Attention index composition | yes |
 | 5 | Wikipedia rename correction | yes |
 | 6 | Article basket selection rule | yes |
@@ -91,6 +91,8 @@ confirmation-period outcomes**.
 | 27 | The anchor-shift null is a gap-permuted placement, not a rigid shift; the record's descriptions corrected, §21's identity claim withdrawn | yes |
 | 28 | The inferential structure — two strata, the eight-test BH family, the both-arms rule, the second outcome and the joint statistic — numbered as a deviation | strata, family and both-arms rule yes; second outcome and joint statistic no (§14) |
 | 29 | The sealed script estimates the 28/60-day windows and the dose arm it had promised; its docstring is the executed specification | yes |
+| 30 | `bheard_exposure` enters every primary specification as a covariate (inert in C1, asserted; identification in C2) — numbered here, having been specified blind in the note's §7 and §11.5 | yes |
+| 31 | Third CP2 audit pass (§30): a tracked run log and a hash-seed requirement on the sealed run; the calibration gate compares the certificate's design with the run's; the window sensitivities draw on the certified 14-day geometry; diagnostics on every district-day; coverage-clean over every break date plus a geocoding-only cell; cancelled-inclusive and no-EDPM cells; pinned sidecars; the reading sealed, its sensitivity set enumerated (23.1c) and the pooled stratum read (23.1d); the record corrected | yes |
 
 ---
 
@@ -438,7 +440,13 @@ scope fixed here first and a check that holds it there:
   columns, that this section exists, and that the access log records the run.
   Defeat-tested before it is baselined: add an outcome column to the output and
   the check must fail; call the exemption from another script and it must fail.
-- **What is decided from it — pre-specified now, before the values exist.**
+- **What is decided from it — pre-specified now, as rules on outputs whose
+  values the record already partly held.** (The EDP-family birth dates were
+  read under F2 and the annual missing-district rates under F3, both disclosed
+  in §15 before this section was written; the rules below are stated on those
+  two outputs and applied to every code; the third CP2 audit pass, §30,
+  records that the earlier heading — "pre-specified now, before the values
+  exist" — that stood here until 2026-09-20 was not true of them.)
   1. A call code whose first or last date falls inside a confirmation *analysis*
      window is a **within-window break** for every outcome group containing it.
      The primary estimates are unchanged. For each affected outcome and stratum,
@@ -569,9 +577,12 @@ It is reported beside the primary and never substituted for it (§9.5, §10). If
 the spliced episode list is absent at run time the cell is recorded `NOT_RUN`
 with the reason rather than skipped.
 
-**What it can show.** In C1 the two series are identical by construction
-(automated is zero before 2020), so any difference there is a rounding check.
-In C2 a result that moves between the arms is a result that depends on how
+**What it can show.** In C1's 2015–2016 block the two series are identical by
+construction (automated is zero before 2020), so any difference there is a
+rounding check; in C1's 2021 block, which lies after the 2020-04-29 break, they
+can differ, and the spliced episode list is compared with the primary there
+exactly as in C2 (the blind-built lists agree on all 15 C1 episodes; §30). In
+C2 a result that moves between the arms is a result that depends on how
 Wikimedia classifies traffic, and is reported as such.
 
 ## 21. The C1 randomization null is a within-block circular shift, and the confirmatory script draws it from the same code the calibration certifies (findings RI3, P1, P8, P9, P10; CP1 audit)
@@ -599,8 +610,11 @@ and `S.ri_scheme_certified` requires C1's certificate to name it.
 
 1. *Sampled, not exact.* §16 and the note say C1's test is exact because the
    685 admissible shifts are fewer than 2,000 draws. Under the within-block
-   scheme there are 520 × 121 = 62,920 distinct placebo designs, so the 2,000
-   pre-specified draws are a sample of them; `ri_exact` is 0 for every cell.
+   scheme there are 542 × 143 = 77,506 distinct placebo designs under the
+   first-week containment of §24 (the 520 × 121 = 62,920 written here until
+   2026-09-20 counted full-post containment, the rule §24 replaced; §30), so
+   the 2,000 pre-specified draws are a sample of them; `ri_exact` is 0 for
+   every cell.
 2. *One implementation.* The sealed script had kept its own copy of the
    seam-crossing shift and would have drawn C1's null with it while gating on
    a certificate for the within-block null — the certificate would have
@@ -688,6 +702,52 @@ reject in the predicted direction) is said only when the two strata reject on at
 least one common primary outcome. Rejections in the same direction on different
 outcomes only are row 2 — confirmed in the clean stratum — with C2's rejection
 reported as partial agreement.
+
+**23.1c The sensitivity set and the robust/fragile label are enumerated**
+(third CP2 audit pass, 2026-09-20, before the lift; findings P43). Note §9.5
+names three sensitivities and says "robust" survives all and "fragile" survives
+none; the sealed script writes ten (`sens_drop_jul2016`, `sens_broad_basket`,
+`sens_spliced_wiki`, `sens_coverage_clean`, `sens_geocoding_clean`,
+`sens_bheard_late_bound`, `sens_post28`, `sens_post60`, `sens_incl_cancelled`,
+`sens_no_edpm`; §3, §18, §20, §29, §30). The label is computed over exactly that
+set, listed in `34_confirmatory_reading.py` as `SENSITIVITY_SPECS` and held equal
+to the specs the dry run writes. A rejection *survives* a sensitivity when every
+estimated cell of that sensitivity on a rejecting outcome (share or count, the
+cancelled-inclusive and EDPM-excluded shares included) stays at unadjusted
+randomization p ≤ 0.05 — the same unadjusted threshold the placebo override and
+the denominator diagnostic use, stated here so a reader can see it is easier
+than the family threshold the primary cleared; a cell recorded
+IDENTICAL_TO_PRIMARY survives by construction; a cell NOT_RUN is not applicable
+and is not counted. Coverage-clean cells on the falsification outcomes belong to
+the `sensitivity` family but never enter the label or the non-rejecting
+stratum's count of sensitivity cells. Robust = survives every applicable
+sensitivity; fragile = survives none; otherwise the count is reported.
+
+**23.1d The pooled stratum is read** (third CP2 audit pass, 2026-09-20, before
+the lift; finding P44). Note §9.4 makes the pooled estimate descriptive and says
+it never overturns a stratum-level disagreement, and fixed no sentence for it.
+The pooled stratum *rejects on an outcome* when both arms are at unadjusted
+randomization p ≤ 0.05 with the same sign of the first-week mean coefficient; it
+is reported as "pooled rejects (descriptive, unadjusted)" or "pooled does not
+reject", beside the strata and outside the family. Where the pooled stratum
+rejects and neither stratum does, the §9.4 conclusion is the strata's, with the
+pooled rejection appended as reported and overturning nothing.
+
+**23.1e The secondary arms are read against the direction the note fixes**
+(third CP2 audit pass, 2026-09-20, before the lift; finding P55). The note gives
+both secondary arms a predicted direction and no reading rule, and §9.4 row 3
+says the B-HEARD interaction arm "is what speaks to" a C2-only rejection. Each
+secondary cell is read mechanically at unadjusted asymptotic p ≤ 0.05: the
+dose-response arm's predicted sign is H1's (a decline per SD of peak intensity);
+the interaction's predicted sign is *opposite* to the stratum's primary
+share-arm first-week mean on that outcome (attenuation where B-HEARD has already
+removed police contact, note §7), and is stated only when that mean is
+negative — otherwise the cell is reported without a direction. A cell reads
+"moves in the predicted direction", "moves against the predicted direction",
+"no movement" or "not read" (NOT_RUN / not estimable). The readings are
+descriptive, outside the family, and never enter the §9.4 conclusion; where the
+table lands on row 3 the interaction arm's reading is appended to the row-3
+sentence as what it is, a secondary arm's asymptotic reading.
 
 **23.2 Direction is the sign of the first-week mean coefficient** (the effect
 size §6 already reports), taken over the rejecting cells. A rejection whose two
@@ -780,9 +840,11 @@ begins 2015-07-01 because the pageview series does (§18, note §4).
 
 **23.10 Two accesses the record had not named.** The precinct–district
 crosswalk (S14) was built by a server-side SODA count of dispatches per
-precinct × district pooled over 2015–2024: a geography weight, no call type and
-no date, but a read of confirmation-period dispatch counts, recorded as
-incident **F4** in §15 and PAPER_MASTER §5.3. §18 rule 2's justification cites
+precinct × district pooled over 2015–2024: a geography weight built from the
+total-dispatch count — the quantity the primary share divides by — with no call
+type and no date, but a read of confirmation-period dispatch counts, recorded as
+incident **F4** in §15 and PAPER_MASTER §5.3 (wording corrected 2026-09-20, §30
+P50; the disposition is unchanged). §18 rule 2's justification cites
 the 0.0002 step estimate from the F3 refutation; the rule stands on its
 pre-specified form, and the figure is now labelled as F3-derived where it
 appears. Rule 1 as implemented treats a code born or retired on a window's
@@ -793,14 +855,38 @@ non-rejection against a minimum detectable effect computed at the per-test
 nominal α = 0.05. Under the eight-test correction the effective threshold is
 stricter, so the detectable effect is larger by a factor of roughly
 (z₀.₉₉₆₉ + z₀.₈)/(z₀.₉₇₅ + z₀.₈) ≈ 1.28 at the Bonferroni bound; the bounded
-null is stated at the nominal level and this factor is quoted beside it.
+null is stated at the nominal level and this factor is quoted beside it,
+labelled approximate. *Added 2026-09-20 (§30, finding P53):* 1.28 is the
+one-parameter (z-test) inflation; for the 8-df joint Wald chi-square the run
+tests, the same Bonferroni-bound inflation of the noncentrality at 80% power is
+1.21. The larger factor is the one quoted, so the bound is stated
+conservatively. Two further limitations of the bound: the pre-freeze MDE is
+measured against the asymptotic joint Wald test at nominal α, while the
+non-rejection it bounds is a Benjamini–Hochberg-adjusted randomization p (on
+discovery, where both were computed, the randomization MDE was about 8% larger);
+and confirmation requires a corrected conjunction (both arms, BH over eight)
+while the placebo override and the denominator discount are uncorrected
+disjunctions over four and three cells, so a true effect of exactly the MDE is
+discarded by the override with probability of roughly one in six per stratum
+under the null of no placebo movement. Both are stated as limitations, not
+corrected: the rules stand as pre-registered.
 
 **23.12 What the calibration certificates do not cover**, stated as a
 limitation: the synthetic null is OLS on a Gaussian EDP share with no covariate
 and a white-noise citywide day shock; the PPML arm, the narrow mental-health
 outcome and the B-HEARD control are not separately certified, and size is
 certified at α = 0.05 with a global uniformity test rather than at the
-correction's effective threshold.
+correction's effective threshold. *Added 2026-09-20 (§30, finding P53):* every
+certificate's noise — level, AR(1) coefficient, idiosyncratic SD and the
+district, day-of-week and day-shock scales — is measured on the panel's
+discovery rows, because the confirmation windows' own dependence may not be
+read while the freeze holds, so the certificates test the estimator against
+2017–2020 dependence applied to each stratum's own episode geometry; and each
+certificate is issued at 200 draws per simulation where the sealed run uses
+2,000, so what is certified is the estimator and the null, not the sampling
+resolution of the sealed p-values (the (1 + k)/(1 + n) form makes the 2,000-draw
+p-values finer, not differently sized). The asymptotic p written beside every
+randomization p is not certified at all and is read only under §25.
 
 ## 24. Placebo admissibility follows first-week containment (finding P13)
 
@@ -958,7 +1044,11 @@ departures from the frozen plan. This section numbers them. The stratification,
 the family and the both-arms requirement were decided blind (2026-09-12); the
 second outcome and the joint statistic were not, and are discounted as §14 says.
 The note's ledger (§11.2–11.4) is corrected to point at this table rather than
-at counts that were true on 2026-09-12.
+at counts that were true on 2026-09-12. *Added 2026-09-20 (§30, finding P48):*
+the B-HEARD exposure covariate — `bheard_exposure` in every primary
+specification, identically zero in C1 (asserted numerically inert there),
+identifying variation in C2 — was specified blind in the note's §7 and §11.5
+but was in no numbered row; it is row 30.
 
 ## 29. The sealed script after the second CP2 audit pass (findings P19, P26)
 
@@ -982,6 +1072,213 @@ to `data/reference`, proceeds under §25 and runs six sensitivities. The
 docstring is rewritten to the executed specification and
 `S.confirmatory_spec_audit` holds it there together with the new cells. The
 synthetic dry run was re-stamped with 137 rows.
+
+## 30. The third CP2 specification audit pass (findings P27–P53)
+
+**Blind. Written 2026-09-20, before the lift; no confirmation outcome read.**
+
+Eight finders read the sealed script, the reader, the calibration and power
+scripts and the record against each other; 57 raw findings were triaged by
+hand and their surviving substance is fixed here. Where a change touches what
+the sealed run *does*, it is listed first; where it touches what the record
+*says*, second; where it is a limitation the record had not stated, it is added
+to 23.11 or 23.12 and named here.
+
+**The sealed run (`30_confirmatory_run.py`; every item held by
+`S.confirmatory_spec_audit`).**
+
+- **P27 A tracked, append-only run log.** Every real invocation writes a
+  `start` row to `data/reference/confirmatory_run_log.csv` before any cell is
+  estimated (commit, source hashes, panel hash, draws, jobs, hash seed) and a
+  `sealed` row with the table's sha256 after it is written; a real start while a
+  prior `start` row exists is refused without `--overwrite-sealed-result`. Until
+  now the one-shot was a file-existence test, so a run killed after opening the
+  sample — or one whose result was deleted — could be repeated as if it were the
+  first. The docstring names every flag (`--draws`, `--dry-run-synthetic`,
+  `--jobs`, `--overwrite-sealed-result`).
+- **P28 The real run requires `PYTHONHASHSEED=0`.** X20 established that the
+  pipeline is byte-reproducible only under a fixed hash seed and one BLAS
+  thread; nothing made the sealed run itself insist on it. It now refuses to run
+  for real otherwise, and `ops/phase_i.sh` exports the environment.
+- **P29 The calibration gate compares designs, not labels.** `check_calibration`
+  accepted a certificate on its verdict and simulation count; it now also
+  requires the certificate's `draw_scheme` to equal `draw_scheme_for` on this
+  run's geometry and the calibration ledger's recorded episode starts to equal
+  the starts this run keeps, per stratum — a `SealBroken`, not a warning. A
+  certificate that described another null could otherwise have gated the run
+  (S.ri_scheme_certified compared scheme names in the suite only).
+- **P30 The 28- and 60-day windows draw on the certified geometry.**
+  `sens_post28`/`sens_post60` had drawn their placebo starts with their own post
+  length, so their admissible sets — and on C2 at 60 days the real design's own
+  admissibility — differed from the null the certificate describes. They now
+  pass `draw_post = 14` to the drawer, recorded in the ledger design and in a
+  `draw_post_window` column: the longer window changes what is estimated, not
+  which starts the null may take.
+- **P31 The diagnostics run on every district-day.** The ≥ 5-calls rule was a
+  row filter on the whole sealed sample, so the denominator diagnostic was
+  conditioned on the denominator it exists to check. The three diagnostic cells
+  per stratum now take the unfiltered panel; every other cell keeps the rule.
+- **P32 Coverage-clean over every break date, and a geocoding-only cell.**
+  The coverage-clean sensitivity filtered `ems_coverage_breaks.csv` by the
+  stratum's own window labels, so the pooled stratum ignored breaks dated in C1
+  and C1's cell kept an episode whose window held a break the table labelled
+  otherwise; §18 rule 2's geocoding demonstration was merged into rule 1's cell;
+  and an inapplicable sensitivity emitted no row, so "not run" and "nothing to
+  drop" were indistinguishable. Every break date now applies to every stratum;
+  `sens_geocoding_clean` drops only the episodes whose window contains the
+  geocoding step; and both emit IDENTICAL_TO_PRIMARY rows when nothing applies.
+  The break builder (`35_coverage_breaks.py`) treats boundary days as inside, as
+  23.10 says (its output is unchanged by the correction: 22 code breaks, one
+  geocoding break).
+- **P33 The cancelled-inclusive sensitivity exists.** 23.7 pre-registered the
+  shares with cancelled and other excluded dispositions restored as runnable;
+  no cell estimated them and the columns did not exist. `01_build_panel.py`
+  writes `*_incl_cancelled` from the excluded-disposition extract (the ≥ 5 rule
+  on the inclusive total) and `sens_incl_cancelled` estimates the share arm for
+  both H1 outcomes. The panel's existing columns are byte-identical after the
+  rebuild (checked column by column).
+- **P34 The EDPM sensitivity exists.** 23.7's EDP family includes EDPM, the one
+  code whose inclusion the record admits was decided on confirmation-period
+  data (F2); nothing bounded its contribution. `sens_no_edpm` estimates the EDP
+  share without it (`edp_ex_edpm_share`), IDENTICAL_TO_PRIMARY where a stratum
+  has no EDPM dispatch (C1) and NOT_RUN where the panel predates the column.
+- **P35 The sidecar pins the run.** It named a comment-insensitive fingerprint
+  of two scripts. It now also carries the raw sha256 of this file,
+  `event_study.py`, `freeze_guard.py`, `config.py` and the B-HEARD builder
+  (a change to the docstring the record calls the specification is now
+  visible), the git commit, the hash seed, and the sha256 of the panel, the
+  three episode lists, the coverage table, the exposure table and the
+  certificates.
+- **P36 A real start the drawer would relocate is refused; the design count
+  is corrected.** Under first-week containment (§24) a real episode start that
+  is not itself admissible would be absent from its own null; the run now
+  refuses (`SealBroken`) rather than letting the drawer snap it. `stratum_episodes`
+  requires an episode's first week to lie inside ONE window of the stratum, so
+  an episode straddling the pooled stratum's 2021-05-31/06-01 seam is dropped
+  with its reason rather than kept in a stack whose null cannot place it (none
+  does: the pooled certificate's 45 starts equal the run's, which P29 checks).
+  The docstring's "62,920 distinct designs" counted full-post containment; under
+  §24 the count is 542 × 143 = 77,506, corrected in §21, the note, PAPER_MASTER,
+  EXECUTION_PLAN and `event_study.py`.
+
+**The reading (`34_confirmatory_reading.py`; every item held by
+`S.confirmatory_reading_rules` with a planted table).**
+
+- **P37 The §25 fallback applies to the whole stratum.** In an uncertified
+  stratum the placebo override, the denominator diagnostic and the smallest-p
+  sentence read the asymptotic p, as the primary cells do; they had read the
+  randomization p §25 forbids.
+- **P38 A diagnostic cell without a p-value is "diagnostic unavailable"**, not
+  evidence that the result is denominator-driven.
+- **P39 A clean C1 confirmation is not vetoed by a discounted C2.** C1
+  rejecting in the predicted direction with C2's rejection denominator-driven
+  is §9.4 row 2 (confirmed in the clean stratum only; C2's rejection does not
+  count), not "not support".
+- **P40 The placebo override attaches to every rejection**, including one in
+  the opposite direction, which is otherwise reported as evidence for the
+  opposite channel; it had been dropped there.
+- **P41 The reading is sealed.** `confirmatory_reading.csv` is written once
+  with a sidecar binding it to the sha256 of the sealed table it read, the
+  power table, the reader's code and the reading; a second write on the same
+  table requires `--overwrite-reading REASON`, written into the sidecar.
+  `ops/phase_i.sh` runs the reader once.
+- **P42 The MDE has provenance.** The reader takes the MDEs from the TRACKED
+  `data/reference/power_analysis_prefreeze.csv` (a copy of 19's output made
+  before the lift, `freeze_active = 1`), refuses a table that is absent or not
+  flagged pre-freeze, and no longer prints "nan" into the rule 2 sentence. §19
+  rule 7 is thereby enforced rather than promised.
+- **P43 The sensitivity set and the label are enumerated** (23.1c above);
+  falsification-outcome cells no longer enter the label or the count.
+- **P44 The pooled stratum is read** (23.1d above).
+- **P45 The bounded-null sentence is stated as rule 2 fixes it**: at the
+  family level with the stratum's smallest unadjusted p named; the minimum
+  effect of interest printed with its sign (−0.005); the transient clause at
+  the MEI, said to be disfavoured only when the pre-freeze transient MDE lies at
+  or below it and otherwise "not excluded"; the 23.11 factor labelled
+  approximate.
+
+- **P54 The placebo override no longer fails open.** An override cell (cardiac
+  or asthma, either arm) that produced no p-value cannot reject, and its absence
+  had read as a placebo that passed; the reading now records
+  `placebo_cells_unavailable` and appends "PLACEBO CHECK INCOMPLETE (23.4)" to
+  the stratum's verdict when any of the four is missing. The planted tables also
+  pin the unadjusted threshold at exactly 0.05 (a placebo at p = 0.05 overrides,
+  at 0.0501 does not) and plant an asthma override, so neither constant can move
+  after the sealed table exists without the suite noticing.
+- **P55 The secondary arms are read** (23.1e above), and a row-3 conclusion
+  carries the interaction arm's reading rather than delegating to an arm no
+  rule read.
+
+**The sealed run, continued (from the completeness critic; held by
+`S.confirmatory_spec_audit`).**
+
+- **P56 The sealed table carries the day-by-day path.** 23.2 requires a
+  rejection without a consistent direction to be reported with the day-by-day
+  path, and no column held it, so it could only have been produced by a second,
+  unsealed read. Every randomization cell now writes `path_coefs` and
+  `path_ses`: the day 0..7 coefficients and their date-clustered SEs as JSON,
+  from the same fit that produces the first-week mean.
+- **P57 The two outcome-definition sensitivities run on both arms.**
+  `sens_incl_cancelled` and `sens_no_edpm` were share-arm only, suspending the
+  both-arms rule exactly where the outcome definition is weakest. Both now run
+  the count arm too; the cancelled-inclusive count offsets on the
+  cancelled-inclusive total (its own denominator), the EDPM-excluded count on
+  the primary total. `event_study.count_outcome` maps the infixed share names
+  to their counts.
+
+**The record (held by `S.third_pass_record_consistency`).**
+
+- **P46** Summary row 3 (the joint days 0–7 window) was marked blind; §14, 23.9
+  and row 28 say it was adopted after discovery results. It reads "no (§14)".
+- **P47** The note said C1 has "No COVID"; C1's 2021 block (January–May 2021)
+  is inside the pandemic, and the property that makes C1 clean is that B-HEARD
+  had not launched. PAPER_MASTER §6's design table split the confirmation
+  windows at 2021-01-01 and put C1's 2021 block in the exposed row; it now
+  states the strata the code estimates.
+- **P48** The B-HEARD covariate is numbered (row 30; §28).
+- **P49** §18's rules were introduced as fixed "before the values exist";
+  the EDP birth dates and the annual missing-district rates were already in the
+  record under F2 and F3. The heading now says so.
+- **P50** F4's weights were called outcome-free ("no outcome group"); they are
+  a count of total dispatches per precinct × district pooled over 2015–2024 —
+  the quantity the primary share divides by and the sealed run's own
+  denominator diagnostic. The disposition (kept as built) stands and is now
+  stated on the right description: a geography weight built from the total,
+  containing no outcome group and no date.
+- **P51** §20 said the spliced and primary series are identical throughout C1;
+  they are identical by construction only in the 2015–2016 block (above).
+- **P52** `19_power.py`'s STRATA docstring described a C1 calendar its code no
+  longer derives and `_ri_sim`'s docstring a k/n p-value with an open item to
+  change it (the code has computed (1 + k)/(1 + n) since 2026-09-13);
+  `18_null_calibration.py`'s docstring said the null carries "the real design's
+  serial-correlation structure" where it carries the discovery rows'. All three
+  now describe their code; the boundary-day rule of 23.10 is implemented.
+- **P53** Limitations added to 23.11 (the 8-df factor 1.21 beside 1.28; the
+  asymptotic-Wald MDE against a BH-adjusted randomization non-rejection; the
+  corrected-conjunction / uncorrected-disjunction asymmetry) and 23.12
+  (discovery-row noise; 200 draws per simulation against 2,000; the asymptotic p
+  uncertified).
+- **P58** PAPER_MASTER §5.3 said the external pre-registration remedy for the
+  freeze incidents "remains open at any point" and that holding the line "does
+  not foreclose it". Lifting the freeze does foreclose it: once the sealed run
+  has read the confirmation outcomes no external timestamp can precede them.
+  The text now says so, and records that proceeding to Phase I on the internal
+  record (the committed pre-registration, its addendum, the tracked run log and
+  the sealed table) is the author's decision, taken 2026-09-19 (EXECUTION_PLAN
+  CP2 checklist), not a consequence of the design.
+
+**Considered and not changed**, because the pass found them already disclosed
+or not defects: the 200-draw certificates (23.12 now states it as a
+limitation; the certified object is the null, not the draw count); the
+single-outcome certificate (23.12); the unspecified p for the placebo and
+diagnostic rules (23.3 and 23.4 fix it as unadjusted randomization p, §25 as the
+asymptotic p in an uncertified stratum — P37 makes the code follow the second);
+the suggestion to read four unadjusted p ≈ 0.03 as a movement (the family rule
+is the pre-registered rule and is not softened after the power result); and
+the suggestion to replace 1.28 by 1.21 (the more conservative factor is kept and
+both are quoted). No specification, lag, sample or outcome definition changes in
+this pass to recover any result; nothing in it was chosen with a confirmation
+outcome in view.
 
 ## What has NOT changed
 

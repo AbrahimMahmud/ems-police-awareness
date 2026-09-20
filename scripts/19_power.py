@@ -251,13 +251,16 @@ answer is available now, when it can still change the plan.
 
 STRATA
 ------
-Derived from config, never retyped: C1 is the confirmation windows before
-BHEARD_LAUNCH, C2 from BHEARD_LAUNCH on. PAPER_MASTER 6 writes Confirmation A as
-2015-07-01..2016-12-31 while config.CONFIRMATION_WINDOWS opens it at 2015-01-01.
-`_check_strata_agree_with_paper` asserts the disagreement is immaterial to the
-episode geometry -- no episode starts in the disputed gap, the earliest is
-2015-07-23 -- and FAILS if one ever does, rather than letting two definitions of
-a stratum coexist unremarked.
+Derived from config, never retyped: `_stratum_windows` reads
+config.CONFIRMATION_ANALYSIS_WINDOWS, the ONE definition 18_null_calibration.py
+and 30_confirmatory_run.py also read -- C1 is its first two windows
+(2015-07-01..2016-12-31 and 2021-01-01..2021-05-31), C2 its third
+(2021-06-01..2024-12-31) -- and asserts each refines config.CONFIRMATION_WINDOWS
+and splits at BHEARD_LAUNCH. The frozen CONFIRMATION_WINDOWS open 2015-01-01;
+the 181 days before the pageviews API exists carry no treatment and belong to no
+stratum. `_check_strata_agree_with_paper` still FAILS if an episode ever starts
+in that gap, rather than letting two calendars for one stratum coexist
+unremarked (CP1 audit 2026-09-13; third CP2 audit pass 2026-09-20).
 
 Usage:
     python 19_power.py                          # full run, both profiles, RI on
@@ -849,10 +852,11 @@ def _ri_sim(job):
 
     Calls `event_study.randomization_p` -- the estimator 17 runs -- rather than
     reimplementing it, so the RI MDE is the MDE of the committed inference and
-    not of a lookalike. Note that that function computes p as k/n; CP2 carries an
-    open item to move it to the (1+k)/(1+n) form, which would raise every RI
-    p-value by about 1/n and so shift the RI MDE slightly upward. Recorded here
-    because the number in the CSV is a property of today's code.
+    not of a lookalike. That function computes p as (1 + k) / (1 + n) -- the
+    observed statistic counted among the draws -- so the RI MDE here is the MDE
+    of exactly that p-value; an earlier version of this note recorded a k/n form
+    and an open item to change it, both stale since 2026-09-13 (third CP2 audit
+    pass, 2026-09-20). The number in the CSV is a property of today's code.
     """
     c, seed, pname, delta, draws = job
     rng = np.random.default_rng(seed)

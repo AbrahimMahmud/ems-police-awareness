@@ -186,10 +186,15 @@ def _fit(fml, d, counts, vcov, outcome, offset=True):
             # column has to exist. Passing a Series raises TypeError, which the
             # except below then turned into a silent "not estimable" — the arm
             # would have looked merely unlucky rather than broken.
-            d = d[(d["total_calls"] > 0) & d[outcome].notna()].copy()
+            #
+            # `offset` may name the denominator column (the cancelled-inclusive
+            # count arm offsets on the cancelled-inclusive total, addendum 30);
+            # True means the primary denominator, total_calls.
+            total_col = offset if isinstance(offset, str) else "total_calls"
+            d = d[(d[total_col] > 0) & d[outcome].notna()].copy()
             if d.empty:
                 return None
-            d["log_total"] = np.log(d["total_calls"])
+            d["log_total"] = np.log(d[total_col])
             return pf.fepois(fml, d, vcov=vcov, offset="log_total")
         return pf.feols(fml, d, vcov=vcov)
     except Exception:
@@ -265,8 +270,9 @@ def fit_dose_response(stack, outcome, intensity, fe="ep_cd + dow", counts=False,
 
 
 def count_outcome(share_outcome):
-    """The count column behind a share column: edp_share -> edp."""
-    return share_outcome[:-6] if share_outcome.endswith("_share") else share_outcome
+    """The count column behind a share column: edp_share -> edp,
+    edp_share_incl_cancelled -> edp_incl_cancelled, edp_ex_edpm_share -> edp_ex_edpm."""
+    return share_outcome.replace("_share", "", 1) if "_share" in share_outcome else share_outcome
 
 
 # Collinear event-time dummies get dropped when windows are truncated by an
@@ -368,7 +374,8 @@ def joint_p(model, wanted):
 
 
 def first_week_mean(stack, outcome, fe="ep_cd + dow", counts=False, days=range(0, 8),
-                    cluster=CLUSTER_VAR, extra=(), offset=True, return_se=False):
+                    cluster=CLUSTER_VAR, extra=(), offset=True, return_se=False,
+                    return_path=False):
     """Reportable effect size: the mean day 0..7 coefficient. NOT the test statistic.
 
     With `return_se=True` returns `(mean, se)`, where `se` is the asymptotic
@@ -376,24 +383,34 @@ def first_week_mean(stack, outcome, fe="ep_cd + dow", counts=False, days=range(0
     k first-week coefficients. Addendum 23.2 reads a rejection's direction off
     the sign of this mean and calls it inconsistent when the mean is within one
     standard error of zero in either arm, so the sealed script writes both.
+    With `return_path=True` (implies the SE) returns `(mean, se, path)` where
+    `path` is `{day: (coef, se)}` for every requested day the fit identified —
+    the day-by-day path 23.2 requires a direction-less rejection to be reported
+    with, written into the sealed table so no second read is needed (addendum 30).
     """
     m = fit_event_study(stack, outcome, fe=fe, counts=counts, cluster=cluster, extra=extra,
                         offset=offset)
+    none = (None, None, None) if return_path else (None, None) if return_se else None
     if m is None:
-        return (None, None) if return_se else None
+        return none
     names = _rel_day_coefs(m)
     wanted = [names[k] for k in days if k in names]
     if not wanted:
-        return (None, None) if return_se else None
+        return none
     mean = float(m.coef().loc[wanted].mean())
-    if not return_se:
+    if not return_se and not return_path:
         return mean
     allnames = [str(n) for n in m._coefnames]
     V = np.asarray(m._vcov, dtype=float)
     a = np.zeros(len(allnames))
     for w in wanted:
         a[allnames.index(str(w))] = 1.0 / len(wanted)
-    return mean, float(np.sqrt(max(float(a @ V @ a), 0.0)))
+    se = float(np.sqrt(max(float(a @ V @ a), 0.0)))
+    if not return_path:
+        return mean, se
+    coefs, ses = m.coef(), m.se()
+    path = {int(k): (float(coefs.loc[names[k]]), float(ses.loc[names[k]])) for k in days if k in names}
+    return mean, se, path
 
 
 def placebo_starts(rng, real_starts, lo, hi, pre, post):
@@ -530,10 +547,12 @@ def placebo_starts_circular(rng, real_starts, windows, pre, post):
     #
     # Shifting inside each window fixes it by construction: the count per window
     # is preserved on EVERY draw, clustering within a window survives, and there
-    # is no seam to cross. C1 has 520 and 121 admissible days, so 62,920
+    # is no seam to cross. Under first-week containment (CIRCULAR_FIRST_WEEK,
+    # addendum 24) C1 has 542 and 143 admissible days, so 542 x 143 = 77,506
     # distinct placebo designs remain against the 2,000 draws the design calls
-    # for. On a single-window stratum this is arithmetically identical to the old
-    # code, which is what keeps discovery and C2 untouched.
+    # for (the 520 x 121 = 62,920 quoted before 2026-09-20 counted full-post
+    # containment). On a single-window stratum the block shift and the anchor
+    # shift are different draws (addendum 27): discovery and C2 keep the latter.
     # Membership is decided by the WINDOW'S CALENDAR BOUNDS, not by its
     # admissible days. The two differ by `pre` at the start and `post` at the
     # end, and finding P2 is precisely that two of C1's fifteen episodes sit in
@@ -630,6 +649,14 @@ def stratum_episodes(episode_starts, windows, pre, post, first_week=7):
     def inside(d):
         return any(a <= d <= b for a, b in wins)
 
+    def inside_one(days):
+        # The first week must lie inside ONE window. The pooled stratum's C1b
+        # and C2 windows are adjacent in the calendar (2021-05-31 | 2021-06-01),
+        # so a union test would keep an episode whose first week straddles the
+        # seam while the within-block drawer has no block to place it in — the
+        # P13 snap re-created at the seam (third CP2 audit pass, 2026-09-20).
+        return any(all(a <= d <= b for d in days) for a, b in wins)
+
     kept, dropped = [], []
     for s0 in sorted(pd.to_datetime(pd.Series(list(episode_starts))).tolist()):
         if not any(a <= s0 <= b for a, b in wins):
@@ -640,15 +667,17 @@ def stratum_episodes(episode_starts, windows, pre, post, first_week=7):
         full = pd.date_range(s0 - pd.Timedelta(days=pre),
                              s0 + pd.Timedelta(days=post), freq="D")
         lost = int(sum(1 for d in full if not inside(d)))
-        if all(inside(d) for d in fw):
+        if inside_one(fw):
             kept.append({"start": s0, "days_outside_full_window": lost,
                          "full_window_days": len(full)})
         else:
             missing = [d for d in fw if not inside(d)]
             dropped.append({"start": s0, "days_outside_full_window": lost,
-                            "reason": (f"day -1..+{first_week} is not inside the stratum: "
-                                       f"{len(missing)} of {len(fw)} first-week days fall "
-                                       f"outside, first {missing[0].date()}")})
+                            "reason": ((f"day -1..+{first_week} is not inside the stratum: "
+                                        f"{len(missing)} of {len(fw)} first-week days fall "
+                                        f"outside, first {missing[0].date()}") if missing else
+                                       f"day -1..+{first_week} straddles a seam between two of the "
+                                       "stratum's windows; no single block contains it")})
     return kept, dropped
 
 
@@ -908,8 +937,15 @@ def draw_scheme_for(windows, real_starts, pre, post):
 def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
                     fe="ep_cd + dow", counts=False, date_col="incident_date",
                     cluster=CLUSTER_VAR, windows=None, ledger=None, seed=None,
-                    extra=(), offset=True):
+                    extra=(), offset=True, draw_post=None):
     """Episode-level randomization inference. Returns (observed, p, null draws).
+
+    `draw_post` (default: `post`) is the post window the PLACEBO DRAWER uses for
+    admissibility and anchor slack, while `post` is the estimation window. The
+    sealed run's 28- and 60-day window sensitivities pass draw_post=14 so their
+    null is the certified 14-day geometry — the same reference set, the same
+    admissible anchors, the observed design inside its own support — and only
+    the estimation window lengthens (third CP2 audit pass, 2026-09-20).
 
     The statistic is the joint chi-square, which is non-negative and increasing
     in departure from the null, so p is the share of placebo statistics at least
@@ -931,7 +967,8 @@ def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
         return None, np.nan, np.array([])
     if windows is None:
         windows = [(panel[date_col].min(), panel[date_col].max())]
-    scheme, _why = draw_scheme_for(windows, real_starts, pre, post)
+    dpost = int(post if draw_post is None else draw_post)
+    scheme, _why = draw_scheme_for(windows, real_starts, pre, dpost)
     lo, hi = pd.Timestamp(windows[0][0]), pd.Timestamp(windows[-1][1])
 
     # RESUMABLE, BECAUSE THIS ENVIRONMENT WILL NOT HOLD A LONG JOB (finding N6).
@@ -971,7 +1008,10 @@ def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
             "extra": list(extra), "scheme": scheme,
             # Only written when it departs from the default, so every ledger
             # fingerprinted before the raw-count diagnostic existed still matches.
-            **({"offset": False} if not offset else {}),
+            **({"offset": offset} if offset is not True else {}),
+            # Only when the drawer's window differs from the estimation window
+            # (the sealed run's 28/60-day sensitivities draw on the 14-day geometry).
+            **({"draw_post": dpost} if dpost != int(post) else {}),
             "windows": [[str(pd.Timestamp(a).date()), str(pd.Timestamp(b).date())]
                         for a, b in windows],
             "starts": sorted(str(pd.Timestamp(s).date()) for s in real_starts),
@@ -1011,9 +1051,9 @@ def randomization_p(panel, real_starts, outcome, pre, post, draws, rng,
     # the observed one in where two episodes sat. It is now summed and reported.
     DRAWERS = {
         CIRCULAR_SCHEME:
-            lambda r: placebo_starts_circular(r, real_starts, windows, pre, post),
+            lambda r: placebo_starts_circular(r, real_starts, windows, pre, dpost),
         "anchor_shift":
-            lambda r: (placebo_starts(r, real_starts, lo, hi, pre, post), 0),
+            lambda r: (placebo_starts(r, real_starts, lo, hi, pre, dpost), 0),
     }
     if scheme not in DRAWERS:
         raise ValueError(

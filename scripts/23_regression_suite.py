@@ -415,9 +415,37 @@ def s_confirmatory_spec_audit():
     # P26: the docstring is declared to be the specification, so it must name the
     # executed family values and the tracked output path.
     doc = _ast.get_docstring(tree) or ""
-    for token in ("descriptive", "diagnostic", "data/reference/confirmatory_results.csv", "sens_post28"):
+    for token in ("descriptive", "diagnostic", "data/reference/confirmatory_results.csv", "sens_post28",
+                  "--jobs", "--overwrite-sealed-result", "PYTHONHASHSEED", "confirmatory_run_log.csv"):
         if token not in doc:
             problems.append(f"the module docstring does not mention {token}")
+    # Third CP2 audit pass (P27-P4x): the seal is a tracked append-only run log
+    # written before estimation; real mode requires the fixed hash seed; the
+    # calibration gate compares scheme AND episode set with the run's design; the
+    # window sensitivities draw on the certified 14-day geometry; the diagnostics
+    # run on every district-day; coverage-clean uses every break date and a
+    # geocoding-only cell exists; the cancelled-inclusive and no-EDPM cells exist;
+    # the sidecar pins the raw sources, the commit, the panel and the episode lists.
+    for token, why in (('append_run_log("start"', "no run-log row is written before estimation"),
+                       ('append_run_log("sealed"', "no run-log row is written at the seal"),
+                       ('prior[prior["event"] == "start"]', "a prior real run does not refuse a second"),
+                       ('os.environ.get("PYTHONHASHSEED") != "0"', "real mode does not require PYTHONHASHSEED=0"),
+                       ("_assert_certificate_matches_design(", "the gate does not compare the certificate's design with the run's"),
+                       ("draw_post=EVENT_WINDOW_POST", "the window sensitivities do not draw on the 14-day geometry"),
+                       ("panel_all = prepare(raw_panel, apply_min_calls=False)", "no unfiltered panel is built for the diagnostics"),
+                       ("sp_all = attach_bheard(strata_all[stratum]", "the diagnostics are not estimated on every district-day"),
+                       ('"sens_geocoding_clean"', "no geocoding-only sensitivity cell"),
+                       ('"sens_incl_cancelled"', "no cancelled-inclusive sensitivity cell"),
+                       ('"sens_no_edpm"', "no EDPM-excluded sensitivity cell"),
+                       ('"source_sha256"', "the sidecar does not pin the raw sources"),
+                       ('"inputs_sha256"', "the sidecar does not pin the inputs"),
+                       ("real episode start(s)", "a real start the drawer would relocate is not refused"),
+                       ('"path_coefs": json.dumps(', "the day-by-day path is not written into the sealed table (23.2; P56)"),
+                       ('offset="total_calls_incl_cancelled"', "the cancelled-inclusive count arm does not offset on its own total (P57)")):
+        if token not in src:
+            problems.append(why)
+    if 'breaks["window"].isin(STRATUM_BREAK_LABELS' in src:
+        problems.append("coverage-clean still filters break dates by the stratum's own window labels")
     if problems:
         return "FAIL", "; ".join(problems)
     return "PASS", ("real mode fixed to RANDOMIZATION_DRAWS; sealed result tracked; BH over a "
@@ -586,6 +614,23 @@ def s_confirmatory_reading_rules():
     for bad in ("read_parquet", "panel_cd_day", "EPISODE_LIST", "select_sample"):
         if bad in text:
             problems.append(f"34 mentions {bad}: it may read only the sealed table and the power table")
+    # Third CP2 audit pass (P41-P45): the reading is sealed (a sidecar binding it
+    # to the table it read, an overwrite guard with a reason), the MDEs come from
+    # the TRACKED pre-freeze power table and the reader refuses one that is absent
+    # or not flagged pre-freeze, the sensitivity set is enumerated, the pooled
+    # stratum gets its own descriptive reading, and the bounded-null sentence is
+    # written at the family level with the MEI's sign and an approximate factor.
+    for token, why in (("--overwrite-reading", "34 has no overwrite guard for the reading"),
+                       ('"sealed_table_sha256"', "34's sidecar does not bind the reading to the table it read"),
+                       ('POWER = DATA_REFERENCE / "power_analysis_prefreeze.csv"', "34 does not read the tracked pre-freeze power table"),
+                       ('pw.get("freeze_active", 0))) != 1', "34 does not refuse a power table not flagged pre-freeze"),
+                       ("SENSITIVITY_SPECS = (", "34 does not enumerate the sensitivity set"),
+                       ('"pooled_reading"', "34 gives the pooled stratum no reading"),
+                       ("smallest unadjusted", "the bounded-null sentence does not name the smallest unadjusted p"),
+                       ("(−{MINIMUM_EFFECT_OF_INTEREST})", "the bounded-null sentence prints the MEI without its sign"),
+                       ("approximate one-parameter family correction", "the 23.11 factor is not labelled approximate")):
+        if token not in text:
+            problems.append(why)
     spec = importlib.util.spec_from_file_location("_m34", SCRIPTS / "34_confirmatory_reading.py")
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
@@ -626,6 +671,30 @@ def s_confirmatory_reading_rules():
                              spec="sens_drop_jul2016", family="sensitivity", p_randomization=0.5,
                              p_asymptotic=0.5, p_bh_adjusted=np.nan, first_week_mean_coef=-0.0005,
                              first_week_mean_se=0.001, n_episodes=14, status="OK", null_certified=True))
+            # a coverage-clean cell on a falsification outcome: family 'sensitivity',
+            # never an H1 outcome, so it may not enter the robust/fragile label (P43)
+            rows.append(dict(key=f"{s_}:sens_placebo", stratum=s_, outcome="cardiac_share", estimator="OLS_share",
+                             spec="sens_coverage_clean", family="sensitivity", p_randomization=0.01,
+                             p_asymptotic=0.01, p_bh_adjusted=np.nan, first_week_mean_coef=-0.002,
+                             first_week_mean_se=0.001, n_episodes=14, status="OK", null_certified=True))
+            # secondary arms: the interaction (C2 only) and the dose arm, asymptotic p
+            rows.append(dict(key=f"{s_}:sec_interaction", stratum=s_, outcome="edp_share", estimator="OLS_share",
+                             spec="bheard_interaction", family="secondary", p_randomization=np.nan,
+                             p_asymptotic=0.5 if s_ == S2 else np.nan, p_bh_adjusted=np.nan,
+                             first_week_mean_coef=0.002 if s_ == S2 else np.nan, first_week_mean_se=np.nan,
+                             n_episodes=15, status="OK" if s_ == S2 else "NOT_RUN: no B-HEARD exposure in this stratum",
+                             null_certified=True))
+            rows.append(dict(key=f"{s_}:sec_dose", stratum=s_, outcome="edp_share", estimator="OLS_share_dose_per_sd",
+                             spec="dose_response", family="secondary", p_randomization=np.nan, p_asymptotic=0.5,
+                             p_bh_adjusted=np.nan, first_week_mean_coef=-0.001, first_week_mean_se=np.nan,
+                             n_episodes=15, status="OK", null_certified=True))
+        for o in ("edp_share", "mh_narrow_share"):
+            for arm, est in ARM.items():
+                col = o if arm == "share" else count_outcome(o)
+                rows.append(dict(key=f"pooled:{o}:{arm}", stratum="pooled", outcome=col, estimator=est,
+                                 spec="primary", family="descriptive", p_randomization=0.5,
+                                 p_asymptotic=0.5, p_bh_adjusted=np.nan, first_week_mean_coef=-0.0005,
+                                 first_week_mean_se=0.001, n_episodes=45, status="OK", null_certified=True))
         return pd.DataFrame(rows)
 
     def scenario(over):
@@ -691,10 +760,59 @@ def s_confirmatory_reading_rules():
          ("rejects, predicted direction", "does not reject"), "CONFIRMED IN THE CLEAN STRATUM ONLY"),
         ("BH boundary is strict (23.1)", rej(S1, "edp_share", p_bh=0.05),
          ("does not reject", "does not reject"), "THE PRE-SPECIFIED NULL"),
+        ("uncertified null: placebo override reads the asymptotic p (25.3)",
+         {**uncert, **{k: {**v, "null_certified": False, "p_bh_adjusted": 1.0, "p_asymptotic": 0.001}
+                       for k, v in rej(S1, "edp_share").items()},
+          f"{S1}:placebo:cardiac_share:share": dict(null_certified=False, p_randomization=0.5, p_asymptotic=0.01)},
+         ("rejects on the asymptotic p", "does not reject"), "NOT SUPPORT FOR H1"),
+        ("diagnostic unavailable is not denominator-driven (23.3a)",
+         {**rej(S1, "edp_share"), f"{S1}:diag_total": dict(p_randomization=float("nan"))},
+         ("rejects, predicted direction (on edp_share)", "does not reject"), "CONFIRMED IN THE CLEAN STRATUM ONLY"),
+        ("C1 clean, C2 discounted -> row 2 (9.4)",
+         {**rej(S1, "edp_share"), **rej(S2, "edp_share"), f"{S2}:diag_total": dict(p_randomization=0.01)},
+         ("rejects, predicted direction (on edp_share)", "rejects, denominator-driven"), "CONFIRMED IN THE CLEAN STRATUM ONLY (9.4 row 2): C2's rejection does not count"),
+        ("opposite direction under a placebo override (23.4)",
+         {**rej(S1, "edp_share", mean=0.003), f"{S1}:placebo:asthma_share:share": dict(p_randomization=0.01)},
+         ("rejects, opposite direction (9.1): not support for H1; PLACEBO OVERRIDE", "does not reject"), "NOT SUPPORT FOR H1"),
         ("uncertified null, no asymptotic rejection (25.3)",
          {**uncert, **{k: {**v, "null_certified": False, "p_bh_adjusted": 1.0, "p_asymptotic": 0.4}
                        for k, v in rej(S1, "edp_share").items()}},
          ("does not reject", "does not reject"), "THE PRE-SPECIFIED NULL"),
+        # third CP2 audit pass
+        ("pooled rejects where neither stratum does (23.1d)",
+         {"pooled:edp_share:share": dict(p_randomization=0.001, first_week_mean_coef=-0.003),
+          "pooled:edp_share:count": dict(p_randomization=0.001, first_week_mean_coef=-0.03)},
+         ("does not reject", "does not reject"),
+         "THE PRE-SPECIFIED NULL (9.4 row 5): a bounded null in both strata, read by addendum 19 rule 2; the pooled stratum rejects where neither stratum does"),
+        ("pooled arms disagree in sign: no pooled rejection (23.1d)",
+         {"pooled:edp_share:share": dict(p_randomization=0.001, first_week_mean_coef=-0.003),
+          "pooled:edp_share:count": dict(p_randomization=0.001, first_week_mean_coef=0.03)},
+         ("does not reject", "does not reject"), "THE PRE-SPECIFIED NULL"),
+        ("sensitivity survives (23.1c)", {**rej(S1, "edp_share"), f"{S1}:sens": dict(p_randomization=0.01)},
+         ("rejects, predicted direction", "does not reject"), "CONFIRMED IN THE CLEAN STRATUM ONLY"),
+        ("sensitivity fails (23.1c)", rej(S1, "edp_share"),
+         ("rejects, predicted direction", "does not reject"), "CONFIRMED IN THE CLEAN STRATUM ONLY"),
+        ("sensitivity identical to the primary survives (23.1c)",
+         {**rej(S1, "edp_share"), f"{S1}:sens": dict(p_randomization=float("nan"), status="IDENTICAL_TO_PRIMARY: same starts")},
+         ("rejects, predicted direction", "does not reject"), "CONFIRMED IN THE CLEAN STRATUM ONLY"),
+        ("sensitivity not run is not applicable (23.1c)",
+         {**rej(S1, "edp_share"), f"{S1}:sens": dict(p_randomization=float("nan"), status="NOT_RUN: episode list absent")},
+         ("rejects, predicted direction", "does not reject"), "CONFIRMED IN THE CLEAN STRATUM ONLY"),
+        ("placebo cell without a p-value: check incomplete, no silent pass (23.4)",
+         {**rej(S1, "edp_share"), f"{S1}:placebo:cardiac_share:share": dict(p_randomization=float("nan"))},
+         ("rejects, predicted direction (on edp_share); PLACEBO CHECK INCOMPLETE (23.4): 1 of 4", "does not reject"),
+         "CONFIRMED IN THE CLEAN STRATUM ONLY"),
+        ("placebo at exactly alpha overrides (23.4)",
+         {**rej(S1, "edp_share"), f"{S1}:placebo:asthma_share:count": dict(p_randomization=0.05)},
+         ("rejects, predicted direction (on edp_share); PLACEBO OVERRIDE", "does not reject"), "NOT SUPPORT FOR H1"),
+        ("placebo just above alpha does not override (23.4)",
+         {**rej(S1, "edp_share"), f"{S1}:placebo:asthma_share:count": dict(p_randomization=0.0501)},
+         ("rejects, predicted direction (on edp_share)", "does not reject"), "CONFIRMED IN THE CLEAN STRATUM ONLY"),
+        ("secondary arms read against their predicted directions (23.1e)",
+         {**rej(S2, "edp_share"), f"{S2}:sec_interaction": dict(p_asymptotic=0.01, first_week_mean_coef=0.002),
+          f"{S2}:sec_dose": dict(p_asymptotic=0.01, first_week_mean_coef=0.001)},
+         ("does not reject", "rejects, predicted direction"),
+         "NOT CONFIRMATION (9.4 row 3)"),
     ]
     passed = 0
     for name, over, (v1, v2), concl in cases:
@@ -724,6 +842,14 @@ def s_confirmatory_reading_rules():
             row = res[(res["stratum"] == S1) & (res["item"] == "null_certified")]
             if row.empty or int(float(row["value"].iloc[0])) != 0:
                 problems.append("uncertified: null_certified not recorded as 0")
+        if name.startswith("uncertified null: placebo"):
+            row = res[(res["stratum"] == S1) & (res["item"] == "placebo_rejects_any")]
+            if row.empty or int(float(row["value"].iloc[0])) != 1 or "OVERRIDE" not in verdicts[S1]:
+                problems.append("uncertified: the placebo override did not read the asymptotic p")
+        if name.startswith("diagnostic unavailable"):
+            row = res[(res["stratum"] == S1) & (res["item"] == "denominator_driven:edp_share")]
+            if row.empty or int(float(row["value"].iloc[0])) != 0 or "unavailable" not in str(row["detail"].iloc[0]):
+                problems.append("diagnostic unavailable: not recorded as unavailable / read as denominator-driven")
         if name.startswith("one arm only") or name.startswith("arms disagree"):
             row = res[(res["stratum"] == S1) & (res["item"] == "bounded_null")]
             if row.empty or int(float(row["value"].iloc[0])) != 0:
@@ -732,10 +858,167 @@ def s_confirmatory_reading_rules():
             row = res[(res["stratum"] == S1) & (res["item"] == "bounded_null")]
             if row.empty or int(float(row["value"].iloc[0])) != 1:
                 problems.append("both null: the bounded-null sentence was not asserted")
+            elif "family level" not in str(row["detail"].iloc[0]) or "smallest unadjusted" not in str(row["detail"].iloc[0]):
+                problems.append("both null: the bounded-null sentence is not stated at the family level with the smallest unadjusted p")
+            elif "(−0.005)" not in str(row["detail"].iloc[0]):
+                problems.append("both null: the MEI is printed without its sign")
+            elif "transient dip-and-rebound of the minimum effect of interest is disfavoured" not in str(row["detail"].iloc[0]):
+                problems.append("both null: the transient clause is not stated at the MEI")
+            lab = res[(res["stratum"] == S1) & (res["item"] == "sensitivity_summary")]
+            if lab.empty or "0 of 1 H1-outcome sensitivity cells" not in str(lab["value"].iloc[0]):
+                problems.append("both null: the sensitivity count admits falsification-outcome cells "
+                                f"({lab['value'].iloc[0] if not lab.empty else 'absent'!r})")
+        if name.startswith("placebo cell without"):
+            row = res[(res["stratum"] == S1) & (res["item"] == "placebo_cells_unavailable")]
+            if row.empty or int(float(row["value"].iloc[0])) != 1:
+                problems.append("placebo incomplete: placebo_cells_unavailable not recorded as 1")
+            if "OVERRIDE" in verdicts[S1]:
+                problems.append("placebo incomplete: a missing p-value triggered the override")
+        if name.startswith("placebo just above"):
+            if "OVERRIDE" in verdicts[S1] or "INCOMPLETE" in verdicts[S1]:
+                problems.append("placebo just above alpha: read as an override or as incomplete")
+        if name.startswith("secondary arms"):
+            it = res[(res["stratum"] == S2) & (res["item"] == "secondary_reading:bheard_interaction:edp_share:OLS_share")]
+            if it.empty or not str(it["value"].iloc[0]).startswith("moves in the predicted direction"):
+                problems.append("secondary: the attenuating interaction was not read as the predicted direction")
+            it = res[(res["stratum"] == S2) & (res["item"] == "secondary_reading:dose_response:edp_share:OLS_share_dose_per_sd")]
+            if it.empty or not str(it["value"].iloc[0]).startswith("moves against the predicted direction"):
+                problems.append("secondary: a positive dose coefficient was not read as against the predicted direction")
+            if "B-HEARD interaction arm (secondary, 23.1e) reads" not in conclusion:
+                problems.append("secondary: the row-3 conclusion does not carry the interaction arm's reading")
+            it = res[(res["stratum"] == S1) & (res["item"] == "secondary_reading:bheard_interaction:edp_share:OLS_share")]
+            if it.empty or not str(it["value"].iloc[0]).startswith("not read"):
+                problems.append("secondary: a NOT_RUN interaction cell was read")
+        if name.startswith("pooled rejects where"):
+            row = res[(res["stratum"] == "pooled") & (res["item"] == "pooled_reading")]
+            if row.empty or not str(row["value"].iloc[0]).startswith("pooled rejects on edp_share (decline)"):
+                problems.append("pooled: no descriptive pooled rejection was read")
+        if name.startswith("pooled arms disagree"):
+            row = res[(res["stratum"] == "pooled") & (res["item"] == "pooled_reading")]
+            if row.empty or not str(row["value"].iloc[0]).startswith("pooled does not reject"):
+                problems.append("pooled: arms of opposite sign were read as a pooled rejection")
+        if name.startswith("sensitivity"):
+            item = res[(res["stratum"] == S1) & (res["item"] == "sensitivity_survives:sens_drop_jul2016")]
+            lab = str(res[(res["stratum"] == S1) & (res["item"] == "sensitivity_summary")]["value"].iloc[0])
+            want = {"sensitivity survives (23.1c)": (1, "robust"), "sensitivity fails (23.1c)": (0, "fragile"),
+                    "sensitivity identical to the primary survives (23.1c)": (1, "robust"),
+                    "sensitivity not run is not applicable (23.1c)": (None, "survives 0 of 0")}[name]
+            if want[0] is None:
+                if not item.empty:
+                    problems.append(f"{name}: a NOT_RUN sensitivity was counted")
+            elif item.empty or int(float(item["value"].iloc[0])) != want[0]:
+                problems.append(f"{name}: sensitivity_survives:sens_drop_jul2016 not {want[0]}")
+            if want[1] not in lab:
+                problems.append(f"{name}: label {lab!r} lacks {want[1]!r}")
+    # 19.2: the transient clause is conditional on the pre-freeze transient MDE
+    # lying at or below the MEI; above it, the transient shape is NOT excluded (P45).
+    try:
+        mde_big = {S1: {**mde[S1], "dip_rebound": 0.006}, S2: mde[S2]}
+        res, _, _ = m.evaluate(scenario({}), mde_big)
+        row = res[(res["stratum"] == S1) & (res["item"] == "bounded_null")]
+        if row.empty or "transient dip-and-rebound of the minimum effect of interest is not excluded" not in str(row["detail"].iloc[0]):
+            problems.append("transient MDE above the MEI: the sentence still claims the transient shape is disfavoured")
+        else:
+            passed += 1
+    except Exception as e:  # noqa: BLE001
+        problems.append(f"transient MDE above the MEI: evaluate raised {type(e).__name__}: {e}")
+    # 23.1c: the enumerated set is the set the sealed script writes — every
+    # 'sensitivity' spec in the current synthetic dry run is named in it and vice versa.
+    art = OUTPUTS_TABLES / "confirmatory_results_dryrun_synthetic.csv"
+    enumerated = "dry run absent, set not compared"
+    if art.exists():
+        written = set(pd.read_csv(art).query("family == 'sensitivity'")["spec"].unique())
+        named = set(m.SENSITIVITY_SPECS)
+        if written != named:
+            problems.append(f"34's SENSITIVITY_SPECS differ from the specs 30 writes: only in 30 {sorted(written - named)}, "
+                            f"only in 34 {sorted(named - written)}")
+        enumerated = f"the {len(named)} enumerated specs are exactly the specs the dry run writes"
     if problems:
         return "FAIL", "; ".join(problems)
     return "PASS", (f"{passed} planted tables read as the pre-registration requires (23.1–23.4, "
-                    "19.2, 25, note 9.4); 34 reads only the sealed table and the power table")
+                    f"19.2, 25, note 9.4, 23.1c/d); {enumerated}; 34 reads only the sealed table "
+                    "and the tracked pre-freeze power table, and seals its reading")
+
+
+def s_third_pass_record_consistency():
+    """P46-P53 (third CP2 audit pass, 2026-09-20): statements of the record that the
+    audit found contradicted by the code or by the record itself, held to their
+    corrected form by text.
+
+    Each clause is a fact a reader could check by grep: the summary table marks
+    the joint days 0-7 window as decided after discovery results (§14); the
+    note and the master describe C1 as the two blocks the code estimates, with
+    2021's block inside the pandemic and B-HEARD the property that makes it
+    clean; the B-HEARD covariate is a numbered deviation; §18 no longer claims
+    its rules were fixed before the values existed; F4's weights are called what
+    they are (a total-dispatch count); §20 says where the spliced and primary
+    series can differ inside C1; the stale 62,920 design count is gone from every
+    document but the addendum's own correction; 19's, 18's and event_study's
+    method text match their code; 35 treats boundary days as inside; and 23.11 /
+    23.12 state the limitations the pass named.
+    """
+    import ast as _ast
+    problems = []
+    plan = (PROJECT_ROOT / "docs" / "CONFIRMATION_PLAN.md").read_text()
+    note = (PROJECT_ROOT / "docs" / "PRE_ANALYSIS_NOTE.md").read_text()
+    master = (PROJECT_ROOT / "docs" / "PAPER_MASTER.md").read_text()
+    execp = (PROJECT_ROOT / "docs" / "EXECUTION_PLAN.md").read_text()
+    if "| 3 | Test window: days 0–5 → days 0–7, joint | no (§14) |" not in plan:
+        problems.append("summary row 3 does not mark the joint days 0-7 window as decided after discovery (§14)")
+    if "No COVID" in note or "No COVID" in master:
+        problems.append("C1 is still described as having no COVID exposure (its 2021 block is inside the pandemic)")
+    if "2015-07-01 → 2016-12-31 and 2021-01-01 → 2021-05-31" not in master:
+        problems.append("PAPER_MASTER §6 does not describe Confirmation A as the two C1 blocks the code estimates")
+    if 'Confirmation B (stratum C2, "exposed") | 2021-06-01 → 2024-12-31 |' not in master:
+        problems.append("PAPER_MASTER §6 does not open Confirmation B at the B-HEARD launch")
+    if not re.search(r"\| 30 \|.*bheard_exposure", plan):
+        problems.append("the B-HEARD covariate is not a numbered row of the addendum's summary table")
+    if any("before the values exist" in ln and "§30" not in ln for ln in plan.split("## 30.")[0].splitlines()):
+        problems.append("§18 still claims its decision rules were fixed before the values existed")
+    for doc, name in ((plan, "CONFIRMATION_PLAN"), (master, "PAPER_MASTER")):
+        if "no outcome group" in doc and "total-dispatch" not in doc:
+            problems.append(f"{name} disposes of F4 as outcome-free without naming the weights a total-dispatch count")
+    if "2021 block" not in plan.split("## 21.")[0].split("## 20.")[-1]:
+        problems.append("§20 does not say the spliced and primary series can differ inside C1's 2021 block")
+    for doc, name in ((plan, "CONFIRMATION_PLAN"), (note, "PRE_ANALYSIS_NOTE"), (master, "PAPER_MASTER"),
+                      (execp, "EXECUTION_PLAN")):
+        for para in re.split(r"\n\s*\n", doc):
+            if "62,920" in para and "77,506" not in para:
+                problems.append(f"{name} states the 62,920 design count in a passage that does not correct it to 77,506")
+                break
+    if "remains open at any point" in master or "does not foreclose it" in master:
+        problems.append("PAPER_MASTER §5.3 still says the external pre-registration remedy survives the lift")
+    if "1.21" not in plan.split("**23.12")[0].split("**23.11")[-1]:
+        problems.append("23.11 does not give the 8-df factor beside the one-parameter 1.28")
+    lim = plan.split("## 24.")[0].split("**23.12")[-1]
+    for token in ("discovery rows", "200 draws", "asymptotic"):
+        if token not in lim:
+            problems.append(f"23.12 does not state the {token!r} limitation")
+    # code text
+    t19 = _ast.parse(src("19_power.py"))
+    doc19 = _ast.get_docstring(t19) or ""
+    if "CONFIRMATION_ANALYSIS_WINDOWS" not in doc19 or "opens it at 2015-01-01" in doc19:
+        problems.append("19's STRATA docstring does not describe the strata its code derives")
+    ri = next((n for n in _ast.walk(t19) if isinstance(n, _ast.FunctionDef) and n.name == "_ri_sim"), None)
+    if ri is None or "(1 + k) / (1 + n)" not in (_ast.get_docstring(ri) or "") or "computes p as k/n" in (_ast.get_docstring(ri) or ""):
+        problems.append("19's _ri_sim docstring does not describe the (1 + k) / (1 + n) p-value the code computes")
+    doc18 = _ast.get_docstring(_ast.parse(src("18_null_calibration.py"))) or ""
+    if "DISCOVERY rows" not in doc18:
+        problems.append("18's docstring does not say the noise is measured on discovery rows")
+    es = src("event_study.py")
+    if "62,920" in es and "77,506" not in es:
+        problems.append("event_study still quotes 62,920 without the corrected count")
+    t35 = _ast.parse(src("35_coverage_breaks.py"))
+    inside = next((n for n in _ast.walk(t35) if isinstance(n, _ast.FunctionDef) and n.name == "inside"), None)
+    if inside is None or "lo <= d <= hi" not in _ast.unparse(inside):
+        problems.append("35's inside() does not treat boundary days as inside (23.10)")
+    if "strictly inside" in (_ast.get_docstring(t35) or ""):
+        problems.append("35's docstring still says 'strictly inside'")
+    if problems:
+        return "FAIL", "; ".join(problems)
+    return "PASS", ("row 3 marked non-blind; C1 described as the code estimates it; B-HEARD covariate numbered; "
+                    "§18, F4 and §20 wording corrected; 62,920 gone; 19/18/event_study/35 text matches code; "
+                    "23.11 and 23.12 state the pass's limitations")
 
 
 def v_table1_regenerates():
@@ -4786,8 +5069,9 @@ CHECKS = [
     ("S.lift_requires_1000_sims", "P11", "the freeze lifts only on 1000-sim certificates for every stratum", s_lift_requires_1000_sims),
     ("D.discovery_scripts_pinned", "D8", "lifting the freeze cannot move the exploratory scripts onto the sealed sample", d_discovery_scripts_pinned),
     ("S.calibration_noise_measured", "N11", "every certificate's null takes its noise from the measured panel, never the assumed fallback", s_calibration_noise_measured),
-    ("S.confirmatory_spec_audit", "P14,P15,P16,P18,P19,P26", "the sealed script implements addendum 23 (draws, seal, BH family, asymptotic p, diagnostics, C2-only interaction, the 28/60-day windows and dose arm; docstring matches code)", s_confirmatory_spec_audit),
-    ("S.confirmatory_reading_rules", "P14,P20,P21,P22,P25", "the pre-registered reading of the sealed result is mechanical and reads as its text requires", s_confirmatory_reading_rules),
+    ("S.confirmatory_spec_audit", "P14,P15,P16,P18,P19,P26,P27,P28,P29,P30,P31,P32,P33,P34,P35,P36,P56,P57", "the sealed script implements addenda 23, 29 and 30 (draws, seal and run log, BH family, asymptotic p, diagnostics on every district-day, C2-only interaction, the 28/60-day windows on the certified geometry, dose arm, geocoding-clean, cancelled-inclusive and no-EDPM cells; sidecar pins; docstring matches code)", s_confirmatory_spec_audit),
+    ("S.confirmatory_reading_rules", "P14,P20,P21,P22,P25,P37,P38,P39,P40,P41,P42,P43,P44,P45,P54,P55", "the pre-registered reading of the sealed result is mechanical, sealed, and reads as its text requires (23.1-23.4, 23.1c/d, 19.2, 25, note 9.4)", s_confirmatory_reading_rules),
+    ("S.third_pass_record_consistency", "P46,P47,P48,P49,P50,P51,P52,P53,P58", "statements of the record the third CP2 audit pass found contradicted by the code or by itself are held to their corrected form", s_third_pass_record_consistency),
     ("S.draw_scheme_total", "N5", "every draw scheme is dispatched explicitly, none by fallback", s_draw_scheme_total),
     ("S.ri_pvalue_form", "RI1", "randomization p-values use the (1+k)/(1+n) form", s_ri_pvalue_form),
     ("S.calibration_writes_stratified", "P5,D1,N4", "every calibration output names the stratum it describes", s_calibration_writes_stratified),

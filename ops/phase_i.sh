@@ -30,8 +30,12 @@ if [ ! -f "$REPO/data/reference/confirmatory_results.csv" ]; then
 else
   say "sealed result already exists; not re-run"
 fi
-say "START 34_confirmatory_reading"
-python3 34_confirmatory_reading.py >> $ST/step_phase_i_34.log 2>&1; rc=$?
-say "END 34_confirmatory_reading rc=$rc"
+if [ -f "$REPO/data/reference/confirmatory_reading.csv" ]; then
+  say "reading already exists; not re-run (34 refuses to overwrite a reading of the same sealed table)"; rc=0
+else
+  say "START 34_confirmatory_reading"
+  python3 34_confirmatory_reading.py >> $ST/step_phase_i_34.log 2>&1; rc=$?
+  say "END 34_confirmatory_reading rc=$rc"
+fi
 [ $rc -eq 0 ] && touch $ST/phase_i.done
 exit $rc

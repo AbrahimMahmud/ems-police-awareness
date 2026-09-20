@@ -8,8 +8,12 @@ confirmation freeze is still active and the EMS panel is still being rebuilt.
 
 Method
 ------
-Generate panels with the real design's dimensions and serial-correlation
-structure but no relationship to the episode dates:
+Generate panels with the real design's dimensions and a noise structure
+measured on the panel's DISCOVERY rows -- level, AR(1) coefficient, idiosyncratic
+SD and the district, day-of-week and day-shock scales, the same for every
+stratum because the confirmation windows' own dependence may not be read while
+the freeze holds (CONFIRMATION_PLAN addendum 23.12) -- applied to the stratum's
+own episode geometry, with no relationship to the episode dates:
 
   y[i,t] = district effect + day-of-week effect + AR(1) district noise
 

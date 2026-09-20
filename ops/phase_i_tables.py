@@ -54,13 +54,21 @@ STRATA = {"C1_clean": "C1", "C2_exposed": "C2", "pooled": "pooled"}
 OUT_LABEL = {"edp_share": "EDP share", "edp": "EDP count", "mh_narrow_share": "narrow MH share",
              "mh_narrow": "narrow MH count", "cardiac_share": "cardiac share", "cardiac": "cardiac count",
              "injury_share": "injury share", "injury": "injury count", "asthma_share": "asthma share",
-             "asthma": "asthma count", "total_calls": "total dispatches"}
+             "asthma": "asthma count", "total_calls": "total dispatches",
+             "edp_share_incl_cancelled": "EDP share, cancelled included",
+             "mh_narrow_share_incl_cancelled": "narrow MH share, cancelled included",
+             "edp_ex_edpm_share": "EDP share without EDPM",
+             "edp_incl_cancelled": "EDP count, cancelled included",
+             "mh_narrow_incl_cancelled": "narrow MH count, cancelled included",
+             "edp_ex_edpm": "EDP count without EDPM"}
 ARM_LABEL = {"OLS_share": "share", "PPML_count_offset": "count", "PPML_count_no_offset": "count, no offset",
              "OLS_share_dose_per_sd": "share, per SD intensity"}
 SPEC_LABEL = {"sens_drop_jul2016": "drop July 2016", "sens_broad_basket": "broad basket",
               "sens_spliced_wiki": "spliced Wikipedia series", "sens_coverage_clean": "coverage-clean",
               "sens_bheard_late_bound": "late B-HEARD bound", "sens_post28": "28-day post window",
-              "sens_post60": "60-day post window", "bheard_interaction": "B-HEARD interaction",
+              "sens_post60": "60-day post window", "sens_geocoding_clean": "geocoding-clean",
+              "sens_incl_cancelled": "cancelled dispositions included", "sens_no_edpm": "EDP without EDPM",
+              "bheard_interaction": "B-HEARD interaction",
               "dose_response": "dose-response (per SD of peak intensity)"}
 
 claims = []

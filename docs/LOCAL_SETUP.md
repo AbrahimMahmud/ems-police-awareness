@@ -25,7 +25,8 @@ uv (/root/.local/bin/uv); shims: ~/.local/bin/context-capsule, ~/.local/bin/grap
 
 To reproduce on another machine: `uv sync --frozen` (installs from `uv.lock`), then
 `printf '#!/bin/bash\nexec python3 <repo>/ops/context_capsule.py "$@"\n' > ~/.local/bin/context-capsule`
-and the same for `graph-memory` (`cd <repo>/ops && exec python3 -m graph_memory.cli "$@"`), then
+and the same for `graph-memory` (`PYTHONPATH=<repo>/ops exec python3 -m graph_memory.cli "$@"` — not a
+`cd`, so relative paths such as `docs/graph/graph_memory.jsonl` resolve where you run it), then
 `graph-memory import docs/graph/graph_memory.jsonl`.
 
 ## Rollback

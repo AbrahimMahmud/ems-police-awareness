@@ -13,3 +13,11 @@ Mirror of `docs/CONTEXT_CAPSULE.md` (the ledger) and the `decision` nodes of the
 - 2026-09-20 — Every pipeline stage runs under PYTHONHASHSEED=0 and one BLAS thread (X20) so cold passes match to the byte.
 
 See [[Status]] · [[Next actions]]
+- 2026-09-20 — Third CP2 specification audit remediated in full before the lift (P27–P58, addendum §30; rules 23.1c
+  sensitivity set, 23.1d pooled reading, 23.1e secondary arms). Sealed run: run log, hash seed, design gate, 14-day draw
+  geometry, unfiltered diagnostics, cross-window coverage-clean + geocoding-only, cancelled-inclusive and no-EDPM on both
+  arms, path columns, pinned sidecars. Reader: sealed, pre-freeze power table, placebo check cannot fail open.
+- 2026-09-20 — Record corrected where it contradicted the code (row 3 non-blind; C1 clean of B-HEARD, 2021 block inside
+  COVID; §6 strata; row 30 B-HEARD covariate; §18/F4/§20 wording; 62,920 → 77,506; three docstrings; §5.3 remedy
+  foreclosed by the lift — the author's 2026-09-19 decision).
+- 2026-09-20 — Discovery certified at 1,000 sims; the 1.28 factor kept (conservative) with the 8-df 1.21 quoted beside it.

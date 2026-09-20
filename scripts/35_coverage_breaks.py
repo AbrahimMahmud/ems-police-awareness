@@ -30,9 +30,9 @@ and a check holds it there afterwards.
 
 WHAT IS DECIDED FROM IT (pre-specified in addendum 18, applied here to the two
 outputs only, never to an outcome value):
-  1. A call code whose first or last date lies strictly inside a confirmation
-     ANALYSIS window is a within-window break for every outcome group containing
-     it. The primary estimates are unchanged; the affected group/stratum gets a
+  1. A call code whose first or last date lies inside a confirmation ANALYSIS
+     window, boundary days included (addendum 23.10), is a within-window break
+     for every outcome group containing it. The primary estimates are unchanged; the affected group/stratum gets a
      pre-specified sensitivity dropping episodes whose +/-14-day window contains
      the break date, reported beside the primary.
   2. If the missing-district share moves by more than a factor of two between
@@ -94,8 +94,11 @@ windows = [(pd.Timestamp(a), pd.Timestamp(b)) for a, b in CONFIRMATION_ANALYSIS_
 
 
 def inside(day):
+    # Boundary days count as inside (addendum 23.10 states the rule that way; the
+    # code said the opposite until the third CP2 audit pass, 2026-09-20). The
+    # extract's own first and last dates are excluded separately below.
     d = pd.Timestamp(day)
-    return any(lo < d < hi for lo, hi in windows)
+    return any(lo <= d <= hi for lo, hi in windows)
 
 
 code_to_group = {c: g for g, codes in CALL_TYPE_GROUPS.items() for c in codes}

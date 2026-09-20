@@ -1020,9 +1020,10 @@ not from F3.
 **F4 (found 2026-09-13, by the CP2 specification audit).** The precinct–district
 crosswalk that carries B-HEARD exposure onto districts (S14) was built by a
 server-side SODA count of dispatches per precinct × district pooled over
-2015–2024. It is a geography weight — no call type, no date, no outcome group —
-but it is a read of confirmation-period dispatch counts that no exemption
-declared, and it is listed here for that reason (addendum §23.10).
+2015–2024. It is a geography weight built from the total-dispatch count — the
+denominator of the primary share, with no call type and no date — and it is a
+read of confirmation-period dispatch counts that no exemption declared; it is
+listed here for that reason (addendum §23.10, wording corrected in §30).
 
 Materiality for all four is for the supervisor to judge, not us. The gaps are
 closed in code where code can close them: outcome artifacts outside the guard's
@@ -1052,8 +1053,14 @@ This is a floor, not a ceiling. The alternative — finishing the outcome defini
 properly and then depositing a timestamped external pre-registration (OSF, or
 PCI-RR as a Registered Report), so an external timestamp replaces the internal
 freeze as the credibility mechanism — is the standard remedy once an internal
-freeze has known breaches, and remains open at any point. Holding the line now
-does not foreclose it; taking a third access would have.
+freeze has known breaches, and remains open only until the freeze is lifted: the
+moment the sealed run reads the confirmation outcomes, no external timestamp can
+precede them, and the remedy is foreclosed. Holding the line kept it open;
+taking a third access would have foreclosed it early. Proceeding to Phase I on
+the internal record instead — the committed pre-registration and its addendum,
+the tracked run log and the sealed table — is the author's decision, taken
+2026-09-19 and recorded in `EXECUTION_PLAN.md`'s CP2 checklist, not a
+consequence of the design (addendum §30, P58).
 
 ### 5.4 Counts vs shares — a finding that reverses
 
@@ -1107,11 +1114,14 @@ a pattern found by looking.
 | | Window | Status |
 |---|---|---|
 | Discovery | 2017-01-01 → 2020-12-31 | explored |
-| Confirmation A | 2015-07-01 → 2016-12-31 | **no outcome has entered a model or test** (accesses disclosed in §5.3 and §5.1d) — no COVID, no B-HEARD |
-| Confirmation B | 2021-01-01 → 2024-12-31 | **no outcome has entered a model or test** (accesses disclosed in §5.3 and §5.1d) — B-HEARD control required |
+| Confirmation A (stratum C1, "clean") | 2015-07-01 → 2016-12-31 and 2021-01-01 → 2021-05-31 | **no outcome has entered a model or test** (accesses disclosed in §5.3 and §5.1d) — before the B-HEARD launch; the 2021 block is inside the pandemic |
+| Confirmation B (stratum C2, "exposed") | 2021-06-01 → 2024-12-31 | **no outcome has entered a model or test** (accesses disclosed in §5.3 and §5.1d) — B-HEARD control required |
 
-The cleanest confirmation sample runs **backward**. 2015–2016 has never been looked
-at *and* carries none of the confounds.
+The strata are `config.CONFIRMATION_ANALYSIS_WINDOWS`, the one definition the
+calibration, the power analysis and the sealed script read (the 181 days from
+2015-01-01 carry no treatment because the pageviews API begins 2015-07-01, and
+belong to no stratum). The cleanest confirmation sample runs **backward**.
+2015–2016 has never been looked at *and* carries neither confound.
 
 **Layer 3.** `scripts/freeze_guard.py`. Discovery and confirmation are separate
 named constants, and a script asks for its window by name: every exploratory
@@ -1172,26 +1182,29 @@ the thing it was written to detect.
 
 ### 7.4 What the null calibration proves
 
-**Layer 1.** Before trusting our method on real data, we ran it two hundred times
-on fake data built to contain *no* effect. A trustworthy method should cry wolf
-about 5% of the time. Ours cries wolf **5.0%** of the time, and the full spread of
-its answers is the right shape.
+**Layer 1.** Before trusting our method on real data, we ran it one thousand
+times on fake data built to contain *no* effect. A trustworthy method should cry
+wolf about 5% of the time. Ours cries wolf **4.5%** of the time, and the full
+spread of its answers is the right shape.
 
-**Layer 3.** `scripts/18_null_calibration.py`, 200 sims × 200 draws:
+**Layer 3.** `scripts/18_null_calibration.py`, 1,000 sims × 200 draws:
 
 ```
 VERDICT                   CALIBRATED
-empirical rejection rate  0.05     nominal 0.05, band [0.0198, 0.0802]
-KS uniformity (lattice)   p = 0.7516
+empirical rejection rate  0.045     nominal 0.05, band [0.0365, 0.0635]
+KS uniformity (lattice)   p = 0.2944
 AR(1) rho                 0.0482   estimated from the real panel
 ```
 
-These are the figures **regenerated on 2026-09-13** from a clean container under
-the corrected code — the (1+k)/(1+n) p-value form, the lattice uniformity test,
-and per-draw seeding (findings RI1, RI2, N6). The run they replace, made before
-those corrections, read 0.06 and 0.6767; both verdicts are CALIBRATED and both
-sit inside the band, and the numbers moved because the placebo draws and the
-test moved, not the design.
+These are the figures of the **1,000-simulation run completed 2026-09-20
+05:10Z** in a clean container under the corrected code — the (1+k)/(1+n)
+p-value form, the lattice uniformity test, per-draw seeding (findings RI1, RI2,
+N6) and the panel-measured noise (N11). The 200-simulation run of 2026-09-13 that
+it extends (the same seeds per index; the ledger identity is verified by the
+sidecar) read 0.05 and 0.7516, and the run before those corrections 0.06 and
+0.6767; every verdict is CALIBRATED inside its band, and the numbers moved
+because the placebo draws, the test and the simulation count moved, not the
+design.
 
 Uniformity is the property that matters — a correct rejection rate with a
 non-uniform distribution still means a broken statistic. The synthetic panel
@@ -1244,12 +1257,13 @@ corrected code):
 
 | stratum | scheme | geometry | episodes | rejection at α=.05 | KS p | verdict |
 |---|---|---|---|---|---|---|
-| discovery | anchor shift | contiguous | 29 | 0.05 | 0.7516 | CALIBRATED |
+| discovery | anchor shift | contiguous | 29 | 0.045 | 0.2944 | CALIBRATED at 1,000 |
 | C2 | anchor shift | contiguous | 30 | 0.05 | 0.4838 | CALIBRATED |
 | C1 | circular, within block (fw7) | gapped | 15 | 0.049 | 0.9930 | CALIBRATED at 1,000 |
 | pooled | circular, within block (fw7) | gapped | 45 | 0.04 | 0.5492 | CALIBRATED |
 
-*C1's row is the 1,000-simulation certificate under the corrected drawer
+*Discovery's row is the 1,000-simulation certificate completed 2026-09-20
+05:10Z. C1's row is the 1,000-simulation certificate under the corrected drawer
 (addendum §24), issued 2026-09-13 20:56Z. The 200-simulation run that preceded
 it had failed uniformity (D 0.097, p 0.0455) and addendum §25 was written on that
 result, before this one existed, to fix what a second failure would mean; at
@@ -1330,8 +1344,10 @@ simulations against C1's 0.0924.
 The fix was to shift **within each block** rather than across both: one shift per
 block, wrapping inside it. The ten-five split then holds on every draw,
 clustering inside each block survives, and the seam disappears entirely. There
-are 520 × 121 = 62,920 distinct placebo designs available that way, against the
-2,000 draws the design calls for. This is a further departure from the
+are 542 × 143 = 77,506 distinct placebo designs available that way under the
+first-week containment of addendum §24 (the 520 × 121 = 62,920 first written
+here counted full-post containment), against the 2,000 draws the design calls
+for. This is a further departure from the
 pre-registered null and is disclosed as one — but the alternative is a null that
 is not a null of this design.
 
@@ -1458,7 +1474,7 @@ MDE, and none of them is available here.
 ### 7.5 The verification apparatus — and its own failure mode
 
 `scripts/23_regression_suite.py` turns every audit finding into an executable
-check — **89 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
+check — **90 checks** at present. States are PASS / FAIL / **BLOCKED** / ERROR,
 where BLOCKED means "could not evaluate" and is deliberately *not* a pass.
 
 They all pass as of the basket rebuild completing on 2026-09-12 — no FAIL, no
@@ -1495,11 +1511,11 @@ not what was. A register full of prescriptions reads like a register full of
 completions, and whether anything had actually been fixed was recoverable only by
 reading the check suite and matching tags by eye.
 
-Each of the 126 findings now carries a status — `fixed`, `open`, or `unverified` —
+Each of the 158 findings now carries a status — `fixed`, `open`, or `unverified` —
 and the check that guards it asserts one direction only: **nothing may say
 `fixed` while a check tagged to it is not passing.** `unverified` means nothing
 checks it, which is a statement of work remaining and not a synonym for fine.
-Current state: **126 fixed, 0 open, 0 unverified**. P1, P5, RI3, P12 and P13 closed on 2026-09-13 at 20:56Z, when C1's 1,000-simulation certificate under the renamed scheme `circular_within_block_fw7` landed and `S.ri_scheme_certified` passed with every stratum certified under the scheme its geometry requires (§7.4). They had closed once that morning on the old scheme's certificates and reopened when the CP2 audit found the drawer had been snapping C1's two edge episodes onto consecutive placebo days (addendum §24); the corrected drawer's C1 null then failed uniformity at 200 simulations and calibrated at 1,000, so the addendum-§25 fallback written between those two verdicts is not invoked. A failing check is not evidence, and neither is a certificate for a null nobody draws from any more.
+Current state: **158 fixed, 0 open, 0 unverified**. P1, P5, RI3, P12 and P13 closed on 2026-09-13 at 20:56Z, when C1's 1,000-simulation certificate under the renamed scheme `circular_within_block_fw7` landed and `S.ri_scheme_certified` passed with every stratum certified under the scheme its geometry requires (§7.4). They had closed once that morning on the old scheme's certificates and reopened when the CP2 audit found the drawer had been snapping C1's two edge episodes onto consecutive placebo days (addendum §24); the corrected drawer's C1 null then failed uniformity at 200 simulations and calibrated at 1,000, so the addendum-§25 fallback written between those two verdicts is not invoked. A failing check is not evidence, and neither is a certificate for a null nobody draws from any more.
 
 Writing that check taught two things worth keeping, both of which are the same
 defect it exists to prevent, committed inside it:

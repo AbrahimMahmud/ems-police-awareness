@@ -155,9 +155,14 @@ shot is the only cheap way to tell the two apart.
 **Why C1 and C2 are separate.** They are contaminated differently and it is not a
 matter of degree:
 
-* **C1 is clean.** No COVID, and B-HEARD had not launched. The cleanest
-  confirmation sample in this design runs *backward* in time, which is unusual and
-  is the reason the 2015–2016 window is worth as much as it is.
+* **C1 is clean of B-HEARD.** It ends the day before the launch, so the policy
+  that pushes the outcome in H1's direction is absent by construction. Its
+  2015–2016 block is also free of COVID; its 2021 block (January–May 2021) is
+  not — it sits inside the pandemic, like the last ten months of discovery — and
+  the episode × district fixed effects absorb the level, not the trend, of that
+  period. The cleanest confirmation sample in this design runs *backward* in
+  time, which is unusual and is the reason the 2015–2016 window is worth as much
+  as it is. (Wording corrected 2026-09-20; `CONFIRMATION_PLAN.md` §30, P47.)
 * **C2 carries B-HEARD.** From 2021-06-01 New York began routing some
   mental-health 911 calls to a health-led rather than police-led response,
   precinct by precinct. **It pushes the outcome in the same direction as the
@@ -297,8 +302,10 @@ So, pre-specified now rather than discovered later:
 addendum §21).** The shift is now drawn *within each block* of a gapped
 stratum, one shift per window, so the number of episodes per window is
 preserved on every draw (finding RI3: the concatenated shift reproduced C1's
-real 10/5 split on 12.4% of draws). Under that scheme C1 has 62,920 distinct
-placebo designs against 2,000 draws, so the test is **sampled, not exact**, and
+real 10/5 split on 12.4% of draws). Under that scheme C1 has 542 × 143 = 77,506
+distinct placebo designs (first-week containment, addendum §24; addendum §30
+corrects the 62,920 stated here before 2026-09-20) against 2,000 draws, so the
+test is **sampled, not exact**, and
 the "685 admissible days … exact" statement above no longer holds. C1 is
 calibrated under the within-block scheme separately (§8), and the confirmatory
 script draws from the same code the calibration certifies. The pooled stratum's
@@ -549,7 +556,9 @@ frozen record, and they should be read as decisions of this document:
   requirement that both arms agree;
 * the **multiple-testing family** in §10;
 * the **circular-shift randomization scheme** for gapped strata, and its caveat;
-* the **B-HEARD interaction arm** as a secondary, direction-predicted test;
+* the **B-HEARD interaction arm** as a secondary, direction-predicted test, and
+  `bheard_exposure` as a **covariate in every primary specification** (§7;
+  numbered as row 30 of the addendum's summary table on 2026-09-20, §28/§30);
 * the decision to run the confirmatory analysis as a **single sealed script**
   written before the freeze lifts (`scripts/30_confirmatory_run.py`).
 * added 2026-09-13, still blind: the **reading of a non-rejection against the
