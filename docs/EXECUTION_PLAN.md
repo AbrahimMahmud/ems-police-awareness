@@ -37,7 +37,7 @@ that the design cannot deliver one. Both are publishable; neither is a failure.
 
 ---
 
-## Status (2026-09-20 ~06:15Z) — third specification audit remediated (P27–P58, addendum §30), gate clean at 90 checks, discovery certified at 1,000, two cold passes byte-identical on the eight-column panel (06:10Z); C2's 1,000-sim run in progress; the lift waits on it alone
+## Status (2026-09-20 ~09:30Z) — FREEZE LIFTED at `4e3dce1` after C2 certified at 1,000 (09:16Z) and the gate ran clean lifted (incident F5 found by that run, disclosed, pinned); Phase I's sealed run started 09:29:42Z (run log start row, commit 4e3dce1) — resumable, hours; then 34, tables, §8b, the paper's Results/Discussion/Abstract, CP3
 
 **Read this block first; everything below it under "Status (2026-09-12…)" is the
 historical record of the previous session and is kept for its reasoning.**
