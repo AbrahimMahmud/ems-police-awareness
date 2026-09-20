@@ -1084,6 +1084,15 @@ Committed and pushed at `0eaf45d`.
   once) → `ops/phase_i_tables.py --docs docs/PAPER_MASTER.md docs/PAPER.md` →
   PAPER_MASTER §8b and PAPER.md's confirmatory Results (the quoted reading and
   the tables), Discussion and Abstract → CP3 → HANDOFF.
+- **Phase I started 09:29:42Z and was suspended with the container at 09:36:54Z**,
+  five minutes after the session went idle (compute advances only while a
+  session is active — the rule above, met again). Relaunched 10:34:50Z through
+  `ops/phase_i.sh` with `PHASE_I_RESUME_REASON`, which passes 30 the
+  `--overwrite-sealed-result` reason a second real start requires (P27); the
+  reason is in the run log's second start row and will be in every row of the
+  sealed table; every cell resumed from its identity-keyed ledger (2,000, 2,000,
+  1,183, 1,194, 62, 62 banked draws verified), so no number depends on the
+  restart. The run is now babysat from an active session (Monitor cycles).
 - **The lift (09:2xZ)**: C2 certified at 1,000 (0.054 / 0.8221); §7.4 updated;
   `FREEZE_ACTIVE = False`; the gate run to verify the lifted state found three
   suite checks (S7, S8, X6) selecting the confirmation sample — the suite had

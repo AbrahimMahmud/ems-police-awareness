@@ -20,7 +20,15 @@ python3 -c "from config import FREEZE_ACTIVE; raise SystemExit(0 if FREEZE_ACTIV
 if [ ! -f "$REPO/data/reference/confirmatory_results.csv" ]; then
   for i in $(seq 1 30); do
     say "START 30_confirmatory_run try $i"
-    python3 30_confirmatory_run.py --jobs "${PHASE_I_JOBS:-4}" >> $ST/step_phase_i_30.log 2>&1; rc=$?
+    # A relaunch after a container restart is a second real START, which 30
+    # refuses without a reason (run log, P27). The reason is passed through
+    # PHASE_I_RESUME_REASON and is written into the run log and every row of the
+    # sealed table; draws resume from the per-cell ledgers, so no number changes.
+    if [ -n "${PHASE_I_RESUME_REASON:-}" ]; then
+      python3 30_confirmatory_run.py --jobs "${PHASE_I_JOBS:-4}" --overwrite-sealed-result "$PHASE_I_RESUME_REASON" >> $ST/step_phase_i_30.log 2>&1; rc=$?
+    else
+      python3 30_confirmatory_run.py --jobs "${PHASE_I_JOBS:-4}" >> $ST/step_phase_i_30.log 2>&1; rc=$?
+    fi
     say "END 30_confirmatory_run rc=$rc"
     [ $rc -eq 0 ] && break
     [ $rc -eq 3 ] && { say "seal refused; not retried — read $ST/step_phase_i_30.log"; exit 3; }
