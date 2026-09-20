@@ -7,7 +7,7 @@
   6 critic items; everything surviving fixed in code or record before the lift. See [[Decisions]].
 - **Freeze**: ACTIVE. No confirmation outcome has entered a model or test; declared accesses F1–F4 in `PAPER_MASTER.md` §5.3.
 - **Calibration**: discovery certified at 1,000 sims (05:10Z: rejection 0.045, KS p 0.2944); C1 at 1,000 (0.049, 0.9930);
-  C2's 1,000-sim run started 05:15Z (~3 h; 200-sim certificate CALIBRATED meanwhile); pooled at 200 (descriptive).
+  C2 at 1,000 (0.054, 0.8221; 09:16Z); pooled at 200 (descriptive). **CP2 complete.**
 - **Panel**: rebuilt with eight new columns (EDPM, EDP-ex-EDPM, cancelled-inclusive totals/counts/shares); every existing
   column byte-identical. Coverage-break table unchanged under the inclusive boundary rule.
 - **Cold runs**: two passes on the eight-column panel byte-identical on every build and model output (COLD IDENTITY OK, 06:10Z); manifest and registers committed at `eaa7d5d`.

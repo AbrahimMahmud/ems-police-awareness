@@ -1247,18 +1247,20 @@ null**. It keeps each episode's position relative to the others, so clustering
 survives; it does not keep calendar gaps across the seam between the two windows.
 So each stratum is now calibrated separately, each verdict records the scheme and
 geometry it certifies, and a check recomputes what each stratum requires and
-refuses a verdict that certifies something else. All four are now discharged, at
-200 simulations × 200 draws each (the pooled stratum the confirmatory script also
-reports — three windows, descriptive, outside the family — gets its own
-certificate too, addendum §22, rather than resting on C1's and C2's read
-together; C2's row is as regenerated on 2026-09-13, where the lattice KS p moved
-from 0.4878 to 0.4838 and the rejection rate from 0.06 to 0.05 under the
-corrected code):
+refuses a verdict that certifies something else. All four are now discharged:
+discovery, C1 and C2 at 1,000 simulations × 200 draws, the pooled stratum — which
+the confirmatory script also reports; three windows, descriptive, outside the
+family, its own certificate under addendum §22 rather than C1's and C2's read
+together — at 200. C2's row is the 1,000-simulation certificate completed
+2026-09-20 09:16Z (lattice KS p 0.8221, rejection rate 0.054 at 1,000 simulations,
+band [0.0365, 0.0635]); its 200-simulation certificate of 2026-09-13 had read 0.4838
+and 0.05 under the corrected code, and the run before those corrections 0.4878
+and 0.06:
 
 | stratum | scheme | geometry | episodes | rejection at α=.05 | KS p | verdict |
 |---|---|---|---|---|---|---|
 | discovery | anchor shift | contiguous | 29 | 0.045 | 0.2944 | CALIBRATED at 1,000 |
-| C2 | anchor shift | contiguous | 30 | 0.05 | 0.4838 | CALIBRATED |
+| C2 | anchor shift | contiguous | 30 | 0.054 | 0.8221 | CALIBRATED at 1,000 |
 | C1 | circular, within block (fw7) | gapped | 15 | 0.049 | 0.9930 | CALIBRATED at 1,000 |
 | pooled | circular, within block (fw7) | gapped | 45 | 0.04 | 0.5492 | CALIBRATED |
 

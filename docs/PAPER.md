@@ -272,7 +272,8 @@ exactly the pre-specified 2,000 placebos and writes its result to a tracked
 file once.
 
 **Calibration precondition.** Before any p-value is reported for a stratum, the
-full estimator and randomization procedure is run on 200 synthetic panels built
+full estimator and randomization procedure is run on 1,000 synthetic panels (200
+for the descriptive pooled sample) built
 to contain no effect but carrying the real panel's serial dependence, district
 levels, day-of-week pattern and a citywide day shock, on that stratum's own
 episode geometry and draw scheme — separately for C1, C2 and the pooled sample,
