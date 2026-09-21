@@ -1064,9 +1064,23 @@ def v_table1_regenerates():
         first = next((i for i, (x, y) in enumerate(zip(a, b)) if x != y), min(len(a), len(b)))
         return "FAIL", (f"committed Table 1 differs from a fresh render at line {first + 1} "
                         f"({len(a)} vs {len(b)} lines): run ops/paper_table1.py and commit the result")
+    # Since the referee-panel revision (2026-09-21) the same table is Table S6 of the supplement,
+    # pasted as a region by ops/paste_generated.py; the copy there must be the rendered file too.
+    supp = PROJECT_ROOT / "docs" / "SUPPLEMENT.md"
+    if supp.exists():
+        spec2 = importlib.util.spec_from_file_location("_paste", PROJECT_ROOT / "ops" / "paste_generated.py")
+        pg = importlib.util.module_from_spec(spec2)
+        spec2.loader.exec_module(pg)
+        import re as _re
+        m = _re.search(r"<!-- BEGIN:episode_table -->\n(.*?)<!-- END:episode_table -->", supp.read_text(), _re.S)
+        if not m:
+            return "FAIL", "docs/SUPPLEMENT.md has no episode_table region (Table S6)"
+        if m.group(1) != pg.episode_table_body():
+            return "FAIL", ("the supplement's Table S6 differs from the rendered episode table: run "
+                            "ops/paste_generated.py docs/SUPPLEMENT.md")
     n = sum(1 for ln in fresh.splitlines() if ln.startswith("| ") and ln[2:3].isdigit())
     return "PASS", (f"{n} table rows re-render byte-identical from {EPISODE_LIST_PRIMARY}, the frozen "
-                    "list and stratum_episodes")
+                    "list and stratum_episodes, and the supplement's Table S6 is that rendering")
 
 
 def d_discovery_scripts_pinned():
@@ -4498,6 +4512,48 @@ def v_paper_budget():
     return "PASS", f"main text {words:,} words (ceiling 5,000); {len(items)} display items: " + ", ".join(a + " " + b for a, b in items)
 
 
+def v_manuscript_referee_tokens():
+    """RP1-RP6: the sentences the referee panel of 2026-09-21 found wrong stay out of the manuscript.
+
+    Five referees (epidemiologist, statistician, domain, reproducibility, editor) read the
+    restructured draft and its supplement; every major and moderate comment was fact-checked
+    against the sealed files before it reached the author. The corrections that touched what the
+    paper SAYS about the fixed analysis are held here as tokens, the way P59-P63 are: (RP1) the
+    denominator diagnostics were reported as p-values only and the Discussion said total dispatches
+    "did not" fall when their point estimate fell by more than the EDP count's; (RP2) the C1 path was
+    described as a rise then a fall "traced identically by both arms" when day 4 is positive in both
+    arms and day 6 differs in sign, and the mean was called "a small fraction of any single day's
+    coefficient" when it exceeds two of the eight; (RP3) the same-sign rule was said to have blocked a
+    directional reading on C1 when it does so only for the EDP outcome (the narrow mental-health
+    outcome is blocked by its count arm's p); (RP4) the count arm with a total-dispatch offset was said
+    to carry no compositional damping when it is a rate on the share arm's denominator; (RP5) the
+    dose-response arm was called positive "in every stratum" when it is negative over discovery;
+    (R6) the paper reported no interval for its primary effect while saying a sustained shift of the
+    minimum effect of interest was not excluded, and stated its central result in the project's
+    internal vocabulary (the reader, addendum sections, machine output in capitals) and with the
+    falsification outcomes called placebos in one table header. The positive requirement is that
+    the manuscript carries a 95% interval for the first-week mean beside the pre-registered bound.
+    """
+    paper = PROJECT_ROOT / "docs" / "PAPER.md"
+    if not paper.exists():
+        return "BLOCKED", "docs/PAPER.md absent"
+    text = paper.read_text()
+    forbidden = {
+        "RP1": ["while total dispatches did not", "while total dispatches have"],
+        "RP2": ["traced identically by both arms", "small fraction of any single day", "a fall over days 3 to 7"],
+        "RP3": ["would have failed the sign test"],
+        "RP4": ["carries no such damping"],
+        "RP5": ["positive in every stratum"],
+        "RP6": ["placebo rejects", "9.4 row 5", "§19 rule 2", "The reader's conclusion", "The reader therefore"],
+    }
+    problems = [f"{k}: {t!r}" for k, toks in forbidden.items() for t in toks if t in text]
+    if "95% interval" not in text and "95% CI" not in text:
+        problems.append("RP6: no 95% interval for the first-week mean anywhere in the manuscript")
+    if problems:
+        return "FAIL", "; ".join(problems[:4])
+    return "PASS", "the manuscript carries the panel's corrections (RP1-RP6) and a 95% interval beside the pre-registered bound"
+
+
 def v_claims_cover_exhibits():
     """P6: a number cannot enter a PAPER_MASTER table without a claim behind it.
 
@@ -4584,7 +4640,20 @@ def v_claims_cover_exhibits():
           except _re.error:
               continue
       n_pats += len(pats)
+      # The supplement's Table S6 is the regenerated episode list (74 rows of dates and drivers),
+      # pasted as a region and held byte-identical to its inputs by V.table1_regenerates; a claim per
+      # cell would be several hundred rows saying nothing a reader could check, so the region is
+      # skipped here for the reason the docs/tables copy always was.
+      in_episode_table = False
       for i, line in enumerate(doc.read_text().splitlines(), 1):
+          if line.strip() == "<!-- BEGIN:episode_table -->":
+              in_episode_table = True
+              continue
+          if line.strip() == "<!-- END:episode_table -->":
+              in_episode_table = False
+              continue
+          if in_episode_table:
+              continue
           t = line.strip()
           if not (t.startswith("|") and t.endswith("|") and t.count("|") >= 3):
               continue
@@ -5180,6 +5249,7 @@ CHECKS = [
     ("V.claims_reproduce", "X14", "every claimed number recomputes from its artifact", v_claims_reproduce),
     ("V.claims_cover_exhibits", "P6", "no number enters a paper table without a claim behind it", v_claims_cover_exhibits),
     ("V.paper_budget", "W1", "the manuscript stays within the venue's word and display-item budget", v_paper_budget),
+    ("V.manuscript_referee_tokens", "RP1,RP2,RP3,RP4,RP5,RP6", "the referee panel's corrections to what the manuscript says about the fixed analysis hold", v_manuscript_referee_tokens),
     ("V.table1_regenerates", "P6", "the generated episode table re-renders byte-identical from its artifacts", v_table1_regenerates),
     ("V.paper_figures_current", "X21", "the manuscript's tracked figures match the current pipeline output byte for byte", v_paper_figures_current),
     ("V.links_resolve", "X14", "every endpoint has a dated result", v_links_resolve),

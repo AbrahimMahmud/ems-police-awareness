@@ -192,7 +192,9 @@ _ARMS = [("OLS_share", "share arm", "Change in share"),
 
 
 def _path_figure(outcome_share, outcome_count, name, title):
-    fig, axes = plt.subplots(2, 2, figsize=(9.5, 6.0), sharex=True)
+    # One scale per row (sharey="row"), so the C1/C2 contrast the text draws is the
+    # contrast on the page; the in-image title is gone, the caption carries it.
+    fig, axes = plt.subplots(2, 2, figsize=(9.5, 6.0), sharex=True, sharey="row")
     for i, (est, arm, ylab) in enumerate(_ARMS):
         outcome = outcome_share if est == "OLS_share" else outcome_count
         for j, (stratum, slab) in enumerate(_STRATA):
@@ -214,8 +216,6 @@ def _path_figure(outcome_share, outcome_count, name, title):
                 ax.set_xlabel("Days since the episode began (day −1 is the reference)")
             ax.set_xticks(days)
             ax.margins(y=0.15)
-    fig.suptitle(title + "\nDashed line: the first-week mean, the reported effect size; the test is on the eight coefficients jointly",
-                 fontsize=10)
     fig.tight_layout()
     save(fig, name)
 
@@ -274,8 +274,7 @@ ax.annotate("C1", xy=(pd.Timestamp("2021-03-15"), ymax * 0.93), ha="center", fon
 ax.set_ylabel("Attention index (SD units)")
 ax.set_xlabel("")
 ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), fontsize=8, frameon=False, ncol=3)
-ax.set_title("National attention to police violence, July 2015 – December 2024, with the adopted episodes shaded by stratum",
-             fontsize=10)
+# no in-image title: the paper's caption (Figure 2) defines the index, the shading and the line
 save(fig, "fig7_attention_decade")
 
 # ---------------------------------------------------------------------------

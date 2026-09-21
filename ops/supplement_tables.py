@@ -145,19 +145,25 @@ lines += ["**Table S10 — The pre-freeze power table (EDP share only): the mini
           "first-week shift and for a dip-and-rebound, against the declared minimum effect of interest of −0.005.** Source: "
           "`data/reference/power_analysis_prefreeze.csv` (`19_power.py`, computed before the lift; `freeze_active=1`). The MDE is "
           "measured against the asymptotic joint-Wald test at nominal α; the plan's addendum 23.11–23.12 states the bound's "
-          "limitations.", "",
-          "| stratum | MDE, sustained shift | MDE, dip-and-rebound | MDE ÷ minimum effect of interest | verdict |",
-          "|---|---|---|---|---|"]
+          "limitations. The last column is the same sustained-shift MDE measured against the randomization test where the "
+          "pre-freeze table could bracket it (`mde_ri`); C1's two-block geometry left it undefined before the lift.", "",
+          "| stratum | MDE, sustained shift | MDE, dip-and-rebound | MDE ÷ minimum effect of interest | verdict | MDE, sustained shift, randomization test |",
+          "|---|---|---|---|---|---|"]
 for st in ("discovery", "C1", "C2"):
     m_level = metric(st, r"mde_worst_profile")     # the sustained-shift MDE the reader uses (34: mde_level_prefreeze)
     m_dip = metric(st, r"mde_best_profile")        # the dip-and-rebound MDE (34: mde_dip_rebound_prefreeze)
     m_ratio = metric(st, r"mde_over_reference\.minimum_of_interest")
     m_verdict = metric(st, r"POWER_VERDICT")
+    m_ri = metric(st, r"mde_ri")
+    ri_val = pw[m_ri]
+    ri_cell = ("not defined", []) if (ri_val is None or ri_val == "" or (isinstance(ri_val, float) and np.isnan(ri_val))) else \
+        (None, [(float(ri_val), "{:.5f}", f"float(d.set_index('metric')['value'].loc['{m_ri}'])", "mde_ri")])
     lines.append(row([st], [
         (None, [(float(pw[m_level]), "{:.5f}", f"float(d.set_index('metric')['value'].loc['{m_level}'])", "mde_level")]),
         (None, [(float(pw[m_dip]), "{:.5f}", f"float(d.set_index('metric')['value'].loc['{m_dip}'])", "mde_dip")]),
         (None, [(float(pw[m_ratio]), "{:.3f}", f"float(d.set_index('metric')['value'].loc['{m_ratio}'])", "ratio")]),
         (str(pw[m_verdict]), []),
+        ri_cell,
     ], f"s10_{st}", PW))
 lines.append("")
 

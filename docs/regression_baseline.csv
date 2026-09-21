@@ -78,15 +78,16 @@ V.artifacts_current,T14,no artifact predates the script that writes it,PASS,"31 
 V.sources_verified,"X8,X14,X16",every source verified after its last write,PASS,"30 artifacts, all verified after their last write"
 V.no_duplicate_source_ids,"X8,X13","one row per source id, no collisions",PASS,"36 rows, 36 ids, no collisions"
 V.source_id_per_artifact,"P3,P4",a source id never gets repointed at a different artifact,PASS,36 source_id(s) each name exactly one artifact across 211 current and historical rows
-V.claims_reproduce,X14,every claimed number recomputes from its artifact,PASS,1491 claims recomputed and found verbatim in the document
-V.claims_cover_exhibits,P6,no number enters a paper table without a claim behind it,PASS,"every one of 1266 numbers in 1246 numeric table cells of PAPER_MASTER.md, PAPER.md, SUPPLEMENT.md is reproduced by one of 1490 claims, or exempt with a reason (0)"
-V.paper_budget,W1,the manuscript stays within the venue's word and display-item budget,PASS,"main text 4,988 words (ceiling 5,000); 4 display items: Table 1, Table 2, Figure 1, Figure 2"
-V.table1_regenerates,P6,the generated episode table re-renders byte-identical from its artifacts,PASS,"110 table rows re-render byte-identical from confirmation_episodes_rebuilt.csv, the frozen list and stratum_episodes"
+V.claims_reproduce,X14,every claimed number recomputes from its artifact,PASS,1582 claims recomputed and found verbatim in the document
+V.claims_cover_exhibits,P6,no number enters a paper table without a claim behind it,PASS,"every one of 1312 numbers in 1272 numeric table cells of PAPER_MASTER.md, PAPER.md, SUPPLEMENT.md is reproduced by one of 1581 claims, or exempt with a reason (0)"
+V.paper_budget,W1,the manuscript stays within the venue's word and display-item budget,PASS,"main text 4,998 words (ceiling 5,000); 4 display items: Table 1, Table 2, Figure 1, Figure 2"
+V.manuscript_referee_tokens,"RP1,RP2,RP3,RP4,RP5,RP6",the referee panel's corrections to what the manuscript says about the fixed analysis hold,PASS,the manuscript carries the panel's corrections (RP1-RP6) and a 95% interval beside the pre-registered bound
+V.table1_regenerates,P6,the generated episode table re-renders byte-identical from its artifacts,PASS,"110 table rows re-render byte-identical from confirmation_episodes_rebuilt.csv, the frozen list and stratum_episodes, and the supplement's Table S6 is that rendering"
 V.paper_figures_current,X21,the manuscript's tracked figures match the current pipeline output byte for byte,PASS,8 tracked figure(s) byte-identical to the current outputs; not produced by the pipeline here: ['fig5_bridge.png']
 V.links_resolve,X14,every endpoint has a dated result,PASS,"15 endpoints, last result recorded"
 X.run_all_stages_declared,"X10,P17,X19",every pipeline stage exists and declares its outputs,PASS,"36 stages; every script exists and every one declares at least one output, so the empty-run guard covers the whole pipeline"
 X.run_all_refresh_guard,X18,a stage that leaves its outputs unrefreshed fails,PASS,run_stage fails a stage whose declared outputs predate its start; a leftover from an earlier run cannot be recorded as this run's product
 X.run_all_deterministic_env,X20,"run_all runs every stage under a fixed hash seed and one BLAS thread, so cold passes are byte-identical",PASS,every stage runs with PYTHONHASHSEED=0 and one BLAS thread; the runners export the same; two cold passes are byte-identical on every build and model output
-M.status_honest,O5,no finding is recorded fixed without a passing check,PASS,165 findings: fixed=165; 165 carry a check
-M.finding_ids_unique,RI4,every finding id addresses exactly one row,PASS,all 165 findings carry a distinct id
-M.register_sync,O5,register and suite have not drifted apart,PASS,165/165 findings tagged; all 93 blocking covered; register and suite agree on every finding
+M.status_honest,O5,no finding is recorded fixed without a passing check,PASS,171 findings: fixed=171; 171 carry a check
+M.finding_ids_unique,RI4,every finding id addresses exactly one row,PASS,all 171 findings carry a distinct id
+M.register_sync,O5,register and suite have not drifted apart,PASS,171/171 findings tagged; all 93 blocking covered; register and suite agree on every finding
