@@ -43,3 +43,16 @@ and the same for `graph-memory` (`PYTHONPATH=<repo>/ops exec python3 -m graph_me
 The legacy lag-7 result is superseded and is never restated as established; methods, lags, sample and outcome
 definitions are not changed to make something significant; scripts 00/00b (network fetches) are not run
 casually — 00b rebuilds from the page cache inside cold runs only; the graph-memory hooks are not installed.
+
+## The memory graph in Obsidian
+
+`vault/Graph/` holds one generated note per node of `docs/graph/graph_memory.jsonl`, with the node's edges as
+wikilinks, and `vault/Graph memory.md` is the index by type; Obsidian's graph view of `vault/` is therefore the
+memory graph. Re-render after every export:
+
+    cd ops && python3 -m graph_memory.obsidian        # --export PATH, --vault PATH to override
+
+The renderer replaces result values (numbers with three or more decimals, explicit p-values) with a marker,
+because the vault carries paths, schemas and aggregate counts only (vault/AGENTS.md); the cited artifact holds the
+value. Hand-written notes live at the vault's top level; `Graph/` is never edited by hand.
+

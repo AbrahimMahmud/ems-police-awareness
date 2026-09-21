@@ -1,3 +1,7 @@
+---
+tags: [design]
+updated: 2026-09-21
+---
 # Design
 
 - **Treatment.** Attention episodes: bursts of the CAI-D index under a shock rule with a within-year quantile
@@ -15,7 +19,13 @@
   `S.lift_requires_1000_sims`).
 - **Family and reading.** Eight tests (2 outcomes × 2 arms × 2 strata), Benjamini–Hochberg q = 0.05; reading rules
   in `PRE_ANALYSIS_NOTE.md` §9 as amended by addendum §23 and §25, implemented in `34_confirmatory_reading.py`.
+  Outside the family: the pooled estimate (descriptive), the sensitivities (ten specs, both arms), the placebos
+  (cardiac, asthma; override on rejections only) and two secondary arms with asymptotic p only — the B-HEARD
+  interaction (C2) and the dose-response arm (first-week effect per SD of peak intensity, addendum §9).
+- **Power.** `19_power.py` → `data/reference/power_analysis_prefreeze.csv` (EDP share only): the pre-freeze
+  minimum detectable effect per stratum for a sustained shift and a dip-and-rebound, read by §19 rule 2;
+  addendum 23.11–23.12 state the bound's limitations (asymptotic Wald at nominal α vs BH-adjusted randomization p).
 - **Freeze.** `scripts/freeze_guard.py`: exploratory scripts ask for the discovery window by name; only the sealed
   `30_confirmatory_run.py` reads the confirmation sample after `config.FREEZE_ACTIVE = False` (addendum §26).
 
-See [[00 Project]] · [[Decisions]]
+Related: [[00 Project]] · [[Record]] · [[Phase I]] · [[Decisions]]

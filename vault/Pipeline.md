@@ -1,3 +1,7 @@
+---
+tags: [pipeline]
+updated: 2026-09-21
+---
 # Pipeline
 
 `scripts/run_all.py` runs the stages below in order (`--kind fetch|build|check|model`; fetch stages need network and are excluded from cold runs because upstream mutates). Each stage declares what it writes; a stage that exits 0 without refreshing its outputs fails (X18). The manifest is `outputs/run_manifest.json`.
@@ -43,8 +47,8 @@
 
 **Not stages** (hours of resumable compute, driven by `ops/` runners): `18_null_calibration.py` (certificates), `19_power.py` (MDEs), `30_confirmatory_run.py` (the seal, once), `34_confirmatory_reading.py` (its reading).
 
-**The gate**: `23_regression_suite.py` (87 checks, baseline in `docs/regression_baseline.csv`); `31_verify_sources.py --offline` (provenance and every claim); `22_pipeline_check.py`.
+**The gate**: `23_regression_suite.py` (90 checks, baseline in `docs/regression_baseline.csv`; see [[Gate and checks]]); `31_verify_sources.py --offline` (provenance and every claim); `22_pipeline_check.py`.
 
 **Runners** (`ops/README.md`): `rebuild.sh`, `calib1000.sh`, `coldrun.sh`, `phase_i.sh`; generators `paper_table1.py`, `phase_i_tables.py`.
 
-See [[Data inventory]] · [[Status]]
+Related: [[Data inventory]] · [[Gate and checks]] · [[Phase I]] · [[Status]]

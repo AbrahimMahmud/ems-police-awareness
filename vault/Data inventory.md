@@ -1,3 +1,7 @@
+---
+tags: [data]
+updated: 2026-09-21
+---
 # Data inventory
 
 *Paths, schemas and row counts only (parquet metadata and CSV line counts; no values). Generated 2026-09-20 by a metadata scan; regenerate the same way.*
@@ -86,4 +90,10 @@
 - `outputs/tables/*.csv|json`: model tables, calibration certificates and ledgers (kept across cold runs), randomization ledgers, the synthetic dry run of 30.
 - `outputs/figures/*.png|pdf`: fig1_raw_series, fig2_irf_primary, fig3_windows, fig4_decomposition, fig5_bridge, zscore_simulation (`08_figures.py`, `25_zscore_simulation.py`).
 
-See [[Pipeline]] · [[00 Project]]
+## The sealed artifacts (tracked, `data/reference/`, 2026-09-21)
+
+Schemas and counts in [[Phase I]]: `confirmatory_results.csv` (166 rows × 36), `confirmatory_results.meta.json`,
+`confirmatory_run_log.csv` (8 rows: 7 starts, 1 sealed), `confirmatory_reading.csv` (175 rows × 6) with its sidecar,
+`power_analysis_prefreeze.csv` (276 metric rows), `freeze_access_log.csv` (15 declared accesses).
+
+Related: [[Pipeline]] · [[Phase I]] · [[00 Project]]
