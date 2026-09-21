@@ -175,6 +175,110 @@ ax.set_title("Outcome decomposition, days 3–5 window: effect of awareness by c
 save(fig, "fig4_decomposition")
 
 # ---------------------------------------------------------------------------
+# Figures 6 and 6b: the sealed run's day-by-day coefficient paths (days 0-7),
+# read from data/reference/confirmatory_results.csv (the one-shot table; no
+# estimation here). One series per panel, so no legend; 95% intervals from the
+# path SEs; the first-week mean, which the plan reports as the effect size,
+# drawn as a dashed reference. The joint Wald test is on the shape of this
+# path, not on its mean, which is why a rejection can carry no direction.
+# ---------------------------------------------------------------------------
+import json as _json
+
+conf = pd.read_csv(DATA_REFERENCE / "confirmatory_results.csv")
+_STRATA = [("C1_clean", "C1 (clean of B-HEARD; 15 episodes)"),
+           ("C2_exposed", "C2 (B-HEARD exposed; 30 episodes)")]
+_ARMS = [("OLS_share", "share arm", "Change in share"),
+         ("PPML_count_offset", "count arm", "Log points (offset on total dispatches)")]
+
+
+def _path_figure(outcome_share, outcome_count, name, title):
+    fig, axes = plt.subplots(2, 2, figsize=(9.5, 6.0), sharex=True)
+    for i, (est, arm, ylab) in enumerate(_ARMS):
+        outcome = outcome_share if est == "OLS_share" else outcome_count
+        for j, (stratum, slab) in enumerate(_STRATA):
+            ax = axes[i, j]
+            r = conf[(conf["stratum"] == stratum) & (conf["spec"] == "primary")
+                     & (conf["outcome"] == outcome) & (conf["estimator"] == est)].iloc[0]
+            path = np.array(_json.loads(r["path_coefs"]), dtype=float)
+            ses = np.array(_json.loads(r["path_ses"]), dtype=float)
+            days = np.arange(len(path))
+            ax.axhline(0, color=GRAY, lw=0.8)
+            ax.axhline(r["first_week_mean_coef"], color=GRAY, lw=1.0, ls="--")
+            ax.errorbar(days, path, yerr=1.96 * ses, fmt="o-", ms=6, lw=1.6,
+                        capsize=2.5, color=BLUE, mec="white", mew=1.0)
+            ax.set_title(f"{slab}\n{arm}: RI p = {r['p_randomization']:.3f}, "
+                         f"BH-adjusted {r['p_bh_adjusted']:.3f}", fontsize=9)
+            if j == 0:
+                ax.set_ylabel(ylab, fontsize=9, labelpad=8)
+            if i == 1:
+                ax.set_xlabel("Days since the episode began (day −1 is the reference)")
+            ax.set_xticks(days)
+            ax.margins(y=0.15)
+    fig.suptitle(title + "\nDashed line: the first-week mean, the reported effect size; the test is on the eight coefficients jointly",
+                 fontsize=10)
+    fig.tight_layout()
+    save(fig, name)
+
+
+_path_figure("edp_share", "edp", "fig6_conf_paths_edp",
+             "Sealed confirmatory run: day-by-day first-week coefficients, EDP outcome (95% CI, date-clustered)")
+_path_figure("mh_narrow_share", "mh_narrow", "fig6b_conf_paths_mh",
+             "Sealed confirmatory run: day-by-day first-week coefficients, narrow mental-health outcome (95% CI)")
+
+# ---------------------------------------------------------------------------
+# Figure 7: the attention index over the whole decade with every adopted episode
+# shaded by the stratum whose analysis window holds its start. Treatment side
+# only (no outcome is drawn), so it sits outside the freeze; the discovery
+# figure above stays as it is.
+# ---------------------------------------------------------------------------
+from config import CONFIRMATION_ANALYSIS_WINDOWS, DISCOVERY_START, DISCOVERY_END, BHEARD_LAUNCH
+
+ep_all = pd.read_csv(DATA_REFERENCE / EPISODE_LIST_PRIMARY, parse_dates=["start", "end", "peak_date"])
+_windows = {"discovery": [(DISCOVERY_START, DISCOVERY_END)],
+            "C1": [CONFIRMATION_ANALYSIS_WINDOWS[0], CONFIRMATION_ANALYSIS_WINDOWS[1]],
+            "C2": [CONFIRMATION_ANALYSIS_WINDOWS[2]]}
+_stratum_color = {"discovery": GRAY, "C1": BLUE, "C2": "#eb6834"}   # validated categorical slots 1 and 2; gray for the explored period
+
+
+def _stratum_of(start):
+    for name, wins in _windows.items():
+        if any(pd.Timestamp(a) <= start <= pd.Timestamp(b) for a, b in wins):
+            return name
+    return None
+
+
+aw_full = aw[(aw["date"] >= "2015-07-01")].set_index("date")
+fig, ax = plt.subplots(figsize=(10, 3.6))
+for name, wins in _windows.items():
+    for a, b in wins:
+        ax.axvspan(pd.Timestamp(a), pd.Timestamp(b), color=_stratum_color[name], alpha=0.06, lw=0)
+ax.plot(aw_full.index, aw_full["cai_d"], color="#0b0b0b", lw=0.6)
+seen = set()
+for r in ep_all.itertuples():
+    st = _stratum_of(r.start)
+    if st is None:
+        continue
+    ax.axvspan(r.start, r.end + pd.Timedelta(days=1), color=_stratum_color[st], alpha=0.35, lw=0,
+               label=f"{st} episode" if st not in seen else None)
+    seen.add(st)
+ax.axvline(pd.Timestamp(BHEARD_LAUNCH), color=GRAY, lw=0.8, ls=":")
+ax.set_ylim(top=ax.get_ylim()[1] * 1.18)
+ymax = ax.get_ylim()[1]
+ax.annotate("B-HEARD launch", xy=(pd.Timestamp(BHEARD_LAUNCH), ymax * 0.62), xytext=(4, 0),
+            textcoords="offset points", fontsize=8, color=GRAY)
+_label_pos = {"C1": pd.Timestamp("2016-03-01"), "discovery": pd.Timestamp("2018-12-01"), "C2": pd.Timestamp("2023-02-01")}
+for name, when in _label_pos.items():
+    ax.annotate({"C1": "C1 (clean)", "discovery": "discovery (explored)", "C2": "C2 (B-HEARD exposed)"}[name],
+                xy=(when, ymax * 0.93), ha="center", fontsize=8.5, color=_stratum_color[name])
+ax.annotate("C1", xy=(pd.Timestamp("2021-03-15"), ymax * 0.93), ha="center", fontsize=8.5, color=_stratum_color["C1"])
+ax.set_ylabel("Attention index (SD units)")
+ax.set_xlabel("")
+ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), fontsize=8, frameon=False, ncol=3)
+ax.set_title("National attention to police violence, July 2015 – December 2024, with the adopted episodes shaded by stratum",
+             fontsize=10)
+save(fig, "fig7_attention_decade")
+
+# ---------------------------------------------------------------------------
 # Figure 5: bridge from legacy result to corrected specification
 # ---------------------------------------------------------------------------
 # FIGURE 5 IS RETIRED, and skipped rather than crashed.

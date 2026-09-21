@@ -4462,6 +4462,42 @@ SEVERITIES = {"blocking", "moderate", "minor"}
 from config import LIFT_MIN_SIMS  # noqa: E402
 
 
+def v_paper_budget():
+    """W1: the manuscript stays inside the venue's budget.
+
+    PAPER_PLAN.md sets Journal of Urban Health's Template A at ~4,000 words of main text and four
+    display items, and calls the four items "the binding constraint on this paper". The CP3
+    completeness critic (2026-09-21) found the draft at about 8,200 words and nine display items,
+    with the budget stated in its own header. The restructure moved the Methods detail, the
+    reader's transcript, the long tables and the exploratory figures to docs/SUPPLEMENT.md and
+    rewrote the Results as prose; this check holds the main text (Introduction through the end of
+    Limitations, table rows and figure lines excluded) under 5,000 words and the display items at
+    four, so that the budget cannot drift back up unnoticed. Five thousand rather than four is the
+    ceiling because the venue's figure is approximate and the Limitations are, by the plan's own
+    choice, labelled and long.
+    """
+    import re as _re
+    paper = PROJECT_ROOT / "docs" / "PAPER.md"
+    if not paper.exists():
+        return "BLOCKED", "docs/PAPER.md absent"
+    text = paper.read_text()
+    if "## Introduction" not in text or "## Display items" not in text:
+        return "FAIL", "PAPER.md lacks the Introduction or Display items headings the budget is measured between"
+    main = text.split("## Introduction", 1)[1].split("## Display items", 1)[0]
+    words = len(" ".join(l for l in main.splitlines()
+                         if not l.strip().startswith("|") and not l.strip().startswith("![")).split())
+    items_section = text.split("## Display items", 1)[1].split("## RECORD", 1)[0]
+    items = _re.findall(r"^\*\*(Table|Figure) (\d+)[ .\u2014]", items_section, flags=_re.M)
+    problems = []
+    if words > 5000:
+        problems.append(f"main text is {words:,} words (ceiling 5,000; venue ~4,000)")
+    if len(items) != 4:
+        problems.append(f"{len(items)} display items ({', '.join(a + ' ' + b for a, b in items)}); the venue allows four")
+    if problems:
+        return "FAIL", "; ".join(problems)
+    return "PASS", f"main text {words:,} words (ceiling 5,000); {len(items)} display items: " + ", ".join(a + " " + b for a, b in items)
+
+
 def v_claims_cover_exhibits():
     """P6: a number cannot enter a PAPER_MASTER table without a claim behind it.
 
@@ -4503,7 +4539,10 @@ def v_claims_cover_exhibits():
     # PAPER_MASTER is the source document; PAPER.md is the manuscript drafted
     # from it (Phase J, 2026-09-13). A table in either is an exhibit, and the
     # manuscript is where a number is most likely to be retyped by hand.
-    docs = [PROJECT_ROOT / "docs" / "PAPER_MASTER.md", PROJECT_ROOT / "docs" / "PAPER.md"]
+    # SUPPLEMENT.md holds the sealed run's full tables and the code, crosswalk, calibration and
+    # power tables since the CP3 restructure (2026-09-21): an exhibit is an exhibit wherever it lives.
+    docs = [PROJECT_ROOT / "docs" / "PAPER_MASTER.md", PROJECT_ROOT / "docs" / "PAPER.md",
+            PROJECT_ROOT / "docs" / "SUPPLEMENT.md"]
     docs = [d for d in docs if d.exists()]
     if not docs or not reg.exists():
         return "BLOCKED", "PAPER_MASTER.md or CLAIMS_REGISTER.csv absent"
@@ -5140,6 +5179,7 @@ CHECKS = [
     ("V.source_id_per_artifact", "P3,P4", "a source id never gets repointed at a different artifact", v_source_id_per_artifact),
     ("V.claims_reproduce", "X14", "every claimed number recomputes from its artifact", v_claims_reproduce),
     ("V.claims_cover_exhibits", "P6", "no number enters a paper table without a claim behind it", v_claims_cover_exhibits),
+    ("V.paper_budget", "W1", "the manuscript stays within the venue's word and display-item budget", v_paper_budget),
     ("V.table1_regenerates", "P6", "the generated episode table re-renders byte-identical from its artifacts", v_table1_regenerates),
     ("V.paper_figures_current", "X21", "the manuscript's tracked figures match the current pipeline output byte for byte", v_paper_figures_current),
     ("V.links_resolve", "X14", "every endpoint has a dated result", v_links_resolve),

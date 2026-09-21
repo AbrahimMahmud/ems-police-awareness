@@ -20,7 +20,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "outputs" / "figures"
 DST = ROOT / "docs" / "figures"
 FIGURES = ["fig1_raw_series.png", "fig2_irf_primary.png", "fig3_windows.png", "fig4_decomposition.png",
-           "fig5_bridge.png", "zscore_simulation.png"]
+           "fig5_bridge.png", "fig6_conf_paths_edp.png", "fig6b_conf_paths_mh.png", "fig7_attention_decade.png",
+           "zscore_simulation.png"]
 
 
 def sha(p):
