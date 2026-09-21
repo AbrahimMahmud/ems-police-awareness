@@ -1782,8 +1782,9 @@ district-day standard deviation is 0.047.
 
 The sealed script (`30_confirmatory_run.py`) was launched after the lift (`4e3dce1`) and started seven times
 before it sealed at 2026-09-21 03:24:13Z — the original start, a resume after the container was suspended,
-two automatic retries and two hand relaunches after the worker pool was killed by the memory cgroup on the
-pooled stratum's cells (four, then two, then three, then two workers) — each start a dated row of the tracked
+a relaunch to raise the worker count, and after each of two kills of the worker pool by the memory cgroup on
+the pooled stratum's cells an automatic retry and a hand relaunch with fewer workers (four, then two, then
+three, then two workers) — each start a dated row of the tracked
 run log with its reason, the last reason carried in every row of the table (`overwrite_reason`); every cell
 resumed from its identity-keyed ledger, so no number depends on the restarts. `34_confirmatory_reading.py`
 read the table once and sealed its reading.

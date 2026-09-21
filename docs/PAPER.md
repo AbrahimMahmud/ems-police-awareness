@@ -403,11 +403,12 @@ hash seed the byte-reproducible pipeline requires, and writes each cell's
 day-by-day coefficient path so a rejection without a consistent direction can be
 shown without a second read. The run was started seven times before it sealed
 (20 September 2026 09:29 to 21 September 03:24 UTC): once at the lift, once
-after the container was suspended, and twice each — an automatic retry and a
-hand relaunch with fewer workers — after the worker pool was killed by the
-memory limit on the pooled stratum's cells. Each start is a dated row of the
-run log with its reason; every cell resumed from a ledger keyed to its own
-seed and design, so no number depends on the restarts.
+after the container was suspended, once to raise the number of workers, and
+twice each — an automatic retry and a hand relaunch with fewer workers — after
+each of two kills of the worker pool by the memory limit on the pooled stratum's
+cells. Each start is a dated row of the run log with its reason; every cell
+resumed from a ledger keyed to its own seed and design, so no number depends on
+the restarts.
 
 **Exploratory analyses.** Discovery-period estimates and an outcome
 decomposition across thirteen outcomes in four dispatch families and five
