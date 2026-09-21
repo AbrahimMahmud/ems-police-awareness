@@ -32,3 +32,12 @@ See [[Status]] · [[Next actions]]
   check treats a numeral-leading cell as a value needing a claim.
 - 2026-09-21 — Abstract follows PAPER_PLAN (unstructured, 250 words, names NYC EMS Incident Dispatch Data, New York City,
   2015–2024, the linkage, "quasi-experimental stacked episode event study", the three-way question).
+- 2026-09-21 — CP3 fixes prepared while the refuters ran and applied only after the workflow returned, so the refuters
+  judged the text the finders saw; items the refuters killed on materiality were still applied where a sentence made
+  the paper more exact (family-corrected bound, "nor the opposite", MDE-vs-test, Table 5 caption, external deposit).
+- 2026-09-21 — When the paper paraphrases the record it uses the record's own nouns; the five CP3 survivors (P59–P63)
+  are held by suite tokens on the old wording.
+- 2026-09-21 — Generated claims are replaced wholesale when the generator changes; every "per stratum" table loops over
+  every stratum in the sealed file (the pooled falsification/diagnostic rows had been dropped).
+- 2026-09-21 — Figure 3 is drawn from the joint specification the Results report and prints no p-value; Figure 2's axis
+  is in SD units of the index.

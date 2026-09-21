@@ -11,7 +11,7 @@ a claim is a check failure, not a typo.*
 
 *Target: Journal of Urban Health, Template A (public health). ~4,000 words main
 text, four display items, RECORD reporting. Language rules: PAPER_PLAN.md §7. This
-draft exceeds both budgets (about 7,100 words of main text; nine display items)
+draft exceeds both budgets (about 8,200 words of main text; nine display items)
 and awaits the author's editorial pass (HANDOFF_2026-09-21 §5); nothing numeric
 moves without its claim.*
 
