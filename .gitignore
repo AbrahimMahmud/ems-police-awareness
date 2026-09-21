@@ -100,3 +100,6 @@ data/processed/wiki_pageviews_cache/
 
 # ops runner state (PID files, step logs, sentinels)
 ops/state/
+
+# The Obsidian vault is personal and lives outside the repository (kept locally, never committed).
+vault/

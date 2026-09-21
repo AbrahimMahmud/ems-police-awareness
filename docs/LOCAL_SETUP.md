@@ -46,13 +46,16 @@ casually — 00b rebuilds from the page cache inside cold runs only; the graph-m
 
 ## The memory graph in Obsidian
 
-`vault/Graph/` holds one generated note per node of `docs/graph/graph_memory.jsonl`, with the node's edges as
-wikilinks, and `vault/Graph memory.md` is the index by type; Obsidian's graph view of `vault/` is therefore the
-memory graph. Re-render after every export:
+The Obsidian vault is personal and is not tracked in the repository (`vault/` is gitignored; the author keeps it at
+`~/Downloads/abrahimm/EMS`). Its `Graph/` folder holds one generated note per node of
+`docs/graph/graph_memory.jsonl`, with the node's edges as wikilinks, and `Graph memory.md` is the index by type;
+Obsidian's graph view of the vault is therefore the memory graph. Re-render after every export, pointing at the
+vault's location:
 
-    cd ops && python3 -m graph_memory.obsidian        # --export PATH, --vault PATH to override
+    cd ops && python3 -m graph_memory.obsidian --vault ~/Downloads/abrahimm/EMS   # --export PATH to override
 
 The renderer replaces result values (numbers with three or more decimals, explicit p-values) with a marker,
 because the vault carries paths, schemas and aggregate counts only (vault/AGENTS.md); the cited artifact holds the
-value. Hand-written notes live at the vault's top level; `Graph/` is never edited by hand.
+value. Hand-written notes live at the vault's top level; `Graph/` is never edited by hand; the vault's own
+conventions are in its `AGENTS.md`.
 
