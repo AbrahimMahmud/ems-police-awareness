@@ -1,0 +1,176 @@
+stratum,item,value,rule,detail,data_source
+family,family_size,8,note §10,2 outcomes x 2 arms x 2 strata,REAL
+family,family_rejections_bh,0,23.1,cells with BH-adjusted p < 0.05,REAL
+C1_clean,null_certified,1,addendum 25,,REAL
+C1_clean,p_randomization:edp_share:share,0.0114942528735632,note §7,OK,REAL
+C1_clean,p_bh_adjusted:edp_share:share,0.0559720139930035,"note §10; 23.1 (m = 8, q = 0.05)",,REAL
+C1_clean,p_asymptotic:edp_share:share,0.0013694402281865,"note §7 (beside, never instead)",,REAL
+C1_clean,first_week_mean_coef:edp_share:share,-0.0005865764133764,note §6; 23.2,,REAL
+C1_clean,first_week_mean_se:edp_share:share,0.0013561674815364,23.2,,REAL
+C1_clean,rejects_bh:edp_share:share,0,23.1,BH-adjusted randomization p below 0.05,REAL
+C1_clean,p_randomization:edp_share:count,0.0139930034982508,note §7,OK,REAL
+C1_clean,p_bh_adjusted:edp_share:count,0.0559720139930035,"note §10; 23.1 (m = 8, q = 0.05)",,REAL
+C1_clean,p_asymptotic:edp_share:count,0.0010045422969883,"note §7 (beside, never instead)",,REAL
+C1_clean,first_week_mean_coef:edp_share:count,0.0094545462098291,note §6; 23.2,,REAL
+C1_clean,first_week_mean_se:edp_share:count,0.0162313791970115,23.2,,REAL
+C1_clean,rejects_bh:edp_share:count,0,23.1,BH-adjusted randomization p below 0.05,REAL
+C1_clean,rejects_on_outcome:edp_share,0,23.1,no arm rejects,REAL
+C1_clean,p_randomization:mh_narrow_share:share,0.0284857571214392,note §7,OK,REAL
+C1_clean,p_bh_adjusted:mh_narrow_share:share,0.0759620189905047,"note §10; 23.1 (m = 8, q = 0.05)",,REAL
+C1_clean,p_asymptotic:mh_narrow_share:share,0.0039687406694005,"note §7 (beside, never instead)",,REAL
+C1_clean,first_week_mean_coef:mh_narrow_share:share,-0.0007357472595112,note §6; 23.2,,REAL
+C1_clean,first_week_mean_se:mh_narrow_share:share,0.0015729097135186,23.2,,REAL
+C1_clean,rejects_bh:mh_narrow_share:share,0,23.1,BH-adjusted randomization p below 0.05,REAL
+C1_clean,p_randomization:mh_narrow_share:count,0.089455272363818,note §7,OK,REAL
+C1_clean,p_bh_adjusted:mh_narrow_share:count,0.1789105447276361,"note §10; 23.1 (m = 8, q = 0.05)",,REAL
+C1_clean,p_asymptotic:mh_narrow_share:count,0.0291430118389631,"note §7 (beside, never instead)",,REAL
+C1_clean,first_week_mean_coef:mh_narrow_share:count,-0.0001297262845193,note §6; 23.2,,REAL
+C1_clean,first_week_mean_se:mh_narrow_share:count,0.0142000502139828,23.2,,REAL
+C1_clean,rejects_bh:mh_narrow_share:count,0,23.1,BH-adjusted randomization p below 0.05,REAL
+C1_clean,rejects_on_outcome:mh_narrow_share,0,23.1,no arm rejects,REAL
+C1_clean,placebo_rejects_any,0,23.4,no cardiac or asthma cell at p <= 0.05 (4 of 4 override cells with a p-value),REAL
+C1_clean,placebo_cells_unavailable,0,23.4,every override cell carries a p-value,REAL
+C1_clean,falsification_reported_only:injury_share:OLS_share,0.3453273363318341,23.4,"injury is reported, not an override outcome: the discovery decomposition found it responds to attention episodes (protest injuries)",REAL
+C1_clean,falsification_reported_only:injury:PPML_count_offset,0.3713143428285857,23.4,"injury is reported, not an override outcome: the discovery decomposition found it responds to attention episodes (protest injuries)",REAL
+C1_clean,stratum_rejects,0,"23.1, 23.3a",no primary outcome rejects on both arms,REAL
+C1_clean,mde_level_prefreeze,0.011559431591216142,19.2,UNDERPOWERED; worst-profile MDE at nominal alpha,REAL
+C1_clean,mde_dip_rebound_prefreeze,0.003819450834723877,19.2,best-profile MDE at nominal alpha,REAL
+C1_clean,mde_level_family_corrected,0.014796072436756662,23.11,nominal-level MDE x 1.28 at the Bonferroni bound,REAL
+C1_clean,bounded_null,1,19.2,"no effect detected at the family level (smallest unadjusted randomization p among the stratum's primary cells 0.0115); a sustained level shift at or above the pre-freeze MDE 0.01156 in absolute value (about 0.01480 under the approximate one-parameter family correction of 23.11) is disfavoured at 80% power; a sustained shift of the minimum effect of interest (−0.005) is not excluded; a transient dip-and-rebound of the minimum effect of interest is disfavoured (its pre-freeze MDE is 0.00382, at or below 0.005 in absolute value)",REAL
+C1_clean,reading_9_4_input,does not reject,"23.1–23.4, 19.2, 25",,REAL
+C1_clean,rejected_outcomes,,23.1b,outcomes on which the stratum rejects cleanly; 9.4 row 1 needs a common outcome across strata,REAL
+C1_clean,sensitivity_p:sens_broad_basket:edp_share:OLS_share,,9.5,IDENTICAL_TO_PRIMARY: same episode starts in this stratum,REAL
+C1_clean,sensitivity_p:sens_broad_basket:mh_narrow_share:OLS_share,,9.5,IDENTICAL_TO_PRIMARY: same episode starts in this stratum,REAL
+C1_clean,sensitivity_p:sens_spliced_wiki:edp_share:OLS_share,,9.5,IDENTICAL_TO_PRIMARY: same episode starts in this stratum,REAL
+C1_clean,sensitivity_p:sens_spliced_wiki:mh_narrow_share:OLS_share,,9.5,IDENTICAL_TO_PRIMARY: same episode starts in this stratum,REAL
+C1_clean,sensitivity_p:sens_no_edpm:edp_ex_edpm_share:OLS_share,,9.5,IDENTICAL_TO_PRIMARY: no EDPM dispatch in this stratum,REAL
+C1_clean,sensitivity_p:sens_no_edpm:edp_ex_edpm:PPML_count_offset,,9.5,IDENTICAL_TO_PRIMARY: no EDPM dispatch in this stratum,REAL
+C1_clean,sensitivity_p:sens_post28:edp_share:OLS_share,0.0069965017491254,9.5,OK; n_episodes 15,REAL
+C1_clean,sensitivity_p:sens_post28:edp:PPML_count_offset,0.016991504247876,9.5,OK; n_episodes 15,REAL
+C1_clean,sensitivity_p:sens_post28:mh_narrow_share:OLS_share,0.0459770114942528,9.5,OK; n_episodes 15,REAL
+C1_clean,sensitivity_p:sens_post28:mh_narrow:PPML_count_offset,0.176911544227886,9.5,OK; n_episodes 15,REAL
+C1_clean,sensitivity_p:sens_post60:edp_share:OLS_share,0.0189905047476261,9.5,OK; n_episodes 15,REAL
+C1_clean,sensitivity_p:sens_post60:edp:PPML_count_offset,0.031984007996002,9.5,OK; n_episodes 15,REAL
+C1_clean,sensitivity_p:sens_post60:mh_narrow_share:OLS_share,0.0624687656171914,9.5,OK; n_episodes 15,REAL
+C1_clean,sensitivity_p:sens_post60:mh_narrow:PPML_count_offset,0.2158920539730135,9.5,OK; n_episodes 15,REAL
+C1_clean,sensitivity_p:sens_drop_jul2016:edp_share:OLS_share,0.0089955022488755,9.5,OK; n_episodes 14,REAL
+C1_clean,sensitivity_p:sens_drop_jul2016:edp:PPML_count_offset,0.0059970014992503,9.5,OK; n_episodes 14,REAL
+C1_clean,sensitivity_p:sens_drop_jul2016:mh_narrow_share:OLS_share,0.0324837581209395,9.5,OK; n_episodes 14,REAL
+C1_clean,sensitivity_p:sens_drop_jul2016:mh_narrow:PPML_count_offset,0.0644677661169415,9.5,OK; n_episodes 14,REAL
+C1_clean,sensitivity_p:sens_coverage_clean:edp_share:OLS_share,0.0259870064967516,9.5,OK; n_episodes 13,REAL
+C1_clean,sensitivity_p:sens_coverage_clean:edp:PPML_count_offset,0.0154922538730634,9.5,OK; n_episodes 13,REAL
+C1_clean,sensitivity_p:sens_geocoding_clean:edp_share:OLS_share,0.0089955022488755,9.5,OK; n_episodes 14,REAL
+C1_clean,sensitivity_p:sens_geocoding_clean:edp:PPML_count_offset,0.0044977511244377,9.5,OK; n_episodes 14,REAL
+C1_clean,sensitivity_p:sens_coverage_clean:mh_narrow_share:OLS_share,0.0519740129935032,9.5,OK; n_episodes 12,REAL
+C1_clean,sensitivity_p:sens_coverage_clean:mh_narrow:PPML_count_offset,0.1154422788605697,9.5,OK; n_episodes 12,REAL
+C1_clean,sensitivity_p:sens_geocoding_clean:mh_narrow_share:OLS_share,0.0454772613693153,9.5,OK; n_episodes 14,REAL
+C1_clean,sensitivity_p:sens_geocoding_clean:mh_narrow:PPML_count_offset,0.0729635182408795,9.5,OK; n_episodes 14,REAL
+C1_clean,sensitivity_p:sens_coverage_clean:cardiac_share:OLS_share,0.1639180409795102,9.5,OK; n_episodes 13,REAL
+C1_clean,sensitivity_p:sens_coverage_clean:cardiac:PPML_count_offset,0.2923538230884557,9.5,OK; n_episodes 13,REAL
+C1_clean,sensitivity_p:sens_coverage_clean:injury_share:OLS_share,0.5967016491754122,9.5,OK; n_episodes 14,REAL
+C1_clean,sensitivity_p:sens_coverage_clean:injury:PPML_count_offset,0.5647176411794103,9.5,OK; n_episodes 14,REAL
+C1_clean,sensitivity_p:sens_coverage_clean:asthma_share:OLS_share,0.2428785607196401,9.5,OK; n_episodes 14,REAL
+C1_clean,sensitivity_p:sens_coverage_clean:asthma:PPML_count_offset,0.7096451774112944,9.5,OK; n_episodes 14,REAL
+C1_clean,sensitivity_p:sens_incl_cancelled:edp_share_incl_cancelled:OLS_share,0.0579710144927536,9.5,OK; n_episodes 15,REAL
+C1_clean,sensitivity_p:sens_incl_cancelled:edp_incl_cancelled:PPML_count_offset,0.0234882558720639,9.5,OK; n_episodes 15,REAL
+C1_clean,sensitivity_p:sens_incl_cancelled:mh_narrow_share_incl_cancelled:OLS_share,0.3553223388305847,9.5,OK; n_episodes 15,REAL
+C1_clean,sensitivity_p:sens_incl_cancelled:mh_narrow_incl_cancelled:PPML_count_offset,0.3573213393303348,9.5,OK; n_episodes 15,REAL
+C1_clean,sensitivity_summary,"primary does not reject; 14 of 24 H1-outcome sensitivity cells at p <= 0.05 (reported, not substituted)","9.5, 23.1c",,REAL
+C1_clean,secondary_p_asymptotic:dose_response:edp_share:OLS_share_dose_per_sd,0.0308652476299322,"note §5, §10; addendum 9",coef 0.001309; OK,REAL
+C1_clean,secondary_reading:dose_response:edp_share:OLS_share_dose_per_sd,moves against the predicted direction (asymptotic p = 0.0309; coef +0.001309),23.1e,descriptive; outside the family; never enters the 9.4 conclusion,REAL
+C1_clean,secondary_p_asymptotic:dose_response:mh_narrow_share:OLS_share_dose_per_sd,0.018671995523152,"note §5, §10; addendum 9",coef 0.001508; OK,REAL
+C1_clean,secondary_reading:dose_response:mh_narrow_share:OLS_share_dose_per_sd,moves against the predicted direction (asymptotic p = 0.0187; coef +0.001508),23.1e,descriptive; outside the family; never enters the 9.4 conclusion,REAL
+C2_exposed,null_certified,1,addendum 25,,REAL
+C2_exposed,p_randomization:edp_share:share,0.6521739130434783,note §7,OK,REAL
+C2_exposed,p_bh_adjusted:edp_share:share,0.7453416149068323,"note §10; 23.1 (m = 8, q = 0.05)",,REAL
+C2_exposed,p_asymptotic:edp_share:share,0.6429825722530061,"note §7 (beside, never instead)",,REAL
+C2_exposed,first_week_mean_coef:edp_share:share,-0.0001878050022714,note §6; 23.2,,REAL
+C2_exposed,first_week_mean_se:edp_share:share,0.001135111239224,23.2,,REAL
+C2_exposed,rejects_bh:edp_share:share,0,23.1,BH-adjusted randomization p below 0.05,REAL
+C2_exposed,p_randomization:edp_share:count,0.7861069465267366,note §7,OK,REAL
+C2_exposed,p_bh_adjusted:edp_share:count,0.7861069465267366,"note §10; 23.1 (m = 8, q = 0.05)",,REAL
+C2_exposed,p_asymptotic:edp_share:count,0.7843001631732867,"note §7 (beside, never instead)",,REAL
+C2_exposed,first_week_mean_coef:edp_share:count,0.0059063196537562,note §6; 23.2,,REAL
+C2_exposed,first_week_mean_se:edp_share:count,0.0112731296040517,23.2,,REAL
+C2_exposed,rejects_bh:edp_share:count,0,23.1,BH-adjusted randomization p below 0.05,REAL
+C2_exposed,rejects_on_outcome:edp_share,0,23.1,no arm rejects,REAL
+C2_exposed,p_randomization:mh_narrow_share:share,0.4522738630684658,note §7,OK,REAL
+C2_exposed,p_bh_adjusted:mh_narrow_share:share,0.6596701649175413,"note §10; 23.1 (m = 8, q = 0.05)",,REAL
+C2_exposed,p_asymptotic:mh_narrow_share:share,0.435200558724686,"note §7 (beside, never instead)",,REAL
+C2_exposed,first_week_mean_coef:mh_narrow_share:share,-0.000672994664884,note §6; 23.2,,REAL
+C2_exposed,first_week_mean_se:mh_narrow_share:share,0.0013312540176681,23.2,,REAL
+C2_exposed,rejects_bh:mh_narrow_share:share,0,23.1,BH-adjusted randomization p below 0.05,REAL
+C2_exposed,p_randomization:mh_narrow_share:count,0.4947526236881559,note §7,OK,REAL
+C2_exposed,p_bh_adjusted:mh_narrow_share:count,0.6596701649175413,"note §10; 23.1 (m = 8, q = 0.05)",,REAL
+C2_exposed,p_asymptotic:mh_narrow_share:count,0.4764379210958205,"note §7 (beside, never instead)",,REAL
+C2_exposed,first_week_mean_coef:mh_narrow_share:count,0.0019671965132051,note §6; 23.2,,REAL
+C2_exposed,first_week_mean_se:mh_narrow_share:count,0.0107882221446778,23.2,,REAL
+C2_exposed,rejects_bh:mh_narrow_share:count,0,23.1,BH-adjusted randomization p below 0.05,REAL
+C2_exposed,rejects_on_outcome:mh_narrow_share,0,23.1,no arm rejects,REAL
+C2_exposed,placebo_rejects_any,0,23.4,no cardiac or asthma cell at p <= 0.05 (4 of 4 override cells with a p-value),REAL
+C2_exposed,placebo_cells_unavailable,0,23.4,every override cell carries a p-value,REAL
+C2_exposed,falsification_reported_only:injury_share:OLS_share,0.2073963018490754,23.4,"injury is reported, not an override outcome: the discovery decomposition found it responds to attention episodes (protest injuries)",REAL
+C2_exposed,falsification_reported_only:injury:PPML_count_offset,0.2038980509745127,23.4,"injury is reported, not an override outcome: the discovery decomposition found it responds to attention episodes (protest injuries)",REAL
+C2_exposed,stratum_rejects,0,"23.1, 23.3a",no primary outcome rejects on both arms,REAL
+C2_exposed,mde_level_prefreeze,0.008749625622799184,19.2,UNDERPOWERED; worst-profile MDE at nominal alpha,REAL
+C2_exposed,mde_dip_rebound_prefreeze,0.0029004004925761205,19.2,best-profile MDE at nominal alpha,REAL
+C2_exposed,mde_level_family_corrected,0.011199520797182956,23.11,nominal-level MDE x 1.28 at the Bonferroni bound,REAL
+C2_exposed,bounded_null,1,19.2,"no effect detected at the family level (smallest unadjusted randomization p among the stratum's primary cells 0.4523); a sustained level shift at or above the pre-freeze MDE 0.00875 in absolute value (about 0.01120 under the approximate one-parameter family correction of 23.11) is disfavoured at 80% power; a sustained shift of the minimum effect of interest (−0.005) is not excluded; a transient dip-and-rebound of the minimum effect of interest is disfavoured (its pre-freeze MDE is 0.00290, at or below 0.005 in absolute value)",REAL
+C2_exposed,reading_9_4_input,does not reject,"23.1–23.4, 19.2, 25",,REAL
+C2_exposed,rejected_outcomes,,23.1b,outcomes on which the stratum rejects cleanly; 9.4 row 1 needs a common outcome across strata,REAL
+C2_exposed,sensitivity_p:sens_geocoding_clean:edp_share:OLS_share,,9.5,IDENTICAL_TO_PRIMARY: no episode window contains a break,REAL
+C2_exposed,sensitivity_p:sens_geocoding_clean:mh_narrow_share:OLS_share,,9.5,IDENTICAL_TO_PRIMARY: no episode window contains a break,REAL
+C2_exposed,sensitivity_p:sens_coverage_clean:injury_share:OLS_share,,9.5,IDENTICAL_TO_PRIMARY: no episode window contains a break,REAL
+C2_exposed,sensitivity_p:sens_post28:edp_share:OLS_share,0.6176911544227887,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_post28:edp:PPML_count_offset,0.7141429285357321,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_post28:mh_narrow_share:OLS_share,0.367816091954023,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_post28:mh_narrow:PPML_count_offset,0.3638180909545227,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_post60:edp_share:OLS_share,0.6426786606696652,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_post60:edp:PPML_count_offset,0.7591204397801099,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_post60:mh_narrow_share:OLS_share,0.431784107946027,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_post60:mh_narrow:PPML_count_offset,0.4292853573213393,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_broad_basket:edp_share:OLS_share,0.6681659170414792,9.5,OK; n_episodes 31,REAL
+C2_exposed,sensitivity_p:sens_broad_basket:edp:PPML_count_offset,0.5987006496751625,9.5,OK; n_episodes 31,REAL
+C2_exposed,sensitivity_p:sens_broad_basket:mh_narrow_share:OLS_share,0.5957021489255372,9.5,OK; n_episodes 31,REAL
+C2_exposed,sensitivity_p:sens_broad_basket:mh_narrow:PPML_count_offset,0.5692153923038481,9.5,OK; n_episodes 31,REAL
+C2_exposed,sensitivity_p:sens_spliced_wiki:edp_share:OLS_share,0.5637181409295352,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_spliced_wiki:edp:PPML_count_offset,0.6261869065467266,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_spliced_wiki:mh_narrow_share:OLS_share,0.6221889055472264,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_spliced_wiki:mh_narrow:PPML_count_offset,0.544727636181909,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_coverage_clean:edp_share:OLS_share,0.4692653673163418,9.5,OK; n_episodes 28,REAL
+C2_exposed,sensitivity_p:sens_coverage_clean:edp:PPML_count_offset,0.6051974012993503,9.5,OK; n_episodes 28,REAL
+C2_exposed,sensitivity_p:sens_coverage_clean:mh_narrow_share:OLS_share,0.2698650674662669,9.5,OK; n_episodes 27,REAL
+C2_exposed,sensitivity_p:sens_coverage_clean:mh_narrow:PPML_count_offset,0.1964017991004497,9.5,OK; n_episodes 27,REAL
+C2_exposed,sensitivity_p:sens_coverage_clean:cardiac_share:OLS_share,0.8900549725137431,9.5,OK; n_episodes 25,REAL
+C2_exposed,sensitivity_p:sens_coverage_clean:cardiac:PPML_count_offset,0.9370314842578712,9.5,OK; n_episodes 25,REAL
+C2_exposed,sensitivity_p:sens_coverage_clean:asthma_share:OLS_share,0.934032983508246,9.5,OK; n_episodes 28,REAL
+C2_exposed,sensitivity_p:sens_coverage_clean:asthma:PPML_count_offset,0.841079460269865,9.5,OK; n_episodes 28,REAL
+C2_exposed,sensitivity_p:sens_incl_cancelled:edp_share_incl_cancelled:OLS_share,0.0669665167416291,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_incl_cancelled:edp_incl_cancelled:PPML_count_offset,0.0824587706146926,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_incl_cancelled:mh_narrow_share_incl_cancelled:OLS_share,0.0654672663668165,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_incl_cancelled:mh_narrow_incl_cancelled:PPML_count_offset,0.056471764117941,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_no_edpm:edp_ex_edpm_share:OLS_share,0.928535732133933,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_no_edpm:edp_ex_edpm:PPML_count_offset,0.9835082458770614,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_bheard_late_bound:edp_share:OLS_share,0.6351824087956022,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_bheard_late_bound:edp:PPML_count_offset,0.775112443778111,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_bheard_late_bound:mh_narrow_share:OLS_share,0.4482758620689655,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_p:sens_bheard_late_bound:mh_narrow:PPML_count_offset,0.4977511244377811,9.5,OK; n_episodes 30,REAL
+C2_exposed,sensitivity_summary,primary does not reject; 0 of 30 H1-outcome sensitivity cells at p <= 0.05,"9.5, 23.1c",,REAL
+C2_exposed,secondary_p_asymptotic:dose_response:edp_share:OLS_share_dose_per_sd,0.2412349754406832,"note §5, §10; addendum 9",coef 0.000648; OK,REAL
+C2_exposed,secondary_reading:dose_response:edp_share:OLS_share_dose_per_sd,no movement (asymptotic p = 0.2412 > 0.05),23.1e,descriptive; outside the family; never enters the 9.4 conclusion,REAL
+C2_exposed,secondary_p_asymptotic:dose_response:mh_narrow_share:OLS_share_dose_per_sd,0.1819888876624817,"note §5, §10; addendum 9",coef 0.000742; OK,REAL
+C2_exposed,secondary_reading:dose_response:mh_narrow_share:OLS_share_dose_per_sd,no movement (asymptotic p = 0.1820 > 0.05),23.1e,descriptive; outside the family; never enters the 9.4 conclusion,REAL
+C2_exposed,secondary_p_asymptotic:bheard_interaction:edp_share:OLS_share,0.7731598037578915,"note §5, §10; addendum 9",coef 0.000263; OK,REAL
+C2_exposed,secondary_reading:bheard_interaction:edp_share:OLS_share,no movement (asymptotic p = 0.7732 > 0.05),23.1e,descriptive; outside the family; never enters the 9.4 conclusion,REAL
+C2_exposed,secondary_p_asymptotic:bheard_interaction:edp:PPML_count_offset,0.8496069353051117,"note §5, §10; addendum 9",coef 0.001996; OK,REAL
+C2_exposed,secondary_reading:bheard_interaction:edp:PPML_count_offset,no movement (asymptotic p = 0.8496 > 0.05),23.1e,descriptive; outside the family; never enters the 9.4 conclusion,REAL
+C2_exposed,secondary_p_asymptotic:bheard_interaction:mh_narrow_share:OLS_share,0.9760882673879244,"note §5, §10; addendum 9",coef 0.000030; OK,REAL
+C2_exposed,secondary_reading:bheard_interaction:mh_narrow_share:OLS_share,no movement (asymptotic p = 0.9761 > 0.05),23.1e,descriptive; outside the family; never enters the 9.4 conclusion,REAL
+C2_exposed,secondary_p_asymptotic:bheard_interaction:mh_narrow:PPML_count_offset,0.893274912246349,"note §5, §10; addendum 9",coef -0.001204; OK,REAL
+C2_exposed,secondary_reading:bheard_interaction:mh_narrow:PPML_count_offset,no movement (asymptotic p = 0.8933 > 0.05),23.1e,descriptive; outside the family; never enters the 9.4 conclusion,REAL
+family,conclusion_9_4,"THE PRE-SPECIFIED NULL (9.4 row 5): a bounded null in both strata, read by addendum 19 rule 2",note §9.4 as amended by 23,C1: does not reject | C2: does not reject,REAL
+pooled,p_randomization:edp_share:OLS_share,0.2328835582208895,note §9.4 (descriptive),mean coef -0.000356; OK,REAL
+pooled,p_randomization:edp:PPML_count_offset,0.1824087956021989,note §9.4 (descriptive),mean coef 0.007623; OK,REAL
+pooled,p_randomization:mh_narrow_share:OLS_share,0.2598700649675162,note §9.4 (descriptive),mean coef -0.000766; OK,REAL
+pooled,p_randomization:mh_narrow:PPML_count_offset,0.1124437781109445,note §9.4 (descriptive),mean coef 0.001631; OK,REAL
+pooled,pooled_reading,pooled does not reject on both arms (descriptive),note §9.4 (descriptive); 23.1d,,REAL

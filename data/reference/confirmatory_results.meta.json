@@ -1,0 +1,29 @@
+{
+ "script_code_sha256": "47ca4d65ce3d3fbdc2bf0b8537e8ffee205257312fae5f373eca7eab7989dda3",
+ "event_study_code_sha256": "2d86c23579d4a0fb020f40a752be1e45f9cba1c247739f2e4d07805f61369182",
+ "source_sha256": {
+  "30_confirmatory_run.py": "403928df5468165e7ba4133dd13df84d321c262e9692e2ea5129a0fd8347b937",
+  "event_study.py": "667c3e50f1cf53d11b2f756cb0f71e74e33ae08d481d23c99e9273b3b5a0fb90",
+  "freeze_guard.py": "77781ccc6350141cb695fbea1e57b401b77abf2fd601eeb93db259da807e0d02",
+  "config.py": "c7cec2c2cde26d0a28f86b39c6483aa5dd21eef582446c337853c99773002fc9",
+  "bheard.py": "f5bad753c683130fbc701243deae2aa72ae4e6e536ab3d1a6d219c14bbec0c89"
+ },
+ "git_commit": "b046fb63c2a4",
+ "pythonhashseed": "0",
+ "inputs_sha256": {
+  "panel_cd_day.parquet": "01e46a3c112a8d6bbc8a1b2236b47618f4cd6637cffd48baf122644cc3a4ffa0",
+  "confirmation_episodes_rebuilt.csv": "30f1f24059809b12b6b66956ac94e4490ebb2b4523cb1d876ea4a53efd1d93bb",
+  "confirmation_episodes_rebuilt_broad.csv": "3311b71d7afbd5579a8ec97f244d2a93e3655b1dc7c7ba33d72a24cc6ab5134d",
+  "confirmation_episodes_rebuilt_spliced.csv": "a6b3f0a8d53a3b0e4206adca7b7076fe5be980ddb2bbd8259d41e47ce68a912c",
+  "ems_coverage_breaks.csv": "ca4731402e14683d9d0c456a202de06b261edb9ede261cafb1be26c49ee07b4d",
+  "bheard_cd_exposure.csv": "c387a640fc425626cc8e23aae88b549e1da0946edf6f65c7ce157f61769f717b",
+  "null_calibration_C1.csv": "f954b873ee3010c06778a42aa2305c7140e58b63db02ddd9bd552e730ec34f43",
+  "null_calibration_C2.csv": "d58c58ac3bc4dbfc00174d2be9d4275ea1ef52e62e2d4299bda44381fb9f24d8",
+  "null_calibration_pooled.csv": "8d380bc0494f1837f19220d28f1b0039dd83bb14f7af3213609a3f3d2a2581a5"
+ },
+ "rows": 166,
+ "draws": 2000,
+ "jobs": 2,
+ "data_source": "REAL",
+ "written_utc": "2026-09-21T03:24:13+00:00"
+}

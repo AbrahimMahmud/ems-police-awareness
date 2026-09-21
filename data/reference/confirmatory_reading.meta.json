@@ -1,0 +1,11 @@
+{
+ "sealed_table": "data/reference/confirmatory_results.csv",
+ "sealed_table_sha256": "277410d3a2873977d361ec747722e5bd98a43ebe364bf11652b9b22a703fb71c",
+ "power_table": "data/reference/power_analysis_prefreeze.csv",
+ "power_table_sha256": "09bfc6f0b485c56367e94fc79653295b2b1f80db005b33b075d42bde55417b77",
+ "reader_code_sha256": "044ad5f6377e526abe541bda0f5a13ad3c3949a34d5674ba91b3082e0c1e0d61",
+ "reader_source_sha256": "343ed1def08014cf036fee582462edf71d14b135cd335a4abe2694c2260d1b62",
+ "reading_sha256": "a85d4d768a62aa6ff428f9c90e662e5d51356a6178ea8f63f1f7c0c35d21f664",
+ "overwrite_reason": "",
+ "written_utc": "2026-09-21T03:24:15+00:00"
+}
