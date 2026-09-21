@@ -1691,7 +1691,7 @@ significance. **That the two arms agree is worth stating**, because this project
 has been caught by the opposite: the 2020 "signature" that looked like a shift
 in composition existed only in the denominator and reversed when counts were
 modelled. Here it does not reverse. The estimates are stable across the 14-, 28-
-and 60-day post windows as well, moving in the fourth decimal.
+and post window 60 dayss as well, moving in the fourth decimal.
 
 **Read against the minimum effect of interest, −0.005**, the EDP share estimate
 is about a quarter of it and the narrow-MH estimate about a fifth. So the data
@@ -1777,6 +1777,218 @@ coefficient is −0.0024 for narrow MH on day 0, against a series whose
 district-day standard deviation is 0.047.
 
 ---
+
+### 8b. The confirmatory result (Phase I): the sealed run, read once
+
+The sealed script (`30_confirmatory_run.py`) was launched after the lift (`4e3dce1`) and started seven times
+before it sealed at 2026-09-21 03:24:13Z — the original start, a resume after the container was suspended,
+two automatic retries and two hand relaunches after the worker pool was killed by the memory cgroup on the
+pooled stratum's cells (four, then two, then three, then two workers) — each start a dated row of the tracked
+run log with its reason, the last reason carried in every row of the table (`overwrite_reason`); every cell
+resumed from its identity-keyed ledger, so no number depends on the restarts. `34_confirmatory_reading.py`
+read the table once and sealed its reading.
+What follows is that reading, quoted, and the tables it was read from; every number is held to
+`data/reference/confirmatory_results.csv` or `confirmatory_reading.csv` by a registered claim.
+
+**Confirmatory strata.** The sealed run (`30_confirmatory_run.py`) wrote its table once; the pre-registered reading (`34_confirmatory_reading.py`; CONFIRMATION_PLAN addendum §23, §19 rule 2, §25, 23.1c–e; PRE_ANALYSIS_NOTE §9) is a function of that table and the pre-freeze power table, and its sentences are quoted here as it wrote them.
+
+*C1, the clean stratum.* Primary family (23.1–23.4), C1: “does not reject”. Against the pre-freeze power (§19 rule 2), C1: “no effect detected at the family level (smallest unadjusted randomization p among the stratum's primary cells 0.0115); a sustained level shift at or above the pre-freeze MDE 0.01156 in absolute value (about 0.01480 under the approximate one-parameter family correction of 23.11) is disfavoured at 80% power; a sustained shift of the minimum effect of interest (−0.005) is not excluded; a transient dip-and-rebound of the minimum effect of interest is disfavoured (its pre-freeze MDE is 0.00382, at or below 0.005 in absolute value)”. Sensitivities (§9.5, 23.1c), C1: “primary does not reject; 14 of 24 H1-outcome sensitivity cells at p <= 0.05 (reported, not substituted)”. Falsification outcomes (23.4), C1: “no cardiac or asthma cell at p <= 0.05 (4 of 4 override cells with a p-value)”.
+
+*C2, the B-HEARD-exposed stratum.* Primary family (23.1–23.4), C2: “does not reject”. Against the pre-freeze power (§19 rule 2), C2: “no effect detected at the family level (smallest unadjusted randomization p among the stratum's primary cells 0.4523); a sustained level shift at or above the pre-freeze MDE 0.00875 in absolute value (about 0.01120 under the approximate one-parameter family correction of 23.11) is disfavoured at 80% power; a sustained shift of the minimum effect of interest (−0.005) is not excluded; a transient dip-and-rebound of the minimum effect of interest is disfavoured (its pre-freeze MDE is 0.00290, at or below 0.005 in absolute value)”. Sensitivities (§9.5, 23.1c), C2: “primary does not reject; 0 of 30 H1-outcome sensitivity cells at p <= 0.05”. Falsification outcomes (23.4), C2: “no cardiac or asthma cell at p <= 0.05 (4 of 4 override cells with a p-value)”.
+
+*Pooled (descriptive, 23.1d).* “pooled does not reject on both arms (descriptive)”.
+
+*Secondary arms (23.1e; asymptotic p, outside the family).* C1 dose-response (per SD of peak intensity), EDP share (share, per SD intensity): “moves against the predicted direction (asymptotic p = 0.0309; coef +0.001309)”; C1 dose-response (per SD of peak intensity), narrow MH share (share, per SD intensity): “moves against the predicted direction (asymptotic p = 0.0187; coef +0.001508)”; C2 dose-response (per SD of peak intensity), EDP share (share, per SD intensity): “no movement (asymptotic p = 0.2412 > 0.05)”; C2 dose-response (per SD of peak intensity), narrow MH share (share, per SD intensity): “no movement (asymptotic p = 0.1820 > 0.05)”; C2 B-HEARD interaction, EDP share (share): “no movement (asymptotic p = 0.7732 > 0.05)”; C2 B-HEARD interaction, EDP count (count): “no movement (asymptotic p = 0.8496 > 0.05)”; C2 B-HEARD interaction, narrow MH share (share): “no movement (asymptotic p = 0.9761 > 0.05)”; C2 B-HEARD interaction, narrow MH count (count): “no movement (asymptotic p = 0.8933 > 0.05)”.
+
+**Conclusion under note §9.4 as amended by addendum 23:** “THE PRE-SPECIFIED NULL (9.4 row 5): a bounded null in both strata, read by addendum 19 rule 2”.
+
+**Table 8b.1 — The pre-specified primary family: two outcomes × two arms × two strata.** First-week mean coefficient with its date-clustered SE, the joint Wald statistic on days 0–7, the randomization p at 2,000 draws, the Benjamini–Hochberg-adjusted p over the family of eight, and the asymptotic p beside it.
+
+| stratum | outcome | arm | episodes | first-week mean | SE | joint χ² | RI p | BH p | asymptotic p |
+|---|---|---|---|---|---|---|---|---|---|
+| C1 | EDP share | share | 15 | −0.00059 | 0.00136 | 25.32 | 0.0115 | 0.0560 | 0.0014 |
+| C1 | EDP count | count | 15 | 0.00945 | 0.01623 | 26.11 | 0.0140 | 0.0560 | 0.0010 |
+| C1 | narrow MH share | share | 15 | −0.00074 | 0.00157 | 22.57 | 0.0285 | 0.0760 | 0.0040 |
+| C1 | narrow MH count | count | 15 | −0.00013 | 0.01420 | 17.09 | 0.0895 | 0.1789 | 0.0291 |
+| C2 | EDP share | share | 30 | −0.00019 | 0.00114 | 6.04 | 0.6522 | 0.7453 | 0.6430 |
+| C2 | EDP count | count | 30 | 0.00591 | 0.01127 | 4.75 | 0.7861 | 0.7861 | 0.7843 |
+| C2 | narrow MH share | share | 30 | −0.00067 | 0.00133 | 7.98 | 0.4523 | 0.6597 | 0.4352 |
+| C2 | narrow MH count | count | 30 | 0.00197 | 0.01079 | 7.57 | 0.4948 | 0.6597 | 0.4764 |
+
+**Table 8b.2 — The pre-registered reading, applied by code (addendum §23, §19 rule 2, §25).**
+
+| stratum | null certified | stratum rejects | placebo rejects | pre-freeze MDE, sustained | × family correction | pre-freeze MDE, transient |
+|---|---|---|---|---|---|---|
+| C1 | 1 | 0 | 0 | 0.01156 | 0.01480 | 0.00382 |
+| C1 reading | does not reject | | | | | |
+| C2 | 1 | 0 | 0 | 0.00875 | 0.01120 | 0.00290 |
+| C2 reading | does not reject | | | | | |
+
+*Conclusion under note §9.4 as amended: THE PRE-SPECIFIED NULL (9.4 row 5): a bounded null in both strata, read by addendum 19 rule 2*
+
+**Table 8b.3 — Falsification outcomes and the denominator diagnostic, per stratum (unadjusted randomization p; addendum §23.3–23.4).** Cardiac and asthma cells at p ≤ 0.05 override the stratum's primary rejections; injury is reported but does not override (§23.4); the no-offset counts are the denominator diagnostic (§23.3).
+
+| stratum | outcome | arm | episodes | first-week mean | RI p | asymptotic p |
+|---|---|---|---|---|---|---|
+| C1 | EDP count | count, no offset | 15 | −0.01180 | 0.0115 | 0.0004 |
+| C1 | narrow MH count | count, no offset | 15 | −0.01965 | 0.0775 | 0.0188 |
+| C1 | total dispatches | count, no offset | 15 | −0.01585 | 0.5422 | 0.5039 |
+| C1 | cardiac share | share | 15 | 0.00121 | 0.2609 | 0.1240 |
+| C1 | cardiac count | count | 15 | 0.01385 | 0.5597 | 0.4286 |
+| C1 | injury share | share | 15 | −0.00185 | 0.3453 | 0.2919 |
+| C1 | injury count | count | 15 | −0.01192 | 0.3713 | 0.2632 |
+| C1 | asthma share | share | 15 | 0.00018 | 0.1619 | 0.0987 |
+| C1 | asthma count | count | 15 | 0.03038 | 0.5792 | 0.4267 |
+| C2 | EDP count | count, no offset | 30 | −0.00442 | 0.3368 | 0.3222 |
+| C2 | narrow MH count | count, no offset | 30 | −0.00840 | 0.1054 | 0.0778 |
+| C2 | total dispatches | count, no offset | 30 | −0.01004 | 0.7481 | 0.8067 |
+| C2 | cardiac share | share | 30 | 0.00118 | 0.7736 | 0.7327 |
+| C2 | cardiac count | count | 30 | 0.00988 | 0.8866 | 0.8643 |
+| C2 | injury share | share | 30 | −0.00004 | 0.2074 | 0.1856 |
+| C2 | injury count | count | 30 | −0.00124 | 0.2039 | 0.1796 |
+| C2 | asthma share | share | 30 | 0.00032 | 0.9630 | 0.9576 |
+| C2 | asthma count | count | 30 | 0.03192 | 0.9675 | 0.9670 |
+
+**Table 8b.4 — Pre-registered sensitivities, reported beside the primary and never substituted for it (note §9.5).** IDENTICAL means the arm's episode starts in that stratum equal the primary's, so no second p-value is printed (addendum §23.6).
+
+| stratum | sensitivity | outcome | arm | episodes | first-week mean | RI p |
+|---|---|---|---|---|---|---|
+| C1 | broad basket | EDP share | share | IDENTICAL_TO_PRIMARY | | |
+| C1 | broad basket | narrow MH share | share | IDENTICAL_TO_PRIMARY | | |
+| C1 | spliced Wikipedia series | EDP share | share | IDENTICAL_TO_PRIMARY | | |
+| C1 | spliced Wikipedia series | narrow MH share | share | IDENTICAL_TO_PRIMARY | | |
+| C1 | EDP without EDPM | EDP share without EDPM | share | IDENTICAL_TO_PRIMARY | | |
+| C1 | EDP without EDPM | EDP count without EDPM | count | IDENTICAL_TO_PRIMARY | | |
+| C1 | post window 28 days | EDP share | share | 15 | −0.00048 | 0.0070 |
+| C1 | post window 28 days | EDP count | count | 15 | 0.01081 | 0.0170 |
+| C1 | post window 28 days | narrow MH share | share | 15 | −0.00057 | 0.0460 |
+| C1 | post window 28 days | narrow MH count | count | 15 | 0.00145 | 0.1769 |
+| C1 | post window 60 days | EDP share | share | 15 | −0.00047 | 0.0190 |
+| C1 | post window 60 days | EDP count | count | 15 | 0.01007 | 0.0320 |
+| C1 | post window 60 days | narrow MH share | share | 15 | −0.00059 | 0.0625 |
+| C1 | post window 60 days | narrow MH count | count | 15 | 0.00085 | 0.2159 |
+| C1 | drop July 2016 | EDP share | share | 14 | −0.00141 | 0.0090 |
+| C1 | drop July 2016 | EDP count | count | 14 | 0.00115 | 0.0060 |
+| C1 | drop July 2016 | narrow MH share | share | 14 | −0.00168 | 0.0325 |
+| C1 | drop July 2016 | narrow MH count | count | 14 | −0.00765 | 0.0645 |
+| C1 | coverage-clean | EDP share | share | 13 | −0.00098 | 0.0260 |
+| C1 | coverage-clean | EDP count | count | 13 | 0.00729 | 0.0155 |
+| C1 | geocoding-clean | EDP share | share | 14 | −0.00054 | 0.0090 |
+| C1 | geocoding-clean | EDP count | count | 14 | 0.01075 | 0.0045 |
+| C1 | coverage-clean | narrow MH share | share | 12 | −0.00036 | 0.0520 |
+| C1 | coverage-clean | narrow MH count | count | 12 | −0.00014 | 0.1154 |
+| C1 | geocoding-clean | narrow MH share | share | 14 | −0.00036 | 0.0455 |
+| C1 | geocoding-clean | narrow MH count | count | 14 | 0.00282 | 0.0730 |
+| C1 | coverage-clean | cardiac share | share | 13 | 0.00202 | 0.1639 |
+| C1 | coverage-clean | cardiac count | count | 13 | 0.02326 | 0.2924 |
+| C1 | coverage-clean | injury share | share | 14 | −0.00122 | 0.5967 |
+| C1 | coverage-clean | injury count | count | 14 | −0.00737 | 0.5647 |
+| C1 | coverage-clean | asthma share | share | 14 | 0.00010 | 0.2429 |
+| C1 | coverage-clean | asthma count | count | 14 | 0.02959 | 0.7096 |
+| C1 | cancelled dispositions included | EDP share, cancelled included | share | 15 | −0.00094 | 0.0580 |
+| C1 | cancelled dispositions included | EDP count, cancelled included | count | 15 | 0.00471 | 0.0235 |
+| C1 | cancelled dispositions included | narrow MH share, cancelled included | share | 15 | −0.00105 | 0.3553 |
+| C1 | cancelled dispositions included | narrow MH count, cancelled included | count | 15 | −0.00251 | 0.3573 |
+| C2 | geocoding-clean | EDP share | share | IDENTICAL_TO_PRIMARY | | |
+| C2 | geocoding-clean | narrow MH share | share | IDENTICAL_TO_PRIMARY | | |
+| C2 | coverage-clean | injury share | share | IDENTICAL_TO_PRIMARY | | |
+| C2 | post window 28 days | EDP share | share | 30 | −0.00021 | 0.6177 |
+| C2 | post window 28 days | EDP count | count | 30 | 0.00572 | 0.7141 |
+| C2 | post window 28 days | narrow MH share | share | 30 | −0.00071 | 0.3678 |
+| C2 | post window 28 days | narrow MH count | count | 30 | 0.00183 | 0.3638 |
+| C2 | post window 60 days | EDP share | share | 30 | −0.00018 | 0.6427 |
+| C2 | post window 60 days | EDP count | count | 30 | 0.00545 | 0.7591 |
+| C2 | post window 60 days | narrow MH share | share | 30 | −0.00071 | 0.4318 |
+| C2 | post window 60 days | narrow MH count | count | 30 | 0.00136 | 0.4293 |
+| C2 | broad basket | EDP share | share | 31 | 0.00023 | 0.6682 |
+| C2 | broad basket | EDP count | count | 31 | 0.00786 | 0.5987 |
+| C2 | broad basket | narrow MH share | share | 31 | −0.00021 | 0.5957 |
+| C2 | broad basket | narrow MH count | count | 31 | 0.00375 | 0.5692 |
+| C2 | spliced Wikipedia series | EDP share | share | 30 | 0.00004 | 0.5637 |
+| C2 | spliced Wikipedia series | EDP count | count | 30 | 0.00723 | 0.6262 |
+| C2 | spliced Wikipedia series | narrow MH share | share | 30 | −0.00048 | 0.6222 |
+| C2 | spliced Wikipedia series | narrow MH count | count | 30 | 0.00247 | 0.5447 |
+| C2 | coverage-clean | EDP share | share | 28 | −0.00016 | 0.4693 |
+| C2 | coverage-clean | EDP count | count | 28 | 0.00688 | 0.6052 |
+| C2 | coverage-clean | narrow MH share | share | 27 | −0.00047 | 0.2699 |
+| C2 | coverage-clean | narrow MH count | count | 27 | 0.00408 | 0.1964 |
+| C2 | coverage-clean | cardiac share | share | 25 | 0.00081 | 0.8901 |
+| C2 | coverage-clean | cardiac count | count | 25 | 0.00242 | 0.9370 |
+| C2 | coverage-clean | asthma share | share | 28 | 0.00020 | 0.9340 |
+| C2 | coverage-clean | asthma count | count | 28 | 0.01475 | 0.8411 |
+| C2 | cancelled dispositions included | EDP share, cancelled included | share | 30 | −0.00039 | 0.0670 |
+| C2 | cancelled dispositions included | EDP count, cancelled included | count | 30 | 0.00408 | 0.0825 |
+| C2 | cancelled dispositions included | narrow MH share, cancelled included | share | 30 | −0.00083 | 0.0655 |
+| C2 | cancelled dispositions included | narrow MH count, cancelled included | count | 30 | 0.00093 | 0.0565 |
+| C2 | EDP without EDPM | EDP share without EDPM | share | 30 | −0.00096 | 0.9285 |
+| C2 | EDP without EDPM | EDP count without EDPM | count | 30 | −0.00060 | 0.9835 |
+| C2 | late B-HEARD bound | EDP share | share | 30 | −0.00019 | 0.6352 |
+| C2 | late B-HEARD bound | EDP count | count | 30 | 0.00582 | 0.7751 |
+| C2 | late B-HEARD bound | narrow MH share | share | 30 | −0.00068 | 0.4483 |
+| C2 | late B-HEARD bound | narrow MH count | count | 30 | 0.00189 | 0.4978 |
+| pooled | post window 28 days | EDP share | share | 45 | −0.00037 | 0.2329 |
+| pooled | post window 28 days | EDP count | count | 45 | 0.00762 | 0.1744 |
+| pooled | post window 28 days | narrow MH share | share | 45 | −0.00078 | 0.2499 |
+| pooled | post window 28 days | narrow MH count | count | 45 | 0.00158 | 0.0995 |
+| pooled | post window 60 days | EDP share | share | 45 | −0.00031 | 0.2789 |
+| pooled | post window 60 days | EDP count | count | 45 | 0.00776 | 0.1934 |
+| pooled | post window 60 days | narrow MH share | share | 45 | −0.00074 | 0.2459 |
+| pooled | post window 60 days | narrow MH count | count | 45 | 0.00155 | 0.1129 |
+| pooled | drop July 2016 | EDP share | share | 44 | −0.00067 | 0.2519 |
+| pooled | drop July 2016 | EDP count | count | 44 | 0.00465 | 0.2309 |
+| pooled | drop July 2016 | narrow MH share | share | 44 | −0.00115 | 0.2354 |
+| pooled | drop July 2016 | narrow MH count | count | 44 | −0.00112 | 0.1274 |
+| pooled | broad basket | EDP share | share | 46 | −0.00005 | 0.5402 |
+| pooled | broad basket | EDP count | count | 46 | 0.00908 | 0.2984 |
+| pooled | broad basket | narrow MH share | share | 46 | −0.00043 | 0.5222 |
+| pooled | broad basket | narrow MH count | count | 46 | 0.00301 | 0.2994 |
+| pooled | spliced Wikipedia series | EDP share | share | 45 | −0.00018 | 0.2989 |
+| pooled | spliced Wikipedia series | EDP count | count | 45 | 0.00869 | 0.2219 |
+| pooled | spliced Wikipedia series | narrow MH share | share | 45 | −0.00060 | 0.3708 |
+| pooled | spliced Wikipedia series | narrow MH count | count | 45 | 0.00219 | 0.1534 |
+| pooled | coverage-clean | EDP share | share | 41 | −0.00034 | 0.2484 |
+| pooled | coverage-clean | EDP count | count | 41 | 0.00856 | 0.1619 |
+| pooled | geocoding-clean | EDP share | share | 44 | −0.00028 | 0.3233 |
+| pooled | geocoding-clean | EDP count | count | 44 | 0.00829 | 0.2144 |
+| pooled | coverage-clean | narrow MH share | share | 39 | −0.00042 | 0.2264 |
+| pooled | coverage-clean | narrow MH count | count | 39 | 0.00393 | 0.0350 |
+| pooled | geocoding-clean | narrow MH share | share | 44 | −0.00060 | 0.3748 |
+| pooled | geocoding-clean | narrow MH count | count | 44 | 0.00275 | 0.1544 |
+| pooled | coverage-clean | cardiac share | share | 38 | 0.00127 | 0.7326 |
+| pooled | coverage-clean | cardiac count | count | 38 | 0.00892 | 0.8891 |
+| pooled | coverage-clean | injury share | share | 44 | −0.00001 | 0.1559 |
+| pooled | coverage-clean | injury count | count | 44 | −0.00076 | 0.1964 |
+| pooled | coverage-clean | asthma share | share | 42 | 0.00014 | 0.7781 |
+| pooled | coverage-clean | asthma count | count | 42 | 0.02183 | 0.9390 |
+| pooled | cancelled dispositions included | EDP share, cancelled included | share | 45 | −0.00063 | 0.0170 |
+| pooled | cancelled dispositions included | EDP count, cancelled included | count | 45 | 0.00516 | 0.0075 |
+| pooled | cancelled dispositions included | narrow MH share, cancelled included | share | 45 | −0.00100 | 0.0665 |
+| pooled | cancelled dispositions included | narrow MH count, cancelled included | count | 45 | 0.00036 | 0.0180 |
+| pooled | EDP without EDPM | EDP share without EDPM | share | 45 | −0.00063 | 0.3183 |
+| pooled | EDP without EDPM | EDP count without EDPM | count | 45 | 0.00529 | 0.4113 |
+| pooled | late B-HEARD bound | EDP share | share | 45 | −0.00036 | 0.2534 |
+| pooled | late B-HEARD bound | EDP count | count | 45 | 0.00756 | 0.1959 |
+| pooled | late B-HEARD bound | narrow MH share | share | 45 | −0.00077 | 0.2584 |
+| pooled | late B-HEARD bound | narrow MH count | count | 45 | 0.00157 | 0.1219 |
+
+**Table 8b.5 — The pooled stratum (descriptive, outside the family) and the two secondary arms, the B-HEARD interaction (C2) and the dose-response arm (asymptotic p only; note §10, addendum §9).**
+
+| stratum | item | outcome | arm | episodes | coefficient | RI p | asymptotic p |
+|---|---|---|---|---|---|---|---|
+| pooled | primary design | EDP share | share | 45 | −0.00036 | 0.2329 | 0.2340 |
+| pooled | primary design | EDP count | count | 45 | 0.00762 | 0.1824 | 0.1710 |
+| pooled | primary design | narrow MH share | share | 45 | −0.00077 | 0.2599 | 0.2382 |
+| pooled | primary design | narrow MH count | count | 45 | 0.00163 | 0.1124 | 0.1013 |
+| C1 | dose-response (per SD of peak intensity) | EDP share | share, per SD intensity | 15 | 0.00131 | — | 0.0309 |
+| C1 | dose-response (per SD of peak intensity) | narrow MH share | share, per SD intensity | 15 | 0.00151 | — | 0.0187 |
+| C2 | dose-response (per SD of peak intensity) | EDP share | share, per SD intensity | 30 | 0.00065 | — | 0.2412 |
+| C2 | dose-response (per SD of peak intensity) | narrow MH share | share, per SD intensity | 30 | 0.00074 | — | 0.1820 |
+| pooled | dose-response (per SD of peak intensity) | EDP share | share, per SD intensity | 45 | 0.00080 | — | 0.0364 |
+| pooled | dose-response (per SD of peak intensity) | narrow MH share | share, per SD intensity | 45 | 0.00110 | — | 0.0050 |
+| C2 | B-HEARD interaction | EDP share | share | 30 | 0.00026 | — | 0.7732 |
+| C2 | B-HEARD interaction | EDP count | count | 30 | 0.00200 | — | 0.8496 |
+| C2 | B-HEARD interaction | narrow MH share | share | 30 | 0.00003 | — | 0.9761 |
+| C2 | B-HEARD interaction | narrow MH count | count | 30 | −0.00120 | — | 0.8933 |
 
 ## 9. Limitations, in the order a referee will raise them
 

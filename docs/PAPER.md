@@ -1,25 +1,42 @@
 # Public attention to police violence and emergency help-seeking in New York City, 2015–2024
 
 *Manuscript draft. Drafting order (PAPER_PLAN.md): Methods → RECORD → Introduction →
-Limitations → Results → Discussion → Abstract. Sections marked* **[PHASE I PENDING]**
-*are written after the sealed confirmatory run and are empty until then. Every number
-in this document is a claim in `docs/CLAIMS_REGISTER.csv` that recomputes from a
-committed artifact; a number without a claim is a check failure, not a typo.*
+Limitations → Results → Discussion → Abstract. The confirmatory Results, the
+Discussion paragraphs that read them and the Abstract were written after the
+sealed confirmatory run of 2026-09-21 (PAPER_MASTER.md §8b), from the reader's
+sentences only. Every number in this document is a claim in
+`docs/CLAIMS_REGISTER.csv` that recomputes from a committed artifact; a number
+without a claim is a check failure, not a typo.*
 
 *Target: Journal of Urban Health, Template A (public health). ~4,000 words main
 text, four display items, RECORD reporting. Language rules: PAPER_PLAN.md §7.*
 
 ---
 
-## Abstract **[PHASE I PENDING]**
+## Abstract
 
-*≤250 words, unstructured. Must name: NYC EMS Incident Dispatch Data, New York City,
-2015–2024, linkage of dispatch records to community districts and to a publicly
-reconstructible attention index; the design ("stacked episode event study",
-"quasi-experimental"); the three-way question. Written last.*
-
-> Does public attention to police violence increase, decrease, or leave unchanged
-> what New York City communities ask emergency medical services for?
+Publicised police violence is linked to worse mental health and fewer
+police-related 911 calls; whether it changes mental-health help-seeking is
+untested at daily resolution. We asked whether public attention to police
+violence increases, decreases, or leaves unchanged what New York City communities
+ask emergency medical services for. In the NYC EMS Incident Dispatch Data (New
+York City, 2015–2024), each dispatch was linked to its community district and day
+and to a publicly reconstructible attention index from Wikipedia pageviews and
+Google searches. A quasi-experimental stacked episode event study took the share
+and count of mental-health dispatches as outcomes, cardiac and asthma dispatches
+as falsification outcomes, and randomization inference. After a freely examined
+exploratory period (2017–2020), two confirmation strata, before and after the
+B-HEARD programme, were held under a code-level freeze until every hypothesis,
+estimator, sensitivity and reading rule was committed, then analysed once by a
+sealed script and read mechanically. Both strata return the pre-specified null:
+no primary cell rejects after correction, falsification outcomes are quiet, and a
+sustained shift in the mental-health share at or above the pre-freeze minimum
+detectable effect (0.01156 in the clean stratum, 0.00875 in the exposed one) is
+disfavoured at 80% power, as is a transient dip-and-rebound of the minimum effect
+of interest; a sustained shift of that minimum (−0.005) is not excluded. Fourteen
+of 24 clean-stratum sensitivity cells fall below unadjusted p = 0.05 and are
+reported, not read as evidence. Within these bounds, attention to police violence
+does not measurably change first-week mental-health help-seeking.
 
 ---
 
@@ -334,7 +351,7 @@ of dispatches with no district fell by two thirds — a demonstration rather tha
 correction, chosen over month-year fixed effects because it changes the sample
 and not the estimator, so it stays comparable with the calibrated null — and (vi)
 a geocoding-clean estimate that drops only the episodes containing that step;
-(vii) the 28- and 60-day post windows, whose placebo draws keep the certified
+(vii) the 28- and post window 60 dayss, whose placebo draws keep the certified
 14-day geometry; (viii) the outcomes with cancelled and other never-sent
 dispositions restored to numerator and denominator; (ix) EDP without the EDPM
 code, the one code whose inclusion was decided on confirmation-period counts.
@@ -384,7 +401,13 @@ verbatim and each held to the reading file by a registered claim. The sealed run
 keeps a tracked log of every start and seal, refuses to run without the fixed
 hash seed the byte-reproducible pipeline requires, and writes each cell's
 day-by-day coefficient path so a rejection without a consistent direction can be
-shown without a second read.
+shown without a second read. The run was started seven times before it sealed
+(20 September 2026 09:29 to 21 September 03:24 UTC): once at the lift, once
+after the container was suspended, and twice each — an automatic retry and a
+hand relaunch with fewer workers — after the worker pool was killed by the
+memory limit on the pooled stratum's cells. Each start is a dated row of the
+run log with its reason; every cell resumed from a ledger keyed to its own
+seed and design, so no number depends on the restarts.
 
 **Exploratory analyses.** Discovery-period estimates and an outcome
 decomposition across thirteen outcomes in four dispatch families and five
@@ -445,7 +468,7 @@ coefficient on the EDP share is −0.00123 (randomization *p* = 0.697, 2,000 dra
 and on the EDP count −0.01084 (*p* = 0.527); on the narrow mental-health share
 −0.00103 (*p* = 0.886) and count −0.00615 (*p* = 0.822). Share and count arms
 agree in sign in every case. The estimates move in the fourth decimal across the
-14-, 28- and 60-day post windows. Read against the minimum effect of interest of
+14-, 28- and post window 60 dayss. Read against the minimum effect of interest of
 −0.005, the EDP share estimate is about a quarter of it.
 
 Across the 65 outcome-by-window decomposition tests, under a Bonferroni threshold
@@ -456,14 +479,211 @@ mental-health outcome survives (smallest *p* 0.044); neither falsification
 outcome survives (cardiac share *p* = 0.082 and asthma share *p* = 0.076 at
 their strongest).
 
-### Confirmatory strata **[PHASE I PENDING]**
+### Confirmatory strata
 
-*C1, C2, pooled; primary family with Benjamini–Hochberg; sensitivities; falsification;
-B-HEARD interaction. Read by PRE_ANALYSIS_NOTE.md §9 and CONFIRMATION_PLAN.md §19.*
+**Confirmatory strata.** The sealed run (`30_confirmatory_run.py`) wrote its table once; the pre-registered reading (`34_confirmatory_reading.py`; CONFIRMATION_PLAN addendum §23, §19 rule 2, §25, 23.1c–e; PRE_ANALYSIS_NOTE §9) is a function of that table and the pre-freeze power table, and its sentences are quoted here as it wrote them.
+
+*C1, the clean stratum.* Primary family (23.1–23.4), C1: “does not reject”. Against the pre-freeze power (§19 rule 2), C1: “no effect detected at the family level (smallest unadjusted randomization p among the stratum's primary cells 0.0115); a sustained level shift at or above the pre-freeze MDE 0.01156 in absolute value (about 0.01480 under the approximate one-parameter family correction of 23.11) is disfavoured at 80% power; a sustained shift of the minimum effect of interest (−0.005) is not excluded; a transient dip-and-rebound of the minimum effect of interest is disfavoured (its pre-freeze MDE is 0.00382, at or below 0.005 in absolute value)”. Sensitivities (§9.5, 23.1c), C1: “primary does not reject; 14 of 24 H1-outcome sensitivity cells at p <= 0.05 (reported, not substituted)”. Falsification outcomes (23.4), C1: “no cardiac or asthma cell at p <= 0.05 (4 of 4 override cells with a p-value)”.
+
+*C2, the B-HEARD-exposed stratum.* Primary family (23.1–23.4), C2: “does not reject”. Against the pre-freeze power (§19 rule 2), C2: “no effect detected at the family level (smallest unadjusted randomization p among the stratum's primary cells 0.4523); a sustained level shift at or above the pre-freeze MDE 0.00875 in absolute value (about 0.01120 under the approximate one-parameter family correction of 23.11) is disfavoured at 80% power; a sustained shift of the minimum effect of interest (−0.005) is not excluded; a transient dip-and-rebound of the minimum effect of interest is disfavoured (its pre-freeze MDE is 0.00290, at or below 0.005 in absolute value)”. Sensitivities (§9.5, 23.1c), C2: “primary does not reject; 0 of 30 H1-outcome sensitivity cells at p <= 0.05”. Falsification outcomes (23.4), C2: “no cardiac or asthma cell at p <= 0.05 (4 of 4 override cells with a p-value)”.
+
+*Pooled (descriptive, 23.1d).* “pooled does not reject on both arms (descriptive)”.
+
+*Secondary arms (23.1e; asymptotic p, outside the family).* C1 dose-response (per SD of peak intensity), EDP share (share, per SD intensity): “moves against the predicted direction (asymptotic p = 0.0309; coef +0.001309)”; C1 dose-response (per SD of peak intensity), narrow MH share (share, per SD intensity): “moves against the predicted direction (asymptotic p = 0.0187; coef +0.001508)”; C2 dose-response (per SD of peak intensity), EDP share (share, per SD intensity): “no movement (asymptotic p = 0.2412 > 0.05)”; C2 dose-response (per SD of peak intensity), narrow MH share (share, per SD intensity): “no movement (asymptotic p = 0.1820 > 0.05)”; C2 B-HEARD interaction, EDP share (share): “no movement (asymptotic p = 0.7732 > 0.05)”; C2 B-HEARD interaction, EDP count (count): “no movement (asymptotic p = 0.8496 > 0.05)”; C2 B-HEARD interaction, narrow MH share (share): “no movement (asymptotic p = 0.9761 > 0.05)”; C2 B-HEARD interaction, narrow MH count (count): “no movement (asymptotic p = 0.8933 > 0.05)”.
+
+**Conclusion under note §9.4 as amended by addendum 23:** “THE PRE-SPECIFIED NULL (9.4 row 5): a bounded null in both strata, read by addendum 19 rule 2”.
+
+**Table 2 — The pre-specified primary family: two outcomes × two arms × two strata.** First-week mean coefficient with its date-clustered SE, the joint Wald statistic on days 0–7, the randomization p at 2,000 draws, the Benjamini–Hochberg-adjusted p over the family of eight, and the asymptotic p beside it.
+
+| stratum | outcome | arm | episodes | first-week mean | SE | joint χ² | RI p | BH p | asymptotic p |
+|---|---|---|---|---|---|---|---|---|---|
+| C1 | EDP share | share | 15 | −0.00059 | 0.00136 | 25.32 | 0.0115 | 0.0560 | 0.0014 |
+| C1 | EDP count | count | 15 | 0.00945 | 0.01623 | 26.11 | 0.0140 | 0.0560 | 0.0010 |
+| C1 | narrow MH share | share | 15 | −0.00074 | 0.00157 | 22.57 | 0.0285 | 0.0760 | 0.0040 |
+| C1 | narrow MH count | count | 15 | −0.00013 | 0.01420 | 17.09 | 0.0895 | 0.1789 | 0.0291 |
+| C2 | EDP share | share | 30 | −0.00019 | 0.00114 | 6.04 | 0.6522 | 0.7453 | 0.6430 |
+| C2 | EDP count | count | 30 | 0.00591 | 0.01127 | 4.75 | 0.7861 | 0.7861 | 0.7843 |
+| C2 | narrow MH share | share | 30 | −0.00067 | 0.00133 | 7.98 | 0.4523 | 0.6597 | 0.4352 |
+| C2 | narrow MH count | count | 30 | 0.00197 | 0.01079 | 7.57 | 0.4948 | 0.6597 | 0.4764 |
+
+**Table 3 — The pre-registered reading, applied by code (addendum §23, §19 rule 2, §25).**
+
+| stratum | null certified | stratum rejects | placebo rejects | pre-freeze MDE, sustained | × family correction | pre-freeze MDE, transient |
+|---|---|---|---|---|---|---|
+| C1 | 1 | 0 | 0 | 0.01156 | 0.01480 | 0.00382 |
+| C1 reading | does not reject | | | | | |
+| C2 | 1 | 0 | 0 | 0.00875 | 0.01120 | 0.00290 |
+| C2 reading | does not reject | | | | | |
+
+*Conclusion under note §9.4 as amended: THE PRE-SPECIFIED NULL (9.4 row 5): a bounded null in both strata, read by addendum 19 rule 2*
+
+**Table 4 — Falsification outcomes and the denominator diagnostic, per stratum (unadjusted randomization p; addendum §23.3–23.4).** Cardiac and asthma cells at p ≤ 0.05 override the stratum's primary rejections; injury is reported but does not override (§23.4); the no-offset counts are the denominator diagnostic (§23.3).
+
+| stratum | outcome | arm | episodes | first-week mean | RI p | asymptotic p |
+|---|---|---|---|---|---|---|
+| C1 | EDP count | count, no offset | 15 | −0.01180 | 0.0115 | 0.0004 |
+| C1 | narrow MH count | count, no offset | 15 | −0.01965 | 0.0775 | 0.0188 |
+| C1 | total dispatches | count, no offset | 15 | −0.01585 | 0.5422 | 0.5039 |
+| C1 | cardiac share | share | 15 | 0.00121 | 0.2609 | 0.1240 |
+| C1 | cardiac count | count | 15 | 0.01385 | 0.5597 | 0.4286 |
+| C1 | injury share | share | 15 | −0.00185 | 0.3453 | 0.2919 |
+| C1 | injury count | count | 15 | −0.01192 | 0.3713 | 0.2632 |
+| C1 | asthma share | share | 15 | 0.00018 | 0.1619 | 0.0987 |
+| C1 | asthma count | count | 15 | 0.03038 | 0.5792 | 0.4267 |
+| C2 | EDP count | count, no offset | 30 | −0.00442 | 0.3368 | 0.3222 |
+| C2 | narrow MH count | count, no offset | 30 | −0.00840 | 0.1054 | 0.0778 |
+| C2 | total dispatches | count, no offset | 30 | −0.01004 | 0.7481 | 0.8067 |
+| C2 | cardiac share | share | 30 | 0.00118 | 0.7736 | 0.7327 |
+| C2 | cardiac count | count | 30 | 0.00988 | 0.8866 | 0.8643 |
+| C2 | injury share | share | 30 | −0.00004 | 0.2074 | 0.1856 |
+| C2 | injury count | count | 30 | −0.00124 | 0.2039 | 0.1796 |
+| C2 | asthma share | share | 30 | 0.00032 | 0.9630 | 0.9576 |
+| C2 | asthma count | count | 30 | 0.03192 | 0.9675 | 0.9670 |
+
+**Table 5 — Pre-registered sensitivities, reported beside the primary and never substituted for it (note §9.5).** IDENTICAL means the arm's episode starts in that stratum equal the primary's, so no second p-value is printed (addendum §23.6).
+
+| stratum | sensitivity | outcome | arm | episodes | first-week mean | RI p |
+|---|---|---|---|---|---|---|
+| C1 | broad basket | EDP share | share | IDENTICAL_TO_PRIMARY | | |
+| C1 | broad basket | narrow MH share | share | IDENTICAL_TO_PRIMARY | | |
+| C1 | spliced Wikipedia series | EDP share | share | IDENTICAL_TO_PRIMARY | | |
+| C1 | spliced Wikipedia series | narrow MH share | share | IDENTICAL_TO_PRIMARY | | |
+| C1 | EDP without EDPM | EDP share without EDPM | share | IDENTICAL_TO_PRIMARY | | |
+| C1 | EDP without EDPM | EDP count without EDPM | count | IDENTICAL_TO_PRIMARY | | |
+| C1 | post window 28 days | EDP share | share | 15 | −0.00048 | 0.0070 |
+| C1 | post window 28 days | EDP count | count | 15 | 0.01081 | 0.0170 |
+| C1 | post window 28 days | narrow MH share | share | 15 | −0.00057 | 0.0460 |
+| C1 | post window 28 days | narrow MH count | count | 15 | 0.00145 | 0.1769 |
+| C1 | post window 60 days | EDP share | share | 15 | −0.00047 | 0.0190 |
+| C1 | post window 60 days | EDP count | count | 15 | 0.01007 | 0.0320 |
+| C1 | post window 60 days | narrow MH share | share | 15 | −0.00059 | 0.0625 |
+| C1 | post window 60 days | narrow MH count | count | 15 | 0.00085 | 0.2159 |
+| C1 | drop July 2016 | EDP share | share | 14 | −0.00141 | 0.0090 |
+| C1 | drop July 2016 | EDP count | count | 14 | 0.00115 | 0.0060 |
+| C1 | drop July 2016 | narrow MH share | share | 14 | −0.00168 | 0.0325 |
+| C1 | drop July 2016 | narrow MH count | count | 14 | −0.00765 | 0.0645 |
+| C1 | coverage-clean | EDP share | share | 13 | −0.00098 | 0.0260 |
+| C1 | coverage-clean | EDP count | count | 13 | 0.00729 | 0.0155 |
+| C1 | geocoding-clean | EDP share | share | 14 | −0.00054 | 0.0090 |
+| C1 | geocoding-clean | EDP count | count | 14 | 0.01075 | 0.0045 |
+| C1 | coverage-clean | narrow MH share | share | 12 | −0.00036 | 0.0520 |
+| C1 | coverage-clean | narrow MH count | count | 12 | −0.00014 | 0.1154 |
+| C1 | geocoding-clean | narrow MH share | share | 14 | −0.00036 | 0.0455 |
+| C1 | geocoding-clean | narrow MH count | count | 14 | 0.00282 | 0.0730 |
+| C1 | coverage-clean | cardiac share | share | 13 | 0.00202 | 0.1639 |
+| C1 | coverage-clean | cardiac count | count | 13 | 0.02326 | 0.2924 |
+| C1 | coverage-clean | injury share | share | 14 | −0.00122 | 0.5967 |
+| C1 | coverage-clean | injury count | count | 14 | −0.00737 | 0.5647 |
+| C1 | coverage-clean | asthma share | share | 14 | 0.00010 | 0.2429 |
+| C1 | coverage-clean | asthma count | count | 14 | 0.02959 | 0.7096 |
+| C1 | cancelled dispositions included | EDP share, cancelled included | share | 15 | −0.00094 | 0.0580 |
+| C1 | cancelled dispositions included | EDP count, cancelled included | count | 15 | 0.00471 | 0.0235 |
+| C1 | cancelled dispositions included | narrow MH share, cancelled included | share | 15 | −0.00105 | 0.3553 |
+| C1 | cancelled dispositions included | narrow MH count, cancelled included | count | 15 | −0.00251 | 0.3573 |
+| C2 | geocoding-clean | EDP share | share | IDENTICAL_TO_PRIMARY | | |
+| C2 | geocoding-clean | narrow MH share | share | IDENTICAL_TO_PRIMARY | | |
+| C2 | coverage-clean | injury share | share | IDENTICAL_TO_PRIMARY | | |
+| C2 | post window 28 days | EDP share | share | 30 | −0.00021 | 0.6177 |
+| C2 | post window 28 days | EDP count | count | 30 | 0.00572 | 0.7141 |
+| C2 | post window 28 days | narrow MH share | share | 30 | −0.00071 | 0.3678 |
+| C2 | post window 28 days | narrow MH count | count | 30 | 0.00183 | 0.3638 |
+| C2 | post window 60 days | EDP share | share | 30 | −0.00018 | 0.6427 |
+| C2 | post window 60 days | EDP count | count | 30 | 0.00545 | 0.7591 |
+| C2 | post window 60 days | narrow MH share | share | 30 | −0.00071 | 0.4318 |
+| C2 | post window 60 days | narrow MH count | count | 30 | 0.00136 | 0.4293 |
+| C2 | broad basket | EDP share | share | 31 | 0.00023 | 0.6682 |
+| C2 | broad basket | EDP count | count | 31 | 0.00786 | 0.5987 |
+| C2 | broad basket | narrow MH share | share | 31 | −0.00021 | 0.5957 |
+| C2 | broad basket | narrow MH count | count | 31 | 0.00375 | 0.5692 |
+| C2 | spliced Wikipedia series | EDP share | share | 30 | 0.00004 | 0.5637 |
+| C2 | spliced Wikipedia series | EDP count | count | 30 | 0.00723 | 0.6262 |
+| C2 | spliced Wikipedia series | narrow MH share | share | 30 | −0.00048 | 0.6222 |
+| C2 | spliced Wikipedia series | narrow MH count | count | 30 | 0.00247 | 0.5447 |
+| C2 | coverage-clean | EDP share | share | 28 | −0.00016 | 0.4693 |
+| C2 | coverage-clean | EDP count | count | 28 | 0.00688 | 0.6052 |
+| C2 | coverage-clean | narrow MH share | share | 27 | −0.00047 | 0.2699 |
+| C2 | coverage-clean | narrow MH count | count | 27 | 0.00408 | 0.1964 |
+| C2 | coverage-clean | cardiac share | share | 25 | 0.00081 | 0.8901 |
+| C2 | coverage-clean | cardiac count | count | 25 | 0.00242 | 0.9370 |
+| C2 | coverage-clean | asthma share | share | 28 | 0.00020 | 0.9340 |
+| C2 | coverage-clean | asthma count | count | 28 | 0.01475 | 0.8411 |
+| C2 | cancelled dispositions included | EDP share, cancelled included | share | 30 | −0.00039 | 0.0670 |
+| C2 | cancelled dispositions included | EDP count, cancelled included | count | 30 | 0.00408 | 0.0825 |
+| C2 | cancelled dispositions included | narrow MH share, cancelled included | share | 30 | −0.00083 | 0.0655 |
+| C2 | cancelled dispositions included | narrow MH count, cancelled included | count | 30 | 0.00093 | 0.0565 |
+| C2 | EDP without EDPM | EDP share without EDPM | share | 30 | −0.00096 | 0.9285 |
+| C2 | EDP without EDPM | EDP count without EDPM | count | 30 | −0.00060 | 0.9835 |
+| C2 | late B-HEARD bound | EDP share | share | 30 | −0.00019 | 0.6352 |
+| C2 | late B-HEARD bound | EDP count | count | 30 | 0.00582 | 0.7751 |
+| C2 | late B-HEARD bound | narrow MH share | share | 30 | −0.00068 | 0.4483 |
+| C2 | late B-HEARD bound | narrow MH count | count | 30 | 0.00189 | 0.4978 |
+| pooled | post window 28 days | EDP share | share | 45 | −0.00037 | 0.2329 |
+| pooled | post window 28 days | EDP count | count | 45 | 0.00762 | 0.1744 |
+| pooled | post window 28 days | narrow MH share | share | 45 | −0.00078 | 0.2499 |
+| pooled | post window 28 days | narrow MH count | count | 45 | 0.00158 | 0.0995 |
+| pooled | post window 60 days | EDP share | share | 45 | −0.00031 | 0.2789 |
+| pooled | post window 60 days | EDP count | count | 45 | 0.00776 | 0.1934 |
+| pooled | post window 60 days | narrow MH share | share | 45 | −0.00074 | 0.2459 |
+| pooled | post window 60 days | narrow MH count | count | 45 | 0.00155 | 0.1129 |
+| pooled | drop July 2016 | EDP share | share | 44 | −0.00067 | 0.2519 |
+| pooled | drop July 2016 | EDP count | count | 44 | 0.00465 | 0.2309 |
+| pooled | drop July 2016 | narrow MH share | share | 44 | −0.00115 | 0.2354 |
+| pooled | drop July 2016 | narrow MH count | count | 44 | −0.00112 | 0.1274 |
+| pooled | broad basket | EDP share | share | 46 | −0.00005 | 0.5402 |
+| pooled | broad basket | EDP count | count | 46 | 0.00908 | 0.2984 |
+| pooled | broad basket | narrow MH share | share | 46 | −0.00043 | 0.5222 |
+| pooled | broad basket | narrow MH count | count | 46 | 0.00301 | 0.2994 |
+| pooled | spliced Wikipedia series | EDP share | share | 45 | −0.00018 | 0.2989 |
+| pooled | spliced Wikipedia series | EDP count | count | 45 | 0.00869 | 0.2219 |
+| pooled | spliced Wikipedia series | narrow MH share | share | 45 | −0.00060 | 0.3708 |
+| pooled | spliced Wikipedia series | narrow MH count | count | 45 | 0.00219 | 0.1534 |
+| pooled | coverage-clean | EDP share | share | 41 | −0.00034 | 0.2484 |
+| pooled | coverage-clean | EDP count | count | 41 | 0.00856 | 0.1619 |
+| pooled | geocoding-clean | EDP share | share | 44 | −0.00028 | 0.3233 |
+| pooled | geocoding-clean | EDP count | count | 44 | 0.00829 | 0.2144 |
+| pooled | coverage-clean | narrow MH share | share | 39 | −0.00042 | 0.2264 |
+| pooled | coverage-clean | narrow MH count | count | 39 | 0.00393 | 0.0350 |
+| pooled | geocoding-clean | narrow MH share | share | 44 | −0.00060 | 0.3748 |
+| pooled | geocoding-clean | narrow MH count | count | 44 | 0.00275 | 0.1544 |
+| pooled | coverage-clean | cardiac share | share | 38 | 0.00127 | 0.7326 |
+| pooled | coverage-clean | cardiac count | count | 38 | 0.00892 | 0.8891 |
+| pooled | coverage-clean | injury share | share | 44 | −0.00001 | 0.1559 |
+| pooled | coverage-clean | injury count | count | 44 | −0.00076 | 0.1964 |
+| pooled | coverage-clean | asthma share | share | 42 | 0.00014 | 0.7781 |
+| pooled | coverage-clean | asthma count | count | 42 | 0.02183 | 0.9390 |
+| pooled | cancelled dispositions included | EDP share, cancelled included | share | 45 | −0.00063 | 0.0170 |
+| pooled | cancelled dispositions included | EDP count, cancelled included | count | 45 | 0.00516 | 0.0075 |
+| pooled | cancelled dispositions included | narrow MH share, cancelled included | share | 45 | −0.00100 | 0.0665 |
+| pooled | cancelled dispositions included | narrow MH count, cancelled included | count | 45 | 0.00036 | 0.0180 |
+| pooled | EDP without EDPM | EDP share without EDPM | share | 45 | −0.00063 | 0.3183 |
+| pooled | EDP without EDPM | EDP count without EDPM | count | 45 | 0.00529 | 0.4113 |
+| pooled | late B-HEARD bound | EDP share | share | 45 | −0.00036 | 0.2534 |
+| pooled | late B-HEARD bound | EDP count | count | 45 | 0.00756 | 0.1959 |
+| pooled | late B-HEARD bound | narrow MH share | share | 45 | −0.00077 | 0.2584 |
+| pooled | late B-HEARD bound | narrow MH count | count | 45 | 0.00157 | 0.1219 |
+
+**Table 6 — The pooled stratum (descriptive, outside the family) and the two secondary arms, the B-HEARD interaction (C2) and the dose-response arm (asymptotic p only; note §10, addendum §9).**
+
+| stratum | item | outcome | arm | episodes | coefficient | RI p | asymptotic p |
+|---|---|---|---|---|---|---|---|
+| pooled | primary design | EDP share | share | 45 | −0.00036 | 0.2329 | 0.2340 |
+| pooled | primary design | EDP count | count | 45 | 0.00762 | 0.1824 | 0.1710 |
+| pooled | primary design | narrow MH share | share | 45 | −0.00077 | 0.2599 | 0.2382 |
+| pooled | primary design | narrow MH count | count | 45 | 0.00163 | 0.1124 | 0.1013 |
+| C1 | dose-response (per SD of peak intensity) | EDP share | share, per SD intensity | 15 | 0.00131 | — | 0.0309 |
+| C1 | dose-response (per SD of peak intensity) | narrow MH share | share, per SD intensity | 15 | 0.00151 | — | 0.0187 |
+| C2 | dose-response (per SD of peak intensity) | EDP share | share, per SD intensity | 30 | 0.00065 | — | 0.2412 |
+| C2 | dose-response (per SD of peak intensity) | narrow MH share | share, per SD intensity | 30 | 0.00074 | — | 0.1820 |
+| pooled | dose-response (per SD of peak intensity) | EDP share | share, per SD intensity | 45 | 0.00080 | — | 0.0364 |
+| pooled | dose-response (per SD of peak intensity) | narrow MH share | share, per SD intensity | 45 | 0.00110 | — | 0.0050 |
+| C2 | B-HEARD interaction | EDP share | share | 30 | 0.00026 | — | 0.7732 |
+| C2 | B-HEARD interaction | EDP count | count | 30 | 0.00200 | — | 0.8496 |
+| C2 | B-HEARD interaction | narrow MH share | share | 30 | 0.00003 | — | 0.9761 |
+| C2 | B-HEARD interaction | narrow MH count | count | 30 | −0.00120 | — | 0.8933 |
 
 ---
 
-## Discussion **[PHASE I PENDING — the mechanism and implications paragraphs are written from the sealed reading]**
+## Discussion
 
 This study asked a narrow question with an unusually strict design: whether the
 share of New York City emergency medical dispatches coded as mental-health crises
@@ -481,9 +701,30 @@ table was produced by one sealed script run once. The Results section reports th
 pre-registered reading of that table verbatim; nothing in this section adds to
 it or subtracts from it.
 
-*[PHASE I PENDING — what the reading says about the mechanism: written from the
-sealed table and its reading only, in the terms the pre-analysis note fixed for
-each row of its interpretation table.]*
+**What the reading says.** Neither stratum rejects the pre-registered null on
+either primary outcome after the Benjamini–Hochberg correction over the family of
+eight, and the reading in both is the bounded null of the plan's §19 rule 2: a
+sustained level shift at or above the pre-freeze minimum detectable effect —
+0.01156 of the share in C1, 0.00875 in C2 — is disfavoured at 80% power; a
+sustained shift of the minimum effect of interest, −0.005, is not excluded; a
+transient dip-and-rebound of that size is disfavoured, the design having been
+powered for that shape (pre-freeze MDEs 0.00382 and 0.00290). The falsification
+outcomes are quiet in both strata, so the null is not an artefact of a placebo
+movement, and the pooled stratum does not reject on both arms. Two features of
+the table are reported because the plan requires them to be reported and read
+as no more than the plan allows. In C1 the smallest unadjusted randomization p
+among the four primary cells is 0.0115, and 14 of the 24 sensitivity cells on
+the primary outcomes lie at unadjusted p ≤ 0.05; the pre-registered rules do not
+substitute an unadjusted p for the corrected family result, and this paper does
+not either. The secondary dose-response arm in C1 moves against the predicted
+direction — a larger, not smaller, first-week share per standard deviation of
+episode intensity, at asymptotic p of 0.03 and 0.02 on the two outcomes —
+outside the family and descriptive; in C2 neither the dose arm nor the B-HEARD
+interaction moves. On the mechanism the study set out to test: the avoidance
+account predicted a first-week decline in help-seeking; the confirmation strata
+neither show it nor rule out a sustained decline of the size the study declared
+it cares about, and they disfavour the transient dip-and-rebound the mechanism
+work had made the most plausible shape.
 
 **Relation to prior work.** The closest antecedents measured incidents rather
 than attention and outcomes at the county-month or coarser. Das and colleagues
@@ -522,7 +763,19 @@ non-rejection bounds a sustained shift at the pre-freeze minimum detectable
 effect and no smaller, while a transient dip-and-rebound of the size the study
 declared it cares about is the shape the design was powered for.
 
-*[PHASE I PENDING — implications, written after the reading.]*
+**Implications.** The design delivered the result it was built to deliver: a
+bounded null, read by rules fixed before the confirmation outcomes were seen,
+from a script run once. Within the bounds stated, the estimates do not support
+the concern that publicised police violence suppresses calls for emergency
+medical help in mental-health crises at the citywide scale in the week after
+attention rises — nor the opposite — and the discovery-period injury pattern
+remains exploratory. What would move the question is not more of the same
+test. The attention measure is national, so New Yorkers' own attention is
+unmeasured; the B-HEARD interaction, the one arm with district-level exposure
+variation, showed no movement in C2; and the number of independent episodes in
+each stratum is what bounds the power. The C1 sensitivity pattern and the
+positive dose-response coefficients are hypotheses a later study could
+pre-register, not findings of this one.
 
 ### Limitations
 
@@ -620,6 +873,13 @@ likely understate the response they measure.
    the two episode lists by `ops/paper_table1.py` as `docs/tables/TABLE1_episodes.md`
    and held to them by the regression suite, which re-renders it and requires
    identical bytes.
+
+5. **Table 2.** The pre-specified primary family (two outcomes × two arms × two
+   strata) from the sealed run. **Table 3.** The pre-registered reading applied by
+   code. **Table 4.** Falsification outcomes and the denominator diagnostic.
+   **Table 5.** Pre-registered sensitivities. **Table 6.** The pooled stratum and the
+   two secondary arms. All five rendered from `data/reference/confirmatory_results.csv`
+   and `confirmatory_reading.csv` by `ops/phase_i_tables.py`, every cell a registered claim.
 
 Supplement: randomization histograms per stratum; the calibration certificates;
 the power table; the z-scoring simulation (`docs/figures/zscore_simulation.png`); the basket with every include/exclude

@@ -65,8 +65,8 @@ ARM_LABEL = {"OLS_share": "share", "PPML_count_offset": "count", "PPML_count_no_
              "OLS_share_dose_per_sd": "share, per SD intensity"}
 SPEC_LABEL = {"sens_drop_jul2016": "drop July 2016", "sens_broad_basket": "broad basket",
               "sens_spliced_wiki": "spliced Wikipedia series", "sens_coverage_clean": "coverage-clean",
-              "sens_bheard_late_bound": "late B-HEARD bound", "sens_post28": "28-day post window",
-              "sens_post60": "60-day post window", "sens_geocoding_clean": "geocoding-clean",
+              "sens_bheard_late_bound": "late B-HEARD bound", "sens_post28": "post window 28 days",
+              "sens_post60": "post window 60 days", "sens_geocoding_clean": "geocoding-clean",
               "sens_incl_cancelled": "cancelled dispositions included", "sens_no_edpm": "EDP without EDPM",
               "bheard_interaction": "B-HEARD interaction",
               "dose_response": "dose-response (per SD of peak intensity)"}
