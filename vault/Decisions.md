@@ -22,3 +22,13 @@ See [[Status]] · [[Next actions]]
   foreclosed by the lift — the author's 2026-09-19 decision).
 - 2026-09-20 — Discovery certified at 1,000 sims; the 1.28 factor kept (conservative) with the 8-df 1.21 quoted beside it.
 - 2026-09-20 — The lift: `FREEZE_ACTIVE = False` in its own commit, after discovery, C1 and C2 certified at 1,000 sims and the gate ran clean in the lifted state. Incident F5 found by that gate run (three suite checks selected the confirmation sample; nothing of H1 printed) is disclosed in addendum §15 / PAPER_MASTER §5.3 and the checks pinned; the suite is scanned by D8.
+- 2026-09-21 — Phase I's seven starts are recorded, not hidden: every restart reason is a run-log row and the sealed
+  table's `overwrite_reason` carries the last; parallelism (4 → 2 → 3 → 2 workers) changes no number because every cell
+  is seeded from its own identity and banked in its own ledger. Methods and §8b state the history.
+- 2026-09-21 — The confirmatory Results are the reader's sentences quoted verbatim, each held by a claim; the Discussion
+  and Abstract add no number the reading does not carry. C1's 14/24 sensitivity cells and the dose-response sign are
+  reported as hypotheses for a later pre-registration, not findings.
+- 2026-09-21 — Table labels never begin with a numeral ("post window 28 days", not "28-day post window"): the exhibit
+  check treats a numeral-leading cell as a value needing a claim.
+- 2026-09-21 — Abstract follows PAPER_PLAN (unstructured, 250 words, names NYC EMS Incident Dispatch Data, New York City,
+  2015–2024, the linkage, "quasi-experimental stacked episode event study", the three-way question).

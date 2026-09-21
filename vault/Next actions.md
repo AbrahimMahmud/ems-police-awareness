@@ -1,14 +1,14 @@
 # Next actions
 
-1. Phase I is running (started 09:29Z, resumed 10:34Z with a recorded reason): keep the session active until
-   `ops/state/phase_i.done`; relaunch with `PHASE_I_RESUME_REASON` after any container restart.
-2. Commit the sealed table, sidecar, run-log `sealed` row and the reading the moment they exist.
-3. (done 2026-09-20: cold passes byte-identical `eaa7d5d`; C2 at 1,000 `294dd8c`; the lift `4e3dce1` with F5 disclosed.)
-4. `ops/phase_i_tables.py` → PAPER_MASTER §8b and PAPER.md Results/Discussion/Abstract with claims; CP3 audit;
-   EXECUTION_PLAN session log; HANDOFF; reconcile this vault and graph with the Mac copies.
+1. CP3 full manuscript audit (scratchpad `cp3-manuscript-audit.js`: 8 finders, 3-lens refuters, critic) on the completed
+   PAPER.md; triage, fix, gate twice, commit.
+2. EXECUTION_PLAN status block + session log for 2026-09-21; `docs/HANDOFF_2026-09-21.md`; capsule and graph export.
+3. Author's editorial pass: word budget (Methods → Supplementary Methods), reference 13 title, RECORD 6.2 comparison,
+   journal template. Nothing numeric changes without a claim.
+4. Reconcile this vault and graph with the Mac copies (Obsidian vault, ems-graph-memory).
 
-Closed this session: the third specification audit's refutation phase completed (wf_f524dc75, 39 agents) and its
-findings are remediated (P27–P58). The Registered Report route is foreclosed by the lift; PAPER_MASTER §5.3 records
-that proceeding is the author's decision (P58).
+Closed 2026-09-21: Phase I sealed (03:24:13Z) and read; §8b, Results, Discussion and Abstract written from the reading;
+1,269 claims verify; gate 90/90 twice. Closed 2026-09-20: CP2, the lift (`4e3dce1`, F5 disclosed), cold identity,
+the third specification audit (P27–P58), CP3's blind half.
 
 See [[Status]] · [[Decisions]]
