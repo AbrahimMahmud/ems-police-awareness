@@ -896,7 +896,7 @@ sensitivity grid; the audit register.
 |---|---|---|
 | RECORD 1.1–1.3 | Data type, database name, geography, timeframe, linkage in title and abstract | Title; Abstract (names NYC EMS Incident Dispatch Data, New York City, 2015–2024, linkage to community districts and to the attention index) |
 | RECORD 6.1 | Codes/algorithms used to identify the population | Methods, *Outcome*: the EDP family and the narrow mental-health family, code by code |
-| RECORD 6.2 | Validation of those codes | No external validation of the dispatch codes exists yet: Kang, Lu & Pang (2026, *Psychiatric Services*)¹¹ work on the same dataset, and a comparison of their classification with ours (which disaggregates call families and handles the mid-2018 EDPC recode explicitly) is pending |
+| RECORD 6.2 | Validation of those codes | No external validation of the dispatch codes exists yet: Kang, Lu & Pang (2026, *Psychiatric Services*)¹¹ analyse the same EMS Incident Dispatch Data (monthly precinct-level rates of nonviolent mental-health-related calls, January 2019 to December 2024; 31 adopting precincts of 76), and a comparison of their call classification with ours (which disaggregates call families and handles the mid-2018 EDPC recode explicitly) awaits their code list and is pending |
 | RECORD 6.3 | Linkage flow | Supplement figure: dispatch → district; precinct → district crosswalk |
 | RECORD 7.1 | Complete code list | Supplement table: every code, family, first and last date |
 | RECORD 12.1 | Data cleaning | Methods, *Outcome*; disposition filter (finding O1) in the plan |
@@ -920,8 +920,8 @@ sensitivity grid; the audit register.
 8. Nix J, Lozada MJ. Police killings of unarmed Black Americans: a reassessment of community mental health spillover effects. *Police Pract Res*. 2021;22(3):1330-1339.
 9. Wu HH, Gallagher RJ, Alshaabi T, et al. Say their names: resurgence in the collective attention toward Black victims of fatal police violence following the death of George Floyd. *PLoS One*. 2023;18(1):e0279225.
 10. Weitzel KJ, Chew RF, Miller AB, Oppenheimer CW, Lowe A, Yaros A. The use of crisis services following the mass school shooting in Uvalde, Texas: quasi-experimental event study. *JMIR Public Health Surveill*. 2023;9:e42811.
-11. Kang, Lu, Pang. An EMS-based crisis response model for mental health-related EMS calls: a quasi-experimental study. *Psychiatr Serv*. 2026. doi:10.1176/appi.ps.20250528.
-12. New York City Independent Budget Office. *B-HEARD: a look at precinct level data*. 2026.
-13. Hölzl, Keusch, Sajons. [Systematic review of Google Trends use across 360 studies; title to be confirmed against the source before submission.] *Soc Sci Res*. 2025;126:103099.
+11. Kang B, Lu Y-F, Pang J. An EMS-based crisis response model for mental health–related EMS calls: a quasi-experimental study. *Psychiatr Serv*. 2026;77(7):616–622. doi:10.1176/appi.ps.20250528.
+12. New York City Independent Budget Office. *B-HEARD: a look at precinct level data*. January 2026. https://www.ibo.nyc.gov/assets/ibo/downloads/pdf/public-safety/2026/2026-january-bheard-a-look-at-precinct-level-data.pdf
+13. Hölzl J, Keusch F, Sajons C. The (mis)use of Google Trends data in the social sciences – a systematic review, critique, and recommendations. *Soc Sci Res*. 2025;126:103099. doi:10.1016/j.ssresearch.2024.103099.
 14. Ang D. The effects of police violence on inner-city students. *Q J Econ*. 2021;136(1):115-168.
 15. Legewie J, Fagan J. Aggressive policing and the educational performance of minority youth. *Am Sociol Rev*. 2019;84(2):220-247.
