@@ -37,6 +37,26 @@ that the design cannot deliver one. Both are publishable; neither is a failure.
 
 ---
 
+## Status (2026-09-21 ~22:50Z) — MANUSCRIPT REVISED ON A FIVE-REFEREE PANEL at `d999d84`; restructured to the venue's budget at `03e3d8e`; gate 92/92 twice; what remains is the author's decisions listed below
+
+**Read this block first; the blocks below it are the record of how the result was produced (CP3 at 05:30Z, the seal at 04:00Z, the lift on 2026-09-20).**
+
+| | |
+|---|---|
+| Branch | `analysis-rework`, pushed through `d999d84` (the panel revision) plus this record commit; the Obsidian vault is no longer in the repository (`vault/` gitignored since `6ace8f5`; delivered as a zip). |
+| Restructure (`03e3d8e`, ~17:45Z) | `docs/PAPER.md` cut to the venue's shape: prose Results, four display items (Table 1 family + reading, Table 2 outside the family, Figure 1 first-week paths, Figure 2 the decade of attention); Methods detail, the reader's transcript, the sealed run's full tables (S1–S5), the code list, crosswalk, calibration and power tables (S7–S10) and the exploratory figures in a new `docs/SUPPLEMENT.md`. New generators `ops/paper_confirmatory_tables.py`, `ops/supplement_tables.py`, `ops/paste_generated.py`, `ops/refresh_generated_claims.py`; figures fig6/fig6b (paths) and fig7 (decade) in `08_figures.py`. `V.paper_budget` (finding W1) holds the main text under 5,000 words and the display items at four. |
+| Referee panel (wf_a3619d51-50e, 19:00–22:10Z) | Five lenses (epidemiologist, statistician, domain, reproducibility, editor), 50 comments; 41 of 47 major/moderate comments fact-checked against the sealed files (the last six editor checks and the synthesis fell to a usage limit). Record with the disposition of every comment: `docs/REFEREE_PANEL_2026-09-21.md`. |
+| What the panel found wrong (fixed, RP1–RP6, `V.manuscript_referee_tokens`) | Diagnostics reported by p alone and "total dispatches did not" fall (their mean fell by more); the C1 path tidied past its coefficients; the same-sign rule said to block both outcomes (it blocks only EDP; narrow MH is blocked by its count arm's p 0.0895); the offset count arm called free of compositional damping (it is a rate on the share's denominator); the dose-response arm "positive in every stratum" (negative over discovery); no interval anywhere while "not excluded" was said four times. |
+| Manuscript now | Abstract 250 words around the estimate (−0.00059, 95% CI −0.0032 to 0.0021 before B-HEARD; −0.00019, −0.0024 to 0.0020 during it; mean share 0.086); Introduction with the two channels, Curtis et al., Nix & Lozada on Bor; Methods with the identifying assumption, the count arm as a functional-form check, the certification scope, the two mismatches behind the bound, B-HEARD's direction (Kang) and attenuation; Results reporting only (eight C1 coefficients, 1-df Wald 0.19 vs 25.32, asymptotic p, within-period family of four, ranges, both diagnostics' coefficients, discovery dose-response); discovery estimates moved verbatim to S1.10; Discussion reconciles the bound with the realised precision and keeps the pre-registered reading as the conclusion; Limitation 2 (citywide average); implications paragraph. **4,998 words main text** (ceiling 5,000; the venue's ~4,000 was not reached without cutting substance the panel asked for). |
+| Display items | Table 1A: interval (95%) and asymptotic p; 1B: episodes, district-day observations, plain headers; Table 2 in two panels (ranges, override/injury split, diagnostics with coefficients). Figure 1: one scale per row, no in-image title; Figure 2: standalone caption. Supplement: Table S6 embedded as a regenerated region (S3.1); Table S10 with the randomization-based MDE. |
+| Claims | **1,582 registered, 1,582 verify** (292 hand-written + 1,290 generated); 88 new hand claims for the revision's prose numbers (C1400–C1487), 43 dropped with their sentences, 25 re-pointed to the supplement with the discovery text. |
+| Findings | **171 filed, 171 fixed, 0 open** (W1 the budget; RP1–RP6 the panel). |
+| Gate | **92 checks, 92/92 twice** after the revision (and twice after the restructure at 91). New: `V.paper_budget`, `V.manuscript_referee_tokens`; `V.claims_cover_exhibits` scans the supplement and skips the regenerated episode table; `V.table1_regenerates` holds the supplement's copy. |
+| Open for the author | (1) the venue's ~4,000 words: a further ~1,000 would have to come from substance (candidates: Limitations 7–9 and 11–12 to the supplement; the within-period-family sentence; the guards sentence); (2) the within-period family-of-four disclosure and the intervals-beside-the-bound framing are additions to what the pre-registration reads out — strike if unwanted (the reading stands either way); (3) the raw outcome series as a main-text figure in place of Table 2 (epidemiologist); (4) a Figure S7 from the discovery heterogeneity split needs a tracked generator; (5) a counted linkage flow for RECORD 6.3 (records removed by the disposition filter, dispatches without a district, district-days under the five-dispatch rule) needs registered numbers; (6) the ethics determination, affiliations, funding and conflict lines; (7) RECORD 6.2's code-list comparison with Kang, Lu & Pang. |
+| Memory | capsule, graph export, `HANDOFF_2026-09-21.md` §1/§2/§5 revised; the vault (outside the repo) updated and re-zipped. |
+
+---
+
 ## Status (2026-09-21 ~05:30Z) — CP3 DONE: the full manuscript audit ran (39 agents) and every surviving item is fixed and held by the suite; the manuscript is complete at `663153d`; what remains is the author's editorial pass
 
 **Read this block first; the two blocks below it (04:00Z: the seal and the paste; 2026-09-20 09:30Z: the lift) are the record of how the result was produced.**
@@ -1083,6 +1103,43 @@ non-human-subjects determination in writing; OSF deposit with timestamp.
 ---
 
 ## Session log — where execution stopped
+
+**2026-09-21 ~22:50Z — The manuscript restructured to the venue's budget (`03e3d8e`) and revised on a five-referee panel (`d999d84`). See the Status block at the top.**
+
+- **Restructure (17:00–17:45Z).** `docs/SUPPLEMENT.md` created (S1 Supplementary Methods, S2 the reader's
+  transcript, S3 Tables S1–S6, S4 Tables S7–S10 and the linkage flow, S5 Figures S1–S6, S6 the record); the
+  paper's Results rewritten as prose from the sealed files with a claim per number; four display items; new
+  generators and the paste tool with named regions; `V.paper_budget` (W1) added and defeat-tested; gate 91/91
+  twice. The Obsidian vault left the repository (`6ace8f5`, `d56852e`) at the user's request.
+- **Referee panel (wf_a3619d51-50e).** Five lenses, ten comments each, every major/moderate comment fact-checked
+  by a separate agent against the sealed files (41 of 47 ran; the fact-checks caught two suggested rewrites that
+  would themselves have been wrong — "no coefficient distinguishable from zero" is false for the C1 count arm's
+  day 1, and the offered counterfactual sentence mis-stated the day −1 reference — and both were written the
+  corrected way). The synthesis stage fell to a usage limit; the disposition of every comment is
+  `docs/REFEREE_PANEL_2026-09-21.md`.
+- **Fixes applied after the panel returned**, prepared while it ran: intervals (mean ± 1.96 SE, normal
+  approximation on the date-clustered SE) beside the verbatim pre-registered reading in Abstract, Results, Table
+  1A and Discussion; the C1 path described from `path_coefs` (positive days 0–2 and 4, negative 3 and 5–7; no
+  share-arm interval excludes zero; the count arm agrees in sign on seven of eight days, day 1 the only
+  coefficient whose interval excludes zero); the two guards outcome by outcome; the within-period family of four
+  (0.028, 0.028, 0.038; 0.0895) with the period-level reading unchanged; both diagnostics by coefficient; the
+  count arm as a rate on the same denominator; the dose-response arm including discovery (−0.00017, p 0.768);
+  the identifying assumption; the certification scope; the two mismatches behind the bound with Table S10's new
+  randomization-MDE column; Kang cited for B-HEARD's direction, the mechanism attenuation, Curtis as the closest
+  antecedent, Nix & Lozada on Bor; Limitation 2 (citywide average); implications; plain language throughout;
+  Table S6 embedded; captions rewritten; front matter in place of the drafting note. Every new number is a hand
+  claim computed by the same expression its prose was rendered from (`rf_paper.py` in the session scratchpad).
+- **Budget.** Six trim passes brought the main text from 6,284 words after the additions to 4,998; the
+  exploratory discovery estimates moved verbatim to S1.10 (their 25 claims re-pointed); Limitation 11 (the
+  non-blind changes, already in Deviations and Limitation 10) folded away. The venue's ~4,000 is an author
+  decision now: the remaining words are substance the panel asked for.
+- **Gate.** `V.manuscript_referee_tokens` (RP1–RP6); the exhibits check skips the `episode_table` region;
+  `V.table1_regenerates` compares the supplement's copy; baseline refreshed; 92/92 twice. Register 1,582 claims;
+  findings 171. Commit `d999d84`, pushed.
+- **Lessons.** A whitespace-tolerant replacer (tokens joined by `\s+`) is the right tool for editing prose that
+  was wrapped by hand; a span captured as `t[a:j - len(marker)]` when `j` is the marker's start truncates the
+  tail (caught by a claim that failed to reproduce: the discovery text lost its last sentence); a table header
+  that begins with a numeral ("95% interval") is a value to the exhibits check.
 
 **2026-09-21 ~05:30Z — CP3 complete; the manuscript is finished to the extent the assistant can finish it. See the Status block at the top.**
 
