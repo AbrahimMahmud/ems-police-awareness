@@ -966,8 +966,19 @@ def s_third_pass_record_consistency():
     if "| 3 | Test window: days 0–5 → days 0–7, joint | no (§14) |" not in plan:
         problems.append("summary row 3 does not mark the joint days 0-7 window as decided after discovery (§14)")
     paper = (PROJECT_ROOT / "docs" / "PAPER.md").read_text()
-    if "breached four times" in paper or "Four freeze incidents" in master:
+    if "breached four times" in paper or "Four freeze incidents" in master or "— **four**, all disclosed" in master:
         problems.append("the paper or the master still counts four freeze incidents; the record has five (F5 at the lift)")
+    if "has not been looked at" in note or "never examined before the lift" in note:
+        problems.append("PRE_ANALYSIS_NOTE still describes the confirmation data as untouched before the lift; F1-F5 are recorded accesses")
+    if "no number from them was kept" in paper or "never used for any specification choice" in paper:
+        problems.append("PAPER.md still says nothing was kept from the freeze incidents or that no specification choice touched the strata (F4 weights kept; F2 decision)")
+    # CP3 manuscript audit, 2026-09-21 (P59-P63): the paper's account of the record
+    if "undeclared metadata reads" in paper or "coverage statistics made while refuting" in paper:
+        problems.append("PAPER.md Limitation 9 still calls F1/F2 metadata reads or F3 a coverage read; all three read confirmation-period outcome values (P59)")
+    if "before any confirmation-period outcome was seen" in paper:
+        problems.append("PAPER.md still says everything was committed before any confirmation-period outcome was seen; F1-F3 precede the commitments (P62)")
+    if "likely understate the response they measure" in paper:
+        problems.append("PAPER.md still claims the compositional damping biases toward the null (P63)")
     if "No COVID" in note or "No COVID" in master or "free of both COVID" in paper:
         problems.append("C1 is still described as having no COVID exposure (its 2021 block is inside the pandemic)")
     if "2015-07-01 → 2016-12-31 and 2021-01-01 → 2021-05-31" not in master:
@@ -5092,7 +5103,7 @@ CHECKS = [
     ("S.calibration_noise_measured", "N11", "every certificate's null takes its noise from the measured panel, never the assumed fallback", s_calibration_noise_measured),
     ("S.confirmatory_spec_audit", "P14,P15,P16,P18,P19,P26,P27,P28,P29,P30,P31,P32,P33,P34,P35,P36,P56,P57", "the sealed script implements addenda 23, 29 and 30 (draws, seal and run log, BH family, asymptotic p, diagnostics on every district-day, C2-only interaction, the 28/60-day windows on the certified geometry, dose arm, geocoding-clean, cancelled-inclusive and no-EDPM cells; sidecar pins; docstring matches code)", s_confirmatory_spec_audit),
     ("S.confirmatory_reading_rules", "P14,P20,P21,P22,P25,P37,P38,P39,P40,P41,P42,P43,P44,P45,P54,P55", "the pre-registered reading of the sealed result is mechanical, sealed, and reads as its text requires (23.1-23.4, 23.1c/d, 19.2, 25, note 9.4)", s_confirmatory_reading_rules),
-    ("S.third_pass_record_consistency", "P46,P47,P48,P49,P50,P51,P52,P53,P58", "statements of the record the third CP2 audit pass found contradicted by the code or by itself are held to their corrected form", s_third_pass_record_consistency),
+    ("S.third_pass_record_consistency", "P46,P47,P48,P49,P50,P51,P52,P53,P58,P59,P60,P61,P62,P63", "statements of the record the third CP2 audit pass found contradicted by the code or by itself are held to their corrected form", s_third_pass_record_consistency),
     ("S.draw_scheme_total", "N5", "every draw scheme is dispatched explicitly, none by fallback", s_draw_scheme_total),
     ("S.ri_pvalue_form", "RI1", "randomization p-values use the (1+k)/(1+n) form", s_ri_pvalue_form),
     ("S.calibration_writes_stratified", "P5,D1,N4", "every calibration output names the stratum it describes", s_calibration_writes_stratified),

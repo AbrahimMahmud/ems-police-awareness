@@ -4,39 +4,44 @@
 Limitations → Results → Discussion → Abstract. The confirmatory Results, the
 Discussion paragraphs that read them and the Abstract were written after the
 sealed confirmatory run of 2026-09-21 (PAPER_MASTER.md §8b), from the reader's
-sentences only. Every number in this document is a claim in
-`docs/CLAIMS_REGISTER.csv` that recomputes from a committed artifact; a number
-without a claim is a check failure, not a typo.*
+sentences only. Every result number in this document is a claim in
+`docs/CLAIMS_REGISTER.csv` that recomputes from its artifact — a committed file,
+or one the pipeline regenerates from the recorded inputs; a result number without
+a claim is a check failure, not a typo.*
 
 *Target: Journal of Urban Health, Template A (public health). ~4,000 words main
-text, four display items, RECORD reporting. Language rules: PAPER_PLAN.md §7.*
+text, four display items, RECORD reporting. Language rules: PAPER_PLAN.md §7. This
+draft exceeds both budgets (about 7,100 words of main text; nine display items)
+and awaits the author's editorial pass (HANDOFF_2026-09-21 §5); nothing numeric
+moves without its claim.*
 
 ---
 
 ## Abstract
 
 Publicised police violence is linked to worse mental health and fewer
-police-related 911 calls; whether it changes mental-health help-seeking is
-untested at daily resolution. We asked whether public attention to police
-violence increases, decreases, or leaves unchanged what New York City communities
-ask emergency medical services for. In the NYC EMS Incident Dispatch Data (New
-York City, 2015–2024), each dispatch was linked to its community district and day
-and to a publicly reconstructible attention index from Wikipedia pageviews and
-Google searches. A quasi-experimental stacked episode event study took the share
-and count of mental-health dispatches as outcomes, cardiac and asthma dispatches
-as falsification outcomes, and randomization inference. After a freely examined
-exploratory period (2017–2020), two confirmation strata, before and after the
-B-HEARD programme, were held under a code-level freeze until every hypothesis,
-estimator, sensitivity and reading rule was committed, then analysed once by a
-sealed script and read mechanically. Both strata return the pre-specified null:
-no primary cell rejects after correction, falsification outcomes are quiet, and a
-sustained shift in the mental-health share at or above the pre-freeze minimum
-detectable effect (0.01156 in the clean stratum, 0.00875 in the exposed one) is
-disfavoured at 80% power, as is a transient dip-and-rebound of the minimum effect
-of interest; a sustained shift of that minimum (−0.005) is not excluded. Fourteen
-of 24 clean-stratum sensitivity cells fall below unadjusted p = 0.05 and are
-reported, not read as evidence. Within these bounds, attention to police violence
-does not measurably change first-week mental-health help-seeking.
+police-related 911 calls; its effect on mental-health help-seeking is untested at
+daily resolution. We asked whether national attention to police violence
+increases, decreases, or leaves unchanged what New York City communities ask
+emergency medical services for. In the NYC EMS Incident Dispatch Data, 2015–2024,
+each dispatch was linked to its community district and day and to a publicly
+reconstructible attention index from Wikipedia pageviews and Google searches. A
+stacked episode event study took mental-health dispatch shares and counts as
+outcomes, cardiac and asthma as falsification outcomes, and randomization
+inference. After a freely examined exploratory period (2017–2020), two
+confirmation strata, before and after B-HEARD, stayed under a code-level freeze
+(five disclosed breaches) until every hypothesis, estimator, sensitivity and
+reading rule was committed, then analysed once by a sealed script, read
+mechanically. Both return the pre-specified null: no primary cell rejects
+after correction, falsification outcomes are quiet, a sustained EDP-share shift of
+at least the pre-freeze minimum detectable effect (0.01156 in the clean stratum
+and 0.00875 in the exposed one; about 0.0148 and 0.0112 under the approximate
+family correction) is disfavoured at 80% power, as is a transient dip-and-rebound
+of the minimum effect of interest (−0.005); a sustained shift of that minimum is
+not excluded. Of 24 clean-stratum sensitivity cells on the primary outcomes, 14
+fall below unadjusted p = 0.05, reported, not read as evidence. Within these
+bounds, national attention to police violence does not measurably change
+first-week mental-health help-seeking.
 
 ---
 
@@ -67,17 +72,17 @@ thirteen cities after the murder of George Floyd while gunshots detected by
 acoustic sensors rose, and attributed the gap between that response and the
 smaller responses to lower-profile killings to salience and media attention.⁶
 Attention, not incidence, is the mechanism those results point at, and neither
-study measured it. Attention has been measured on its own terms — Wikipedia
-pageviews for earlier victims of police violence surged collectively after the
-murder of George Floyd⁹ — but not, to our knowledge, carried to a health outcome
-at the resolution of a day.
+study measured it. Attention has been measured on its own terms — on Twitter,
+the names of earlier Black victims of police violence surged collectively after
+the murder of George Floyd⁹ — but not, to our knowledge, carried to a health
+outcome at the resolution of a day.
 
 The closest quantified antecedent on the health side is Das and colleagues, who
 found depression-related emergency department visits among African Americans
 rose by about 11% in the month of a police killing of an unarmed African American
 and the three months following, across 75 counties⁷ — a class of finding whose
-sensitivity to how victims' armed status is coded has since been contested.⁸ Their
-design, like every
+sensitivity to how victims' armed status is coded has since been contested⁸ (the
+attention measure used here makes no use of armed status). Their design, like every
 administrative-outcome study we know of, works at the county-month. It therefore
 cannot say whether the response peaks on the first day or the twentieth, whether
 it is a sustained shift or a dip that rebounds, or whether what changed was
@@ -85,7 +90,7 @@ distress or the willingness to summon help — two forces that push the same
 instrument in opposite directions.
 
 This study addresses three gaps in that literature at once. First, the exposure
-is *attention*, measured daily from what the public chose to look up — Wikipedia
+is national *attention*, measured daily from what the public chose to look up — Wikipedia
 pageviews of articles about people killed by police and Google searches about
 police violence — rather than the occurrence of an incident, so that
 anniversaries, verdicts and video releases count when they draw attention and
@@ -122,7 +127,9 @@ We conducted a quasi-experimental panel study — a stacked episode event study 
 of New York City emergency medical dispatches by community district and day. The
 decade was divided into a **discovery** period (1 January 2017 to 31 December
 2020), used to build the pipeline and explore the data, and two **confirmation**
-strata never used for any specification choice: **C1**, 1 July 2015 to 31 December
+strata protected from specification choices by a freeze whose five recorded
+breaches — one of which did inform a specification decision — are disclosed below
+(Deviations; Limitation 9): **C1**, 1 July 2015 to 31 December
 2016 together with 1 January to 31 May 2021 — every confirmation month before the
 B-HEARD mental-health response programme launched; the 2015–16 block is also free
 of COVID-19, the 2021 block is not — and **C2**, 1 June 2021 to 31 December 2024,
@@ -130,11 +137,12 @@ in which B-HEARD was rolling out precinct by precinct. The
 lower bound of C1 is a data constraint, not a choice: Wikimedia's pageview
 interface begins on 1 July 2015.
 
-The confirmation strata were protected by a code-level freeze: every analysis
-script draws its sample through one guard function whose active window is derived
-from a single flag, and a regression suite of automated checks (90 at the time of
-writing) verifies that no script can read confirmation-period outcome values
-without passing through it. The hypotheses, the estimator, the primary inference,
+The confirmation strata were protected by a code-level freeze: every exploratory
+script draws its sample through one guard function pinned by name to the discovery
+window, the sealed confirmatory script alone derives its window from a single
+flag, and a regression suite of automated checks (90 at the time of writing)
+verifies that no other script can read confirmation-period outcome values without
+passing through the guard. The hypotheses, the estimator, the primary inference,
 the calibration precondition, the sensitivity battery, the multiple-testing family
 and the rules for reading every possible result were committed to the repository
 in dated documents before the freeze was lifted (`docs/CONFIRMATION_PLAN.md`,
@@ -165,8 +173,10 @@ every emergency medical dispatch in the city with an incident timestamp, a
 dispatcher-assigned final call type, a disposition and a community district.
 We downloaded the complete set (29,978,154 records) through the open-data API in
 seven-column pages and used dispatches from December 2014 to December 2024. The
-extract, its page-level cache and its cryptographic hash are recorded in a
-provenance register; the download is reproducible.
+extract's cryptographic hash and page count are recorded in a provenance
+register; the page cache itself is not tracked, so a replicator re-downloads from
+the live dataset and the register detects a changed source rather than absorbing
+it.
 
 **Wikipedia pageviews.** Daily article-level pageviews for human readers
 (`agent=user`) from the Wikimedia REST API, 1 July 2015 onward, for a basket of
@@ -239,10 +249,12 @@ series is comparable across the decade; it is identical to the primary before
 which the index lies in the top 10% of its own calendar year, and ends when the
 run ends. The within-year quantile keeps stringency constant across years; a fixed
 threshold selected a share of days that varied several-fold from year to year. Each
-episode carries two labels: the person in the victim registry whose death drew
-most attention in the window, and — because attention is driven by verdicts,
-video releases and anniversaries at least as often as by new killings — the
-articles actually read during the window, ranked by share of basket pageviews.
+episode carries two labels: the registry deaths of the preceding 60 days whose
+articles drew attention inside the window (Table 1's candidate events, empty when
+the registry holds no recent death), and — because attention is driven by
+verdicts, video releases and anniversaries at least as often as by new killings —
+the articles actually read during the window, ranked by share of basket
+pageviews.
 An episode is a burst of attention, not a killing, and the manuscript never
 describes it as the latter. The originally frozen episode rule was a *regime*
 rule that produced a single episode covering the whole summer of 2020;
@@ -253,7 +265,12 @@ strict basket (29 in discovery, 15 in C1, 30 in C2) and 75 in the broad.
 
 **Outcome.** For each community district and day we counted dispatches whose
 final call type carries the *emotionally disturbed person* prefix (EDP, EDPC,
-EDPE, EDPM, EDPT, EDPW, T-EDP) and divided by all dispatches. This **EDP share** is the
+EDPE, EDPM, EDPT, EDPW, T-EDP) and divided by all dispatches that were sent and
+not cancelled or duplicated: records whose disposition marks a cancelled,
+never-sent or duplicate call, and special-event, standby and transfer incidents,
+are excluded from numerator and denominator alike (a filter that falls more
+heavily on EDP than on the comparison families, which is why the
+cancelled-inclusive sensitivity restores them). This **EDP share** is the
 primary outcome. A **narrow mental-health share** adds altered-mental-status and
 suicide-related codes. Because a share can move when its denominator does, every
 outcome is also modelled as a **count**, with the district-day's total dispatches
@@ -316,7 +333,8 @@ procedure are run, at 200 placebo draws per simulation, on 1,000 synthetic panel
 the serial dependence, district levels, day-of-week pattern and citywide day
 shock measured on the discovery rows of the real panel, on that stratum's own
 episode geometry and draw scheme — separately for C1, C2 and the pooled sample,
-whose three-window geometry is its own null. The count arm, the narrow
+whose three-window geometry is its own null, and for the discovery period, whose
+own 1,000-simulation certificate precedes the discovery p-values reported below. The count arm, the narrow
 mental-health outcome, the covariate and the sealed run's 2,000-draw resolution
 are not separately certified; the plan states this as a limitation. The stratum's p-values are reported only if
 the empirical rejection rate at α = 0.05 lies inside its binomial band and the
@@ -335,11 +353,21 @@ had been seen (Deviations) — is two outcomes (EDP share, narrow mental-health
 share) × two arms (share, count) × two strata (C1, C2) = eight tests, controlled
 by Benjamini–Hochberg at *q* = 0.05. The pooled
 estimate (a re-description of the same eight), the sensitivities (robustness
-readings of tests already in the family), the B-HEARD interaction (secondary,
+readings of tests already in the family), the two secondary arms (below;
 asymptotic p-value only) and the falsification outcomes are outside the family,
 each for the reason given in the plan; every result row carries its family
 membership so that a reader can recompute the correction under a different
 definition.
+
+**Secondary arms.** Two pre-registered secondary arms are estimated outside the
+family and report asymptotic p-values only, because permuting episode dates holds
+district exposure fixed and so cannot test a cross-district contrast: the
+B-HEARD interaction (C2 only), the first-week coefficient interacted with the
+district's B-HEARD exposure, and the dose-response arm, the first-week effect on
+the share per standard deviation of the episode's peak attention intensity, whose
+predicted sign is the hypothesis's (a decline per standard deviation). Both are
+read for direction by a pre-specified rule in the two inferential strata and never
+enter the conclusion; the pooled dose-response rows are descriptive.
 
 **Sensitivities and falsification, pre-specified.** (i) Dropping the July 2016
 episode, which contains the killings of Alton Sterling and Philando Castile and
@@ -351,11 +379,15 @@ of dispatches with no district fell by two thirds — a demonstration rather tha
 correction, chosen over month-year fixed effects because it changes the sample
 and not the estimator, so it stays comparable with the calibrated null — and (vi)
 a geocoding-clean estimate that drops only the episodes containing that step;
-(vii) the 28- and post window 60 dayss, whose placebo draws keep the certified
+(vii) 28- and 60-day post windows, whose placebo draws keep the certified
 14-day geometry; (viii) the outcomes with cancelled and other never-sent
 dispositions restored to numerator and denominator; (ix) EDP without the EDPM
 code, the one code whose inclusion was decided on confirmation-period counts.
-Every sensitivity runs on both arms. Robust means a rejection survives every
+Every sensitivity is estimated on both arms; a branch whose episode set in a
+stratum is the primary's by construction — the same episode starts, no EDPM
+dispatch in the stratum, no coverage break inside any episode window — is marked
+identical to the primary on its share row rather than re-estimated under a new
+seed. Robust means a rejection survives every
 applicable sensitivity at unadjusted randomization *p* ≤ 0.05, fragile that it
 survives none; the set is enumerated in the reader and held equal to what the
 sealed run writes.
@@ -366,18 +398,27 @@ is estimated and reported beside them but does not override, because the
 exploratory decomposition found it responds to attention episodes. A
 family cell *rejects* when its adjusted *p* is below 0.05; a stratum rejects on
 an outcome when both arms reject with the same sign of the first-week mean, and
-direction is that sign. Two diagnostic cells per stratum — the outcome's raw
-count without an offset, and total dispatches — decide whether a share-arm
-rejection is denominator-driven.
+direction is that sign. Three diagnostic cells per stratum, run on the panel
+without the five-dispatch minimum — each primary outcome's raw count without an
+offset, and total dispatches — decide whether a share-arm rejection is
+denominator-driven.
 
 **Power and the reading of a non-rejection.** Before the freeze lifted, the
 minimum detectable effect at 80% power was computed by simulation for each
-stratum against a pre-declared minimum effect of interest of −0.005 in the
-mental-health share (about 6% of the discovery-period mean), for two effect
-shapes — a sustained level shift over the first week and a dip-and-rebound of
-the same size. Every stratum is underpowered for the sustained shape (minimum
-detectable effects of 1.75 to 2.31 times the minimum effect of interest) and
-adequately powered for the transient shape. The reading of a non-rejection was
+stratum against a pre-declared minimum effect of interest of −0.005 in the EDP
+share (about 6% of the discovery-period mean), for two effect shapes — a
+sustained level shift over the first week and a dip-and-rebound of the same
+size; the power table covers the EDP share only, so no separate minimum
+detectable effect exists for the narrow mental-health share. Every stratum is
+underpowered for the sustained shape (minimum detectable effects of 1.75 to 2.31
+times the minimum effect of interest) and adequately powered for the transient
+shape. The minimum detectable effect is measured against the asymptotic
+joint-Wald test at the nominal α = 0.05, while the non-rejection it bounds is a
+Benjamini–Hochberg-adjusted randomization p; the plan states the bound at the
+nominal level, quotes beside it an approximate one-parameter inflation of 1.28
+for the eight-test correction (1.21 for the eight-degree-of-freedom statistic),
+and records both the difference of tests and the uncorrected placebo override
+as limitations of the bound rather than correcting them. The reading of a non-rejection was
 therefore fixed in advance: no effect detected; a sustained shift at or above
 that stratum's minimum detectable effect is disfavoured; a sustained shift of
 the minimum effect of interest is not excluded; a transient effect of that size
@@ -406,9 +447,14 @@ shown without a second read. The run was started seven times before it sealed
 after the container was suspended, once to raise the number of workers, and
 twice each — an automatic retry and a hand relaunch with fewer workers — after
 each of two kills of the worker pool by the memory limit on the pooled stratum's
-cells. Each start is a dated row of the run log with its reason; every cell
-resumed from a ledger keyed to its own seed and design, so no number depends on
-the restarts.
+cells. Each start is a dated row of the run log: the original start carries no
+reason, each relaunch by hand carries the reason given at the time, and the
+runner's two automatic retries repeat the reason of the start they retried (the
+sealed table's `overwrite_reason` column carries the last reason only); the log
+records the source hashes of the sealed script, the estimator and the
+configuration at every start, identical across the seven, and the sidecar pins
+the seal-time commit. Every cell resumed from a ledger keyed to its own seed and
+design, so no number depends on the restarts.
 
 **Exploratory analyses.** Discovery-period estimates and an outcome
 decomposition across thirteen outcomes in four dispatch families and five
@@ -417,13 +463,22 @@ exploratory and are not tests of the hypothesis. A heterogeneity analysis by
 district racial composition, whose hypothesis was formed from discovery results,
 and a distributed-lag specification of the continuous attention index were also
 estimated on the discovery period; their tables are in the repository and, apart
-from the impulse-response figure, they are not reported here.
+from the impulse-response figure (Figure 2), they are not reported here.
 
-**Software and reproducibility.** Python 3.11 with pyfixest; every table and
-figure regenerates from the committed repository by one driver script that
-records a manifest (commit, input hashes, row counts). Every number in this
-manuscript is registered as a claim that an automated check recomputes from its
-artifact.
+**Software and reproducibility.** Python 3.11 with pyfixest, package versions
+pinned in the repository's lock file, under a fixed hash seed (`PYTHONHASHSEED=0`)
+and one linear-algebra thread, so that two cold passes of the pipeline are
+byte-identical. One driver script regenerates every build, discovery and check
+artifact from the recorded inputs and records a manifest (commit, input hashes,
+row counts); the null-calibration certificates and the pre-freeze power table are
+produced by separate resumable runners (hours of compute) and their hashes are
+pinned in the sealed run's sidecar; the sealed run and its reading are one-shot
+by design and are committed with sidecars naming their source hashes, inputs,
+commit and seed, and a second real start requires a recorded reason. Every result
+in this manuscript — every table cell and every result stated in prose — is
+registered as a claim that an automated check recomputes from its artifact,
+committed or regenerated; design constants (windows, draws, thresholds) are not
+claims.
 
 ### Deviations from the frozen pre-registration
 
@@ -462,21 +517,25 @@ sensitivities — in that order, no interpretation. Drafted from PAPER_MASTER.md
 The panel holds 217,356 district-days across the 59 community districts from
 December 2014 to December 2024; the discovery analysis window holds 86,199 of
 them. In that window the mean EDP share is 0.0856 and the mean district-day
-carries 66.1 dispatches. Twenty-nine attention episodes begin inside the discovery window.
+carries 66.1 dispatches. Twenty-nine attention episodes begin inside the discovery
+window (Table 1; Figure 1 shows the series and the episodes).
 
 Stacked over those 29 episodes with day −1 as reference, the first-week
 coefficient on the EDP share is −0.00123 (randomization *p* = 0.697, 2,000 draws)
 and on the EDP count −0.01084 (*p* = 0.527); on the narrow mental-health share
 −0.00103 (*p* = 0.886) and count −0.00615 (*p* = 0.822). Share and count arms
 agree in sign in every case. The estimates move in the fourth decimal across the
-14-, 28- and post window 60 dayss. Read against the minimum effect of interest of
+14-, 28- and 60-day post windows. Read against the minimum effect of interest of
 −0.005, the EDP share estimate is about a quarter of it.
 
-Across the 65 outcome-by-window decomposition tests, under a Bonferroni threshold
+Across the 65 outcome-by-window decomposition tests (Figure 3 shows the days 3–5
+window), under a Bonferroni threshold
 of α = 0.000769, 2 survive and both are injury in days 0–2: injury share
 (+0.00159, *p* = 0.00004) and log injury count (+0.01048, *p* = 0.00008); the
 injury-share coefficient for days 12–14 (+0.00104, *p* = 0.00172) does not. No
-mental-health outcome survives (smallest *p* 0.044); neither falsification
+mental-health outcome survives (smallest *p* 0.044 in the mental-health family;
+the narrow mental-health count, in the volume family, reaches *p* 0.014 in days
+6–8 and does not survive either); neither falsification
 outcome survives (cardiac share *p* = 0.082 and asthma share *p* = 0.076 at
 their strongest).
 
@@ -519,7 +578,7 @@ their strongest).
 *Conclusion under note §9.4 as amended: THE PRE-SPECIFIED NULL (9.4 row 5): a bounded null in both strata, read by addendum 19 rule 2*
 
 **Table 4 — Falsification outcomes and the denominator diagnostic, per stratum (unadjusted randomization p; addendum §23.3–23.4).** Cardiac and asthma cells at p ≤ 0.05 override the stratum's primary rejections; injury is reported but does not override (§23.4); the no-offset counts are the denominator diagnostic (§23.3).
-
+ The pooled rows are descriptive (23.1d): the override rule reads C1 and C2 only.
 | stratum | outcome | arm | episodes | first-week mean | RI p | asymptotic p |
 |---|---|---|---|---|---|---|
 | C1 | EDP count | count, no offset | 15 | −0.01180 | 0.0115 | 0.0004 |
@@ -540,8 +599,17 @@ their strongest).
 | C2 | injury count | count | 30 | −0.00124 | 0.2039 | 0.1796 |
 | C2 | asthma share | share | 30 | 0.00032 | 0.9630 | 0.9576 |
 | C2 | asthma count | count | 30 | 0.03192 | 0.9675 | 0.9670 |
+| pooled | EDP count | count, no offset | 45 | −0.00614 | 0.0215 | 0.0143 |
+| pooled | narrow MH count | count, no offset | 45 | −0.01184 | 0.0260 | 0.0086 |
+| pooled | total dispatches | count, no offset | 45 | −0.01215 | 0.5697 | 0.6621 |
+| pooled | cardiac share | share | 45 | 0.00122 | 0.5462 | 0.4826 |
+| pooled | cardiac count | count | 45 | 0.01105 | 0.7461 | 0.7106 |
+| pooled | injury share | share | 45 | −0.00018 | 0.0965 | 0.0998 |
+| pooled | injury count | count | 45 | −0.00196 | 0.1329 | 0.1460 |
+| pooled | asthma share | share | 45 | 0.00024 | 0.7016 | 0.6930 |
+| pooled | asthma count | count | 45 | 0.03191 | 0.9315 | 0.9163 |
 
-**Table 5 — Pre-registered sensitivities, reported beside the primary and never substituted for it (note §9.5).** IDENTICAL means the arm's episode starts in that stratum equal the primary's, so no second p-value is printed (addendum §23.6).
+**Table 5 — Pre-registered sensitivities, reported beside the primary and never substituted for it (note §9.5).** IDENTICAL means the cell is the primary by construction — the branch's episode starts in that stratum equal the primary's, the stratum has no EDPM dispatch (C1, EDP without EDPM), or no episode window contains a coverage break (C2) — so no second p-value is printed (addendum §23.6); the sealed table's status column gives the reason per cell.
 
 | stratum | sensitivity | outcome | arm | episodes | first-week mean | RI p |
 |---|---|---|---|---|---|---|
@@ -663,7 +731,7 @@ their strongest).
 | pooled | late B-HEARD bound | narrow MH share | share | 45 | −0.00077 | 0.2584 |
 | pooled | late B-HEARD bound | narrow MH count | count | 45 | 0.00157 | 0.1219 |
 
-**Table 6 — The pooled stratum (descriptive, outside the family) and the two secondary arms, the B-HEARD interaction (C2) and the dose-response arm (asymptotic p only; note §10, addendum §9).**
+**Table 6 — The pooled stratum (descriptive, outside the family) and the two secondary arms, the B-HEARD interaction (C2) and the dose-response arm (asymptotic p only; note §10, addendum §9).** The reader applies rule 23.1e to the secondary arms in C1 and C2; the pooled dose-response rows are descriptive and are not read.
 
 | stratum | item | outcome | arm | episodes | coefficient | RI p | asymptotic p |
 |---|---|---|---|---|---|---|---|
@@ -697,21 +765,24 @@ district and day — fine enough to see the shape of a response inside the first
 week rather than a monthly average of it. And the inference is confirmatory in
 the literal sense: the hypotheses, the estimator, the null the p-values rest on,
 the sensitivities and the sentence to be written for every possible result were
-committed before any confirmation-period outcome was seen, and the confirmatory
-table was produced by one sealed script run once. The Results section reports the
+committed before any confirmation-period outcome entered a model or test, except
+as the five recorded freeze incidents describe (Limitation 9), and the
+confirmatory table was produced by one sealed script run once. The Results section reports the
 pre-registered reading of that table verbatim; nothing in this section adds to
 it or subtracts from it.
 
 **What the reading says.** Neither stratum rejects the pre-registered null on
 either primary outcome after the Benjamini–Hochberg correction over the family of
 eight, and the reading in both is the bounded null of the plan's §19 rule 2: a
-sustained level shift at or above the pre-freeze minimum detectable effect —
-0.01156 of the share in C1, 0.00875 in C2 — is disfavoured at 80% power; a
-sustained shift of the minimum effect of interest, −0.005, is not excluded; a
-transient dip-and-rebound of that size is disfavoured, the design having been
-powered for that shape (pre-freeze MDEs 0.00382 and 0.00290). The falsification
-outcomes are quiet in both strata, so the null is not an artefact of a placebo
-movement, and the pooled stratum does not reject on both arms. Two features of
+sustained level shift at or above the pre-freeze minimum detectable effect of
+the EDP share — 0.01156 in C1 and 0.00875 in C2 at nominal α, about 0.0148 and
+0.0112 under the approximate eight-test correction the plan requires to be quoted
+beside it — is disfavoured at 80% power; a sustained shift of the minimum effect
+of interest, −0.005, is not excluded; a transient dip-and-rebound of that size is
+disfavoured, the design having been powered for that shape (pre-freeze MDEs
+0.00382 and 0.00290). The falsification outcomes are quiet in both strata — the
+override rule, which acts only on a rejection, had nothing to act on — and the
+pooled stratum does not reject on both arms. Two features of
 the table are reported because the plan requires them to be reported and read
 as no more than the plan allows. In C1 the smallest unadjusted randomization p
 among the four primary cells is 0.0115, and 14 of the 24 sensitivity cells on
@@ -724,8 +795,8 @@ outside the family and descriptive; in C2 neither the dose arm nor the B-HEARD
 interaction moves. On the mechanism the study set out to test: the avoidance
 account predicted a first-week decline in help-seeking; the confirmation strata
 neither show it nor rule out a sustained decline of the size the study declared
-it cares about, and they disfavour the transient dip-and-rebound the mechanism
-work had made the most plausible shape.
+it cares about, and they disfavour a transient dip-and-rebound of that size, the
+shape the mechanism work had made the most plausible.
 
 **Relation to prior work.** The closest antecedents measured incidents rather
 than attention and outcomes at the county-month or coarser. Das and colleagues
@@ -748,12 +819,12 @@ mental-health 911 calls dispatched an ambulance and, until B-HEARD, the police, 
 an avoidance response would run through the anticipated presence of officers at
 a medical call rather than through crime reporting. Second, the discovery period
 contains the 2020 episodes on which the earlier evidence rests, and in it the
-EDP share moved in the predicted direction after the murder of George Floyd while
-the count did not — a compositional movement carried by a rise in injury calls
-that the decomposition attributes to street activity rather than to withdrawal
-from care, and that no mental-health outcome survives the corrected threshold
-(Results). The confirmatory strata are the test of whether anything of that kind
-holds outside the year the hypothesis was formed in.
+pooled discovery estimate is a bounded null on every mental-health outcome; the
+only movements that survive the exploratory decomposition's corrected threshold
+are rises in injury dispatches in the first three days, a pattern consistent with
+street activity rather than with withdrawal from care (Results). The confirmatory
+strata are the test of whether anything of the hypothesised kind holds outside
+the year the hypothesis was formed in.
 
 **What the design cannot say.** The limitations below are ordered as a referee
 would raise them. Two bear directly on how the confirmatory reading should be
@@ -766,11 +837,13 @@ declared it cares about is the shape the design was powered for.
 
 **Implications.** The design delivered the result it was built to deliver: a
 bounded null, read by rules fixed before the confirmation outcomes were seen,
-from a script run once. Within the bounds stated, the estimates do not support
-the concern that publicised police violence suppresses calls for emergency
-medical help in mental-health crises at the citywide scale in the week after
-attention rises — nor the opposite — and the discovery-period injury pattern
-remains exploratory. What would move the question is not more of the same
+from a script run once. Within the bounds stated, the primary family does not
+support the concern that national attention to publicised police violence
+suppresses calls for emergency medical help in mental-health crises at the
+citywide scale in the week after attention rises, nor does it show an increase;
+the secondary dose-response arm in C1, outside the family, moved against the
+prediction and is reported as a hypothesis, and the discovery-period injury
+pattern remains exploratory. What would move the question is not more of the same
 test. The attention measure is national, so New Yorkers' own attention is
 unmeasured; the B-HEARD interaction, the one arm with district-level exposure
 variation, showed no movement in C2; and the number of independent episodes in
@@ -806,6 +879,8 @@ remains valid for.
    codes are born or retired inside the confirmation windows. Codes are grouped
    into families so that a recode within a family does not move the family; the
    coverage-clean sensitivities drop every episode whose window contains a break.
+   Four of the seven EDP codes (EDPC, EDPM, EDPW, T-EDP) are absent from the FDNY
+   data dictionary and are assigned to the family by their prefix.
 5. **B-HEARD** overlaps the whole of C2 and moves the outcome in the hypothesised
    direction, on adoption dates that are low-confidence for 17 of 31 precincts.
    Exposure is carried as bounds rather than a date, enters every specification,
@@ -826,21 +901,38 @@ remains valid for.
    which the spliced sensitivity series addresses; Google Trends returns a
    sample, not a census, and its reliability across studies is itself contested.¹³
 9. **The freeze was breached five times, four before it lifted and one at the
-   lift,** each disclosed: two undeclared metadata reads during automated
-   audits, one of which informed a specification decision about the EDPM code;
-   one record-level read of 2015–16 coverage statistics made while refuting an
-   audit finding; a precinct-to-district crosswalk counted over every year; and,
-   in the gate run made to verify the lifted state before it was committed, three
-   regression checks that had derived their sample from the freeze flag selected
-   the confirmation sample once — one of them fitted the primary specification
-   with and without the B-HEARD covariate on it and printed only the largest
-   difference between the two coefficient vectors, the others a shared-days count
-   and a residual autocorrelation. A separate, declared and logged read of
-   coverage — first and last dates per code and the yearly missing-district rate,
-   no outcome value — produced the coverage sensitivities. No test of the
-   hypothesis was read from any of them and no number from them was kept; their
+   lift,** each disclosed and none declared in advance. F1: an automated audit
+   computed the citywide annual mental-health call share for every year,
+   confirmation years included. F2: a check of call-type birth dates queried the
+   source API for first-record dates, whole-period and annual totals per call
+   type, citywide monthly counts across the B-HEARD boundary and precinct-level
+   EDPM counts for June 2021 compared across the three pilot precincts — and a
+   specification decision, retaining EDPM in the EDP family, was taken on that
+   comparison, so the composition of the primary outcome is not fully blind. F3:
+   a refutation of an audit finding computed record-level 2014–16 statistics
+   from the outcome extract (missing-district rates, one code's monthly counts
+   and last date, another's share across the 2015/16 boundary, an estimated step
+   in the mental-health share) and wrote them into the findings register. F4:
+   the precinct-to-district crosswalk that carries B-HEARD exposure was built
+   from a count of all dispatches per precinct and district pooled over
+   2015–2024 — a geography weight with no call type or date, but a read of
+   confirmation-period counts that no exemption declared, and the one thing kept
+   from the five: it is inside the B-HEARD exposure covariate of the estimating
+   equation. F5: in the gate run made to verify the lifted state before it was
+   committed, three regression checks that had derived their sample from the
+   freeze flag selected the confirmation sample once — one fitted the primary
+   specification with and without the B-HEARD covariate and printed only the
+   largest difference between the two coefficient vectors, the others a
+   shared-days count and a residual autocorrelation. A separate, declared and
+   logged read of coverage — first and last dates per code and the yearly
+   missing-district rate, no outcome value — produced the coverage
+   sensitivities. No test of the hypothesis was read from any of the five; what
+   was kept from them is the F4 weights and the F2 decision, both stated; their
    materiality is for the reader to judge and the record is complete
-   (`CONFIRMATION_PLAN.md` §15, `PAPER_MASTER.md` §5.3).
+   (`CONFIRMATION_PLAN.md` §15, `PAPER_MASTER.md` §5.3). The pre-registration is
+   internal: its timestamps are git commits, no externally timestamped deposit
+   was made, and that remedy was foreclosed once the sealed run read the
+   confirmation outcomes.
 10. **The episode construct changed after the original freeze** while blind to
     outcomes; **the test window and the second primary outcome changed after
     discovery results had been seen** and are not blind — the plan marks them so
@@ -848,10 +940,18 @@ remains valid for.
     list is committed byte-identical.
 11. **Generalisability.** New York City's density, its unified EMS system and the
     B-HEARD programme are distinctive; the estimates describe this city.
+12. **Two of the three pre-registered hypotheses were not run.** H2 (substitution
+    toward the NYC Well helpline) and H3 (mechanism, through complaint and stop
+    rates) need data that are not in the repository; H1 alone is the confirmation
+    package, materially weaker than the joint package the original power note
+    assumed (pre-analysis note §11.6; plan deviation 12).
 
 Where a limitation biases toward the null — the national index attenuates any
-local response; the share arm is compositionally damped by injury — the estimates
-likely understate the response they measure.
+local response — the estimates understate a response of the kind the index can
+detect. The compositional damping of the share arm by injury dispatches runs the
+other way: a rise in injury calls lowers the mental-health share, which is the
+direction the hypothesis predicts, so it would exaggerate rather than mask a
+decline; the count arm, reported beside every share, carries no such damping.
 
 ---
 
@@ -862,12 +962,14 @@ likely understate the response they measure.
    episodes shaded and the COVID emergency marked. `08_figures.py`; tracked copy
    `docs/figures/fig1_raw_series.png`.
 2. **Figure 2.** Impulse response of the narrow mental-health share to the
-   continuous attention index by relative day, leads shown as a pre-trend check,
-   95% intervals (distributed-lag specification, exploratory; discovery period).
+   continuous attention index (effect per standard deviation of the index) by
+   relative day, leads shown as a pre-trend check, 95% intervals (distributed-lag
+   specification, exploratory; discovery period).
    `docs/figures/fig2_irf_primary.png`. `fig3_windows.png` shows the same share by
    three-day awareness window, each window entered alone and all jointly.
 3. **Figure 3.** Outcome decomposition: the days 3–5 window's coefficient for
-   each of seven dispatch shares, falsification outcomes in grey (discovery
+   each of seven dispatch shares with all five windows entered jointly, the
+   specification the Results report, falsification outcomes in grey (discovery
    period, each outcome estimated separately). `docs/figures/fig4_decomposition.png`.
 4. **Table 1.** The episode list: start, end, peak, registry label, driver label
    with share, stratum, and the frozen-versus-adopted difference. Generated from
@@ -895,8 +997,8 @@ sensitivity grid; the audit register.
 | Checklist item | Requirement | Where addressed |
 |---|---|---|
 | RECORD 1.1–1.3 | Data type, database name, geography, timeframe, linkage in title and abstract | Title; Abstract (names NYC EMS Incident Dispatch Data, New York City, 2015–2024, linkage to community districts and to the attention index) |
-| RECORD 6.1 | Codes/algorithms used to identify the population | Methods, *Outcome*: the EDP family and the narrow mental-health family, code by code |
-| RECORD 6.2 | Validation of those codes | No external validation of the dispatch codes exists yet: Kang, Lu & Pang (2026, *Psychiatric Services*)¹¹ analyse the same EMS Incident Dispatch Data (monthly precinct-level rates of nonviolent mental-health-related calls, January 2019 to December 2024; 31 adopting precincts of 76), and a comparison of their call classification with ours (which disaggregates call families and handles the mid-2018 EDPC recode explicitly) awaits their code list and is pending |
+| RECORD 6.1 | Codes/algorithms used to identify the population | Methods, *Outcome*: the EDP family code by code and the disposition filter; the narrow mental-health family's codes in the supplementary code list (RECORD 7.1) |
+| RECORD 6.2 | Validation of those codes | No external validation of the dispatch codes exists yet: Kang, Lu & Pang (2026, *Psychiatric Services*)¹¹ analyse the same EMS Incident Dispatch Data (monthly precinct-level rates of nonviolent mental-health-related calls, January 2019 to December 2024; 31 adopting precincts of 76), and a comparison of their call classification with ours (which disaggregates call families and handles the mid-2018 EDPC recode explicitly) awaits their code list and is pending; four of the seven EDP codes are undocumented in the FDNY data dictionary (Limitation 4) |
 | RECORD 6.3 | Linkage flow | Supplement figure: dispatch → district; precinct → district crosswalk |
 | RECORD 7.1 | Complete code list | Supplement table: every code, family, first and last date |
 | RECORD 12.1 | Data cleaning | Methods, *Outcome*; disposition filter (finding O1) in the plan |
@@ -904,7 +1006,7 @@ sensitivity grid; the audit register.
 | RECORD 12.3 | Linkage quality | Supplement: crosswalk validation against the dispatch data's own precinct field |
 | RECORD 13.1 | Selection of persons/units | The 59-district whitelist and the ≥5-dispatch rule, Methods |
 | RECORD 19.1 | Changing eligibility over time | Limitations 4 (code drift), Methods *Outcome* |
-| RECORD 22.1 | Access to protocol, data, code | The public repository: frozen pre-registration with git timestamps, provenance register with hashes, claims register, regression suite |
+| RECORD 22.1 | Access to protocol, data, code | The public repository: frozen pre-registration whose timestamps are git commits (internal; no externally timestamped deposit exists — Limitation 9), provenance register with hashes, claims register, regression suite |
 
 ---
 

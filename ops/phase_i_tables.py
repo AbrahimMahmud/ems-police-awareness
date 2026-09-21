@@ -169,9 +169,9 @@ concl = rdg[(rdg.stratum == "family") & (rdg.item == "conclusion_9_4")]["value"]
 lines += ["", f"*Conclusion under note §9.4 as amended: {concl}*", ""]
 
 # ---- Table C: placebos and denominator diagnostics -------------------------
-lines += [f"**Table 8b.3 — Falsification outcomes and the denominator diagnostic, per stratum (unadjusted randomization p; addendum §23.3–23.4){A_SYN}.** Cardiac and asthma cells at p ≤ 0.05 override the stratum's primary rejections; injury is reported but does not override (§23.4); the no-offset counts are the denominator diagnostic (§23.3).", "",
+lines += [f"**Table 8b.3 — Falsification outcomes and the denominator diagnostic, per stratum (unadjusted randomization p; addendum §23.3–23.4){A_SYN}.** Cardiac and asthma cells at p ≤ 0.05 override the stratum's primary rejections; injury is reported but does not override (§23.4); the no-offset counts are the denominator diagnostic (§23.3).", " The pooled rows are descriptive (23.1d): the override rule reads C1 and C2 only.",
           "| stratum | outcome | arm | episodes | first-week mean | RI p | asymptotic p |", "|---|---|---|---|---|---|---|"]
-for s in ("C1_clean", "C2_exposed"):
+for s in ("C1_clean", "C2_exposed", "pooled"):
     sl = STRATA[s]
     sub = res[(res.stratum == s) & (res.family.isin(["placebo", "diagnostic"]))]
     for r in sub.itertuples():
@@ -187,7 +187,7 @@ lines.append("")
 
 # ---- Table D: sensitivities -------------------------------------------------
 lines += [f"**Table 8b.4 — Pre-registered sensitivities, reported beside the primary and never substituted for it (note §9.5){A_SYN}.** "
-          "IDENTICAL means the arm's episode starts in that stratum equal the primary's, so no second p-value is printed (addendum §23.6).", "",
+          "IDENTICAL means the cell is the primary by construction — the branch's episode starts in that stratum equal the primary's, the stratum has no EDPM dispatch (C1, EDP without EDPM), or no episode window contains a coverage break (C2) — so no second p-value is printed (addendum §23.6); the sealed table's status column gives the reason per cell.", "",
           "| stratum | sensitivity | outcome | arm | episodes | first-week mean | RI p |", "|---|---|---|---|---|---|---|"]
 for s in ("C1_clean", "C2_exposed", "pooled"):
     sl = STRATA[s]
@@ -206,7 +206,7 @@ for s in ("C1_clean", "C2_exposed", "pooled"):
 lines.append("")
 
 # ---- Table E: pooled (descriptive) and the B-HEARD interaction (secondary) --
-lines += [f"**Table 8b.5 — The pooled stratum (descriptive, outside the family) and the two secondary arms, the B-HEARD interaction (C2) and the dose-response arm (asymptotic p only; note §10, addendum §9){A_SYN}.**", "",
+lines += [f"**Table 8b.5 — The pooled stratum (descriptive, outside the family) and the two secondary arms, the B-HEARD interaction (C2) and the dose-response arm (asymptotic p only; note §10, addendum §9){A_SYN}.** The reader applies rule 23.1e to the secondary arms in C1 and C2; the pooled dose-response rows are descriptive and are not read.", "",
           "| stratum | item | outcome | arm | episodes | coefficient | RI p | asymptotic p |", "|---|---|---|---|---|---|---|---|"]
 for r in res[(res.stratum == "pooled") & (res.family == "descriptive")].itertuples():
     w = where("pooled", r.spec, r.outcome, r.estimator)

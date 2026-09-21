@@ -138,13 +138,15 @@ were killed — is in neither basket.
 ## 4. The design, and why the data is split in two
 
 The data is split into two parts. The first was explored freely. Predictions were
-written down. The second was locked away and has not been looked at.
+written down. The second was locked away; the five recorded accesses to it before
+the lift are in §11.4 and CONFIRMATION_PLAN §15, and one of them informed a
+specification decision.
 
 | | Window | Status |
 |---|---|---|
 | **Discovery** | 2017-01-01 → 2020-12-31 | explored freely — this is the design working as intended |
-| **Confirmation C1 "clean"** | 2015-07-01 → 2016-12-31 **and** 2021-01-01 → 2021-05-31 | never examined before the lift of 2026-09-20 (then: the sealed run; and, for one gate run at the lift, three regression checks — F5) |
-| **Confirmation C2 "exposed"** | 2021-06-01 → 2024-12-31 | never examined before the lift of 2026-09-20 (same) |
+| **Confirmation C1 "clean"** | 2015-07-01 → 2016-12-31 **and** 2021-01-01 → 2021-05-31 | no outcome from it entered a model or test before the lift of 2026-09-20 except as incidents F1–F5 record (§11.4); then the sealed run |
+| **Confirmation C2 "exposed"** | 2021-06-01 → 2024-12-31 | same (F2's precinct-level EDPM comparison and F4's crosswalk count lie inside it) |
 
 **Why split at all.** A pattern found by looking at data is worth much less than a
 prediction that survives on data nobody has seen, because the first kind of

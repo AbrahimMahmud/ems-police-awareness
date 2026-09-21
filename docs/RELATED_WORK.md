@@ -265,7 +265,7 @@ Weitzel, K. J., Chew, R. F., Miller, A. B., Oppenheimer, C. W., Lowe, A., & Yaro
 
 Wu, H. H., Gallagher, R. J., Alshaabi, T., Adams, J. L., Minot, J. R., Arnold, M. V., Foucault Welles, B., Harp, R., Dodds, P. S., & Danforth, C. M. (2023). Say their names: resurgence in the collective attention toward Black victims of fatal police violence following the death of George Floyd. *PLOS ONE*, 18(1), e0279225.
 
-*An EMS-based crisis response model for mental health-related EMS calls: a quasi-experimental study.* (2026). *Psychiatric Services*. doi:10.1176/appi.ps.20250528.
+Kang, B., Lu, Y.-F., & Pang, J. (2026). *An EMS-based crisis response model for mental health-related EMS calls: a quasi-experimental study.* *Psychiatric Services*, 77(7), 616–622. doi:10.1176/appi.ps.20250528. Per its abstract (PubMed 41992109): EMS Incident Dispatch Data, January 2019–December 2024; 76 NYPD precincts, 31 adopting B-HEARD; staggered-adoption difference-in-differences on monthly precinct-level rates of nonviolent mental health-related EMS calls; heterogeneous, delayed reductions (about a year after adoption). Its call-type code list is not in the abstract; the RECORD 6.2 comparison waits on the article's methods.
 
 *Black emergency department visits for schizophrenia/psychosis following the police killing of George Floyd: an empirical test of "protest psychosis."* (2024). *SSM-Mental Health*.
 

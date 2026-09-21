@@ -113,7 +113,7 @@ ax.plot(irf["k"], irf["coef"], color=BLUE, lw=1.6, marker="o", ms=3)
 ax.text(-7.5, ax.get_ylim()[1] * 0.92, "leads\n(pre-trend check)", ha="center",
         fontsize=8, color=GRAY)
 ax.set_xlabel("Days relative to awareness (negative = awareness in the future)")
-ax.set_ylabel("Effect on narrow mental-health\ncall share (per log-point awareness)")
+ax.set_ylabel("Effect on narrow mental-health\ncall share (per SD of the attention index)")
 ax.set_title("Impulse response: awareness and the narrow mental-health call share\n"
              "(95% CI, SEs clustered by date)")
 save(fig, "fig2_irf_primary")
@@ -146,7 +146,9 @@ ax.set_title("Narrow mental-health call share by awareness window, discovery per
 save(fig, "fig3_windows")
 
 # ---------------------------------------------------------------------------
-# Figure 4: decomposition forest (days 3-5 window, alone)
+# Figure 4: decomposition forest (days 3-5 window, all five windows entered jointly —
+# the specification the paper's Results report; no p-values are printed, so that the
+# figure carries no number the claims register does not)
 # ---------------------------------------------------------------------------
 order = [("edp_share", "EDP (police co-response)"),
          ("altmen_share", "Other mental-health alerts"),
@@ -164,16 +166,12 @@ for y_pos, (col, label) in zip(ys, order):
     r = d35.loc[col]
     is_placebo = "placebo" in label
     color = GRAY if is_placebo else (VIOLET if "protest" in label else BLUE)
-    ax.errorbar(r["coef_alone"], y_pos, xerr=1.96 * r["se_alone"],
+    ax.errorbar(r["coef_joint"], y_pos, xerr=1.96 * r["se_joint"],
                 fmt="o", ms=6, lw=1.6, capsize=3, color=color)
-    if r["p_alone"] < 0.1:
-        ax.annotate(f"p={r['p_alone']:.3f}", xy=(r["coef_alone"], y_pos),
-                    xytext=(0, 7), textcoords="offset points", ha="center",
-                    fontsize=8, color=color)
 ax.set_yticks(ys, [label for _, label in order])
 ax.set_xlabel("Effect of awareness (days 3–5 window) on call-type share")
 ax.set_title("Outcome decomposition, days 3–5 window: effect of awareness by call type\n"
-             "(each outcome estimated separately; 95% CI, date-clustered)")
+             "(each outcome estimated separately, all five windows jointly; 95% CI, date-clustered)")
 save(fig, "fig4_decomposition")
 
 # ---------------------------------------------------------------------------

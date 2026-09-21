@@ -960,7 +960,7 @@ what actually moved was the unit the coefficient is denominated in.
 This is why the measure is standardised once, on a fixed reference window that
 contains no George Floyd, and never re-standardised inside a sample.
 
-### 5.3 The freeze incidents — **four**, all disclosed
+### 5.3 The freeze incidents — **five**, all disclosed
 
 **F1 (2026-09-10).** During an automated audit, an agent computed the citywide
 mental-health call share by year for 2005–2026, including confirmation years, in
@@ -1532,11 +1532,11 @@ not what was. A register full of prescriptions reads like a register full of
 completions, and whether anything had actually been fixed was recoverable only by
 reading the check suite and matching tags by eye.
 
-Each of the 159 findings now carries a status — `fixed`, `open`, or `unverified` —
+Each of the 164 findings now carries a status — `fixed`, `open`, or `unverified` —
 and the check that guards it asserts one direction only: **nothing may say
 `fixed` while a check tagged to it is not passing.** `unverified` means nothing
 checks it, which is a statement of work remaining and not a synonym for fine.
-Current state: **159 fixed, 0 open, 0 unverified**. P1, P5, RI3, P12 and P13 closed on 2026-09-13 at 20:56Z, when C1's 1,000-simulation certificate under the renamed scheme `circular_within_block_fw7` landed and `S.ri_scheme_certified` passed with every stratum certified under the scheme its geometry requires (§7.4). They had closed once that morning on the old scheme's certificates and reopened when the CP2 audit found the drawer had been snapping C1's two edge episodes onto consecutive placebo days (addendum §24); the corrected drawer's C1 null then failed uniformity at 200 simulations and calibrated at 1,000, so the addendum-§25 fallback written between those two verdicts is not invoked. A failing check is not evidence, and neither is a certificate for a null nobody draws from any more.
+Current state: **164 fixed, 0 open, 0 unverified**. P1, P5, RI3, P12 and P13 closed on 2026-09-13 at 20:56Z, when C1's 1,000-simulation certificate under the renamed scheme `circular_within_block_fw7` landed and `S.ri_scheme_certified` passed with every stratum certified under the scheme its geometry requires (§7.4). They had closed once that morning on the old scheme's certificates and reopened when the CP2 audit found the drawer had been snapping C1's two edge episodes onto consecutive placebo days (addendum §24); the corrected drawer's C1 null then failed uniformity at 200 simulations and calibrated at 1,000, so the addendum-§25 fallback written between those two verdicts is not invoked. A failing check is not evidence, and neither is a certificate for a null nobody draws from any more.
 
 Writing that check taught two things worth keeping, both of which are the same
 defect it exists to prevent, committed inside it:
@@ -1691,7 +1691,7 @@ significance. **That the two arms agree is worth stating**, because this project
 has been caught by the opposite: the 2020 "signature" that looked like a shift
 in composition existed only in the denominator and reversed when counts were
 modelled. Here it does not reverse. The estimates are stable across the 14-, 28-
-and post window 60 dayss as well, moving in the fourth decimal.
+and 60-day post windows as well, moving in the fourth decimal.
 
 **Read against the minimum effect of interest, −0.005**, the EDP share estimate
 is about a quarter of it and the narrow-MH estimate about a fifth. So the data
@@ -1785,7 +1785,9 @@ before it sealed at 2026-09-21 03:24:13Z — the original start, a resume after 
 a relaunch to raise the worker count, and after each of two kills of the worker pool by the memory cgroup on
 the pooled stratum's cells an automatic retry and a hand relaunch with fewer workers (four, then two, then
 three, then two workers) — each start a dated row of the tracked
-run log with its reason, the last reason carried in every row of the table (`overwrite_reason`); every cell
+run log (the hand relaunches carry the reason given at the time, the two automatic retries repeat the reason of the
+start they retried, the original start carries none), the last reason carried in every row of the table
+(`overwrite_reason`); every cell
 resumed from its identity-keyed ledger, so no number depends on the restarts. `34_confirmatory_reading.py`
 read the table once and sealed its reading.
 What follows is that reading, quoted, and the tables it was read from; every number is held to
@@ -1828,7 +1830,7 @@ What follows is that reading, quoted, and the tables it was read from; every num
 *Conclusion under note §9.4 as amended: THE PRE-SPECIFIED NULL (9.4 row 5): a bounded null in both strata, read by addendum 19 rule 2*
 
 **Table 8b.3 — Falsification outcomes and the denominator diagnostic, per stratum (unadjusted randomization p; addendum §23.3–23.4).** Cardiac and asthma cells at p ≤ 0.05 override the stratum's primary rejections; injury is reported but does not override (§23.4); the no-offset counts are the denominator diagnostic (§23.3).
-
+ The pooled rows are descriptive (23.1d): the override rule reads C1 and C2 only.
 | stratum | outcome | arm | episodes | first-week mean | RI p | asymptotic p |
 |---|---|---|---|---|---|---|
 | C1 | EDP count | count, no offset | 15 | −0.01180 | 0.0115 | 0.0004 |
@@ -1849,8 +1851,17 @@ What follows is that reading, quoted, and the tables it was read from; every num
 | C2 | injury count | count | 30 | −0.00124 | 0.2039 | 0.1796 |
 | C2 | asthma share | share | 30 | 0.00032 | 0.9630 | 0.9576 |
 | C2 | asthma count | count | 30 | 0.03192 | 0.9675 | 0.9670 |
+| pooled | EDP count | count, no offset | 45 | −0.00614 | 0.0215 | 0.0143 |
+| pooled | narrow MH count | count, no offset | 45 | −0.01184 | 0.0260 | 0.0086 |
+| pooled | total dispatches | count, no offset | 45 | −0.01215 | 0.5697 | 0.6621 |
+| pooled | cardiac share | share | 45 | 0.00122 | 0.5462 | 0.4826 |
+| pooled | cardiac count | count | 45 | 0.01105 | 0.7461 | 0.7106 |
+| pooled | injury share | share | 45 | −0.00018 | 0.0965 | 0.0998 |
+| pooled | injury count | count | 45 | −0.00196 | 0.1329 | 0.1460 |
+| pooled | asthma share | share | 45 | 0.00024 | 0.7016 | 0.6930 |
+| pooled | asthma count | count | 45 | 0.03191 | 0.9315 | 0.9163 |
 
-**Table 8b.4 — Pre-registered sensitivities, reported beside the primary and never substituted for it (note §9.5).** IDENTICAL means the arm's episode starts in that stratum equal the primary's, so no second p-value is printed (addendum §23.6).
+**Table 8b.4 — Pre-registered sensitivities, reported beside the primary and never substituted for it (note §9.5).** IDENTICAL means the cell is the primary by construction — the branch's episode starts in that stratum equal the primary's, the stratum has no EDPM dispatch (C1, EDP without EDPM), or no episode window contains a coverage break (C2) — so no second p-value is printed (addendum §23.6); the sealed table's status column gives the reason per cell.
 
 | stratum | sensitivity | outcome | arm | episodes | first-week mean | RI p |
 |---|---|---|---|---|---|---|
@@ -1972,7 +1983,7 @@ What follows is that reading, quoted, and the tables it was read from; every num
 | pooled | late B-HEARD bound | narrow MH share | share | 45 | −0.00077 | 0.2584 |
 | pooled | late B-HEARD bound | narrow MH count | count | 45 | 0.00157 | 0.1219 |
 
-**Table 8b.5 — The pooled stratum (descriptive, outside the family) and the two secondary arms, the B-HEARD interaction (C2) and the dose-response arm (asymptotic p only; note §10, addendum §9).**
+**Table 8b.5 — The pooled stratum (descriptive, outside the family) and the two secondary arms, the B-HEARD interaction (C2) and the dose-response arm (asymptotic p only; note §10, addendum §9).** The reader applies rule 23.1e to the secondary arms in C1 and C2; the pooled dose-response rows are descriptive and are not read.
 
 | stratum | item | outcome | arm | episodes | coefficient | RI p | asymptotic p |
 |---|---|---|---|---|---|---|---|
@@ -2048,7 +2059,7 @@ What follows is that reading, quoted, and the tables it was read from; every num
 12. **The discovery null is bounded, not empty — and the bound is wide.** §8
    reports no detectable movement in the mental-health share, and §7.5b now says
    how large an effect would have had to be before this design could have found
-   it: **1.9 times the minimum effect of interest on discovery, 2.5 on C1**, under
+   it: **1.9 times the minimum effect of interest on discovery, 2.3 on C1**, under
    a sustained level shift. "We did not detect it" therefore means "we could not
    have detected it unless it were roughly twice the size we said would matter, or
    unless it took a transient shape". That is a real statement and a weak one, and
