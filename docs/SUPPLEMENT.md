@@ -15,7 +15,7 @@ the tables; S5 the figures; S6 the record.*
 
 The confirmation strata were protected by a code-level freeze: every exploratory script draws its sample through
 one guard function pinned by name to the discovery window, the sealed confirmatory script alone derives its window
-from a single flag, and a regression suite of automated checks (92 at the time of writing) verifies that no other
+from a single flag, and a regression suite of automated checks (88 at the time of writing) verifies that no other
 script can read confirmation-period outcome values without passing through the guard. The hypotheses, the
 estimator, the primary inference, the calibration precondition, the sensitivity battery, the multiple-testing
 family and the rules for reading every possible result were committed to the repository in dated documents before
@@ -937,7 +937,7 @@ record-level linkage to any external dataset occurs.
 `docs/CONFIRMATION_PLAN.md` (frozen text; addendum §1–§30; summary table of deviations with a blindness column),
 `docs/PRE_ANALYSIS_NOTE.md` (hypotheses, the interpretation table §9.4, the ledger of what is and is not
 pre-specified), `docs/PAPER_MASTER.md` (the source document, including §5.3 on the incidents and §8b on the sealed
-result), `docs/AUDIT_FINDINGS.csv` (every audit finding with the check that holds its fix), `docs/CLAIMS_REGISTER.csv`
+result), `docs/CLAIMS_REGISTER.csv`
 (every result number), `docs/regression_baseline.csv` (the gate), `data/reference/freeze_access_log.csv` (declared
 accesses), `data/reference/confirmatory_run_log.csv` (every start and the seal). All at
-`https://github.com/abrahimmahmud/ems-police-awareness`, branch `analysis-rework`.
+`https://github.com/abrahimmahmud/ems-police-awareness`, branch `main`.

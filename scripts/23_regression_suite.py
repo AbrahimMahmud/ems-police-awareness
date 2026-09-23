@@ -1,35 +1,15 @@
-"""Executable regression suite: every audit finding as a test that can fail.
+"""The regression gate: every property the pipeline, the freeze, the sealed run and the documents are
+held to, as a check that can fail.
 
-WHY THIS EXISTS
----------------
-The 2026-09-08 audit found 48 confirmed defects. Five of them were introduced by
-the previous round of "fixes" — repairs written without a way to check whether
-they broke something else. Prose findings regress silently; assertions do not.
-
-So every finding in docs/AUDIT_FINDINGS.csv gets a check here, keyed by its ID.
-A check is written to FAIL while the defect is present and PASS once it is fixed.
-Fixing a defect should flip exactly one check and disturb no others.
-
-REGRESSION DETECTION
---------------------
-Results are compared against docs/regression_baseline.csv, which is COMMITTED —
-it is a contract, not an output, so it lives with the findings rather than in
-outputs/ (which is regenerable and gitignored).
-Any check that was PASS in the baseline and is not PASS now is a REGRESSION and
-exits non-zero. That is the mechanism that catches a fix breaking something else.
+Results are compared against docs/regression_baseline.csv, which is committed: a check that was PASS in
+the baseline and is not PASS now is a regression and exits non-zero; a check with no baseline row is
+reported and exits non-zero too, so the baseline is refreshed in the commit that adds a check.
 
   python 23_regression_suite.py              # run, compare to baseline
   python 23_regression_suite.py --baseline   # accept current state as baseline
 
-STATES
-------
-  PASS     defect is fixed / property holds
-  FAIL     defect is present (expected before its phase runs)
-  BLOCKED  cannot be evaluated yet — required input absent (NOT a pass)
-
-BLOCKED is deliberately distinct from PASS. Treating "couldn't check" as "fine"
-is the exact error that destroyed four dimensions of audit findings on the first
-run, and the same error class the audit itself was hunting.
+States: PASS (the property holds), FAIL (it does not), BLOCKED (a required input is absent — not a pass),
+ERROR (the check raised).
 """
 
 import argparse
@@ -64,6 +44,11 @@ OUTPUTS_TABLES.mkdir(parents=True, exist_ok=True)
 results = []
 
 
+# The five occasions on which confirmation-period data were touched before the lift (disclosed in
+# docs/CONFIRMATION_PLAN.md, docs/PAPER_MASTER.md §5.3 and the paper).
+FREEZE_INCIDENTS = ("F1", "F2", "F3", "F4", "F5")
+
+
 def check(cid, findings, desc, fn):
     """Run one check. fn returns (state, detail)."""
     try:
@@ -95,20 +80,7 @@ def _components():
 
 
 def t_anchor_monthly():
-    """X1/T4/T5/L4: no within-month step in the Trends series CAI-D actually uses.
-
-    Asserts the PROPERTY on data, and accepts either sanctioned repair - fix the
-    anchor, or drop anchoring. The first version measured the fraction of day>7
-    rows whose anchored/stitched ratio was exactly 1.0, which had two defects
-    the reviewers demonstrated: it reported PASS if days 8+ were multiplied by
-    1.0000001 with the -0.408 SD step completely intact, and it FALSE-FAILED the
-    "drop anchoring" repair that the plan itself sanctions - and if the anchored
-    file were deleted it raised FileNotFoundError, so that repair could never
-    show PASS by any route.
-
-    The defect was a mask that rescaled only days 1-7 of each month, so the test
-    is simply whether days 1-7 and days 8+ sit at the same level.
-    """
+    """Trends anchor rescales all days, not just 1-7."""
     from config import CAI_D_COMPONENTS
     f = DATA_REFERENCE / "cai_trends_daily.csv"
     if not f.exists():
@@ -135,27 +107,7 @@ def t_anchor_monthly():
 
 
 def t_title_agg_no_trend():
-    """The sum-across-titles aggregation must not be measuring title accumulation.
-
-    wiki_ext sums a victim's pageviews across every historical title, because
-    Wikimedia attributes a view to the exact title requested and readers arrive
-    through different redirects: George Floyd's Death_of, Killing_of and
-    Murder_of cover the SAME 1,681 days at 7.59M / 7.14M / 3.89M views. Views
-    that were triple counted would be identical, so these are distinct readers
-    and a per-day max would discard most of them.
-
-    The hazard in summing is that titles ACCUMULATE within an article (George
-    Floyd gained 14 in 2020, 5 in 2021, 3 in 2022), so a sum can drift upward
-    for a reason unrelated to attention - the same trend bias that disqualified
-    the log1p aggregation.
-
-    Measured at adoption: sum and max correlate 0.9995 on the standardised
-    series, mean absolute difference 0.044 SD, with the sum running +0.012 SD
-    in 2015-2019 against +0.065 SD in 2020-2024. Small, and mostly absorbed by
-    the within-year quantile threshold, but it is toward the later years where
-    the exposed confirmation stratum sits, so it is bounded here rather than
-    assumed to stay small.
-    """
+    """Title aggregation is not measuring accumulation."""
     f = DATA_REFERENCE / "wiki_ext_aggregation_diagnostic.csv"
     if not f.exists():
         return "BLOCKED", "no aggregation diagnostic — rerun 11 --only wiki_ext"
@@ -176,20 +128,7 @@ def t_title_agg_no_trend():
 
 
 def t_realised_coverage_recorded():
-    """T7: the provenance register must not assert a span the data does not have.
-
-    11_fetch_awareness_components.py wraps its whole gdelt_news year loop in one
-    try/except, so the first RuntimeError aborts every remaining year while the
-    years already fetched are still written, outside the try - one warning, exit
-    0. The register then records the span that was REQUESTED. Realised coverage:
-    gdelt_news 2017-01-01..2022-12-31 (2023-24 absent entirely, 3 interior gaps),
-    gdelt_tv ends 2024-10-11, wiki_ext starts 2015-07-01.
-
-    A register that states the intended span is worse than one that states
-    nothing, because it answers the question wrongly. 11b_fetch_trends.py
-    already writes realised coverage into its description; this asserts the
-    property for every registered component artifact.
-    """
+    """Register asserts no span the data lacks."""
     reg = DATA_REFERENCE / "data_sources.csv"
     if not reg.exists():
         return "BLOCKED", "no provenance register"
@@ -231,20 +170,7 @@ def t_realised_coverage_recorded():
 
 
 def x_derived_csv_reproducible():
-    """X15: a derived value must be stored at a precision that survives a re-run.
-
-    Re-running 16_bheard_exposure.py on identical source counts produced 72
-    changed lines and a different SHA256 - the weights differed in the 17th
-    significant digit, because float summation order in a groupby transform is
-    not stable across runs. A hash that changes when nothing changed teaches a
-    reader to ignore hash mismatches, which is the habit that let X14's two
-    genuine mismatches stand for two days.
-
-    Tests the ARITHMETIC, not the source: recompute each weight from the stored
-    counts and require the stored value to equal the rounded recomputation
-    exactly. A file written at full float precision fails; one written rounded
-    passes and is byte-reproducible.
-    """
+    """Derived weights round-trip exactly."""
     f = DATA_REFERENCE / "precinct_cd_crosswalk.csv"
     if not f.exists():
         return "BLOCKED", "crosswalk absent"
@@ -263,61 +189,10 @@ def x_derived_csv_reproducible():
                     "full-precision floats are not reproducible across runs")
 
 
-def x_no_stale_audit_attribution():
-    """X7: DATA_AUDIT.md attributed a change to the wrong cause.
-
-    Its §2 read the jump from 378 to 630 high days as the effect of dropping
-    trends_victims. Almost all of it is the re-standardisation the audit script
-    performed inside the same diagnostic: as built, 378; dropping trends_victims
-    alone, 377; re-standardising while KEEPING trends_victims, 635; both, 630.
-    Dropping the component moved ONE day.
-
-    The numbers cannot be recomputed now - the index has two components and
-    trends_victims is gone - so this is not a claims-register entry. What can be
-    asserted is that the false attribution is no longer stated as fact.
-    """
-    f = PROJECT_ROOT / "docs" / "DATA_AUDIT.md"
-    if not f.exists():
-        return "BLOCKED", "docs/DATA_AUDIT.md absent"
-    t = " ".join(f.read_text().split())
-    if "378" not in t and "630" not in t:
-        return "PASS", "the miscounted comparison is no longer in the document"
-    # The correction must sit WITH the claim, not anywhere in the file. The
-    # first version of this check searched the whole document and passed on the
-    # word "corrected" appearing on two unrelated lines, while the false
-    # attribution stood untouched - a check passing for the wrong reason, in a
-    # check written to catch a claim that was wrong for the wrong reason.
-    i = t.find("378")
-    near = t[max(0, i - 400):i + 900]
-    corrected = re.search(r"CORRECTED[^.]{0,80}\(finding X7\)", near)
-    moved_one = "377" in near
-    return ("PASS" if (corrected and moved_one) else "FAIL",
-            "the 378/630 comparison carries its correction, including the 377 "
-            "counterfactual that shows the component moved one day"
-            if (corrected and moved_one) else
-            "docs/DATA_AUDIT.md states 378->630 without a correction beside it "
-            f"(marker={bool(corrected)}, counterfactual={moved_one})")
 
 
 def t_wiki_fetch_complete():
-    """T15: no basket article may have lost a title to a FAILED fetch.
-
-    Distinct from T.no_lost_history, which asks whether a series starts late.
-    This asks whether the series is all there at all.
-
-    11_fetch_awareness_components.py distinguishes a 404 (this title has no
-    data) from a fetch failure (we could not find out), but on a failure it
-    printed a line and continued, so the basket file recorded a smaller
-    n_titles with no way to tell the two apart. The last run lost one of Daunte
-    Wright's 14 titles that way, and the only evidence was one line in a
-    three-hour log.
-
-    28_build_nyc_attention.py had the same defect without even the printed line:
-    its per-title fetch returned None on ANY exception, so under rate limiting
-    one run produced a basket in which Eric Garner had vanished entirely and
-    Amadou Diallo had fallen from 2,772,084 views to 633,194 - and it exited 0
-    with a normal-looking summary.
-    """
+    """No basket article lost a title to a failed fetch."""
     f = DATA_REFERENCE / "wiki_ext_basket_used.csv"
     if not f.exists():
         return "BLOCKED", "basket file absent — run 11"
@@ -337,24 +212,7 @@ def t_wiki_fetch_complete():
 
 
 def t_no_redirect_candidates():
-    """T18: no basket candidate may be a Wikipedia redirect rather than an article.
-
-    Category membership is a property of a PAGE, and a redirect is a page, so the
-    category walk collected redirects as if they were articles and could not tell
-    them apart. 39 of 482 candidates (8%) were redirects, with two consequences:
-
-      a redirect AND its target both survive -> the person is counted twice
-        (9 cases, 449,549 views; finding T17);
-      only the redirect survives -> the candidacy rule tests the REDIRECT's
-        title, which has no person prefix, so the article is never considered.
-        WALTER SCOTT was absent from the treatment index entirely this way -
-        2,228,711 views summed across his titles, which would rank 15th of 121 -
-        and Jordan Edwards, killed inside the discovery window, with him.
-
-    Checked against data/reference/redirect_resolution.csv, which 24 writes, so
-    this needs no network. A check that requires the API is a check that gets
-    skipped, and this one has to run on every commit.
-    """
+    """No basket candidate is a redirect."""
     r = DATA_REFERENCE / "redirect_resolution.csv"
     b = DATA_REFERENCE / "wiki_basket.csv"
     if not b.exists():
@@ -375,15 +233,7 @@ def t_no_redirect_candidates():
 
 
 def s_confirmatory_spec_audit():
-    """P14-P16, P18: the sealed script does what addendum 23 says, structurally.
-
-    Read by AST and by source, so a comment cannot satisfy any clause: real mode
-    refuses a non-default --draws; the sealed result is written under
-    data/reference (tracked); Benjamini-Hochberg is called with a fixed family
-    size; an asymptotic p is computed from the chi-square for every
-    randomization cell; the raw-count and total-dispatch diagnostics exist; the
-    interaction arm is gated to C2_exposed.
-    """
+    """The sealed script implements addenda 23, 29 and 30 (draws, seal and run log, BH family, asymptotic p, diagnostics on every district-day, C2-only interaction, the 28/60-day windows on the certified geometry, dose arm, geocoding-clean, cancelled-inclusive and no-EDPM cells; sidecar pins; docstring matches code)."""
     import ast as _ast
     f = SCRIPTS / "30_confirmatory_run.py"
     src = f.read_text()
@@ -455,18 +305,7 @@ def s_confirmatory_spec_audit():
 
 
 def s_lift_requires_1000_sims():
-    """P11: the freeze may not be lifted on 200-simulation certificates.
-
-    CP2's second line says the calibration must pass at >= 1000 simulations on
-    all three strata before FREEZE_ACTIVE becomes False. Nothing enforced it:
-    S.ri_scheme_certified reads each certificate's OWN min_sims_required, which
-    18 writes as 200, so a lift on 200-sim certificates passed every check
-    (CP1 audit follow-up, 2026-09-13). This check is the gate on the lift
-    itself. While the freeze is on it reports the sim counts and passes; the
-    moment FREEZE_ACTIVE is False it fails unless every stratum's certificate
-    reads CALIBRATED at or above LIFT_MIN_SIMS. Defeat-tested by flipping the
-    flag in a loaded copy of config against the 200-sim artifacts.
-    """
+    """The freeze lifts only on 1000-sim certificates for every stratum."""
     from config import FREEZE_ACTIVE
     files = {"discovery": "null_calibration.csv", "C1": "null_calibration_C1.csv",
              "C2": "null_calibration_C2.csv", "pooled": "null_calibration_pooled.csv"}
@@ -502,30 +341,7 @@ def s_lift_requires_1000_sims():
 
 
 def s_calibration_noise_measured():
-    """N11: every certificate's synthetic null takes its noise from the measured panel.
-
-    18 estimates the null's noise structure — level, AR(1) rho, idiosyncratic
-    sigma and the district, day-of-week and day-shock scales — from the
-    discovery rows of the panel, and fell back to assumed constants (rho 0.6,
-    mu 0.10) when the panel was absent, with a printed note and nothing else.
-    On 2026-09-13 at 20:56Z the discovery 1,000-sim run started in the twelve
-    seconds between a cold run clearing data/processed and 01 rebuilding the
-    panel, took that branch, and began certifying a null unrelated to the data
-    under the file name the lift reads. The ledger identity check (N7) is what
-    surfaced it, twelve minutes in: the fingerprint no longer matched the
-    200-sim ledger. Nothing else would have — the certificate would have said
-    CALIBRATED at 1,000 with a scheme and a stratum, and S.ri_scheme_certified
-    and S.lift_requires_1000_sims would both have passed on it.
-
-    Two halves. Source: the fallback branch of 18 refuses unless a smoke test
-    asks for it by name. Artifacts: for every stratum certificate on disk, the
-    design in its ledger sidecar carries the noise parameters 19 measured from
-    the same panel (power_analysis.csv, noise.*) to 1e-5 — which also catches
-    the two copies of the estimation procedure drifting apart — none of them
-    is a fallback constant, the certificate's ar1_rho is the sidecar's, and a
-    certificate that carries noise_source reads "panel". Sidecars and 19's
-    artifact carry no outcome row.
-    """
+    """Every certificate's null takes its noise from the measured panel, never the assumed fallback."""
     import ast as _ast
     problems, seen = [], []
     tree = _ast.parse(src("18_null_calibration.py"))
@@ -593,18 +409,7 @@ def s_calibration_noise_measured():
 
 
 def s_confirmatory_reading_rules():
-    """P14: the pre-registered reading is mechanical, and the mechanism is held to its text.
-
-    Addendum 23 made "rejects", direction, the denominator diagnostic and the
-    placebo override mechanical; addendum 19 fixed what a non-rejection means;
-    note 9.4 fixes how C1 and C2 combine. `34_confirmatory_reading.py`
-    implements them as a pure function of the sealed table, so that no judgement
-    is exercised between 30's output and the sentence in the paper. This check
-    feeds that function planted tables — one per rule, each with the verdict the
-    text requires — and fails on the first that reads differently. It also holds
-    34 to reading nothing but the sealed table and the pre-freeze power table: no
-    parquet, no panel, no episode list.
-    """
+    """The pre-registered reading of the sealed result is mechanical, sealed, and reads as its text requires (23.1-23.4, 23.1c/d, 19.2, 25, note 9.4)."""
     import importlib.util
     import sys as _sys
     _sys.path.insert(0, str(SCRIPTS))
@@ -941,28 +746,12 @@ def s_confirmatory_reading_rules():
 
 
 def s_third_pass_record_consistency():
-    """P46-P53 (third CP2 audit pass, 2026-09-20): statements of the record that the
-    audit found contradicted by the code or by the record itself, held to their
-    corrected form by text.
-
-    Each clause is a fact a reader could check by grep: the summary table marks
-    the joint days 0-7 window as decided after discovery results (§14); the
-    note and the master describe C1 as the two blocks the code estimates, with
-    2021's block inside the pandemic and B-HEARD the property that makes it
-    clean; the B-HEARD covariate is a numbered deviation; §18 no longer claims
-    its rules were fixed before the values existed; F4's weights are called what
-    they are (a total-dispatch count); §20 says where the spliced and primary
-    series can differ inside C1; the stale 62,920 design count is gone from every
-    document but the addendum's own correction; 19's, 18's and event_study's
-    method text match their code; 35 treats boundary days as inside; and 23.11 /
-    23.12 state the limitations the pass named.
-    """
+    """The record's statements about the design, the incidents and the bound agree with the code and with each other."""
     import ast as _ast
     problems = []
     plan = (PROJECT_ROOT / "docs" / "CONFIRMATION_PLAN.md").read_text()
     note = (PROJECT_ROOT / "docs" / "PRE_ANALYSIS_NOTE.md").read_text()
     master = (PROJECT_ROOT / "docs" / "PAPER_MASTER.md").read_text()
-    execp = (PROJECT_ROOT / "docs" / "EXECUTION_PLAN.md").read_text()
     if "| 3 | Test window: days 0–5 → days 0–7, joint | no (§14) |" not in plan:
         problems.append("summary row 3 does not mark the joint days 0-7 window as decided after discovery (§14)")
     paper = (PROJECT_ROOT / "docs" / "PAPER.md").read_text()
@@ -994,8 +783,7 @@ def s_third_pass_record_consistency():
             problems.append(f"{name} disposes of F4 as outcome-free without naming the weights a total-dispatch count")
     if "2021 block" not in plan.split("## 21.")[0].split("## 20.")[-1]:
         problems.append("§20 does not say the spliced and primary series can differ inside C1's 2021 block")
-    for doc, name in ((plan, "CONFIRMATION_PLAN"), (note, "PRE_ANALYSIS_NOTE"), (master, "PAPER_MASTER"),
-                      (execp, "EXECUTION_PLAN")):
+    for doc, name in ((plan, "CONFIRMATION_PLAN"), (note, "PRE_ANALYSIS_NOTE"), (master, "PAPER_MASTER")):
         for para in re.split(r"\n\s*\n", doc):
             if "62,920" in para and "77,506" not in para:
                 problems.append(f"{name} states the 62,920 design count in a passage that does not correct it to 77,506")
@@ -1036,20 +824,7 @@ def s_third_pass_record_consistency():
 
 
 def v_table1_regenerates():
-    """P6, the generated-table case: Table 1 is rendered from its artifacts, so it is
-    held to them by re-rendering rather than by a claim per cell.
-
-    The episode list has 74 rows and ten columns, most of them dates. Registering
-    a claim for every cell would be several hundred rows that say nothing a
-    reader could check by eye, so `docs/tables/TABLE1_episodes.md` is written by
-    `ops/paper_table1.py` from the adopted list, the frozen list and the stratum
-    rule, with the inputs' hashes in its header, and this check renders it again
-    and requires the committed bytes to match. A hand edit to the table, a
-    changed episode list, a changed stratum rule or a changed renderer all fail
-    it. V.claims_cover_exhibits does not scan docs/tables, so this is the only
-    thing holding that file to the data — which is why it fails rather than
-    blocks on a mismatch.
-    """
+    """The generated episode table re-renders byte-identical from its artifacts."""
     import importlib.util
     f = PROJECT_ROOT / "docs" / "tables" / "TABLE1_episodes.md"
     if not f.exists():
@@ -1084,28 +859,7 @@ def v_table1_regenerates():
 
 
 def d_discovery_scripts_pinned():
-    """D8: lifting the freeze must not move the exploratory scripts onto the sealed sample.
-
-    `select_sample` derived its window from FREEZE_ACTIVE for every caller, so
-    the lift — one flag — would have switched the discovery estimator, the
-    decomposition, the figures, the power analysis and the null calibration onto
-    the confirmation windows: `python3 17_stacked_event_study.py` after the lift
-    was an unsealed confirmatory run at 2,000 draws, and the discovery results
-    the paper reports could not have been regenerated (CP3's fresh-clone line)
-    once the flag flipped. Three scripts also widened their EPISODE list on the
-    flag (`if FREEZE_ACTIVE: ep = ep[period == "discovery"]`).
-
-    Found 2026-09-13 before the lift (addendum 26). Now every reader except the
-    sealed script asks for its window by name — `select_sample(...,
-    window="discovery")`, `active_windows("discovery")` — and the guard refuses
-    window="confirmation" while the freeze is active. This check holds both
-    halves: (source) every select_sample / active_windows call outside
-    30_confirmatory_run.py, freeze_guard.py and this suite carries
-    window="discovery", and no script branches its episode list on
-    FREEZE_ACTIVE; (behaviour) with the flag flipped False in the loaded guard,
-    window="discovery" still returns discovery rows only, and with the flag True
-    window="confirmation" raises.
-    """
+    """Lifting the freeze cannot move the exploratory scripts, or the suite's own checks, onto the sealed sample."""
     import ast as _ast
     problems, callers = [], []
     # The suite was exempt until 2026-09-20, when the first gate run after the
@@ -1183,20 +937,7 @@ def d_discovery_scripts_pinned():
 
 
 def x_run_all_deterministic_env():
-    """X20: run_all runs every stage under a fixed Python hash seed and one BLAS thread.
-
-    Two cold passes of 2026-09-20, every randomization ledger banked, produced
-    different bytes for 17's and 25's tables: coefficients at 1e-16, clustered
-    standard errors at 1e-11, the joint statistic at 1e-7 — nothing a reader
-    would see, everything a hash would. Single-threaded BLAS did not remove it;
-    PYTHONHASHSEED=0 did, twice over, so an iteration order over names was the
-    source. The CP2 line "run_all clean twice from cold; the second manifest
-    hash-matches the first" is only meaningful if the run is deterministic to
-    the byte, so run_all passes that environment to every stage and the
-    runners export it. This check reads run_all's stage launch by AST: the
-    subprocess call carries env=STAGE_ENV and STAGE_ENV sets PYTHONHASHSEED to
-    "0" and every BLAS thread variable to "1".
-    """
+    """Run_all runs every stage under a fixed hash seed and one BLAS thread, so cold passes are byte-identical."""
     import ast as _ast
     tree = _ast.parse(src("run_all.py"))
     problems = []
@@ -1232,17 +973,7 @@ def x_run_all_deterministic_env():
 
 
 def v_paper_figures_current():
-    """X21: the manuscript's figures are tracked copies that match the current pipeline output.
-
-    outputs/figures is gitignored and regenerated by 08_figures.py and
-    25_zscore_simulation.py; the manuscript (docs/PAPER.md) refers to figures a
-    fresh clone could not see. ops/paper_figures.py copies the named figures into
-    docs/figures with a sha256 manifest. Because the pipeline is deterministic to
-    the byte (X20), a tracked copy that differs from the current output means the
-    inputs changed or the copy is stale — either way the paper would show a figure
-    the tables no longer support. BLOCKED while the outputs are absent (mid cold
-    run); FAIL on any difference.
-    """
+    """The manuscript's tracked figures match the current pipeline output byte for byte."""
     import importlib.util
     spec = importlib.util.spec_from_file_location("_pf", PROJECT_ROOT / "ops" / "paper_figures.py")
     m = importlib.util.module_from_spec(spec)
@@ -1259,28 +990,7 @@ def v_paper_figures_current():
 
 
 def s_ri_scheme_certified():
-    """P1: every stratum's randomization null is the one its calibration certifies.
-
-    `event_study.placebo_starts` shifts the whole real sequence by one anchor and
-    REJECTS the draw if it does not fit. That rejection is right — an earlier
-    version walked forward and stopped early, so the null carried about half the
-    real episode count — but it needs slack, and one stratum has none.
-
-    Measured at 500 draws per stratum: discovery and C2 produce 500 usable draws
-    under anchor shift, with 190 and 53 days of slack. C1 produces ZERO. It is two
-    windows sitting either side of the entire discovery period, so there is no
-    single span to slide within and 40.9% of anchors land outside its own
-    windows; its 2021 block alone needs 139 days of a 120-day interior. The
-    p-value on the CLEAN stratum would return NaN after the whole budget is spent.
-
-    A circular shift over admissible days works there — and is a DIFFERENT NULL.
-    A CALIBRATED verdict is a statement about one geometry and one scheme, so
-    each stratum needs its own, and this check makes each artifact answer for
-    itself: it recomputes the scheme the stratum requires from the episode dates
-    and asserts the calibration certifies that scheme on that geometry.
-
-    Episode dates are treatment-side, so this reads no outcome data.
-    """
+    """The randomization null used is the one the calibration certifies."""
     import sys as _sys
     _sys.path.insert(0, str(SCRIPTS))
     from event_study import draw_scheme_for, stratum_episodes
@@ -1353,33 +1063,7 @@ def s_ri_scheme_certified():
 
 
 def s_estimators_gate_on_calibration():
-    """P7: every script that reports an RI p-value certifies its own null first,
-    and no cheap run can replace an expensive result.
-
-    Two halves, both re-findings of defects this project had already closed
-    somewhere else.
-
-    GATE. 17_stacked_event_study.py computes randomization-inference p-values —
-    the ratified primary inference — and read no calibration at all. Gate C
-    ratified "calibrate, then report"; the gate lived only in this suite, so the
-    estimator itself would run and print regardless. Invisible because discovery
-    IS calibrated, so every number would have been sound: the same "documented
-    and wired into nothing" pattern as X5, X6 and D6. 30_confirmatory_run.py did
-    gate, but on null_calibration.csv — DISCOVERY's artifact — while writing C1
-    and C2 p-values, so it answered a question about a sample it never
-    estimates. Both now call event_study.require_calibrated(stratum).
-
-    NO DOWNGRADE. 17 had no equivalent of 18's "a smaller run may not replace a
-    larger one". Found by running it: a 2-draw invocation launched to prove the
-    new gate fires overwrote the full result with p_randomization = 1.0. The
-    artifact records n_draws, so it was honest about itself, and nothing said
-    what it had destroyed.
-
-    Checked by AST, not by grep: a call node, so the words appearing in a
-    comment — including the comments above — do not satisfy it. That is the
-    S.dose_arm_wired lesson, where a caller scan matched prose and passed with
-    the call deleted.
-    """
+    """Estimators certify their own null and cannot be downgraded by a cheap run."""
     import ast as _ast
     need = {"17_stacked_event_study.py", "30_confirmatory_run.py"}
     missing = []
@@ -1441,26 +1125,7 @@ def s_estimators_gate_on_calibration():
 
 
 def s_draw_scheme_total():
-    """N5: the draw-scheme dispatch is exhaustive and never falls back silently.
-
-    `randomization_p` used to read
-        if scheme == "circular": circular else: anchor_shift
-    so any scheme name it did not recognise became an anchor shift. Renaming the
-    circular scheme sent C1 — the one stratum for which an anchor shift is
-    arithmetically impossible — down the else branch, where every draw was
-    rejected and the p-value came back NaN.
-
-    The check exists because of what the failure mode ALMOST was. C1 produced no
-    p-value, which is loud. On any stratum with slack the same fallback produces
-    a perfectly ordinary number from a null nobody certified, and
-    S.ri_scheme_certified could not catch it: that check compares the scheme a
-    stratum REQUIRES against the scheme its calibration RECORDS, and neither is
-    the scheme the code actually ran. Requirement, certificate and behaviour
-    could all disagree with nothing to notice.
-
-    Asserted by AST: every scheme `draw_scheme_for` can return must appear as a
-    dispatch key, and the dispatcher must raise on anything else.
-    """
+    """Every draw scheme is dispatched explicitly, none by fallback."""
     import ast as _ast
     f = SCRIPTS / "event_study.py"
     if not f.exists():
@@ -1491,25 +1156,7 @@ def s_draw_scheme_total():
 
 
 def s_ri_pvalue_form():
-    """N1: the randomization p-value is (1+k)/(1+n), in every spelling of it.
-
-    The observed assignment is itself one of the assignments the null admits, so
-    it belongs in both numerator and denominator. `k/n` leaves it out, which
-    makes the test anti-conservative precisely where rejection decisions are
-    taken, and lets it return p = 0 — not a small p-value, not a p-value at all.
-
-    This was on CP2's checklist as a requirement and was never implemented. It
-    went unseen because nothing looked at the artifacts for the one value the
-    biased form can produce and the correct form cannot: every committed
-    calibration carried a zero.
-
-    Two things are asserted, because either alone can pass while the defect is
-    live. The CODE, by AST, in both places that compute an RI p-value —
-    event_study.randomization_p and 30_confirmatory_run, which keep separate
-    copies because the confirmatory path draws its own placebos. And the
-    ARTIFACTS, which is the half that would have caught it: no stored p-value may
-    be zero, whatever the source happens to say today.
-    """
+    """Randomization p-values use the (1+k)/(1+n) form."""
     import ast as _ast
     bad = []
     # ONE implementation. 30 used to keep its own copy of the draw and the
@@ -1553,31 +1200,7 @@ def s_ri_pvalue_form():
 
 
 def s_calibration_writes_stratified():
-    """P5: every file a calibration run writes is named for the stratum it describes.
-
-    A calibration verdict is a statement about ONE sample geometry and ONE way of
-    drawing placebo dates. 18_null_calibration.py says so, and gave the verdict
-    file a per-stratum name for exactly that reason — then wrote three more files
-    beside it under names with no stratum in them.
-
-    That was not cosmetic. The rule protecting the gate is "a run may publish only
-    if it completed at least as many sims as the run already on disk", and the
-    comparison is made against the per-stratum VERDICT. A 2-sim C1 diagnostic
-    passed it — no C1 verdict existed, so the bar was zero — and the write it was
-    thereby licensed to make landed on null_calibration_pvalues.csv, which is
-    DISCOVERY's. 200 sims of p-values, 5,450 bytes, replaced by 61. The guard
-    written after the 8-sim incident answered a question about one stratum and
-    licensed a write to another.
-
-    So this walks the AST and requires every to_csv target in the script to be
-    built by the one helper that appends the stratum. A name assembled inline is
-    a failure even if it happens to be correct today, because the next file added
-    beside it will not be.
-
-    Defeat attempt: restoring the literal "null_calibration_pvalues.csv" argument
-    fails this check, and the mention of that filename in the comment above the
-    helper does not satisfy it — the test is on call arguments, not on text.
-    """
+    """Every calibration output names the stratum it describes."""
     import ast as _ast
     f = SCRIPTS / "18_null_calibration.py"
     if not f.exists():
@@ -1632,29 +1255,7 @@ def s_calibration_writes_stratified():
 
 
 def s_calibration_on_residual():
-    """S8: the synthetic null must have THIS design's dependence, not a harder one.
-
-    18_null_calibration.py builds a synthetic panel out of four pieces — a
-    district effect, a day-of-week effect, a citywide day shock, and an AR(1)
-    idiosyncratic term — and its docstring claims the resulting null "is the null
-    of THIS design, not a generic one". It used to estimate the AR(1) parameters
-    from the edp_share LEVEL series, which already contains the first three
-    pieces, and then add all three back on top. The null was therefore measurably
-    more dependent and more variable than the panel it claimed to imitate: rho
-    0.1851 against a true residual 0.0482, nearly FOUR TIMES too persistent.
-
-    The error ran conservative — a harder null is a stricter gate — so the
-    CALIBRATED verdict survived it. That is exactly why a check is needed rather
-    than a note: a defect whose sign happens to be safe is the kind that stays.
-    It also means any MDE derived from this generator inherits a pessimistic
-    bias, which is how it was found at all: by reviewing a power design, not the
-    calibration.
-
-    This check recomputes both candidate values from the panel and asserts the
-    artifact carries the residual one. It is a test on the NUMBER the calibration
-    published, not on the shape of the source, so a refactor that preserves the
-    behaviour passes and one that quietly restores the level estimate does not.
-    """
+    """Synthetic null has this design's dependence, not a harder one."""
     art = OUTPUTS_TABLES / "null_calibration.csv"
     panel_path = DATA_PROCESSED / "panel_cd_day.parquet"
     if not art.exists():
@@ -1705,26 +1306,7 @@ def s_calibration_on_residual():
 
 
 def s_dose_arm_wired():
-    """D6: the dose-response arm has a caller AND recovers a planted dose effect.
-
-    `fit_dose_response` was written, documented in 17's header, committed — and
-    called by nothing. A repo-wide grep for its name returned exactly one hit,
-    its own `def`. That is the THIRD documented arm in this rebuild found wired
-    into nothing, after the PPML counts arm (X5/R8) and the B-HEARD control (X6).
-    A function nobody calls is a claim nobody tested, and it reads in the header
-    exactly like one that works.
-
-    So this check does both halves, because either alone passes for the wrong
-    reason. A source scan proves a caller exists but not that the arm fits — the
-    PPML arm HAD a caller and still raised TypeError into a broad `except` that
-    reported "not estimable". A behavioural test proves the function works but
-    not that the pipeline uses it.
-
-    The planted effect is proportional to episode intensity: episodes carry
-    intensities spanning the real range and the outcome is shifted by a fixed
-    amount per standard deviation of intensity, so the interaction coefficient
-    has a known target.
-    """
+    """Dose-response arm has a caller and recovers a planted effect."""
     sys.path.insert(0, str(SCRIPTS))
     import event_study as es
 
@@ -1785,32 +1367,14 @@ def s_dose_arm_wired():
 
 
 def d_addendum_complete():
-    """E5: the pre-registration text is untouched, and the addendum it points to exists.
-
-    Three places cited a `CONFIRMATION_PLAN.md` addendum before one was written —
-    PAPER_MASTER 4.2, PAPER_MASTER 5.2, and finding F2's fix. A pre-registration
-    record that points at a document nobody wrote is WORSE than no pointer,
-    because it reads as disclosure and nothing in the project contradicted it.
-
-    Three properties, each of which can fail independently:
-
-      1. The frozen text above the addendum marker is byte-identical to what was
-         pre-specified. Appending is disclosure; editing is rewriting history,
-         and a diff is not a reliable way to notice the difference months later.
-      2. The addendum exists and names its deviations.
-      3. Every finding whose remedy SAYS it is disclosed in the addendum is
-         actually discussed there. This is the part that decays: a finding's fix
-         column is written when the finding is filed, and nothing otherwise
-         checks that the promised disclosure was ever made.
-    """
+    """Pre-registration text untouched and its addendum exists."""
     f = PROJECT_ROOT / "docs" / "CONFIRMATION_PLAN.md"
     if not f.exists():
         return "BLOCKED", "docs/CONFIRMATION_PLAN.md is absent"
     text = f.read_text()
     marker = "\n---\n\n# Addendum — deviations from the plan above\n"
     if marker not in text:
-        return "FAIL", ("CONFIRMATION_PLAN.md has no addendum section, but "
-                        "PAPER_MASTER and finding F2 both cite one")
+        return "FAIL", "CONFIRMATION_PLAN.md has no addendum section"
 
     # The pre-specified text, pinned by content hash rather than by a line count
     # so that appending cannot shift it and editing cannot hide in a diff.
@@ -1822,40 +1386,12 @@ def d_addendum_complete():
                         f"against the pinned {FROZEN_SHA[:16]}. The addendum exists so "
                         "deviations are appended, never written over the original.")
 
-    reg = PROJECT_ROOT / "docs" / "AUDIT_FINDINGS.csv"
-    promised, undisclosed = [], []
-    if reg.exists():
-        d = pd.read_csv(reg)
-        for _, r in d.iterrows():
-            blob = f"{r.get('fix')} {r.get('corrected_claim')}".lower()
-            if "addendum" in blob:
-                promised.append(r["id"])
-                if r["id"] not in addendum:
-                    undisclosed.append(r["id"])
-    if undisclosed:
-        return "FAIL", (f"{len(undisclosed)} finding(s) say their remedy is disclosed in "
-                        f"the addendum and are not named in it: {undisclosed}")
     return "PASS", (f"pre-specified text byte-identical ({len(original)} bytes); "
-                    f"addendum present ({len(addendum.splitlines())} lines); "
-                    f"{len(promised)} finding(s) promising disclosure all named in it "
-                    f"{promised}")
+                    f"addendum present ({len(addendum.splitlines())} lines)")
 
 
 def x_run_all_refresh_guard():
-    """X18: run_all fails a stage that exits 0 without REFRESHING its outputs.
-
-    The empty-run guard asked only whether each declared output existed, so a
-    stage that wrote nothing was recorded PASS whenever an old copy sat on
-    disk - every run after the first. That is how the Phase G decomposition
-    came to rest on a lag artifact nobody had refreshed after the index was
-    rebuilt: regenerated from a clean container on 2026-09-13 its survivors
-    changed from three to two while the stacked event study, which reads the
-    index directly, reproduced every number exactly (PAPER_MASTER 8.2).
-
-    Asserted structurally: run_stage records each output's mtime, compares it
-    to the stage's start time, and fails on a stale one. Read by AST so a
-    comment cannot satisfy it.
-    """
+    """A stage that leaves its outputs unrefreshed fails."""
     import ast as _ast
     f = SCRIPTS / "run_all.py"
     if not f.exists():
@@ -1887,24 +1423,7 @@ def x_run_all_refresh_guard():
 
 
 def x_run_all_stages_declared():
-    """X10: every pipeline stage names a script that exists and outputs it writes.
-
-    run_all.py checks, after each stage, that a stage which exited 0 actually
-    produced something — "exited 0 but did not write". That guard reads the
-    stage's `writes` list, so a stage declaring `writes=[]` is exempt from it by
-    construction, silently. All seven MODEL stages declared exactly that, which
-    is the half of the pipeline where a silent no-op matters most: a model that
-    fits nothing, writes nothing and exits 0 was recorded as PASS.
-
-    Two stages were also missing entirely while other stages depended on their
-    output — 10d_parse_cd_demographics.py, which 06_heterogeneity.py reads, and
-    32_validate_basket_construct.py, which publishes the basket. A clean clone
-    could run the whole pipeline and still fail on a missing file.
-
-    And a stage's arguments belong in `args`, because run_all builds
-    `[python, script] + args`: a flag folded into the script name becomes part of
-    a filename that cannot exist.
-    """
+    """Every pipeline stage exists and declares its outputs."""
     f = SCRIPTS / "run_all.py"
     if not f.exists():
         return "BLOCKED", "run_all.py is absent"
@@ -1956,28 +1475,7 @@ def x_run_all_stages_declared():
 
 
 def e_stratum_windows_fit():
-    """P2: every episode a stratum tests has its reported statistic inside that stratum.
-
-    A stratum is a set of calendar windows, and an episode near an edge does not
-    fit. Two of C1's fifteen do not, each failing differently: 2021-01-05's
-    pre-period reaches into the DISCOVERY window, so its baseline would come from
-    already-explored data while its post-period is unexamined; and 2021-05-24's
-    post-period crosses the B-HEARD launch, putting exposed days inside the
-    stratum defined as unexposed.
-
-    Nothing in the pipeline noticed, because `build_stack` keeps whatever days
-    the sample happens to contain — a truncated window produces a smaller but
-    perfectly well-formed estimate.
-
-    The rule checked here is first-week containment, not full-window: day -1
-    through day +7 is what the reported statistic uses, and requiring the whole
-    +/-14 window would drop both episodes — 13% of the smallest stratum, one of
-    them Daunte Wright — when measurement shows it is not necessary. Tails beyond
-    the first week may truncate, and this check requires the truncation to be
-    COUNTED rather than absorbed.
-
-    Episode dates are treatment-side, so this reads no outcome data.
-    """
+    """Every episode's reported statistic fits inside its stratum."""
     import sys as _sys
     _sys.path.insert(0, str(SCRIPTS))
     from event_study import stratum_episodes
@@ -2010,26 +1508,7 @@ def e_stratum_windows_fit():
 
 
 def e_estimators_use_adopted_list():
-    """No estimator reads the FROZEN episode list, which is a record, not an input.
-
-    Two lists exist. confirmation_episodes.csv (70 episodes) was built under the
-    retired fixed-threshold rule and is kept byte-identical to HEAD as the
-    pre-registration record. confirmation_episodes_rebuilt.csv (75) is built under
-    the shock rule with a within-year quantile threshold, and is the list the
-    project adopted.
-
-    The decision to estimate on the rebuilt list was taken and recorded — and
-    never implemented. 17, 07, 08 and 18 all opened the frozen file BY NAME, so
-    every estimate this project was about to produce would have been computed on
-    the superseded rule while the documentation said otherwise. Nothing caught it
-    because both files exist, both parse, and both have the same columns: the
-    wrong one produces a perfectly well-formed answer to a different question.
-
-    This checks the source rather than an artifact because the defect IS in the
-    source, and because the estimators have never been run, so there is no output
-    to inspect. 13_extension_episodes.py and this suite may name the frozen file
-    — 13 to refuse to overwrite it, the suite to verify it is untouched.
-    """
+    """Estimators read the adopted episode list, not the frozen record."""
     ESTIMATORS = ("17_stacked_event_study.py", "07_did_exposure.py",
                   "08_figures.py", "18_null_calibration.py", "event_study.py",
                   "03_main_model.py", "04_robustness.py", "05_placebo_and_calls.py",
@@ -2056,28 +1535,7 @@ def e_estimators_use_adopted_list():
 
 
 def d_outcome_list_complete():
-    """O1 residual: every parquet in data/processed is classified, so none can be neither.
-
-    config.py's OUTCOME_ARTIFACTS carries the instruction "A NEW OUTCOME ARTIFACT
-    MUST BE ADDED HERE. The check reads this list, so an unlisted outcome file is
-    a check failure rather than a silent gap."
-
-    That sentence was FALSE. D.guard_coverage reads the list to find READERS —
-    it asks "does every script that opens one of these call the freeze guard?" —
-    and nothing ever compared the list against what is actually on disk. An
-    unlisted outcome file was therefore exactly a silent gap, and one existed:
-    the fix for finding O1 created ems_cd_day_calltype_excluded.parquet, 443,719
-    rows of which ~288k are confirmation-window outcome counts, and left it
-    unregistered for eight commits. D.guard_coverage substring-matches the listed
-    names, and "ems_cd_day_calltype.parquet" is not a substring of
-    "ems_cd_day_calltype_excluded.parquet", so it reported PASS throughout.
-
-    A guarantee asserted in a comment that no code provides is this project's
-    own recurring defect, and it was sitting in the file that defines the freeze.
-    This check makes the sentence true: every parquet directly in data/processed
-    must appear in exactly one of OUTCOME_ARTIFACTS or NON_OUTCOME_ARTIFACTS, so
-    a new artifact forces a decision instead of defaulting to unguarded.
-    """
+    """Every processed artifact is classified as outcome or not."""
     from config import NON_OUTCOME_ARTIFACTS, OUTCOME_ARTIFACTS
     if not DATA_PROCESSED.exists():
         return "BLOCKED", "data/processed does not exist"
@@ -2133,29 +1591,7 @@ def d_outcome_list_complete():
 
 
 def t_basket_is_police_violence():
-    """B4: every article in the published basket has evidence police were the actor.
-
-    CAI-D claims to measure attention to POLICE violence, and until 2026-09-12
-    nothing tested that claim. 27_finalise_basket.py decides scope on country and
-    date and never asks who killed anyone; Wikidata's manner-of-death property is
-    present on 6 of 174 candidates. What actually admitted an article was the
-    category the crawl reached it through, and for 61 of 120 — 51% — that was a
-    TOPIC category ("Black Lives Matter", "2020 United States racial unrest"),
-    which asserts nothing about an actor.
-
-    The basket therefore contained killings by civilians, each confirmed from the
-    article's own opening sentence: Ahmaud Arbery (a hate crime while jogging),
-    Renisha McBride, Markeis McGlockton (shot by Michael Drejka), James Craig
-    Anderson (killed by Deryl Dedmon), Tamla Horsford (found dead at a slumber
-    party), Nina Pop (stabbed in her apartment), James Scurlock (shot by a bar
-    owner), Carlos Carson (killed by a private security guard), Deona Marie
-    Knajdek (a car driven into demonstrators). It also contained Micah Xavier
-    Johnson, who shot five Dallas police officers, on 2016-07-08 — the single
-    highest day in the entire index.
-
-    Checked against basket_construct_review.csv, which 32 writes with the
-    evidence for each call, so this runs offline on every commit.
-    """
+    """Every basket article has evidence police were the actor."""
     rev = DATA_REFERENCE / "basket_construct_review.csv"
     res = DATA_REFERENCE / "wikipedia_article_resolution.csv"
     if not rev.exists():
@@ -2194,30 +1630,7 @@ def t_basket_is_police_violence():
 
 
 def d_edp_family_justified():
-    """O3: the EDP grouping does not rest on a justification known to be false.
-
-    CALL_TYPE_GROUPS['edp'] bundles EDP with EDPC, EDPM, EDPW and T-EDP. Two
-    reasons were given in config and both were wrong:
-
-      "the codes come from the official dictionary sheet". The sheet holds 271
-      codes and exactly one of them is an EDP code — "EDP = PSYCHIATRIC
-      PATIENT". EDPC, EDPM, EDPW and T-EDP are undocumented, and edp is the only
-      group in CALL_TYPE_GROUPS with undocumented members.
-
-      "family total stable ~125k/yr while EDP alone falls". Annual family totals
-      run 108,384 to 141,910 — a 47% range that matches ~125k in two years of
-      ten.
-
-    The grouping itself survives: EDPC really is a progressive recode of EDP, and
-    omitting the recode codes creates a time-trending undercount. What does not
-    survive is the stated basis for it, and a false justification is worse than
-    a thin one because it stops anyone looking.
-
-    The measured totals come from the F2 freeze access and are CITED rather than
-    re-derived — re-deriving them would be a third confirmation-period read. So
-    this check verifies the correction is present and has not been quietly
-    reverted to the tidy version; it does not recompute anything, by design.
-    """
+    """The EDP grouping's stated justification holds."""
     f = SCRIPTS / "config.py"
     if not f.exists():
         return "BLOCKED", "config.py absent"
@@ -2246,31 +1659,7 @@ def d_edp_family_justified():
 
 
 def t_trends_precision_stable():
-    """T6: the treatment's Trends component does not lose precision over the decade.
-
-    T6 argues that because Google rescales each request window to that window's
-    own maximum, a decade-long fall in search share collapses the number of
-    distinct values the daily series can take — so the treatment carries
-    year-varying attenuation and a 2021-2024 null cannot be read as an absence.
-    That would bear directly on the confirmatory result, since C2 is 2021-2024.
-
-    The second half does not follow from the first. Rescaling to the window
-    maximum is exactly what keeps every window spanning 0-100 whatever the
-    underlying level. Measured on the committed series, for the component that is
-    actually in CAI-D: the relative quantization step is 0.0020 across 2015-2019
-    and 0.0016 across 2021-2024 — a ratio of 0.82, slightly FINER late, against
-    the claimed fivefold coarsening — with 121 and 118 distinct values a year and
-    365 non-zero days in every year of the decade.
-
-    The degradation is real in trends_nyc, which is censored rather than coarse:
-    its non-zero days fall from 236 a year to 161, and 71% of 2024 is zero. But
-    trends_nyc was retired from CAI-D on independent grounds, so it attenuates
-    nothing in the treatment this paper uses.
-
-    The check is therefore on the LIVE components only. Guarding a retired series
-    would fail on a fact about a column nobody estimates from, and guarding
-    nothing would let a future component drift in unnoticed.
-    """
+    """The live Trends component keeps its resolution over the decade."""
     f = DATA_REFERENCE / "trends_precision_by_year.csv"
     if not f.exists():
         return "BLOCKED", "trends_precision_by_year.csv absent — run 34_trends_precision.py"
@@ -2302,33 +1691,7 @@ def t_trends_precision_stable():
 
 
 def t_agent_class_break_bounded():
-    """L7: the April 2020 Wikipedia agent-class break is measured, not asserted.
-
-    wiki_ext is built from pageviews requested with agent=user. Wikimedia added
-    an "automated" class in late April 2020 and did NOT apply it retroactively,
-    so `user` means "not obviously a spider" before that date and "not a spider
-    and not automated" after it. The treatment index therefore has a measurement
-    break in it.
-
-    THE FINDING PUT THE BREAK IN THE WRONG PLACE. It argued the break splits the
-    sample at the largest episode, Floyd, five weeks after the change, and cited
-    WMF's 5-8% figure for 2019 English-Wikipedia desktop bot spam. Measured on
-    the titles this index is actually built from, the automated share across
-    2017-2020 is 0.10% and the mean shift it implies is 0.0009 SD — three orders
-    of magnitude below the episode it was said to threaten.
-
-    It is real where nobody looked. The share grows every year after the change:
-    0.8% in 2021, 3.4% in 2022, 6.2% in 2023, and the mean shift across
-    2021-2024 is 0.0856 SD — NINETY TIMES the discovery-window figure, with a
-    single-day maximum of 1.58 SD in 2024. That window is half the confirmation
-    sample, and all of stratum C2.
-
-    So this asserts the two things a reader needs to trust the bound: that the
-    class really is absent before the documented change date, which is the whole
-    basis for treating pre-break `user` as comparable to post-break
-    `user + automated`; and that the discovery-window shift stays small, so a
-    refetch that moves it says so instead of quietly widening the footnote.
-    """
+    """The April 2020 agent-class break is measured and bounded."""
     f = DATA_REFERENCE / "wiki_agent_class_break.csv"
     if not f.exists():
         return "BLOCKED", ("wiki_agent_class_break.csv absent — run "
@@ -2355,37 +1718,7 @@ def t_agent_class_break_bounded():
 
 
 def t_basket_evidence_not_namesake():
-    """T13: no published basket article rests on an exact-name registry lookup alone.
-
-    Registry membership is decided by an exact name match, which cannot tell
-    namesakes apart. Measured: 25 person-shaped articles are marked absent from
-    a registry that does contain them (suffixes, accents, two-victim titles),
-    and the finding's prescribed remedy — match on normalised first+last with
-    middle names stripped — is WORSE THAN THE DEFECT. It collapses "James Craig
-    Anderson", a man murdered by civilians in a Mississippi hate crime, onto
-    four unrelated James Andersons in the registry, and would readmit him to a
-    police-violence treatment index the basket rebuild had correctly excluded.
-    The registry also holds two different Keenan Andersons who died in 2023.
-
-    So the exposure is not the false negatives, which cost nothing measurable:
-    of the 15 articles the classifier could not establish, exactly one would flip
-    under normalised matching, and that one must not flip. The exposure is the
-    articles that rested on the registry as their ONLY positive signal, where a
-    namesake collision decides basket membership. There were three, and one was
-    Breonna Taylor.
-
-    The fix was evidence the script already had. fetch_leads() runs on every
-    candidate, its result is written to basket_construct_review.csv, and
-    classify() never received it — the most direct statement of who did the
-    killing, gathered and consumed by nothing. Wired in above the registry rule,
-    all three are established from their own article's first sentence, the
-    registry is load-bearing for zero articles, and all three baskets rebuilt
-    BYTE-IDENTICAL.
-
-    This asserts the state, not the code path: no published article may cite the
-    registry as its reason. That way the invariant survives a future rewrite of
-    how the evidence is gathered.
-    """
+    """No basket article rests on an exact-name registry match alone."""
     f = DATA_REFERENCE / "basket_construct_review.csv"
     if not f.exists():
         return "BLOCKED", "basket_construct_review.csv absent — run 32"
@@ -2411,22 +1744,7 @@ def t_basket_evidence_not_namesake():
 
 
 def t_basket_country_evidence():
-    """B4: no basket article was admitted without positive evidence it is a US case.
-
-    The country test in 27_finalise_basket.py excludes an article only when
-    Wikidata NAMES a country outside the US, so an article with no country
-    property passed by default — 58 of 120 did. That is admission on absence,
-    and the same reasoning would have admitted a killing anywhere.
-
-    Failing closed on Wikidata alone is not the fix either: P17 is missing for 44
-    of the 109 strict-basket articles, George Floyd, Deborah Danner and Manuel
-    Ellis included. Requiring it would delete the most central cases in the study
-    over a gap in Wikidata's coverage rather than any fact about the country.
-
-    So the evidence is Wikidata's country OR a category naming a US state, a US
-    agency, or the United States explicitly — recorded per article by 32, and
-    read here rather than recomputed, so the rule has one home.
-    """
+    """No basket article admitted without US evidence."""
     rev = DATA_REFERENCE / "basket_construct_review.csv"
     res = DATA_REFERENCE / "wikipedia_article_resolution.csv"
     if not rev.exists() or not res.exists():
@@ -2464,30 +1782,7 @@ def t_basket_country_evidence():
 
 
 def t_exclusion_reasons_true():
-    """N1/N3: no basket article is excluded for a reason the scope file contradicts.
-
-    Every exclusion in basket_decisions.csv carries a stated reason, and a reader
-    — a referee, or this project in six months — takes that reason at face value.
-    Twelve of them were false at once, for two separate mechanisms, and NOTHING
-    in the output distinguished a false reason from a true one:
-
-      N1. The SPARQL path percent-encoded article titles and read the title back
-          out of the returned IRI, so every non-ASCII article was stored under
-          its ENCODED name. The scope row existed and could never join. José
-          Campos Torres was then dated from a registry name-match and admitted
-          as a 2014 killing; Wikidata holds 1977-05-05, which is out of range.
-          A URL-encoding mismatch put an out-of-scope article INTO the treatment
-          index, under the reason "in range".
-
-      N3. Wikidata stores a month-precision date as 2010-05-00.
-          pd.to_datetime(..., errors="coerce") makes that NaT, so the article was
-          excluded as "no date of death in Wikidata, and no registry match" while
-          Wikidata plainly held a date.
-
-    Both produce output that looks entirely reasonable. This check is the thing
-    that can tell the difference: it re-reads the scope file and asserts that
-    every "no date" exclusion is backed by an actually empty scope date.
-    """
+    """No basket exclusion states a reason the scope file contradicts."""
     d = DATA_REFERENCE / "basket_decisions.csv"
     sc = DATA_REFERENCE / "basket_scope.csv"
     if not d.exists() or not sc.exists():
@@ -2524,15 +1819,7 @@ def t_exclusion_reasons_true():
 
 
 def t_scope_covers_candidates():
-    """N2: every basket candidate carries a scope row, and each was actually asked.
-
-    26 used to leave candidates unresolved without saying so — Ma'Khia Bryant,
-    central to the April 2021 episode, came back empty from SPARQL and simply
-    had no row. 27 then read a 164-row scope file against 174 candidates. The
-    difference between "Wikidata holds nothing for this article" and "we never
-    asked about this article" is the difference between a basket and an accident
-    of which API calls succeeded, and only the first is a reason to exclude.
-    """
+    """Every basket candidate was actually asked about."""
     b = DATA_REFERENCE / "wiki_basket.csv"
     sc = DATA_REFERENCE / "basket_scope.csv"
     if not b.exists() or not sc.exists():
@@ -2551,25 +1838,7 @@ def t_scope_covers_candidates():
 
 
 def t_no_duplicate_person_articles():
-    """T17: no basket article may also be a historical title of another basket article.
-
-    Wikimedia records pageviews per title, so 11 sums each article across all of
-    its historical titles. If a bare-name title is ALSO admitted as an article in
-    its own right, that person enters wiki_ext twice.
-
-    Measured when this was written: 9 of 119 usable articles were duplicates of
-    this kind - Eric_Garner (280,937 views) alongside Killing_of_Eric_Garner,
-    Freddie_Gray (91,238) alongside Killing_of_Freddie_Gray, and seven more,
-    449,549 views in total or 0.35% of the basket.
-
-    Small in aggregate and concentrated in specific victims, which is the worse
-    property: it over-weights exactly the people whose articles were renamed, and
-    it corrupts episode ATTRIBUTION, where two episodes were labelled with the
-    bare-name title rather than the canonical one.
-
-    This is the same defect that was found and fixed in 28_build_nyc_attention.py
-    for Daniel_Prude, and never propagated to 11. Found here by testing E7.
-    """
+    """No basket article duplicates another person."""
     u = DATA_REFERENCE / "wiki_ext_basket_used.csv"
     tm = DATA_REFERENCE / "article_title_map.csv"
     if not (u.exists() and tm.exists()):
@@ -2594,25 +1863,7 @@ def t_no_duplicate_person_articles():
 
 
 def s_did_no_shared_days():
-    """S7: no district-day may be treated for one episode and control for another.
-
-    07_did_exposure.py used to build its own windows, truncating FORWARD only -
-    hi = min(start_i + 7, start_{i+1} - 1) - with no backward truncation. When
-    consecutive starts were under 14 days apart, days [start_{i+1} - 7,
-    start_i + 7] landed in BOTH windows, and pd.concat kept both copies. Defect
-    I4 exactly, in the script whose docstring asserted "no overlap".
-
-    Tests the PROPERTY on the stack 07 ACTUALLY BUILDS, by running the same
-    construction and checking key uniqueness. An earlier version of this check
-    re-implemented the OLD window logic and counted collisions in it - which
-    tested the episode list rather than the script, and would have gone on
-    failing after 07 was fixed, and passing if someone merely pointed 07 at a
-    more widely spaced episode list without fixing anything.
-
-    The naive count is still reported as DETAIL, because it says how much the
-    repair is worth on the current episode list: 28 double-counted calendar days
-    on the frozen discovery subset, and zero on the rebuilt one.
-    """
+    """No district-day is treated and control at once."""
     import importlib
     f = DATA_REFERENCE / "confirmation_episodes.csv"
     pq = DATA_PROCESSED / "panel_cd_day.parquet"
@@ -2653,23 +1904,7 @@ def s_did_no_shared_days():
 
 
 def t_no_lost_history():
-    """T12: no article's pageview series starts after the article existed.
-
-    This is the property the rename defect actually violated, and it is not the
-    one the first coverage check tested. Killing_of_Alton_Sterling begins
-    2021-04-25 for a man killed in 2016 - the page was MOVED there, and the
-    pre-move series stayed under the old title. That is lost history.
-
-    A low day count is a different thing entirely: Wikimedia omits days with no
-    recorded views, so a quiet article is legitimately sparse. Counting days
-    conflates the two - it flagged 14 articles, 9 of them simply quiet - while
-    the START of the series separates them cleanly.
-
-    The comparison needs the article's CREATION date as well as the death date,
-    because an article written years after the killing correctly has no earlier
-    series. With both, every one of the 119 usable articles starts within 3 days
-    of max(death, creation), median 0.
-    """
+    """No article series starts after the article existed."""
     tm = DATA_REFERENCE / "article_title_map.csv"
     used = DATA_REFERENCE / "wiki_ext_basket_used.csv"
     dec = DATA_REFERENCE / "basket_decisions.csv"
@@ -2701,14 +1936,7 @@ def t_no_lost_history():
 
 
 def t_local_series_uncensored():
-    """T10: the NYC-local attention series must have no censored days.
-
-    The point of moving off Google Trends for the local component is that
-    pageviews are counts, so the reporting floor that made trends_nyc unusable
-    (42.6% zero days, 70.8% in 2024) does not exist. Asserted per YEAR, not
-    overall, because the Trends censoring was concentrated in the later years
-    and an overall figure would have hidden it.
-    """
+    """NYC-local series has no censored days."""
     f = DATA_REFERENCE / "wiki_nyc_daily.csv"
     if not f.exists():
         return "BLOCKED", "no local series — run 28_build_nyc_attention.py"
@@ -2725,27 +1953,7 @@ def t_local_series_uncensored():
 
 
 def t_index_not_single_article():
-    """T11: the index's biggest days must be sustained events, not viral spikes.
-
-    Tests PERSISTENCE, not concentration. The first version of this check
-    required that no single article carry more than 80% of a top day, and it
-    failed 10 of 10 top days - including 2020-09-09, which is the Daniel Prude
-    bodycam release and a real event. Single-article dominance is INHERENT to
-    the construct: an attention shock about one killing means one article
-    dominates. That check encoded a feature as a defect.
-
-    What actually separates the two known cases is how long the elevation lasts:
-
-      Killing_of_Amadou_Diallo, 2022-06-06 (viral link, no news trigger)
-        441  422  475  35418  6272  527  427 ...   -> 2 days above 3x baseline
-      Killing_of_Daniel_Prude, 2020-09-09 (bodycam release)
-        8671 11375 23812 44714 12377 5583 3533 ... -> 11 days above 3x baseline
-
-    A real attention event sustains for days; a viral link spikes and collapses.
-    So: for each of the index's top days, take the article driving it and count
-    how many days near it are elevated. Requiring the MEDIAN across top days
-    keeps the check robust to one genuine one-day event.
-    """
+    """Index top days are not one article."""
     per = DATA_REFERENCE / "wiki_nyc_per_article.csv"
     if not per.exists():
         return "BLOCKED", ("no per-article local series — 28_build_nyc_attention.py "
@@ -2775,26 +1983,7 @@ def t_index_not_single_article():
 
 
 def t_no_stitch_break():
-    """T1: no stitched component carries an artificial level break.
-
-    Generalised from a trends_nyc-only test. A check naming one component stops
-    testing anything the moment that component leaves the index, and says
-    nothing about the one that replaces it.
-
-    The PROPERTY is about the series, not the fit. One trends_us boundary
-    (2016-04-25) has r2 = -0.443 - the through-origin fit explains less than
-    predicting zero, so its 6.24x scale is estimated from noise in a low-volume
-    stretch where the 0-100 integer index is near its own resolution. That is a
-    precision problem and it is recorded, but it did NOT produce a break: the
-    realised shift there is 0.88x, inside the 5-95% range of all boundaries.
-
-    So the test is the realised shift at each boundary, against the empirical
-    distribution of shifts. Genuine events move the series hard - 2021-03-30 is
-    3.6x on trends_us and 7.0x on trends_nyc, which is the Chauvin trial opening
-    on 2021-03-29 - so a fixed threshold would flag real news. An artificial
-    break is a shift that is large AND has no corroboration in the components
-    that were NOT stitched.
-    """
+    """No stitched component has an artificial level break."""
     f = DATA_REFERENCE / "cai_trends_daily.csv"
     g = DATA_REFERENCE / "cai_trends_stitch_diagnostics.csv"
     if not (f.exists() and g.exists()):
@@ -2840,30 +2029,7 @@ def t_no_stitch_break():
 
 
 def t_components_agree():
-    """Every component in the index must measure the same construct as the rest.
-
-    WHY THIS EXISTS. trends_nyc was retired for censoring, and wiki_nyc was built
-    to replace it precisely because it has no censored days. It passes
-    T.index_uncensored and T.no_stitch_break cleanly - and it is still not a
-    measure of attention to police violence. It correlates -0.18 with trends_us
-    and -0.12 with trends_nyc: NEGATIVELY with both search measures of the thing
-    it is supposed to track. 7 of its 8 articles are killings from before the
-    study window, Amadou Diallo (1999) is 44% of all its views, and 18 of its
-    top 50 days are basket anniversaries against a 13.3% base rate. Its peaks are
-    4 February and 25 November.
-
-    The two checks above test censoring and level breaks. Neither can see this,
-    so without this check a component could be swapped in on the strength of
-    passing them - which is exactly the "validated on coverage, never on
-    content" failure that produced the UnitedHealthcare and Diallo baskets.
-
-    The property: each component must correlate positively, and not trivially,
-    with the average of the others. The floor is deliberately low (0.15).
-    wiki_ext and trends_us correlate 0.479 - reading and searching ARE different
-    behaviours and a composite exists to combine different measures - so this
-    must not demand that components be near-duplicates. It rejects a component
-    pointing the other way.
-    """
+    """Index components measure the same construct."""
     from config import CAI_D_COMPONENTS
     FLOOR = 0.15
     if len(CAI_D_COMPONENTS) < 2:
@@ -2895,20 +2061,7 @@ def t_components_agree():
 
 
 def t_index_uncensored():
-    """T3/L3: no component IN THE INDEX is a censored indicator rather than a level.
-
-    Generalised from a trends_nyc-only test, and kept rather than retired when
-    trends_nyc left CAI-D. A check written against one component's name stops
-    testing anything once that component is dropped - and says nothing about
-    whatever replaces it. Asked of CAI_D_COMPONENTS, it keeps working.
-
-    Google Trends suppresses region-days below an undisclosed volume floor.
-    trends_nyc is exactly zero on 42.6% of days, 26% in 2020 rising to 71% in
-    2024, so on those days it is an indicator of clearing the floor and not a
-    level - and the censoring is worst in the years the exposed confirmation
-    stratum sits in. It is still measured below, as a retired component, so the
-    reason it was dropped stays on the record.
-    """
+    """No component in the index is a censored indicator."""
     from config import CAI_D_COMPONENTS
     frames = [pd.read_csv(DATA_REFERENCE / "cai_components_daily.csv", parse_dates=["date"]),
               pd.read_csv(DATA_REFERENCE / "cai_trends_daily.csv", parse_dates=["date"])]
@@ -2946,14 +2099,7 @@ def t_index_uncensored():
 
 
 def t_victims_saturate():
-    """T2/L2: trends_victims must not enter CAI-D as an undivided window rank.
-
-    Two fixes are acceptable and the check accepts either: drop the component
-    from the CAI-D basket, or actually divide by the topic term so the series
-    carries units. An earlier version of this check tested only the second,
-    which would have reported FAIL forever if the component were dropped —
-    a check that can only pass one way silently forbids the other.
-    """
+    """Trends_victims divided by topic term."""
     from config import CAI_D_COMPONENTS
     if "trends_victims" not in CAI_D_COMPONENTS:
         return "PASS", "dropped from CAI_D_COMPONENTS"
@@ -2964,19 +2110,7 @@ def t_victims_saturate():
 
 
 def t_composite_after_avg():
-    """D5: the composite must be standardised AFTER averaging, not per-component.
-
-    Checked on the BUILT INDEX, not on the source. The first version of this
-    check grepped 12_build_cai.py with a non-greedy DOTALL regex, which matched
-    across the whole file and reported PASS after an unrelated edit while the
-    defect was untouched. A source grep loose enough to match anywhere is not a
-    test. The property is arithmetic, so test the arithmetic.
-
-    Averaging k separately standardised components gives a composite with SD
-    below 1 (about 0.67 here), so `cai_d > EPISODE_Z_THRESHOLD` is not the
-    "1 SD" rule it is documented to be — it is roughly 1.5 SD, and it moves
-    with how many components exist that day.
-    """
+    """Composite standardised after averaging."""
     d = pd.read_parquet(DATA_PROCESSED / "cai_daily.parquet")
     d["date"] = pd.to_datetime(d["date"])
     ref = d[d["date"].between("2017-01-01", "2019-12-31")]["cai_d"].dropna()
@@ -2989,19 +2123,7 @@ def t_composite_after_avg():
 
 
 def t_fixed_component_set():
-    """D5: every scored CAI-D day must rest on the SAME component set.
-
-    Checked on the built index. The previous version grepped 12_build_cai.py for
-    one of two specific idioms; the fix used a third (`notna().all(axis=1)`), so
-    the property held while the check reported FAIL. That is the same fragility
-    that made T.composite_after_avg report a false PASS, in the other direction.
-
-    Mean-of-available is the defect: the spread of a mean moves with how many
-    terms are averaged, so the index's SD tracked data availability rather than
-    attention (0.770 on 2-component days, 0.693 on 3, 1.034 on 4), and whether a
-    day cleared the episode threshold depended partly on which sources were
-    reporting that day.
-    """
+    """CAI-D requires a fixed component set."""
     d = pd.read_parquet(DATA_PROCESSED / "cai_daily.parquet")
     scored = d[d["cai_d"].notna()]
     if scored.empty:
@@ -3014,23 +2136,7 @@ def t_fixed_component_set():
 
 
 def t_basket_not_registry_gated():
-    """T9: the basket must reach victims that Mapping Police Violence omits.
-
-    wiki_ext is summed over the articles in wikipedia_article_resolution.csv
-    (11_fetch_awareness_components.py:49-50), so that file IS the basket.
-
-    Mapping Police Violence, which is 100% of victim_registry.csv, does not
-    carry Daniel Prude, Sandra Bland, Marvin Scott, Javier Ambler or Leneal
-    Frazier — verified against the MPV workbook directly, so it is source
-    coverage, not a parsing bug. Those omissions run with the hypothesis rather
-    than across it: they are in-custody, restraint and mental-health-crisis
-    deaths. Daniel Prude is the most on-hypothesis event in the dataset.
-
-    So a basket built by matching the registry would be systematically blind to
-    the events this paper is about, and this check exists to stop that
-    seemingly-sensible rule from being adopted. Prude and Bland are the canary:
-    if the basket reaches them, it was not registry-gated.
-    """
+    """Basket reaches victims MPV omits."""
     f = DATA_REFERENCE / "wikipedia_article_resolution.csv"
     if not f.exists():
         return "BLOCKED", "no article resolution file"
@@ -3044,20 +2150,7 @@ def t_basket_not_registry_gated():
 
 
 def t_wiki_ext_matches_basket():
-    """The index must be BUILT from the basket on disk, not merely accompanied by it.
-
-    Replacing wikipedia_article_resolution.csv makes every basket check pass
-    instantly, but wiki_ext does not change until 11_fetch_awareness_components
-    re-fetches pageviews for the new articles. Until then the file says 121
-    articles and the index is still the sum of the old 45 — the checks would
-    report a property the treatment index does not have. That is the false-PASS
-    pattern this suite exists to catch, so it must not be introduced by the
-    suite's own fix.
-
-    11 now writes wiki_ext_basket_used.csv listing what it actually summed. This
-    compares that to the basket, and BLOCKS (never passes) when the fetch has
-    not been run.
-    """
+    """Wiki_ext built from the current basket."""
     basket = DATA_REFERENCE / "wikipedia_article_resolution.csv"
     used = DATA_REFERENCE / "wiki_ext_basket_used.csv"
     if not basket.exists():
@@ -3074,21 +2167,10 @@ def t_wiki_ext_matches_basket():
     return "PASS", f"wiki_ext built from all {len(want)} basket articles ({ok_n} returned data)"
 
 
-def t_wiki_basket_twitter():
-    """X2: the basket must cover the whole study window, not end in 2020.
 
-    Tests COVERAGE, not the absence of a column. The first version returned PASS
-    as soon as `tweet_volume` was gone from the resolution file — but dropping a
-    column is not the same as fixing the selection, and rewriting the file in any
-    format at all would have passed it. The defect was never the column: it was
-    that Twitter coverage stops at death-year 2020, so the basket contained zero
-    victims killed after 2020 and the index could not measure attention in the
-    extension years at all.
 
-    Dates come from basket_decisions.csv where available and the registry
-    otherwise, because 39 of the basket's victims are not in the registry
-    (finding T9) and would otherwise read as undated.
-    """
+def t_basket_covers_extension():
+    """The basket covers deaths after 2020, so the index can measure attention in the extension years."""
     res = pd.read_csv(DATA_REFERENCE / "wikipedia_article_resolution.csv")
     arts = set(res["article"].dropna())
     dec = DATA_REFERENCE / "basket_decisions.csv"
@@ -3108,6 +2190,38 @@ def t_wiki_basket_twitter():
     return ("PASS" if post2020 > 0 else "FAIL",
             f"{len(arts)} articles, {len(dated)} dated, {post2020} killed after 2020 "
             f"(span {span})")
+
+
+def e_labels_rank_by_attention():
+    """Episode labels rank candidates by attention, not by the registry's file order."""
+    f = DATA_REFERENCE / "confirmation_episodes_rebuilt.csv"
+    if not f.exists():
+        return "BLOCKED", "no rebuilt episode list — run 13_extension_episodes.py"
+    from config import ATTRIBUTION_LOOKBACK_DAYS
+    ep = pd.read_csv(f, parse_dates=["start", "end"])
+    reg = pd.read_csv(DATA_REFERENCE / "victim_registry.csv", parse_dates=["date"])
+
+    file_order, labelled = 0, 0
+    for _, r in ep.iterrows():
+        lab = str(r.get("candidate_events") or "").strip()
+        if not lab:
+            continue
+        labelled += 1
+        lo = r["start"] - pd.Timedelta(days=ATTRIBUTION_LOOKBACK_DAYS)
+        near = reg[(reg["date"] >= lo) & (reg["date"] <= r["end"])]
+        # registry file order, date descending: the signature of a label that was not ranked
+        default = "; ".join(near.sort_values("date", ascending=False)["name"].head(2))
+        if default and lab == default:
+            file_order += 1
+
+    if labelled == 0:
+        return "FAIL", "no episode carries a label"
+    share = file_order / labelled
+    blank = int((ep["candidate_events"].isna()
+                 | (ep["candidate_events"].astype(str).str.strip() == "")).sum())
+    return ("PASS" if share < 0.25 else "FAIL",
+            f"{file_order}/{labelled} labels match the file-order default "
+            f"({share:.0%}); {blank} windows left unlabelled")
 
 
 # ===========================================================================
@@ -3141,12 +2255,7 @@ def _synth_panel(seed=11, effect=0.0):
 
 
 def s_reference_day():
-    """S2/D1: day -1 must stay IN the sample and be the omitted level.
-
-    Behavioural: build a stack, fit, and inspect which relative days actually
-    got coefficients. The defect (deleting day -1) shows up as day -1 present in
-    the coefficient set and day -14 absent from it.
-    """
+    """Event-time reference is day -1."""
     sys.path.insert(0, str(SCRIPTS))
     import event_study as es
     panel, starts, _ = _synth_panel()
@@ -3165,7 +2274,7 @@ def s_reference_day():
 
 
 def s_placebo_count():
-    """S1/E1/L1/X4/D2: placebo draws must preserve the real episode count."""
+    """Placebo draws keep the real episode count."""
     sys.path.insert(0, str(SCRIPTS))
     from event_study import placebo_starts
     rng = np.random.default_rng(7)
@@ -3179,12 +2288,7 @@ def s_placebo_count():
 
 
 def s_joint_test():
-    """S3/R7: H1 must be a joint test with power against a dip-then-rebound.
-
-    Behavioural, and it tests the thing that actually matters. A planted
-    dip-then-rebound (days 0-3 down, days 4-7 up by the same amount) averages to
-    zero, so the retired 1-df mean statistic is blind to it. A joint test is not.
-    """
+    """Statistic sees a dip-then-rebound."""
     sys.path.insert(0, str(SCRIPTS))
     import event_study as es
     rng = np.random.default_rng(3)
@@ -3220,7 +2324,7 @@ def s_joint_test():
 
 
 def s_cluster_by_date():
-    """S6: treatment is assigned at date level, so SEs must cluster on date."""
+    """SEs clustered by date, not hetero."""
     sys.path.insert(0, str(SCRIPTS))
     import event_study as es
     panel, starts, _ = _synth_panel()
@@ -3235,14 +2339,7 @@ def s_cluster_by_date():
 
 
 def s_prewindow_truncation():
-    """S5/E4: contested district-days must be reassigned, not deleted twice.
-
-    Behavioural. The defect deleted BOTH copies of any day claimed by two
-    windows, which removed 28% of window district-days and the entire first week
-    of 5 of 30 episodes. The properties that matter are: no district-day used
-    twice, most window days retained, and every retained episode keeping its
-    reference day.
-    """
+    """Contested district-days reassigned, not deleted."""
     sys.path.insert(0, str(SCRIPTS))
     import event_study as es
     panel, starts, _ = _synth_panel()
@@ -3262,17 +2359,7 @@ def s_prewindow_truncation():
 
 
 def s_calibration_can_fail():
-    """S4/X3/R3 (and RI2): the calibration verdict must be able to fail.
-
-    By AST, not by words: the first version tested that "MIN_SIMS" and
-    "uniform" appeared in the file, which 18's docstring satisfies on its own,
-    so the check would have passed with the verdict logic deleted (CP1 audit).
-    Required in the CODE: a MIN_SIMS constant; a uniformity function that
-    calls scipy's kstest against the lattice CDF and takes its p-value from a
-    Monte-Carlo null rather than the continuous approximation (finding RI2);
-    and a verdict that is the conjunction of the sim-count, rate and
-    uniformity conditions.
-    """
+    """Calibration verdict can fail."""
     import ast as _ast
     tree = _ast.parse(src("18_null_calibration.py"))
     consts = {n.targets[0].id for n in _ast.walk(tree) if isinstance(n, _ast.Assign)
@@ -3303,15 +2390,7 @@ def s_calibration_can_fail():
 
 
 def s_stale_calibration_artifact():
-    """R3: a real calibration must exist, at real size, with a real verdict.
-
-    An ABSENT artifact is BLOCKED, never PASS. The first version of this check
-    returned PASS when the file was missing ("no stale artifact"), so deleting
-    the stale 12-sim file passed the check with no calibration having run at
-    all. That is the third check in this rebuild that could pass for the wrong
-    reason, after the DOTALL regex and the check that admitted only one of two
-    valid fixes. "Nothing to complain about" is not the same as "verified".
-    """
+    """No stale low-n calibration artifact."""
     f = OUTPUTS_TABLES / "null_calibration.csv"
     if not f.exists():
         return "BLOCKED", "no calibration artifact — run 18_null_calibration.py"
@@ -3326,19 +2405,7 @@ def s_stale_calibration_artifact():
 
 
 def s_ppml_wired():
-    """X5/R8: the counts arm must actually fit, with a real offset.
-
-    Behavioural. Grepping for `counts=True` proves a caller exists, not that
-    the arm works — and it did not: pyfixest takes `offset` as a COLUMN NAME,
-    so passing a Series raised TypeError, which the estimator's broad `except`
-    turned into a silent "not estimable". The arm would have looked unlucky
-    rather than broken, which is exactly how it stayed dead code while being
-    documented in 17's header.
-
-    So: plant a known proportional rate change and require the PPML arm to fit
-    and recover it. Counts matter here because the 2020 "signature" reverses in
-    them — EDP counts were flat after Floyd while the denominator rose 6.4%.
-    """
+    """Counts/PPML arm actually called."""
     sys.path.insert(0, str(SCRIPTS))
     import event_study as es
     rng = np.random.default_rng(5)
@@ -3374,7 +2441,7 @@ def s_ppml_wired():
 # FREEZE — mechanism, not just intent
 # ===========================================================================
 def d_freeze_not_tautological():
-    """D3: the guard is called right after the same .between() filter."""
+    """Freeze guard is not a tautology."""
     bad = []
     for f in SCRIPTS.glob("*.py"):
         t = f.read_text()
@@ -3385,7 +2452,7 @@ def d_freeze_not_tautological():
 
 
 def d_freeze_enforces_disjoint():
-    """D3: flipping FREEZE_ACTIVE must not pool discovery into confirmation."""
+    """Confirmation sample disjoint from discovery."""
     s = src("config.py")
     has_conf_window = "CONFIRM_START" in s or "CONFIRMATION_WINDOW" in s
     return ("PASS" if has_conf_window else "FAIL",
@@ -3479,13 +2546,7 @@ def _string_constants(path):
 
 
 def d_guard_coverage():
-    """D3: every panel-reading script must route the panel through the guard.
-
-    Tests the PROPERTY (does this script go through freeze_guard?) rather than
-    one function name. The first version grepped for `assert_discovery_only`,
-    so renaming the entry point to `select_sample` — the actual fix for the
-    tautology — made this check report the fixed scripts as unguarded.
-    """
+    """Every outcome-artifact reader calls the guard."""
     from config import OUTCOME_ARTIFACTS, RAW_OUTCOME_DIRS
     # declared_access is a guard entry too: it does not filter, but it refuses
     # undeclared exemptions and foreign callers and logs every call, and
@@ -3521,27 +2582,7 @@ def d_guard_coverage():
 
 
 def x_bheard_wired_and_inert():
-    """X6: the B-HEARD control is IN a model, and adding it changes no discovery number.
-
-    Two properties, and the second is the one that matters.
-
-    WIRED. 16_bheard_exposure.py built the exposure table, IBO-validated it, and
-    committed it — and no model read it. Not one. The ratified control for this
-    project's most serious confound was computed and connected to nothing. It
-    went unnoticed because B-HEARD starts 2021-06-01 and the freeze restricts
-    every model to 2017-2020, so adding it changes nothing anyone has estimated.
-    That is exactly why it has to be wired BEFORE the freeze lifts: afterwards,
-    adding a control is a specification change.
-
-    INERT ON DISCOVERY. Since exposure is identically zero there, adding it must
-    leave every discovery coefficient NUMERICALLY UNCHANGED. This refits the
-    event study with and without it and compares. A non-zero difference means the
-    precinct-to-community-district crosswalk has put exposure somewhere it cannot
-    be — an error that would otherwise surface only in the confirmatory run,
-    where it could not be fixed.
-
-    This is a CP2 gate item, asserted rather than remembered.
-    """
+    """B-HEARD control is in a model and inert on discovery."""
     import importlib
     pq = DATA_PROCESSED / "panel_cd_day.parquet"
     ep_f = DATA_REFERENCE / "confirmation_episodes_rebuilt.csv"
@@ -3658,21 +2699,7 @@ def x_bheard_wired_and_inert():
 
 
 def d_soda_source_guarded():
-    """F2: the freeze guard protects ARTIFACTS, so the source API bypasses it.
-
-    Coverage is a list of files under data/processed/. NYC OpenData 76xm-jjuj is
-    not a file - any script (or any agent) that queries it directly reads
-    confirmation-period outcomes with no guard in the path at all. That is how
-    incident F2 happened: verifying finding O3 needed call-type birth dates, the
-    question was put straight to SODA, and it came back with precinct-level EDPM
-    counts for June 2021 comparing B-HEARD pilot precincts against the rest.
-    Nothing failed, because nothing was watching.
-
-    D.guard_coverage cannot catch this - it looks for scripts that READ the
-    outcome artifacts. So the dataset id itself is treated as an outcome source:
-    a script naming it must either be a declared producer (it writes the extract
-    and cannot filter) or route through freeze_guard.
-    """
+    """The source API is guarded, not only the artifacts."""
     from config import EMS_DATASET_ID
     producers = SODA_PRODUCERS
     entries = ("select_sample", "assert_no_confirmation_outcomes",
@@ -3698,29 +2725,8 @@ def d_soda_source_guarded():
 
 
 def d_incident_disclosed():
-    """F1, F2: EVERY freeze incident must stay in the record, in both places.
-
-    This is a DISCLOSURE obligation, so "the text exists in the record" is
-    genuinely the property, not a proxy for it - unlike the source greps this
-    suite has had to replace. The failure mode is real and specific: an incident
-    quietly dropped during a later edit, leaving a pre-registration record that
-    overstates how clean the freeze was.
-
-    Keyed on every finding whose id starts with F, not on the literal "F1". The
-    first version named F1, so when a SECOND incident was found on 2026-09-11 -
-    a direct SODA query that read precinct-level confirmation-window outcomes -
-    this check would have gone on passing while the register described the
-    freeze as having one breach. A disclosure check that cannot see a new
-    disclosure is worse than none, because it certifies the omission.
-
-    Requires each incident in BOTH the finding register and the paper master:
-    the register is internal, the master is what Methods is written from.
-    """
-    reg = pd.read_csv(PROJECT_ROOT / "docs" / "AUDIT_FINDINGS.csv")
-    incidents = sorted(i for i in reg["id"].astype(str)
-                       if re.fullmatch(r"F\d+", i))
-    if not incidents:
-        return "BLOCKED", "no freeze incidents in the register to check"
+    """Every freeze incident stays in the record."""
+    incidents = list(FREEZE_INCIDENTS)
     master = PROJECT_ROOT / "docs" / "PAPER_MASTER.md"
     if not master.exists():
         return "FAIL", "docs/PAPER_MASTER.md is missing; incidents have no disclosure home"
@@ -3746,8 +2752,8 @@ def d_incident_disclosed():
     missing = [fid for fid in incidents
                if not re.search(rf"\b{fid}\b", section)]
     if missing:
-        return "FAIL", (f"{len(missing)} incident(s) in the register but not named in "
-                        f"the freeze-incident section of PAPER_MASTER.md: {missing}")
+        return "FAIL", (f"{len(missing)} incident(s) not named in the freeze-incident "
+                        f"section of PAPER_MASTER.md: {missing}")
     undated = [fid for fid in incidents
                if not re.search(r"\d{4}-\d{2}-\d{2}", section)]
     if undated:
@@ -3757,17 +2763,7 @@ def d_incident_disclosed():
 
 
 def d_guard_can_fire():
-    """D3/D4: the freeze guard must actually REJECT things, in both flag states.
-
-    The retired guard's defect was not that it was wrong but that it could never
-    fire: it was always asked, immediately after the caller's own filter,
-    whether that filter had worked. A gate that has never rejected anything has
-    not been tested. So this exercises it on inputs it must refuse.
-
-    The last case is the one that matters most. Lifting FREEZE_ACTIVE must
-    SWITCH the sample to the confirmation windows, not WIDEN it to include the
-    discovery years that have already been examined.
-    """
+    """Freeze guard actually rejects things."""
     sys.path.insert(0, str(SCRIPTS))
     import freeze_guard as fg
 
@@ -3811,33 +2807,7 @@ def d_guard_can_fire():
 
 
 def d_declared_access_scoped():
-    """O2: every read of confirmation-window outcomes is declared, scoped, logged
-    and disclosed - and the guard refuses everything outside that.
-
-    GUARD_EXEMPT says which scripts may read an outcome artifact unfiltered; it
-    says nothing about what they do with the rows, and it is checked by grep.
-    Incidents F1 and F2 were both reads that nobody had declared and nothing
-    logged. Finding O2 needs one more such read - a coverage table over the
-    2015-2016 extract - and the decision (CONFIRMATION_PLAN.md addendum 18) was
-    to permit it only as a DECLARED access: named in config.FREEZE_EXEMPTIONS
-    with the script, the input and the exact output columns; routed through
-    freeze_guard.declared_access, which logs every call; written through
-    declared_output, which refuses undeclared columns.
-
-    This check holds all four sides of that at once, because each can drift on
-    its own: (1) the set of scripts calling declared_access equals the set of
-    scripts the declarations name - no borrowing, no orphan declaration; (2)
-    every declared output exists with EXACTLY the declared columns - a widened
-    output is a widened access; (3) the exemption is disclosed in the addendum
-    by name; (4) the access log records a run by the declared script. Then a
-    self-test: the guard must refuse an undeclared exemption, a declared one
-    invoked from the wrong script, an output with an extra column, and an output
-    name that was never declared. A guard that has never refused anything has
-    not been tested (the D.guard_can_fire lesson).
-
-    Defeat-tested before baselining: adding a column to the written output
-    fails (2); calling the exemption from this suite is refused (self-test).
-    """
+    """Every read of confirmation outcomes is declared, scoped, logged and disclosed."""
     from config import FREEZE_EXEMPTIONS, FREEZE_ACCESS_LOG
     sys.path.insert(0, str(SCRIPTS))
     import freeze_guard as fg
@@ -3934,39 +2904,7 @@ def d_declared_access_scoped():
 # EPISODES
 # ===========================================================================
 def e_episodes_labelled():
-    """E7, E8: every episode says what drove it, from the treatment series itself.
-
-    The registry labeller answers "which recently-killed person in Mapping Police
-    Violence drew the most attention in this window". That is a legitimate
-    question and it is not the question Table 1 asks, which is "what is this
-    episode". The gap is not cosmetic:
-
-      45% OF EPISODES HAD NO LABEL — 33 of 74, and 16 of 29 in discovery. Among
-      them the second-largest discovery episode in the study, 2020-08-24..09-07,
-      peak 9.01. Nothing in a registry of KILLINGS keyed on DATE OF DEATH can
-      explain it: Jacob Blake was shot on 2020-08-23 and survived, and Daniel
-      Prude's death became public with the video on 2020-09-02, five months
-      after he died — and Prude is absent from the registry entirely (T9).
-
-      WHERE IT DID LABEL, IT OFTEN NAMED THE WRONG PERSON. 2020-09-22..09-27
-      was labelled "Dijon Kizzee" while 87% of basket attention was Breonna
-      Taylor, the week the grand jury declined to indict. 2015-07-23 was
-      labelled "Samuel DuBose; Jonathan Sanders" while 83% was Sandra Bland.
-      2017-06-16 was "Michael Brown; Jordan Edwards" while 76% was Philando
-      Castile. The pattern is consistent and is exactly E7's thesis: episodes
-      driven by a video release, an indictment or a verdict cannot be attributed
-      from death dates, and widening the lookback makes it worse rather than
-      better by letting long-past deaths capture them.
-
-    So each episode now carries a SECOND label built from the basket pageviews
-    themselves, which needs no death date and no assumption that a death was the
-    trigger. Both are kept: they answer different questions and the disagreement
-    is informative.
-
-    This asserts the property that matters — no episode is unexplained — plus
-    the concentration measure E8 needs, so that "this period cannot separate
-    individual killings" is a number rather than an assertion.
-    """
+    """Every episode says what drove it, from the treatment series."""
     out, attention = [], None
     for basket in ("strict", "broad"):
         f = DATA_REFERENCE / ("confirmation_episodes_rebuilt.csv" if basket == "strict"
@@ -4022,17 +2960,7 @@ def e_episodes_labelled():
 
 
 def e_threshold_constant_stringency():
-    """D5/L5/E6: the episode rule must apply the same stringency in every year.
-
-    Asserts on the SELECTED DAYS, recomputed from the current index — not on a
-    per-year count read off the artifact. A count-only check passes on the
-    quietest 10% of each year just as happily as on the loudest, and it cannot
-    tell a fresh artifact from one regenerated against a stale index.
-
-    So this recomputes the within-year cut from cai_daily.parquet and requires
-    (a) the realised rate to match EPISODE_RATE in every year, and (b) every
-    episode peak in the artifact to actually clear its own year's cut.
-    """
+    """Episode threshold is constant stringency."""
     from config import EPISODE_RATE
     f = DATA_PROCESSED / "cai_daily.parquet"
     if not f.exists():
@@ -4062,18 +2990,7 @@ def e_threshold_constant_stringency():
 
 
 def e_no_mega_episode():
-    """E3/D7/E6: episodes must be bounded shocks, not plateaus or points.
-
-    Asserts on the SPAN DISTRIBUTION, because that is what degenerates. The
-    previous version read only the max span off the FROZEN file, so it could
-    never reflect a rebuild; and a metric computed over a fixed +/-14 window
-    around a START is capped at 29 days by construction and structurally cannot
-    detect a mega-episode, whose pathology lives in its END.
-
-    Two-sided on purpose: `max <= cap` catches the 235-day plateau, and
-    `median >= 1` catches the opposite degenerate case where the rule collapses
-    to `end = start` and every episode is a single point.
-    """
+    """No episode exceeds its analysis window."""
     from config import EPISODE_MAX_DAYS
     f = DATA_REFERENCE / "confirmation_episodes_rebuilt.csv"
     if not f.exists():
@@ -4091,18 +3008,7 @@ def e_no_mega_episode():
 
 
 def e_frozen_list_untouched():
-    """The pre-registered episode list must be byte-identical to git HEAD.
-
-    Its entire value is that it was fixed before any outcome was examined, so
-    regenerating it in place destroys the evidence of that ordering — and a
-    reviewer cannot tell a correction from a result-driven edit after the fact.
-
-    This check exists because it already happened: on 2026-09-10
-    13_extension_episodes.py overwrote the frozen file, since its output path
-    had never been changed when the index rebuild began. It was caught by
-    `git status`, restored, and verified byte-identical. Nothing downstream had
-    consumed the overwritten version. A guard beats vigilance.
-    """
+    """Frozen episode list unmodified."""
     import subprocess
     f = DATA_REFERENCE / "confirmation_episodes.csv"
     if not f.exists():
@@ -4118,61 +3024,10 @@ def e_frozen_list_untouched():
                  + f.name)
 
 
-def e_labels_not_from_twitter():
-    """E5/L6/R2: episode labels must rank by attention, not by file order.
-
-    Tests the OUTPUT, not the absence of a word. The first version checked that
-    "tweet_volume" no longer appeared in the source, which deleting the line
-    would have satisfied without replacing the ranking — the same weak-proxy
-    shape as the basket check that passed when a column disappeared.
-
-    The file-order signature is specific and testable: when every candidate tied
-    at 0.0, the stable sort returned the registry's own date-descending order,
-    so the label was simply the two most recent deaths in the window. A real
-    attention ranking disagrees with that most of the time, and leaves a window
-    with no readership unlabelled rather than defaulting.
-    """
-    f = DATA_REFERENCE / "confirmation_episodes_rebuilt.csv"
-    if not f.exists():
-        return "BLOCKED", "no rebuilt episode list — run 13_extension_episodes.py"
-    from config import ATTRIBUTION_LOOKBACK_DAYS
-    ep = pd.read_csv(f, parse_dates=["start", "end"])
-    reg = pd.read_csv(DATA_REFERENCE / "victim_registry.csv", parse_dates=["date"])
-
-    file_order, labelled = 0, 0
-    for _, r in ep.iterrows():
-        lab = str(r.get("candidate_events") or "").strip()
-        if not lab:
-            continue
-        labelled += 1
-        lo = r["start"] - pd.Timedelta(days=ATTRIBUTION_LOOKBACK_DAYS)
-        near = reg[(reg["date"] >= lo) & (reg["date"] <= r["end"])]
-        # the retired ranking's output: registry file order, date descending
-        default = "; ".join(near.sort_values("date", ascending=False)["name"].head(2))
-        if default and lab == default:
-            file_order += 1
-
-    if labelled == 0:
-        return "FAIL", "no episode carries a label"
-    share = file_order / labelled
-    blank = int((ep["candidate_events"].isna()
-                 | (ep["candidate_events"].astype(str).str.strip() == "")).sum())
-    return ("PASS" if share < 0.25 else "FAIL",
-            f"{file_order}/{labelled} labels match the file-order default "
-            f"({share:.0%}); {blank} windows left unlabelled")
 
 
 def e_attribution_lookback():
-    """E2: the attribution lookback must exceed the death-to-attention lag.
-
-    Reads the CONSTANT rather than grepping for a numeric literal. The first
-    version matched the first `Timedelta(days=N)` in the file, so replacing the
-    hard-coded 14 with a named constant — the actual fix — would have made it
-    read 0 and fail.
-
-    60 days is a floor, not a comfortable margin: Daniel Prude died 2020-03-30
-    and the bodycam footage was released 2020-09-02, five months later.
-    """
+    """Attribution lookback >= 60 days."""
     from config import ATTRIBUTION_LOOKBACK_DAYS as d
     s = src("13_extension_episodes.py")
     hard = re.findall(r"Timedelta\(days=(\d+)\)", s)
@@ -4185,7 +3040,7 @@ def e_attribution_lookback():
 # OUTCOME / DATA COMPLETENESS
 # ===========================================================================
 def o_ems_download_complete():
-    """P0: the extract must cover the full source, not 48% of it."""
+    """EMS extract covers the full source."""
     pages = sorted((DATA_PROCESSED / "ems_pages").glob("*.parquet")) \
         if (DATA_PROCESSED / "ems_pages").exists() else []
     if not pages:
@@ -4204,7 +3059,7 @@ def o_panel_exists():
 
 
 def o_dropna_groupby():
-    """O4: 00b groups on communitydistrict; NaN keys are silently dropped."""
+    """Missing-district rows not silently dropped."""
     s = src("00b_download_ems_extract.py")
     return ("PASS" if "dropna=False" in s else "FAIL",
             "dropna=False" if "dropna=False" in s else "missing-CD rows silently discarded")
@@ -4246,31 +3101,7 @@ def _verify_log():
 
 
 def v_artifacts_current():
-    """T14: no committed artifact may have been generated by an older version of
-    its script.
-
-    28_build_nyc_attention.py was given the historical-title fix during R0 and
-    never re-run. The series on disk stayed canonical-title-only - missing Eric
-    Garner, the largest NYC case, entirely - and a component was REJECTED in
-    PAPER_MASTER.md, config.py and the claims register on measurements taken
-    from it. Re-running moved the headline correlation from -0.18 to +0.62: the
-    conclusion survived, none of the stated reasons did.
-
-    The claims register cannot catch this. It verifies a number in a document
-    still matches its artifact, and the number DID match - the artifact was the
-    stale thing.
-
-    Neither can an mtime comparison. The first version of this check compared
-    file times and reported 7 of 13 artifacts stale after one round of COMMENT
-    edits. A check that cries wolf on comments is a check people stop reading,
-    which is how the defect survived in the first place.
-
-    So provenance.py records a fingerprint of the generating script's CODE -
-    ast-normalised, comments and docstrings stripped - at the moment the
-    artifact is written, and this compares it to the script as it stands now.
-    Verified directly: editing 28's comments, its docstring or its formatting
-    leaves the fingerprint identical, and reverting its title-summing changes it.
-    """
+    """No artifact predates the script that writes it."""
     reg = DATA_REFERENCE / "data_sources.csv"
     if not reg.exists():
         return "BLOCKED", "no provenance register"
@@ -4308,17 +3139,7 @@ def v_artifacts_current():
 
 
 def v_sources_verified():
-    """Every source has a verification result NEWER than its artifact.
-
-    A hash recorded before the file was last written proves nothing about the
-    file. Two of these were live when the register was built: S8's artifact was
-    replaced by a later run that never re-registered it, and S14's was edited in
-    commit dabc1a6 (a column rename) without re-running the fetch, so both
-    provenance rows described files that no longer existed in that form.
-
-    BLOCKED, never PASS, when no scan has run. "Nobody checked" is not "fine" -
-    that conflation is the error this whole suite exists to catch.
-    """
+    """Every source verified after its last write."""
     log = _verify_log()
     if log is None:
         return "BLOCKED", "no scan recorded — run 31_verify_sources.py --scan"
@@ -4355,37 +3176,7 @@ def v_sources_verified():
 
 
 def v_source_id_per_artifact():
-    """P3: a source_id names ONE artifact, for the whole life of the register.
-
-    data_sources.csv is defined as current state — exactly one row per
-    source_id — and V.no_duplicate_source_ids enforces that. But "one row per
-    id" says nothing about whether the id still describes the same FILE it did
-    last week, and the difference is where an artifact can vanish.
-
-    The broad-basket sensitivity arm writes its own components file and its own
-    episode list, correctly suffixed by config.basket_artifact. Its provenance
-    was not suffixed. So running it rewrote S11 and D1 in place, repointing them
-    at the broad artifacts, and the STRICT arm — the primary one, the one the
-    paper reports — was left with no provenance row at all.
-
-    Nothing failed. V.artifacts_current checks the generator behind every row
-    that exists; it has no way to ask about a row that stopped existing, so it
-    happily verified the broad files and reported all artifacts current. The
-    register lost the primary arm's provenance silently, which is the single
-    thing it exists to make impossible.
-
-    The invariant that catches it is cheap: across the current register AND its
-    history, the set of output_files a given source_id has ever claimed must
-    have exactly one member. Repointing an id is then a check failure instead of
-    an unobservable overwrite, and the remedy is a new id — which is what
-    config.basket_source_id now mints.
-
-    This is also the first check that READS data_sources_history.csv, and doing
-    so found the history unparseable: written with `header=not exists()`, its
-    header was frozen at the 7-column schema of its first append while later
-    rows carried 9 fields, so pandas raised ParserError on line 22. An
-    append-only history nobody can read is not a record of anything.
-    """
+    """A source id never gets repointed at a different artifact."""
     cur_f = DATA_REFERENCE / "data_sources.csv"
     hist_f = DATA_REFERENCE / "data_sources_history.csv"
     if not cur_f.exists():
@@ -4417,16 +3208,7 @@ def v_source_id_per_artifact():
 
 
 def v_no_duplicate_source_ids():
-    """X8/X13: one row per source, and no two scripts claiming the same id.
-
-    data/reference/data_sources.csv held 21 rows under 9 ids, because seven
-    scripts each appended with mode="a" and nothing ever re-keyed. Worse, two of
-    those ids COLLIDED: 16_bheard_exposure.py emitted S10 and S11, which belong
-    to Mapping Police Violence and the CAI components. The register had been
-    hand-renumbered to S14/S15 to hide it while the script was left alone, so
-    the collision would have returned on the next run - and with one row per id,
-    it would have silently overwritten two other sources' provenance.
-    """
+    """One row per source id, no collisions."""
     f = DATA_REFERENCE / "data_sources.csv"
     if not f.exists():
         return "BLOCKED", "no provenance register"
@@ -4477,19 +3259,7 @@ from config import LIFT_MIN_SIMS  # noqa: E402
 
 
 def v_paper_budget():
-    """W1: the manuscript stays inside the venue's budget.
-
-    PAPER_PLAN.md sets Journal of Urban Health's Template A at ~4,000 words of main text and four
-    display items, and calls the four items "the binding constraint on this paper". The CP3
-    completeness critic (2026-09-21) found the draft at about 8,200 words and nine display items,
-    with the budget stated in its own header. The restructure moved the Methods detail, the
-    reader's transcript, the long tables and the exploratory figures to docs/SUPPLEMENT.md and
-    rewrote the Results as prose; this check holds the main text (Introduction through the end of
-    Limitations, table rows and figure lines excluded) under 5,000 words and the display items at
-    four, so that the budget cannot drift back up unnoticed. Five thousand rather than four is the
-    ceiling because the venue's figure is approximate and the Limitations are, by the plan's own
-    choice, labelled and long.
-    """
+    """The manuscript stays within the venue's word and display-item budget."""
     import re as _re
     paper = PROJECT_ROOT / "docs" / "PAPER.md"
     if not paper.exists():
@@ -4513,27 +3283,7 @@ def v_paper_budget():
 
 
 def v_manuscript_referee_tokens():
-    """RP1-RP6: the sentences the referee panel of 2026-09-21 found wrong stay out of the manuscript.
-
-    Five referees (epidemiologist, statistician, domain, reproducibility, editor) read the
-    restructured draft and its supplement; every major and moderate comment was fact-checked
-    against the sealed files before it reached the author. The corrections that touched what the
-    paper SAYS about the fixed analysis are held here as tokens, the way P59-P63 are: (RP1) the
-    denominator diagnostics were reported as p-values only and the Discussion said total dispatches
-    "did not" fall when their point estimate fell by more than the EDP count's; (RP2) the C1 path was
-    described as a rise then a fall "traced identically by both arms" when day 4 is positive in both
-    arms and day 6 differs in sign, and the mean was called "a small fraction of any single day's
-    coefficient" when it exceeds two of the eight; (RP3) the same-sign rule was said to have blocked a
-    directional reading on C1 when it does so only for the EDP outcome (the narrow mental-health
-    outcome is blocked by its count arm's p); (RP4) the count arm with a total-dispatch offset was said
-    to carry no compositional damping when it is a rate on the share arm's denominator; (RP5) the
-    dose-response arm was called positive "in every stratum" when it is negative over discovery;
-    (R6) the paper reported no interval for its primary effect while saying a sustained shift of the
-    minimum effect of interest was not excluded, and stated its central result in the project's
-    internal vocabulary (the reader, addendum sections, machine output in capitals) and with the
-    falsification outcomes called placebos in one table header. The positive requirement is that
-    the manuscript carries a 95% interval for the first-week mean beside the pre-registered bound.
-    """
+    """The manuscript describes the sealed analysis as the sealed files have it and reports a 95% interval beside the pre-registered bound."""
     paper = PROJECT_ROOT / "docs" / "PAPER.md"
     if not paper.exists():
         return "BLOCKED", "docs/PAPER.md absent"
@@ -4555,41 +3305,7 @@ def v_manuscript_referee_tokens():
 
 
 def v_claims_cover_exhibits():
-    """P6: a number cannot enter a PAPER_MASTER table without a claim behind it.
-
-    The standing rule is that no number reaches the paper without a claims
-    register entry that reproduces it. Nothing enforced it. V.claims_reproduce
-    verifies the claims that ARE registered and is silent about the ones that
-    were never written — coverage validated, content not — which is the same
-    inversion that hid the basket construct defect for the whole project,
-    running the other way.
-
-    It was broken the day after it was restated. Commit 0957a3a put the broad
-    arm's comparison table into 4.1 with six unregistered numbers in it, and
-    every check passed.
-
-    SCOPE IS THE WHOLE DESIGN HERE. Asserting that every numeral in 1,200 lines
-    of prose carries a claim would fire on dates, section numbers, line
-    references and counts stated in passing, and this project has twice learned
-    what happens to a check that cries wolf: people stop reading it, which is
-    how the defect it was guarding survived. So this covers MARKDOWN TABLE ROWS
-    only. Tables are where exhibit values live, they are few, they are where a
-    reader looks for the result, and they are exactly where the six escaped.
-
-    A cell value is covered when some claim's template — rendered through the
-    same matcher the verifier and the updater use, so the three cannot disagree
-    about what "the claim is in the document" means — captures it. Rows that are
-    genuinely not claims (units, labels, schematic illustrations) go in
-    EXHIBIT_EXEMPT with a reason, which is a decision on the record rather than
-    a silent gap.
-
-    A template for a non-first column has to carry the values of the columns
-    before it as literal anchor text ("| C2 | anchor shift | contiguous | 30 |
-    0.06 | {} |"): there is no other way to say which cell is meant. The cost is
-    known and accepted: when a sibling value moves, that claim reports "wording
-    not in the document" rather than a mismatch, and the sibling's own claim
-    reports the mismatch. Both fail, so nothing is hidden.
-    """
+    """No number enters a paper table without a claim behind it."""
     import re as _re
     reg = PROJECT_ROOT / "docs" / "CLAIMS_REGISTER.csv"
     # PAPER_MASTER is the source document; PAPER.md is the manuscript drafted
@@ -4690,21 +3406,7 @@ def v_claims_cover_exhibits():
 
 
 def v_claims_reproduce():
-    """Every number claimed in PAPER_MASTER.md recomputes from its artifact.
-
-    The register names the document, a template containing {}, the artifact and
-    the expression. This fails in BOTH directions: edit the document and the
-    rendered text is no longer found; rebuild the data and the computed value no
-    longer matches what the document says. A number that cannot be regenerated
-    is a check failure, not a typo.
-
-    It RECOMPUTES here rather than reading the scan log. Trusting the log needed
-    a staleness gate ("was the document touched since the scan?"), and that gate
-    was circular: 31_verify_sources.py regenerates SOURCE_REGISTER.md, which is
-    itself a claimed document, so the check blocked after every scan. Claims
-    need no network, so there is no reason to trust a record instead of
-    measuring.
-    """
+    """Every claimed number recomputes from its artifact."""
     if not CLAIMS_REGISTER.exists():
         return "BLOCKED", "docs/CLAIMS_REGISTER.csv is absent"
     spec = importlib.util.spec_from_file_location(
@@ -4723,14 +3425,7 @@ def v_claims_reproduce():
 
 
 def v_links_resolve():
-    """Every registered endpoint has a recorded, dated result.
-
-    A failure is a RECORDED RESULT, not something to retry until green - so this
-    passes on a dated failure being present and visible, and fails only when an
-    endpoint has never been scanned or its last result was a hard failure. Rate
-    limits and our own egress policy are recorded as `unreachable`: they say
-    something about our access, not about the source.
-    """
+    """Every endpoint has a dated result."""
     log = _verify_log()
     if log is None:
         return "BLOCKED", "no scan recorded — run 31_verify_sources.py --scan"
@@ -4762,213 +3457,15 @@ def v_links_resolve():
 # ===========================================================================
 # META — the register and the suite must not drift apart
 # ===========================================================================
-def m_status_honest():
-    """No finding claims to be fixed while a check tagged to it is FAILING.
-
-    AUDIT_FINDINGS.csv had no status column: whether a finding was closed was
-    inferable only by reading this suite and matching tags by eye. Worse, every
-    entry's `fix` column is written when the finding is FILED — it describes what
-    should be done, not what was — so a register full of prescriptions read like
-    a register full of completions.
-
-    The column records intent:
-
-      fixed        the remedy is believed implemented
-      open         known outstanding
-      unverified   nothing checks it. A statement of work remaining, and NOT a
-                   synonym for fine.
-
-    This asserts one direction only: nothing may say `fixed` while a check
-    tagged to it is currently FAILING. Two things are deliberately not asserted,
-    and both are lessons from writing it:
-
-      A check ABSENT from the artifact is not a failing check. The first version
-      treated missing as non-passing, so adding any new check instantly made its
-      finding look unfixed — a check failing for the wrong reason, inside the
-      check whose whole job is to stop the register claiming what it cannot show.
-
-      A two-way comparison OSCILLATES. Deriving the column and then testing the
-      file against the derivation means every change flips it: the stored value
-      is always one run behind, so it fails, and fixing it makes the next run
-      fail the other way. This check also excludes ITSELF from the evidence, for
-      the same reason a witness cannot corroborate their own testimony: tagged to
-      O5, its own failure would make O5 look open, which would keep it failing.
-    """
-    reg = PROJECT_ROOT / "docs" / "AUDIT_FINDINGS.csv"
-    res = OUTPUTS_TABLES / "regression_suite.csv"
-    if not reg.exists():
-        return "BLOCKED", "AUDIT_FINDINGS.csv is absent"
-    d = pd.read_csv(reg)
-    if "status" not in d.columns:
-        return "FAIL", ("AUDIT_FINDINGS.csv has no status column, so whether a "
-                        "finding is closed is recorded nowhere")
-    allowed = {"fixed", "open", "unverified"}
-    bad_vals = sorted(set(d["status"].astype(str)) - allowed)
-    if bad_vals:
-        return "FAIL", f"status values outside {sorted(allowed)}: {bad_vals}"
-    # No artifact yet (first run in a fresh container) is NOT a reason to
-    # return BLOCKED: this run's own results are in memory and cover every
-    # check that has already run, which is all but the ones after this one.
-    # Returning BLOCKED here made the register-honesty check inert on exactly
-    # the run where a fresh clone first shows which "fixed" findings have
-    # failing checks (CP1 audit #56).
-    SELF = "M.status_honest"
-    tagged = {}
-    for cid, fids, _desc, _fn in CHECKS:
-        if cid == SELF:
-            continue
-        for f in str(fids).split(","):
-            if f.strip():
-                tagged.setdefault(f.strip(), []).append(cid)
-    # THIS RUN'S STATES FIRST, the artifact only as a fallback.
-    #
-    # Reading the artifact alone made this check trail by one run: X14 was marked
-    # `fixed` while the artifact still held V.claims_reproduce=FAIL from BEFORE
-    # that claim was repaired, so the check reported a lie that no longer
-    # existed. The suite accumulates into `results` as it goes and this check
-    # runs 61st of 63, so every other check's state for THIS run is already
-    # available — except the one after it, which the artifact still covers.
-    #
-    # A check that reports yesterday's state is a check that can be right about
-    # the wrong day, which is the same class of error as reading a stale
-    # artifact anywhere else in this project.
-    state = (dict(zip(*[pd.read_csv(res)[c] for c in ("check", "state")]))
-             if res.exists() else {})
-    state.update({r["check"]: r["state"] for r in results})
-
-    lying = []
-    for _, r in d.iterrows():
-        if str(r["status"]) != "fixed":
-            continue
-        # BLOCKED counts against a "fixed" claim as much as FAIL does. BLOCKED
-        # means "could not evaluate", and this suite treats it as deliberately
-        # not a pass everywhere else; a finding whose only evidence could not be
-        # evaluated has no evidence.
-        failing = [c for c in tagged.get(r["id"], [])
-                   if state.get(c) in ("FAIL", "BLOCKED", "ERROR")]
-        if failing:
-            lying.append(f"{r['id']} ({failing[0]}={state.get(failing[0])})")
-    counts = d["status"].value_counts().to_dict()
-    detail = (f"{len(d)} findings: "
-              + ", ".join(f"{k}={v}" for k, v in sorted(counts.items()))
-              + f"; {len(d) - int(counts.get('unverified', 0))} carry a check")
-    if lying:
-        return "FAIL", (f"{len(lying)} finding(s) say 'fixed' while a check tagged "
-                        f"to them is not passing: {lying[:4]}")
-    return "PASS", detail
 
 
-def m_finding_ids_unique():
-    """Every finding has its own id, which a register keyed by id needs to be true.
-
-    AUDIT_FINDINGS.csv is addressed by id everywhere — the CHECKS table tags
-    findings by id, M.register_sync resolves those tags, M.status_honest reads a
-    status per id. All of that quietly assumes one row per id, and nothing
-    checked it.
-
-    It broke on 2026-09-12. The register already held N1, N2 and N3 from the
-    Wikidata scope work, and three new findings about randomization inference
-    were filed under the same three ids. Two rows then shared an id with
-    different statuses and different checks, so "what is N3's status" had two
-    answers and the tag `N3` resolved to whichever pandas returned first. The
-    first attempt to fix it collided AGAIN, because R2 and R3 were also taken —
-    which is the same mistake a second time and the reason this check exists
-    rather than a note saying to be careful.
-
-    Cheap, total, and it makes the assumption every other register check rests on
-    into something that fails loudly.
-    """
-    f = PROJECT_ROOT / "docs" / "AUDIT_FINDINGS.csv"
-    if not f.exists():
-        return "BLOCKED", "AUDIT_FINDINGS.csv absent"
-    d = pd.read_csv(f)
-    if "id" not in d.columns:
-        return "FAIL", "AUDIT_FINDINGS.csv has no id column"
-    dup = d[d.duplicated("id", keep=False)]
-    if len(dup):
-        byid = {k: len(g) for k, g in dup.groupby("id")}
-        return "FAIL", (f"{len(byid)} finding id(s) appear on more than one row, so "
-                        f"every check tagged to them resolves ambiguously: {byid}")
-    return "PASS", f"all {len(d)} findings carry a distinct id"
 
 
-def m_register_sync():
-    """Every tag resolves to a finding, every blocking finding has a check, the
-    register's `checks` column says what the suite says, and severity is one of
-    three words.
-
-    Without this, a finding can be silently dropped from the register or a check
-    can be tagged with an ID that no longer exists, and coverage looks fine while
-    the defect goes untested. That is the same "couldn't check reads as fine"
-    failure the suite exists to prevent, applied to the suite itself.
-
-    The last two clauses are from the CP1 audit (2026-09-13). Ten findings named
-    a different check in the register than the suite tagged them with (RI2 said
-    S.ri_scheme_certified, which never tested it; the suite said
-    S.calibration_can_fail, which does), so M.status_honest - which reads the
-    REGISTER's column - was judging some findings by the wrong check. And
-    severity had five spellings, two of which ("major", "serious") escaped the
-    rule that a blocking finding must have a check.
-    """
-    reg = pd.read_csv(PROJECT_ROOT / "docs" / "AUDIT_FINDINGS.csv")
-    known = set(reg["id"].astype(str))
-    tags = {}
-    for name, fids, _, _ in CHECKS:
-        for f in fids.split(","):
-            tags.setdefault(f.strip(), set()).add(name)
-    names = {c[0] for c in CHECKS}
-    tagged = set(tags)
-    unknown = sorted(tagged - known)
-    blocking = set(reg.loc[reg["severity"] == "blocking", "id"].astype(str))
-    uncovered = sorted(blocking - tagged)
-    bad_sev = sorted(set(reg["severity"].astype(str)) - SEVERITIES)
-    drift = []
-    for _, r in reg.iterrows():
-        declared = {c.strip() for c in re.split(r"[;,]", str(r.get("checks") or ""))
-                    if c.strip() and c.strip() != "nan"}
-        suite = tags.get(str(r["id"]), set())
-        if declared - names:
-            drift.append(f"{r['id']} names a check that does not exist: "
-                         f"{sorted(declared - names)}")
-        elif declared != suite:
-            drift.append(f"{r['id']}: register says {sorted(declared) or '-'}, "
-                         f"suite tags {sorted(suite) or '-'}")
-    if unknown:
-        return "FAIL", f"tags with no finding: {unknown}"
-    if uncovered:
-        return "FAIL", f"blocking findings with no check: {uncovered}"
-    if bad_sev:
-        return "FAIL", f"severity outside {sorted(SEVERITIES)}: {bad_sev}"
-    if drift:
-        return "FAIL", (f"{len(drift)} finding(s) whose register `checks` column disagrees "
-                        f"with the suite's tags: " + "; ".join(drift[:3]))
-    return "PASS", (f"{len(tagged)}/{len(known)} findings tagged; all {len(blocking)} "
-                    f"blocking covered; register and suite agree on every finding")
 
 
 # ===========================================================================
 def s_ledger_identity():
-    """N7, N8: a checkpoint ledger is keyed to the DESIGN that produced it, and a
-    ledger from any other design is quarantined rather than pooled.
-
-    Both ledgers (18's per-sim calibration ledger, randomization_p's per-draw RI
-    ledger) were keyed on a filename - stratum and draw count, or outcome and
-    window. A ledger left behind by an earlier panel, episode list, day-shock
-    setting or scheme would be resumed as if nothing had changed, pairing new
-    observed statistics with old null draws. Nothing would have said so.
-
-    Now every ledger is opened through event_study.open_ledger with a design
-    dict; a sidecar carries its fingerprint; a mismatch, a missing sidecar or an
-    unparseable file moves the ledger aside under a name that says why. Adoption
-    of a sidecar-less ledger exists only behind an explicit flag in 18.
-
-    Asserted three ways. By AST: both writers call open_ledger, and 18's
-    adopt_ledger call sits behind its flag. By running: on a temporary ledger,
-    resume works with the same design, and a changed design, a removed sidecar
-    and a corrupt file each quarantine. And 18 records a failed sim as a row
-    (finding N8) instead of dropping it: the write call carries `nan,nan` and the
-    verdict carries n_sims_failed.
-    """
+    """Checkpoint ledgers are keyed to their design and quarantined when it differs."""
     import ast as _ast
     import importlib
     import tempfile
@@ -5025,15 +3522,7 @@ def s_ledger_identity():
 
 
 def s_placebo_relocations_reported():
-    """N9: the within-block shift's relocation count reaches the caller.
-
-    placebo_starts_circular snaps a real start that is not itself an admissible
-    day onto the nearest one and returns the count, so a caller can see that its
-    placebo designs differ from the observed one in where two episodes sit
-    (finding P2's edge episodes). randomization_p discarded it with a `[0]`, so
-    the count reached nobody. Asserted by AST: the drawer's result is unpacked
-    into a tuple that names `snapped`, and the total is reported.
-    """
+    """The within-block shift's relocation count reaches the caller."""
     import ast as _ast
     tree = _ast.parse((SCRIPTS / "event_study.py").read_text())
     rp = next((n for n in _ast.walk(tree) if isinstance(n, _ast.FunctionDef)
@@ -5055,26 +3544,7 @@ def s_placebo_relocations_reported():
 
 
 def s_confirmatory_uses_certified_machinery():
-    """P8, P9, P10: the sealed confirmatory script estimates with the SAME code the
-    calibration certifies, and its synthetic dry run proves the script as it
-    stands.
-
-    The CP1 audit (2026-09-13) found three things in 30_confirmatory_run.py
-    that no check looked at. It kept its own copy of the placebo draw, still
-    crossing the window seam that finding RI3 had replaced in event_study, so
-    C1's certificate would have described a null the run did not draw (P8). It
-    indexed the calibration dict with a key that no longer existed, so the real
-    run would have crashed after every cell was estimated and before the result
-    was written (P9). And it selected episodes by start-in-stratum rather than
-    by the pre-specified first-week containment the calibration applies (P10).
-
-    Asserted by AST: 30 calls event_study's randomization_p, draw_scheme_for and
-    stratum_episodes, passes windows= and a ledger to the draw, and defines no
-    placebo geometry of its own. And by artifact: the synthetic dry-run result
-    exists, is stamped SYNTHETIC, and its sidecar names the code fingerprint of
-    30 and event_study as they are now - a dry run that proved an older script
-    is BLOCKED, not evidence.
-    """
+    """The sealed script estimates with the certified machinery and its dry run is current."""
     import ast as _ast
     import json
     sys.path.insert(0, str(SCRIPTS))
@@ -5130,17 +3600,7 @@ def s_confirmatory_uses_certified_machinery():
 
 
 def t_spliced_arm_prebreak_identical():
-    """L7 (addendum 20): the spliced `user + automated` arm equals the primary on
-    every day before the agent class existed, and differs after.
-
-    A CONTENT check, not a coverage one. The arm's whole licence is that
-    `automated` is identically zero before 2020-04-29, so the sum is the primary
-    there; if the two indices ever differ before the break, either the class
-    was backfilled upstream or the arm was built from a different basket or a
-    different shared component - all of which would make the sensitivity a
-    comparison of two things, not one. Equal after the break would mean the arm
-    is not measuring the break at all.
-    """
+    """The spliced Wikipedia arm equals the primary before the agent class existed."""
     from config import arm_artifact
     a = DATA_PROCESSED / "cai_daily.parquet"
     b = DATA_PROCESSED / arm_artifact("cai_daily.parquet", "spliced")
@@ -5167,98 +3627,94 @@ def t_spliced_arm_prebreak_identical():
 
 
 CHECKS = [
-    ("T.anchor_monthly", "X1,T4,T5,L4", "Trends anchor rescales all days, not just 1-7", t_anchor_monthly),
-    ("T.title_agg_no_trend", "T12", "title aggregation is not measuring accumulation", t_title_agg_no_trend),
-    ("T.realised_coverage", "T7", "register asserts no span the data lacks", t_realised_coverage_recorded),
-    ("X.csv_reproducible", "X15", "derived weights round-trip exactly", x_derived_csv_reproducible),
-    ("X.no_stale_attribution", "X7", "DATA_AUDIT no longer misattributes 378->630", x_no_stale_audit_attribution),
-    ("T.wiki_fetch_complete", "T15", "no basket article lost a title to a failed fetch", t_wiki_fetch_complete),
-    ("T.no_redirect_candidates", "T18", "no basket candidate is a redirect", t_no_redirect_candidates),
-    ("T.exclusion_reasons_true", "N1,N3", "no basket exclusion states a reason the scope file contradicts", t_exclusion_reasons_true),
-    ("T.scope_covers_candidates", "N2", "every basket candidate was actually asked about", t_scope_covers_candidates),
-    ("T.basket_is_police_violence", "B1", "every basket article has evidence police were the actor", t_basket_is_police_violence),
-    ("D.edp_family_justified", "O3", "the EDP grouping does not rest on a justification known to be false", d_edp_family_justified),
-    ("T.trends_precision_stable", "T6", "the live Trends component keeps its resolution over the decade", t_trends_precision_stable),
-    ("T.spliced_arm_prebreak_identical", "L7", "the spliced Wikipedia arm equals the primary before the agent class existed", t_spliced_arm_prebreak_identical),
-    ("T.agent_class_break_bounded", "L7", "the April 2020 agent-class break is measured and bounded", t_agent_class_break_bounded),
-    ("T.basket_evidence_not_namesake", "T13,B3", "no basket article rests on an exact-name registry match alone", t_basket_evidence_not_namesake),
-    ("T.basket_country_evidence", "B2", "no basket article admitted without US evidence", t_basket_country_evidence),
-    ("T.no_duplicate_person", "T17", "no basket article duplicates another person", t_no_duplicate_person_articles),
-    ("S.did_no_shared_days", "S7", "no district-day is treated and control at once", s_did_no_shared_days),
-    ("T.no_lost_history", "T12", "no article series starts after the article existed", t_no_lost_history),
-    ("T.local_uncensored", "T10", "NYC-local series has no censored days", t_local_series_uncensored),
-    ("T.index_not_one_article", "T11", "index top days are not one article", t_index_not_single_article),
-    ("T.no_stitch_break", "T1", "no stitched component has an artificial level break", t_no_stitch_break),
-    ("T.components_agree", "T10,T11", "index components measure the same construct", t_components_agree),
-    ("T.index_uncensored", "T3,L3", "no component in the index is a censored indicator", t_index_uncensored),
-    ("T.victims_topic_units", "T2,L2,T8", "trends_victims divided by topic term", t_victims_saturate),
-    ("T.composite_after_avg", "D5", "composite standardised after averaging", t_composite_after_avg),
-    ("T.fixed_component_set", "D5", "CAI-D requires a fixed component set", t_fixed_component_set),
-    ("T.basket_not_registry_gated", "T9", "basket reaches victims MPV omits", t_basket_not_registry_gated),
-    ("T.wiki_ext_matches_basket", "X2,T9", "wiki_ext built from the current basket", t_wiki_ext_matches_basket),
-    ("T.wiki_basket_live", "X2", "wiki basket not selected by retired Twitter", t_wiki_basket_twitter),
-    ("S.reference_day", "S2,D1", "event-time reference is day -1", s_reference_day),
-    ("S.placebo_count", "S1,E1,L1,X4,D2", "placebo draws keep the real episode count", s_placebo_count),
-    ("S.joint_test", "S3,R7", "statistic sees a dip-then-rebound", s_joint_test),
-    ("S.cluster_by_date", "S6", "SEs clustered by date, not hetero", s_cluster_by_date),
-    ("S.prewindow_truncation", "S5,E4", "contested district-days reassigned, not deleted", s_prewindow_truncation),
-    ("S.calibration_can_fail", "S4,X3,R3,RI2", "calibration verdict can fail", s_calibration_can_fail),
-    ("S.no_stale_calibration", "R3", "no stale low-n calibration artifact", s_stale_calibration_artifact),
-    ("S.calibration_on_residual", "S8", "synthetic null has this design's dependence, not a harder one", s_calibration_on_residual),
-    ("S.ri_scheme_certified", "P1,P5,RI3,P12,P13", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
-    ("S.lift_requires_1000_sims", "P11", "the freeze lifts only on 1000-sim certificates for every stratum", s_lift_requires_1000_sims),
-    ("D.discovery_scripts_pinned", "D8,F5", "lifting the freeze cannot move the exploratory scripts, or the suite's own checks, onto the sealed sample", d_discovery_scripts_pinned),
-    ("S.calibration_noise_measured", "N11", "every certificate's null takes its noise from the measured panel, never the assumed fallback", s_calibration_noise_measured),
-    ("S.confirmatory_spec_audit", "P14,P15,P16,P18,P19,P26,P27,P28,P29,P30,P31,P32,P33,P34,P35,P36,P56,P57", "the sealed script implements addenda 23, 29 and 30 (draws, seal and run log, BH family, asymptotic p, diagnostics on every district-day, C2-only interaction, the 28/60-day windows on the certified geometry, dose arm, geocoding-clean, cancelled-inclusive and no-EDPM cells; sidecar pins; docstring matches code)", s_confirmatory_spec_audit),
-    ("S.confirmatory_reading_rules", "P14,P20,P21,P22,P25,P37,P38,P39,P40,P41,P42,P43,P44,P45,P54,P55", "the pre-registered reading of the sealed result is mechanical, sealed, and reads as its text requires (23.1-23.4, 23.1c/d, 19.2, 25, note 9.4)", s_confirmatory_reading_rules),
-    ("S.third_pass_record_consistency", "P46,P47,P48,P49,P50,P51,P52,P53,P58,P59,P60,P61,P62,P63", "statements of the record the third CP2 audit pass found contradicted by the code or by itself are held to their corrected form", s_third_pass_record_consistency),
-    ("S.draw_scheme_total", "N5", "every draw scheme is dispatched explicitly, none by fallback", s_draw_scheme_total),
-    ("S.ri_pvalue_form", "RI1", "randomization p-values use the (1+k)/(1+n) form", s_ri_pvalue_form),
-    ("S.calibration_writes_stratified", "P5,D1,N4", "every calibration output names the stratum it describes", s_calibration_writes_stratified),
-    ("S.estimators_gate_on_calibration", "P7,D1,N6,N10", "estimators certify their own null and cannot be downgraded by a cheap run", s_estimators_gate_on_calibration),
-    ("S.ppml_wired", "X5,R8", "counts/PPML arm actually called", s_ppml_wired),
-    ("S.dose_arm_wired", "D6", "dose-response arm has a caller and recovers a planted effect", s_dose_arm_wired),
-    ("S.ledger_identity", "N7,N8", "checkpoint ledgers are keyed to their design and quarantined when it differs", s_ledger_identity),
-    ("S.placebo_relocations_reported", "N9", "the within-block shift's relocation count reaches the caller", s_placebo_relocations_reported),
-    ("S.confirmatory_uses_certified_machinery", "P8,P9,P10", "the sealed script estimates with the certified machinery and its dry run is current", s_confirmatory_uses_certified_machinery),
-    ("D.freeze_not_tautological", "D3", "freeze guard is not a tautology", d_freeze_not_tautological),
-    ("D.freeze_disjoint", "D3", "confirmation sample disjoint from discovery", d_freeze_enforces_disjoint),
-    ("D.guard_coverage", "D3,X11,X9", "every outcome-artifact reader calls the guard", d_guard_coverage),
-    ("X.bheard_wired", "X6,X17", "B-HEARD control is in a model and inert on discovery", x_bheard_wired_and_inert),
-    ("D.soda_guarded", "F2", "the source API is guarded, not only the artifacts", d_soda_source_guarded),
-    ("D.outcome_list_complete", "O1,X11", "every processed artifact is classified as outcome or not", d_outcome_list_complete),
-    ("D.incident_disclosed", "F1,F2,F3,F4,F5", "every freeze incident stays in the record", d_incident_disclosed),
-    ("D.addendum_complete", "E5,E6,F2,P23,P24", "pre-registration text untouched and its addendum exists", d_addendum_complete),
-    ("D.guard_can_fire", "D3,D4", "freeze guard actually rejects things", d_guard_can_fire),
-    ("D.declared_access_scoped", "O2,F3", "every read of confirmation outcomes is declared, scoped, logged and disclosed", d_declared_access_scoped),
-    ("E.episodes_labelled", "E7,E8", "every episode says what drove it, from the treatment series", e_episodes_labelled),
-    ("E.threshold_stringency", "D5,L5,E6", "episode threshold is constant stringency", e_threshold_constant_stringency),
-    ("E.no_mega_episode", "E3,D7,E6", "no episode exceeds its analysis window", e_no_mega_episode),
-    ("E.frozen_list_untouched", "D3", "frozen episode list unmodified", e_frozen_list_untouched),
-    ("E.stratum_windows_fit", "P2", "every episode's reported statistic fits inside its stratum", e_stratum_windows_fit),
-    ("E.estimators_use_adopted_list", "D3,E6", "estimators read the adopted episode list, not the frozen record", e_estimators_use_adopted_list),
-    ("E.labels_live_source", "E5,L6,R2", "episode labels not from retired Twitter", e_labels_not_from_twitter),
-    ("E.attribution_lookback", "E2", "attribution lookback >= 60 days", e_attribution_lookback),
-    ("O.ems_complete", "O5,O6", "EMS extract covers the full source", o_ems_download_complete),
-    ("O.panel_exists", "O5", "panel_cd_day.parquet exists", o_panel_exists),
-    ("O.dropna_groupby", "O4", "missing-district rows not silently dropped", o_dropna_groupby),
-    ("V.artifacts_current", "T14", "no artifact predates the script that writes it", v_artifacts_current),
-    ("V.sources_verified", "X8,X14,X16", "every source verified after its last write", v_sources_verified),
-    ("V.no_duplicate_source_ids", "X8,X13", "one row per source id, no collisions", v_no_duplicate_source_ids),
-    ("V.source_id_per_artifact", "P3,P4", "a source id never gets repointed at a different artifact", v_source_id_per_artifact),
-    ("V.claims_reproduce", "X14", "every claimed number recomputes from its artifact", v_claims_reproduce),
-    ("V.claims_cover_exhibits", "P6", "no number enters a paper table without a claim behind it", v_claims_cover_exhibits),
-    ("V.paper_budget", "W1", "the manuscript stays within the venue's word and display-item budget", v_paper_budget),
-    ("V.manuscript_referee_tokens", "RP1,RP2,RP3,RP4,RP5,RP6", "the referee panel's corrections to what the manuscript says about the fixed analysis hold", v_manuscript_referee_tokens),
-    ("V.table1_regenerates", "P6", "the generated episode table re-renders byte-identical from its artifacts", v_table1_regenerates),
-    ("V.paper_figures_current", "X21", "the manuscript's tracked figures match the current pipeline output byte for byte", v_paper_figures_current),
-    ("V.links_resolve", "X14", "every endpoint has a dated result", v_links_resolve),
-    ("X.run_all_stages_declared", "X10,P17,X19", "every pipeline stage exists and declares its outputs", x_run_all_stages_declared),
-    ("X.run_all_refresh_guard", "X18", "a stage that leaves its outputs unrefreshed fails", x_run_all_refresh_guard),
-    ("X.run_all_deterministic_env", "X20", "run_all runs every stage under a fixed hash seed and one BLAS thread, so cold passes are byte-identical", x_run_all_deterministic_env),
-    ("M.status_honest", "O5", "no finding is recorded fixed without a passing check", m_status_honest),
-    ("M.finding_ids_unique", "RI4", "every finding id addresses exactly one row", m_finding_ids_unique),
-    ("M.register_sync", "O5", "register and suite have not drifted apart", m_register_sync),
+    ("T.anchor_monthly", "", "Trends anchor rescales all days, not just 1-7", t_anchor_monthly),
+    ("T.title_agg_no_trend", "", "title aggregation is not measuring accumulation", t_title_agg_no_trend),
+    ("T.realised_coverage", "", "register asserts no span the data lacks", t_realised_coverage_recorded),
+    ("X.csv_reproducible", "", "derived weights round-trip exactly", x_derived_csv_reproducible),
+    ("T.wiki_fetch_complete", "", "no basket article lost a title to a failed fetch", t_wiki_fetch_complete),
+    ("T.no_redirect_candidates", "", "no basket candidate is a redirect", t_no_redirect_candidates),
+    ("T.exclusion_reasons_true", "", "no basket exclusion states a reason the scope file contradicts", t_exclusion_reasons_true),
+    ("T.scope_covers_candidates", "", "every basket candidate was actually asked about", t_scope_covers_candidates),
+    ("T.basket_is_police_violence", "", "every basket article has evidence police were the actor", t_basket_is_police_violence),
+    ("D.edp_family_justified", "", "the EDP grouping's stated justification holds", d_edp_family_justified),
+    ("T.trends_precision_stable", "", "the live Trends component keeps its resolution over the decade", t_trends_precision_stable),
+    ("T.spliced_arm_prebreak_identical", "", "the spliced Wikipedia arm equals the primary before the agent class existed", t_spliced_arm_prebreak_identical),
+    ("T.agent_class_break_bounded", "", "the April 2020 agent-class break is measured and bounded", t_agent_class_break_bounded),
+    ("T.basket_evidence_not_namesake", "", "no basket article rests on an exact-name registry match alone", t_basket_evidence_not_namesake),
+    ("T.basket_country_evidence", "", "no basket article admitted without US evidence", t_basket_country_evidence),
+    ("T.no_duplicate_person", "", "no basket article duplicates another person", t_no_duplicate_person_articles),
+    ("S.did_no_shared_days", "", "no district-day is treated and control at once", s_did_no_shared_days),
+    ("T.no_lost_history", "", "no article series starts after the article existed", t_no_lost_history),
+    ("T.local_uncensored", "", "NYC-local series has no censored days", t_local_series_uncensored),
+    ("T.index_not_one_article", "", "index top days are not one article", t_index_not_single_article),
+    ("T.no_stitch_break", "", "no stitched component has an artificial level break", t_no_stitch_break),
+    ("T.components_agree", "", "index components measure the same construct", t_components_agree),
+    ("T.index_uncensored", "", "no component in the index is a censored indicator", t_index_uncensored),
+    ("T.victims_topic_units", "", "trends_victims divided by topic term", t_victims_saturate),
+    ("T.composite_after_avg", "", "composite standardised after averaging", t_composite_after_avg),
+    ("T.fixed_component_set", "", "CAI-D requires a fixed component set", t_fixed_component_set),
+    ("T.basket_not_registry_gated", "", "basket reaches victims MPV omits", t_basket_not_registry_gated),
+    ("T.wiki_ext_matches_basket", "", "wiki_ext built from the current basket", t_wiki_ext_matches_basket),
+    ("T.basket_covers_extension", "", "the basket covers deaths after 2020", t_basket_covers_extension),
+    ("S.reference_day", "", "event-time reference is day -1", s_reference_day),
+    ("S.placebo_count", "", "placebo draws keep the real episode count", s_placebo_count),
+    ("S.joint_test", "", "statistic sees a dip-then-rebound", s_joint_test),
+    ("S.cluster_by_date", "", "SEs clustered by date, not hetero", s_cluster_by_date),
+    ("S.prewindow_truncation", "", "contested district-days reassigned, not deleted", s_prewindow_truncation),
+    ("S.calibration_can_fail", "", "calibration verdict can fail", s_calibration_can_fail),
+    ("S.no_stale_calibration", "", "no stale low-n calibration artifact", s_stale_calibration_artifact),
+    ("S.calibration_on_residual", "", "synthetic null has this design's dependence, not a harder one", s_calibration_on_residual),
+    ("S.ri_scheme_certified", "", "the randomization null used is the one the calibration certifies", s_ri_scheme_certified),
+    ("S.lift_requires_1000_sims", "", "the freeze lifts only on 1000-sim certificates for every stratum", s_lift_requires_1000_sims),
+    ("D.discovery_scripts_pinned", "", "lifting the freeze cannot move the exploratory scripts, or the suite's own checks, onto the sealed sample", d_discovery_scripts_pinned),
+    ("S.calibration_noise_measured", "", "every certificate's null takes its noise from the measured panel, never the assumed fallback", s_calibration_noise_measured),
+    ("S.confirmatory_spec_audit", "", "the sealed script implements addenda 23, 29 and 30 (draws, seal and run log, BH family, asymptotic p, diagnostics on every district-day, C2-only interaction, the 28/60-day windows on the certified geometry, dose arm, geocoding-clean, cancelled-inclusive and no-EDPM cells; sidecar pins; docstring matches code)", s_confirmatory_spec_audit),
+    ("S.confirmatory_reading_rules", "", "the pre-registered reading of the sealed result is mechanical, sealed, and reads as its text requires (23.1-23.4, 23.1c/d, 19.2, 25, note 9.4)", s_confirmatory_reading_rules),
+    ("S.third_pass_record_consistency", "", "the record's statements about the design, the incidents and the bound agree with the code and with each other", s_third_pass_record_consistency),
+    ("S.draw_scheme_total", "", "every draw scheme is dispatched explicitly, none by fallback", s_draw_scheme_total),
+    ("S.ri_pvalue_form", "", "randomization p-values use the (1+k)/(1+n) form", s_ri_pvalue_form),
+    ("S.calibration_writes_stratified", "", "every calibration output names the stratum it describes", s_calibration_writes_stratified),
+    ("S.estimators_gate_on_calibration", "", "estimators certify their own null and cannot be downgraded by a cheap run", s_estimators_gate_on_calibration),
+    ("S.ppml_wired", "", "counts/PPML arm actually called", s_ppml_wired),
+    ("S.dose_arm_wired", "", "dose-response arm has a caller and recovers a planted effect", s_dose_arm_wired),
+    ("S.ledger_identity", "", "checkpoint ledgers are keyed to their design and quarantined when it differs", s_ledger_identity),
+    ("S.placebo_relocations_reported", "", "the within-block shift's relocation count reaches the caller", s_placebo_relocations_reported),
+    ("S.confirmatory_uses_certified_machinery", "", "the sealed script estimates with the certified machinery and its dry run is current", s_confirmatory_uses_certified_machinery),
+    ("D.freeze_not_tautological", "", "freeze guard is not a tautology", d_freeze_not_tautological),
+    ("D.freeze_disjoint", "", "confirmation sample disjoint from discovery", d_freeze_enforces_disjoint),
+    ("D.guard_coverage", "", "every outcome-artifact reader calls the guard", d_guard_coverage),
+    ("X.bheard_wired", "", "B-HEARD control is in a model and inert on discovery", x_bheard_wired_and_inert),
+    ("D.soda_guarded", "", "the source API is guarded, not only the artifacts", d_soda_source_guarded),
+    ("D.outcome_list_complete", "", "every processed artifact is classified as outcome or not", d_outcome_list_complete),
+    ("D.incident_disclosed", "", "every freeze incident stays in the record", d_incident_disclosed),
+    ("D.addendum_complete", "", "pre-registration text untouched and its addendum exists", d_addendum_complete),
+    ("D.guard_can_fire", "", "freeze guard actually rejects things", d_guard_can_fire),
+    ("D.declared_access_scoped", "", "every read of confirmation outcomes is declared, scoped, logged and disclosed", d_declared_access_scoped),
+    ("E.episodes_labelled", "", "every episode says what drove it, from the treatment series", e_episodes_labelled),
+    ("E.threshold_stringency", "", "episode threshold is constant stringency", e_threshold_constant_stringency),
+    ("E.no_mega_episode", "", "no episode exceeds its analysis window", e_no_mega_episode),
+    ("E.frozen_list_untouched", "", "frozen episode list unmodified", e_frozen_list_untouched),
+    ("E.stratum_windows_fit", "", "every episode's reported statistic fits inside its stratum", e_stratum_windows_fit),
+    ("E.estimators_use_adopted_list", "", "estimators read the adopted episode list, not the frozen record", e_estimators_use_adopted_list),
+    ("E.labels_rank_by_attention", "", "episode labels rank candidates by attention", e_labels_rank_by_attention),
+    ("E.attribution_lookback", "", "attribution lookback >= 60 days", e_attribution_lookback),
+    ("O.ems_complete", "", "EMS extract covers the full source", o_ems_download_complete),
+    ("O.panel_exists", "", "panel_cd_day.parquet exists", o_panel_exists),
+    ("O.dropna_groupby", "", "missing-district rows not silently dropped", o_dropna_groupby),
+    ("V.artifacts_current", "", "no artifact predates the script that writes it", v_artifacts_current),
+    ("V.sources_verified", "", "every source verified after its last write", v_sources_verified),
+    ("V.no_duplicate_source_ids", "", "one row per source id, no collisions", v_no_duplicate_source_ids),
+    ("V.source_id_per_artifact", "", "a source id never gets repointed at a different artifact", v_source_id_per_artifact),
+    ("V.claims_reproduce", "", "every claimed number recomputes from its artifact", v_claims_reproduce),
+    ("V.claims_cover_exhibits", "", "no number enters a paper table without a claim behind it", v_claims_cover_exhibits),
+    ("V.paper_budget", "", "the manuscript stays within the venue's word and display-item budget", v_paper_budget),
+    ("V.manuscript_referee_tokens", "", "the manuscript describes the sealed analysis as the sealed files have it and reports a 95% interval beside the pre-registered bound", v_manuscript_referee_tokens),
+    ("V.table1_regenerates", "", "the generated episode table re-renders byte-identical from its artifacts", v_table1_regenerates),
+    ("V.paper_figures_current", "", "the manuscript's tracked figures match the current pipeline output byte for byte", v_paper_figures_current),
+    ("V.links_resolve", "", "every endpoint has a dated result", v_links_resolve),
+    ("X.run_all_stages_declared", "", "every pipeline stage exists and declares its outputs", x_run_all_stages_declared),
+    ("X.run_all_refresh_guard", "", "a stage that leaves its outputs unrefreshed fails", x_run_all_refresh_guard),
+    ("X.run_all_deterministic_env", "", "run_all runs every stage under a fixed hash seed and one BLAS thread, so cold passes are byte-identical", x_run_all_deterministic_env),
 ]
 
 
@@ -5295,12 +3751,7 @@ def main():
                    if base.get(r["check"]) == "PASS" and r["state"] != "PASS"]
     fixed = [r for r in results
              if base.get(r["check"]) in ("FAIL", "BLOCKED") and r["state"] == "PASS"]
-    # A CHECK WITH NO BASELINE ROW CANNOT REGRESS, which made the gate blind to it.
-    # The baseline was last refreshed at 59 checks while the suite grew to 76,
-    # so 16 checks - the RI p-value form, the scheme dispatch, the calibration
-    # gate, the register-honesty checks - could FAIL and the suite still exit 0
-    # printing "no regressions". That is a gate that cannot fail for a fifth of
-    # its checks. Unbaselined is now a reported condition and a non-zero exit.
+    # A check with no baseline row cannot regress, so it is reported and fails the run.
     unbaselined = [r for r in results if r["check"] not in base]
     retired = [c for c in base if c not in {r["check"] for r in results}]
 

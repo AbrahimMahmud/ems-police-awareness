@@ -121,7 +121,7 @@ scripts). Update this file whenever a source is added, replaced, or re-downloade
 - **Role**: confound control for the confirmation sample. B-HEARD reduces
   mental-health EMS call rates in adopting precincts (Psychiatric Services,
   doi:10.1176/appi.ps.20250528), affects 18 of 40 extension episodes, and biases in
-  the same direction as the hypothesis under test. See `docs/GATE_C_MEMO.md` §2.
+  the same direction as the hypothesis under test.
 - **Derived output**: `data/reference/bheard_cd_exposure.csv` (CD x date x bound)
 - **Cite as**: NYC Mayor's Office of Community Mental Health, B-HEARD program
   announcements; New York City Independent Budget Office (2026).

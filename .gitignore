@@ -49,10 +49,7 @@ outputs/figures/*.png
 outputs/figures/*.pdf
 outputs/tables/*.csv
 outputs/tables/*.txt
-# Subdirectories too: the glob above stops at one level, so outputs/tables/
-# superseded/ (calibrations moved aside when the null they certify is replaced)
-# showed up as untracked. Everything under outputs/tables is regenerable by
-# re-running the stage that wrote it; none of it is an input.
+# Everything under outputs/tables is regenerable by re-running the stage that wrote it.
 outputs/tables/**/*.csv
 # Ledger identity sidecars (<ledger>.meta.json, event_study.open_ledger) and
 # result sidecars (30_confirmatory_run.py). Regenerable with the ledger they
@@ -78,13 +75,10 @@ data/processed/wiki_probe_cache/
 # Wikipedia category cache (regenerable; scripts/24_build_wiki_basket.py)
 data/processed/wiki_cat_cache/
 
-# Wikidata SPARQL response cache (regenerable; retired with the SPARQL transport,
-# see findings N1-N3 — kept ignored so an old checkout does not suddenly commit it)
+# Wikidata SPARQL response cache (regenerable)
 data/processed/wikidata_cache/
 
 # Wikidata entity cache, one file per article (regenerable; 26_resolve_basket_scope.py).
-# Keyed on the article title rather than on a batch index, so changing --batch
-# reuses it instead of discarding it, which is finding N2.
 data/processed/wikidata_entity_cache/
 
 # Cross-process pacing state for the shared Wikimedia rate-limit bucket
@@ -101,5 +95,5 @@ data/processed/wiki_pageviews_cache/
 # ops runner state (PID files, step logs, sentinels)
 ops/state/
 
-# The Obsidian vault is personal and lives outside the repository (kept locally, never committed).
+# Personal notes, kept locally.
 vault/

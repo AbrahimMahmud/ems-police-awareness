@@ -1,88 +1,72 @@
-# Police-Violence Awareness and Emergency Help-Seeking in NYC
+# Public attention to police violence and emergency help-seeking in New York City, 2015–2024
 
-MIT UROP research project (Prof. Justin Steil, Department of Urban Studies and
-Planning; student: Abrahim Mahmud) studying how public awareness of police
-killings relates to mental-health-related EMS utilization across New York City's
-59 community districts, 2017–2020.
+A pre-registered, sealed-confirmation study of whether national attention to police violence changes what
+New York City communities ask emergency medical services for. The outcome is the share (and count) of
+emergency medical dispatches coded to the Fire Department's emotionally disturbed person (EDP) family, by
+community district and day; the exposure is a daily attention index rebuilt from public sources (Wikipedia
+pageviews of articles about people killed by police, and United States Google search interest in police
+brutality); the design is a stacked episode event study with episode-level randomization inference.
 
-**Status: under active rework.** The original analysis and its conclusions were
-superseded in July 2026 after a full methodological audit; see
-`docs/REWORK_PLAN.md` (issue register and design) and
-`docs/GATE2_PRELIMINARY_RESULTS.md` (current findings and their limits).
-Old scripts and documentation live in git history; old paper drafts in `docs/archive/`.
+The manuscript is `docs/PAPER.md`; its supplementary material is `docs/SUPPLEMENT.md`.
 
-## Current state of findings (summary; see the memo for full detail)
+## Result
 
-- The original headline (a positive lag-7 effect of awareness on mental-health
-  call share) **replicates but is not robust**: it depends on outlier leverage
-  in a z-scored awareness measure and disappears under a log transform.
-- **The legacy Twitter awareness measure was retired on 2026-09-08**
-  (`docs/GATE_C_MEMO.md` §6.0): it is not re-fetchable, its collection
-  methodology was never documented, and it is not defensible in print. The
-  treatment variable is now CAI-D, built from Wikipedia victim pageviews and
-  Google Trends. Twitter survives in one place only — the bridge result, where
-  it is the object of the methods critique rather than a source of claims.
-- **Consequence: the previously reported findings are superseded pending a
-  re-run.** The suggestive decline in police-adjacent (EDP) call shares after
-  awareness spikes was estimated on Twitter, and it does not reproduce under
-  CAI-D at the same window (+0.00038, p=0.407 vs −0.00065, p=0.019). What
-  survives the measure swap is weaker and two-sided: a first-week relationship
-  between awareness and call composition (joint lags 0–7: p=0.041 EDP, p=0.006
-  narrow-MH). Permutation inference on the discovery sample (p≈0.26 for the
-  Twitter-era estimate) already indicated the sample cannot support a
-  confirmatory claim; heterogeneity is non-monotonic and the exposure-intensity
-  DID is underpowered. **Do not cite the earlier numbers as current.**
+Neither confirmation period rejects the pre-specified null after correction over the family of eight tests.
+The first-week mean change in the EDP share is −0.00059 (95% CI −0.0032 to 0.0021) before B-HEARD and
+−0.00019 (−0.0024 to 0.0020) during its rollout, against a mean share of 0.086; the falsification outcomes
+(cardiac, asthma) are quiet. The pre-registered reading is a bounded null in both periods.
 
-## Pipeline
+## Design and record
+
+- **Pre-registration.** `docs/CONFIRMATION_PLAN.md` (frozen text plus a dated addendum of every deviation) and
+  `docs/PRE_ANALYSIS_NOTE.md` (hypotheses, the interpretation table, the reading rules). The confirmation
+  periods were protected by a code-level freeze (`scripts/freeze_guard.py`); the five occasions on which
+  confirmation-period data were touched before the lift are disclosed in the plan, in `docs/PAPER_MASTER.md`
+  §5.3 and in the paper's Limitations, and logged in `data/reference/freeze_access_log.csv`.
+- **Sealed run.** `scripts/30_confirmatory_run.py` ran once after the lift and wrote
+  `data/reference/confirmatory_results.csv` with a sidecar pinning source hashes, inputs, commit and seed;
+  every start is a row of `data/reference/confirmatory_run_log.csv`. `scripts/34_confirmatory_reading.py`
+  applies the pre-registered reading rules mechanically (`data/reference/confirmatory_reading.csv`).
+- **Claims.** Every result number in the paper, the supplement and the master document is a row of
+  `docs/CLAIMS_REGISTER.csv` that recomputes from its artifact (`scripts/31_verify_sources.py`).
+- **Gate.** `scripts/23_regression_suite.py` holds the pipeline, the freeze, the sealed run and the
+  documents to their stated properties against `docs/regression_baseline.csv`.
+- **Master document.** `docs/PAPER_MASTER.md` is the source document the paper was drafted from: data,
+  measurement, design, every statistical choice, results and limitations, with the reasoning.
+
+## Layout
 
 ```
-scripts/
-  config.py                   all constants (CD whitelist, call groups, lags, episodes)
-  00_local_ems_extract.py     run locally against the raw 6.5GB EMS CSV
-  01_build_panel.py           59-CD balanced panel, disaggregated call groups
-  02_build_awareness.py       RETIRED Twitter measure — bridge/methods critique only
-  02b_build_cai_lags.py       calendar-date lags/leads/windows for the CAI treatment
-                              variables (the file every outcome model reads)
-  03_main_model.py            full IRF, four-way SE table, calibrated joint tests
-  03b_bridge_legacy.py        step-by-step attribution: original result -> corrected
-  04_robustness.py            PPML counts, permutation inference, deferral test
-  05_placebo_and_calls.py     outcome decomposition and placebo call types
-  06_heterogeneity.py         demographics interactions/quartiles (ACS + 2010 vintages)
-  07_did_exposure.py          exposure-intensity DID (heavily-Black vs even-distribution
-                              districts primary, Q2 sensitivity — GATE_C_MEMO §6.4)
-  08_figures.py               publication figures (read saved tables only)
-  09_fetch_public_data.py     ACS 2015-19 demographics, Wikipedia pageviews (+ hash log)
-  10_build_victim_registry.py victim/event registry (MPV + WaPo + curation reconcile)
-  10d_parse_cd_demographics.py  legacy 2010 Census parser (kept for vintage comparison)
-  11_fetch_awareness_components.py  wiki / GDELT news / GDELT TV daily series
-  11b_fetch_trends.py         Google Trends daily series, US and NYC metro
-  11c_trends_anchor_and_victims.py  weekly-anchored Trends + victim-name terms
-  12_build_cai.py             CAI-D (treatment) and CAI-S (diagnostics), race-matched
-                              sub-indices, and the validation battery
-  20_data_audit.py            integrity audit of all committed inputs (no outcome data)
-  16_bheard_exposure.py       B-HEARD confound control: precinct x CD crosswalk built
-                              from the dispatch file itself, CD exposure step table
+scripts/     the pipeline (numbered stages), the estimator (event_study.py), the freeze guard, the gate
+ops/         restart-tolerant runners for the long jobs; the generators for the paper's tables and figures
+data/reference/   committed inputs and the sealed outputs (episode lists, baskets, calibration certificates,
+                  the confirmatory table and its reading, the run log)
+data/processed/   built panels and caches (regenerated; not tracked)
+outputs/     tables and figures written by the pipeline (regenerated; not tracked, except the copies the
+             manuscript uses in docs/figures)
+docs/        the manuscript, the supplement, the master document, the pre-registration, the claims register,
+             the regression baseline, the paper plan, related work, data provenance, the source register
+tests/       the gate's synthetic-data checks (run on a clone with no data)
 ```
 
-Run order: 00 (locally) → 01 → 09/10/11/12 (build CAI) → 02b → 03/04/05/06/07 → 08.
-02 and 03b are the legacy/bridge track and are run only for the methods result.
+## Reproducing
+
+```
+uv sync                                   # Python 3.11 with the pinned estimation libraries
+bash ops/rebuild.sh                       # download the dispatch extract, build the panel, calibrate the
+                                          # randomization nulls, run the discovery-period estimators
+cd scripts && PYTHONHASHSEED=0 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 23_regression_suite.py
+uv run pytest                             # the synthetic-data part of the gate
+```
+
+The confirmatory run is sealed; `bash ops/phase_i.sh` re-runs it only against a current calibration
+certificate and refuses to overwrite a sealed result without a recorded reason. The pipeline is
+byte-reproducible under the fixed seed and single-threaded BLAS the runners set.
 
 ## Data
 
-All sources, access dates, hashes, and citation lines: `docs/DATA_PROVENANCE.md`
-and `data/reference/data_sources.csv`. Raw inputs are gitignored; small
-reference files (ACS demographics, Wikipedia pageviews, victim curation table,
-CD whitelist) are committed. Twitter collection methodology is an open item
-pending documentation from the data's originator.
-
-## Documentation
-
-- `docs/REWORK_PLAN.md` — issue register (I1–I19), design, review gates
-- `docs/GATE2_PRELIMINARY_RESULTS.md` — findings memo, updated at each checkpoint
-- `docs/GATE_C_MEMO.md` — decisions needed before the confirmatory run
-- `docs/RELATED_WORK.md` — comparable studies, positioning, and what to borrow
-- `docs/PAPER_PLAN.md` — venue decision, section skeleton, display items, RECORD
-  obligations, and drafting rules for the manuscript
-- `docs/DATA_AUDIT.md` — integrity audit of every committed input; the reason the
-  index construction and episode list are being corrected
-- `docs/DATA_PROVENANCE.md` — source registry
+NYC EMS Incident Dispatch Data (Fire Department of the City of New York, NYC OpenData 76xm-jjuj); Wikimedia
+REST pageviews; Google Trends; Mapping Police Violence; American Community Survey 2015–2019; B-HEARD precinct
+adoption dates compiled from Mayor's Office announcements and the Independent Budget Office's precinct-level
+report. Provenance and hashes: `docs/DATA_PROVENANCE.md`, `docs/SOURCE_REGISTER.md`,
+`data/reference/data_sources.csv`.

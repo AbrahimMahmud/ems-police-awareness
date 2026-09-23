@@ -85,8 +85,8 @@ mental-health EMS call rates, emerging ~1 year post-implementation. **[abstract]
 > Two consequences. It **validates the data source** for exactly this outcome and
 > gives us a precedent for classifying mental-health EMS calls from dispatch codes.
 > And it identifies a **confound in 45% of our extension episodes** — see
-> `GATE_C_MEMO.md` §2 and `scripts/16_bheard_exposure.py`. That is the single most
-> consequential thing this literature review turned up.
+> `scripts/16_bheard_exposure.py`. That is the single most consequential thing this
+> literature review turned up.
 
 **"Protest psychosis" ED study (2024), *SSM-Mental Health*.** Black ED visits for
 schizophrenia/psychosis rose a reported 4.26 percentage points in June 2020.
@@ -140,7 +140,7 @@ it did not arrive everywhere at once.
 of English tweets, victims' names as 2-grams, 3,737 police-involved deaths. Two
 details matter for the CAI. They use **relative frequency** — usage normalized by
 total daily volume — explicitly because raw counts confound attention with platform
-activity, which is the same failure mode as the legacy z-score. And **George Floyd's
+activity. And **George Floyd's
 name became the 7th most-used 2-gram on 29 May 2020, four days after his death** —
 independently reproducing the peak date our own series and the anchored Trends
 component both produce. They also document decay: attention to names fell by an
@@ -156,7 +156,7 @@ the counterfactual. **Peak at day +1, back inside the forecast interval by day +
 
 > The sharpest published benchmark for the timing of acute help-seeking after a
 > collective-trauma event, and the reason the *first week* — not days 3-5 — is the
-> defensible pre-registered window (`GATE_C_MEMO.md` §1). Also a design worth
+> defensible pre-registered window. Also a design worth
 > borrowing: a forecast-based counterfactual needs no control group, which suits a
 > citywide shock.
 
@@ -213,8 +213,8 @@ variation in exposure: distance to a killing, which precinct adopted, which
 neighbourhood was surged, which state or county had an incident. Our attention
 measure is citywide. Cross-sectional identification exists only in the heterogeneity
 and DID designs, which is why those carry more of the inferential weight than their
-usual supporting role — and why the DID's power problem (REWORK_PLAN §5.2,
-GATE_C_MEMO §5) matters more than it otherwise would.
+usual supporting role — and why the DID's power problem matters more than it
+otherwise would.
 
 ---
 

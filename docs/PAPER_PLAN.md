@@ -16,8 +16,7 @@ literature and the STROBE/RECORD checklists.
 
 ## 0. The decision that comes before drafting
 
-**Has the confirmatory run happened?** If not — and per `GATE_C_MEMO.md` it has
-not, since Gate C is open and the extension freeze is intact — there is a route
+**Has the confirmatory run happened?** If not — while the confirmation freeze is intact — there is a route
 that is strictly better than conventional submission:
 
 **Registered Report.** PCI Registered Reports recognises six levels of bias
@@ -238,7 +237,7 @@ timeline table as emerging best practice for exactly this reason.
 - Alternative estimators, window sensitivities (+28/+60), transform
   sensitivities, leave-one-out, drop-Floyd, drop-2020.
 - Descriptive Table 1 equivalent (panel characteristics).
-- The bridge result: legacy z-score vs log, as the methods demonstration.
+- The z-scoring simulation, as the methods demonstration.
 
 ### Caption rules
 Object → definitions (treatment, control, sample, period) → statistical detail
@@ -268,7 +267,7 @@ The items that actually change the draft:
 | 7.1 | Complete code list for exposures, outcomes, confounders | Supplementary table: every dispatch code, its family, its years of validity |
 | 12.3 | Linkage **quality evaluation**, not just description | The precinct×CD crosswalk needs a validation section, not only a description |
 | 13.1 | Why these units were selected | The 59-district whitelist rationale belongs in the main text |
-| **19.1** | Discuss **changing eligibility over time** | **The EDPC recode phased in mid-2018 and the retired legacy OD/POISON codes. Put this in Limitations explicitly — a reviewer who finds it unaided will treat the paper as unreliable** |
+| **19.1** | Discuss **changing eligibility over time** | **The EDPC recode phased in mid-2018 and the retired OD/POISON codes. Put this in Limitations explicitly — a reviewer who finds it unaided will treat the paper as unreliable** |
 | 22.1 | How to access protocol, data, code | The replication package, the frozen episode list with its git timestamp, and the CAI provenance/hash log. This item is what turns the pre-registration discipline from a private virtue into a reportable one |
 
 Also relevant: STROBE 10 ("explain how the study size was arrived at") is the

@@ -209,7 +209,7 @@ The dispatch data are public and contain no personal identifiers; an institution
 human-subjects research is pending. The dispatch data (NYC OpenData dataset 76xm-jjuj), Wikimedia pageviews and Google
 Trends are public interfaces. Code, the frozen pre-registration, the provenance and claims registers, the regression
 suite and the sealed confirmatory table with its run log are at https://github.com/abrahimmahmud/ems-police-awareness
-(branch `analysis-rework`).
+(branch `main`).
 
 ---
 
@@ -471,7 +471,7 @@ table); Figures S1–S6.
 | RECORD 12.3 | Linkage quality | Table S8 |
 | RECORD 13.1 | Selection of persons/units | The 59-district whitelist and the ≥5-dispatch rule, Methods |
 | RECORD 19.1 | Changing eligibility over time | Limitation 5 (code drift), Methods *Outcome*, Table S7 |
-| RECORD 22.1 | Access to protocol, data, code | The public repository https://github.com/abrahimmahmud/ems-police-awareness (branch `analysis-rework`; Methods, *Ethics and data availability*; Supplement S6): frozen pre-registration whose timestamps are git commits (internal; no externally timestamped deposit exists — Limitation 10), provenance register with hashes, claims register, regression suite, sealed confirmatory table and run log |
+| RECORD 22.1 | Access to protocol, data, code | The public repository https://github.com/abrahimmahmud/ems-police-awareness (branch `main`; Methods, *Ethics and data availability*; Supplement S6): frozen pre-registration whose timestamps are git commits (internal; no externally timestamped deposit exists — Limitation 10), provenance register with hashes, claims register, regression suite, sealed confirmatory table and run log |
 
 ---
 
